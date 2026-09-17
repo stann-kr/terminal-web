@@ -61,6 +61,7 @@ afterEach(() => {
 
 describe('request event binding and draft preservation', () => {
   it('shows the closed event layout instead of a locked form for an archived event', async () => {
+    vi.useFakeTimers();
     window.history.replaceState(null, '', '/gate/request?event=event-1');
     localStorage.setItem('terminal_lang', 'ko');
     vi.stubGlobal('fetch', vi.fn(async () => Response.json([{ ...futureEvent, status: 'ARCHIVED' }])));
@@ -68,7 +69,7 @@ describe('request event binding and draft preservation', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'GUEST_REQ' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('불러오는 중');
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    await act(async () => {});
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('현재 신청 가능한 이벤트가 없습니다.');
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: '이벤트 정보' })).toHaveAttribute('href', '/gate?event=event-1');
@@ -91,7 +92,7 @@ describe('request event binding and draft preservation', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
     render(createElement(LangProvider, null, createElement(RequestAccessPage)));
-    await act(async () => {});
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
     expect(screen.getByRole('textbox', { name: '이름' })).toBeDisabled();
     fireEvent.change(screen.getByRole('textbox', { name: '인증 코드' }), { target: { value: 'CODE-1' } });
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
@@ -134,7 +135,7 @@ describe('request event binding and draft preservation', () => {
     vi.stubGlobal('fetch', fetchMock);
     const wrapper = ({ children }: { children: ReactNode }) => createElement(LangProvider, null, children);
     const { result } = renderHook(() => ({ request: useAccessRequest(), language: useLang() }), { wrapper });
-    await act(async () => {});
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
     expect(result.current.request.event?.id).toBe('event-1');
 
     act(() => result.current.request.handleCodeChange({ target: { value: 'CODE-1' } } as ChangeEvent<HTMLInputElement>));
@@ -155,6 +156,7 @@ describe('request event binding and draft preservation', () => {
     expect(result.current.request.needsTargetReview).toBe(true);
     expect(result.current.request.isCodeVerified).toBe(false);
     expect(result.current.request.form).toMatchObject({ name: 'My draft', email: 'draft@example.com', privacyConsent: true });
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
     expect(result.current.request.nextEvent?.id).toBe('event-2');
     expect(result.current.request.gateHref).toBe('/gate?event=event-1');
     expect(window.location.search).toBe('?event=event-1');

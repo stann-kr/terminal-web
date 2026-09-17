@@ -29,7 +29,7 @@ export function EventCountdown({ event, t }: Pick<ScreenProps, 'event' | 't'>) {
     [t('초', 'SEC'), seconds % 60],
   ] as const;
   const remaining = (now === null || target > now);
-  return <section className="tm-countdown tm-cell" data-readout-region role="timer" aria-live="off" aria-label={remaining ? t('이벤트 시작까지 남은 시간', 'Time until event start') : t('이벤트 시작 후 경과 시간', 'Time since event start')}>
+  return <section className="tm-countdown tm-cell" role="timer" aria-live="off" aria-label={remaining ? t('이벤트 시작까지 남은 시간', 'Time until event start') : t('이벤트 시작 후 경과 시간', 'Time since event start')}>
     <div className="tm-countdown-mode"><p className="tm-eyebrow">{remaining ? 'T− COUNTDOWN' : 'T+ ELAPSED'}</p><p>{remaining ? t('이벤트 시작까지', 'Until the event starts') : t('이벤트 시작 이후', 'Since the event started')}</p></div>
     <dl>{units.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{now === null ? '—' : String(value).padStart(2, '0')}</dd></div>)}</dl>
   </section>;

@@ -21,6 +21,7 @@ import { getFutureUpcomingEvent } from '@/lib/events/lifecycle';
 import { useEventClock } from '@/lib/events/useEventClock';
 import type { TerminalEvent } from '@/lib/events/types';
 import { useUrlQueryState } from '@/lib/useUrlQueryState';
+import { withMinimumLoading } from '@/features/terminal/shared/minimumLoading';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const INSTAGRAM_PATTERN = /^@?[\w.]+$/;
@@ -134,13 +135,13 @@ export function useAccessRequest() {
     const controller = new AbortController();
     setEventLoadState(previous => previous === 'loaded' ? previous : 'loading');
 
-    void fetch('/api/events', { signal: controller.signal, cache: 'no-store' })
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Request event fetch failed');
-        const data = await response.json() as unknown;
-        if (!Array.isArray(data)) throw new Error('Request event response was not an array');
-        return data as TerminalEvent[];
-      })
+    void withMinimumLoading(async () => {
+      const response = await fetch('/api/events', { signal: controller.signal, cache: 'no-store' });
+      if (!response.ok) throw new Error('Request event fetch failed');
+      const data = await response.json() as unknown;
+      if (!Array.isArray(data)) throw new Error('Request event response was not an array');
+      return data as TerminalEvent[];
+    }, controller.signal)
       .then((data) => {
         if (controller.signal.aborted) return;
         setEvents(data);

@@ -19,6 +19,7 @@ import {
 import { getNodeId, setNodeId } from '@/lib/transmit/nodeIdentity';
 import type { PostTransmitInput } from '@/lib/transmit/contract';
 import { useT } from '@/lib/langContext';
+import { withMinimumLoading } from '@/features/terminal/shared/minimumLoading';
 
 type TransmitField = 'handle' | 'message';
 type TransmitSubmission = { input: PostTransmitInput; draftRevision: number };
@@ -48,7 +49,7 @@ export function useTransmit() {
     refetch,
   } = useQuery({
     queryKey: transmitKeys.list(currentPage),
-    queryFn: () => fetchTransmitLogs(currentPage),
+    queryFn: () => withMinimumLoading(() => fetchTransmitLogs(currentPage)),
     placeholderData: keepPreviousData,
   });
 

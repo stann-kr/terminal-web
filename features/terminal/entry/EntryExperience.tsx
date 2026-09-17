@@ -5,6 +5,7 @@ import type { EntryMode, Lang, Translate } from '../events/data';
 import { BOOT_LINES, useBootSequence } from './useBootSequence';
 import { completeEntryVisit, readEntryVisit } from './visitState';
 import { useReadoutMotion } from '../motion/useReadoutMotion';
+import '../shared/ui.css';
 import './entry.css';
 
 interface EntryProps { lang: Lang; t: Translate; languageOrigin: 'manual' | 'browser' | 'fallback'; onComplete: () => void }

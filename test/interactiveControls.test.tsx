@@ -21,6 +21,7 @@ import type { Artist, TerminalEvent } from '../lib/events/types';
 import { eventKeys } from '../lib/events/client';
 import LineupPage from '../app/lineup/page';
 import { TerminalFrame } from '../features/terminal/shell/TerminalFrame';
+import { withMinimumLoading } from '../features/terminal/shared/minimumLoading';
 
 vi.mock('next/navigation', () => ({ usePathname: () => window.location.pathname }));
 import { LangProvider, useLang } from '../lib/langContext';
@@ -216,6 +217,36 @@ describe('production Aspen frame', () => {
     } finally {
       act(() => root?.unmount());
       host.remove();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('includes the countdown in the first readout without replaying it on a clock tick', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    function Content() {
+      const root = useRef<HTMLElement>(null);
+      useAspenReadout(root, { key: 'countdown-entry', content: ':scope', layout: true });
+      return <main ref={root}><EventCountdown t={ko => ko} event={{
+        id: 'clock', session: 'Clock event', subtitle: '', date: '2099-09-08', time: '23:00 KST', status: 'UPCOMING',
+        venue: 'Venue', district: '', coords: '', capacity: '', sound: '', artists: [],
+      }} /></main>;
+    }
+    const { unmount } = render(<AspenMotionProvider crt><Content /></AspenMotionProvider>);
+    try {
+      const countdown = screen.getByRole('timer', { hidden: true });
+      expect(countdown).not.toBeVisible();
+      fireEvent.keyDown(screen.getByRole('main'), { key: 'Tab' });
+      expect(countdown).toBeVisible();
+      const before = countdown.textContent;
+      await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
+      expect(countdown).toBeVisible();
+      expect(countdown.textContent).not.toBe(before);
+      for (const value of countdown.querySelectorAll('dd')) expect(value).toBeVisible();
+    } finally {
+      unmount();
+      vi.useRealTimers();
       vi.unstubAllGlobals();
     }
   });
@@ -463,7 +494,7 @@ describe('Transmit draft submission', () => {
     const next = await screen.findByRole('button', { name: '다음 글 페이지' });
     expect(screen.getByRole('button', { name: '이전 글 페이지' })).toBeDisabled();
     await user.click(next);
-    expect(await screen.findByRole('alert')).toHaveTextContent('불러오지 못했습니다');
+    expect(await screen.findByRole('alert', {}, { timeout: 2_000 })).toHaveTextContent('불러오지 못했습니다');
     expect(fetchMock).toHaveBeenCalledWith('/api/transmit?page=2');
     expect(screen.getByRole('button', { name: '다음 글 페이지' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '이전 글 페이지' })).toBeEnabled();
@@ -686,7 +717,7 @@ describe('event page states and optional entry', () => {
   beforeEach(() => {
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })));
   });
-  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
   it('keeps the real event information available when its poster fails', () => {
     render(<EventSummary event={{ ...event, posterUrl: '/missing-poster.png' }} />);
@@ -708,6 +739,7 @@ describe('event page states and optional entry', () => {
   });
 
   it('distinguishes loading, failure and a confirmed empty event registry', async () => {
+    vi.useFakeTimers();
     let complete!: (response: Response) => void;
     vi.spyOn(globalThis, 'fetch').mockImplementationOnce(() => new Promise(resolve => { complete = resolve; }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
@@ -717,11 +749,45 @@ describe('event page states and optional entry', () => {
     expect(screen.getByRole('status')).toHaveTextContent('불러오는 중');
     expect(screen.queryByText('지난 이벤트 기준')).not.toBeInTheDocument();
     await act(async () => complete(Response.json({}, { status: 500 })));
-    expect(await screen.findByRole('alert')).toHaveTextContent('불러오지 못했습니다');
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_001); });
+    expect(screen.getByRole('alert')).toHaveTextContent('불러오지 못했습니다');
     expect(screen.queryByText('지난 이벤트 기준')).not.toBeInTheDocument();
     act(() => { queryClient.setQueryData(eventKeys.list(), []); });
-    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('기록된 이벤트가 없습니다');
+    vi.useRealTimers();
+  });
+
+  it.each([250, 1_500])('reveals a %d ms request after the longer of its duration and one second', async (duration) => {
+    vi.useFakeTimers();
+    let finish!: (value: string) => void;
+    let revealed = false;
+    const result = withMinimumLoading(() => new Promise<string>(resolve => { finish = resolve; }));
+    void result.then(() => { revealed = true; });
+    await vi.advanceTimersByTimeAsync(duration);
+    finish('event data');
+    await vi.advanceTimersByTimeAsync(0);
+    if (duration < 1_000) {
+      expect(revealed).toBe(false);
+      await vi.advanceTimersByTimeAsync(1_000 - duration - 1);
+      expect(revealed).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+    }
+    expect(revealed).toBe(true);
+    await expect(result).resolves.toBe('event data');
+    vi.useRealTimers();
+  });
+
+  it('releases the minimum wait immediately when its page request is aborted', async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const result = withMinimumLoading(() => Promise.resolve('event data'), controller.signal);
+    await vi.advanceTimersByTimeAsync(250);
+    controller.abort();
+    await expect(result).resolves.toBe('event data');
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
   });
 
   it('keeps the visible event and focused action when a background refresh fails', async () => {
@@ -744,6 +810,21 @@ describe('event page states and optional entry', () => {
     expect(action).toHaveFocus();
     expect(action).toHaveAttribute('href', '/gate?event=next');
     expect(main.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('keeps Signal input focus when the unrelated event directory finishes loading', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'performance', 'setTimeout', 'clearTimeout'] });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(Response.json([]));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: Infinity } } });
+    window.history.replaceState(null, '', '/signal');
+    render(<QueryClientProvider client={queryClient}><TerminalFrame><SignalPage /></TerminalFrame></QueryClientProvider>);
+    const email = screen.getByRole('textbox', { name: '이메일' });
+    email.focus();
+    fireEvent.change(email, { target: { value: 'draft@example.test' } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_001); });
+    expect(queryClient.getQueryData(eventKeys.list())).toEqual([]);
+    expect(email).toHaveFocus();
+    expect(email).toHaveValue('draft@example.test');
   });
 
   it('keeps archived deep links and selects events with one history update while requests are closed', () => {

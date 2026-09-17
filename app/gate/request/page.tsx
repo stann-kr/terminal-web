@@ -15,19 +15,25 @@ export default function RequestAccessPage() {
   const { t, lang, event, eventState, form, fieldErrors, codeState, isCodeVerified, codeError, codeStatus,
     needsTargetReview, isRefreshingEvent, nextEvent, submitted, isSubmitting, formError } = request;
   const tr = (ko: string, en: string) => lang === 'ko' ? ko : en;
+  const pending = !submitted && eventState.kind === 'loading';
+  const closed = !submitted && (eventState.kind === 'load-error' || eventState.kind === 'empty' || (eventState.kind === 'inactive' && !needsTargetReview) || (eventState.kind === 'target-changed' && !nextEvent && !isRefreshingEvent));
+  const pageStage = pending ? 'loading' : closed ? 'closed' : 'form';
+  const pageRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLElement>(null);
   const resultRef = useRef<HTMLHeadingElement>(null);
+  useReadoutMotion(pageRef, { key: `${lang}:${event?.id}:${pageStage}`, content: ':scope', layout: true });
   useReadoutMotion(inputRef, {
     key: `${lang}:${event?.id}:${eventState.kind}:${needsTargetReview}:${submitted}:${codeState.kind}:${codeError}:${formError}:${Object.values(fieldErrors).join(',')}`,
     contentKey: `${lang}:${event?.id}:${eventState.kind}`, content: ':scope',
     updates: '.tm-contact-result,.tm-field-error,.tm-form-hint,.tm-target-review', layout: true,
   });
   useEffect(() => { if (submitted) resultRef.current?.focus(); }, [submitted]);
+  useEffect(() => { if (!submitted) pageRef.current?.querySelector('h1')?.focus(); }, [pageStage, submitted]);
   const details = event && <div className="tm-closed-event"><EventState event={event} t={tr} /><h2>{event.session}</h2><p>{event.date} / {event.time} / {event.venue}</p></div>;
 
-  if (!submitted && eventState.kind === 'loading') return <PagePending code="GUEST_REQ" t={tr} />;
-  if (!submitted && (eventState.kind === 'load-error' || eventState.kind === 'empty' || (eventState.kind === 'inactive' && !needsTargetReview) || (eventState.kind === 'target-changed' && !nextEvent && !isRefreshingEvent))) {
-    return <section className="tm-form-closed tm-cell"><p className="tm-eyebrow">GUEST_REQ / {event?.id ?? 'EVENTS'}</p>
+  if (pending) return <PagePending code="GUEST_REQ" t={tr} />;
+  if (closed) {
+    return <section ref={pageRef} data-readout-region className="tm-form-closed tm-cell"><p className="tm-eyebrow">GUEST_REQ / {event?.id ?? 'EVENTS'}</p>
       <h1 data-motion-title tabIndex={-1}><TerminalText>{eventState.kind === 'load-error' ? tr('정보를 불러오지 못했습니다.', 'Could not load information.') : tr('현재 신청 가능한\n이벤트가 없습니다.', 'No events are open\nfor guest requests.')}</TerminalText></h1>
       <div role={eventState.kind === 'load-error' ? 'alert' : 'status'}>{eventState.kind === 'load-error' ? t.request.eventLoadFailed : eventState.kind === 'inactive' ? <><p>{t.request.windowInfo(ACCESS_WINDOW_DAYS)}</p><p>{eventState.window.isElapsed ? t.request.eventElapsed : t.request.windowCountdown(eventState.window.opensInDays ?? 0)}</p></> : t.request.noEvent}</div>
       {details}
@@ -36,7 +42,7 @@ export default function RequestAccessPage() {
     </section>;
   }
 
-  return <div className="tm-contact-grid" data-kind="request">
+  return <section ref={pageRef} data-readout-region className="tm-contact-grid" data-kind="request">
     <section className="tm-contact-context tm-cell"><p className="tm-eyebrow">TERMINAL / GUEST_REQ</p><h1 data-motion-title tabIndex={-1}><TerminalText>{'GUEST\nREQUEST'}</TerminalText></h1>
       <div data-motion-copy className="tm-contact-context-bottom"><h2>{tr('게스트 신청', 'Guest request')}</h2>{event && <><h3>{event.session}</h3><p className="tm-contact-meta">{event.date} / {event.time}<br />{event.venue}</p></>}
         {!submitted && <div className="tm-contact-notice">{(event?.invitationLines?.[lang] ?? [tr('초대인에게 받은 인증 코드를 입력해 주세요.', 'Enter the access code from your inviter.')]).filter(line => /[a-zA-Z가-힣\d]/.test(line)).map((line, index) => <p key={index}>{line}</p>)}<p>{t.request.committedSub}</p></div>}
@@ -60,5 +66,5 @@ export default function RequestAccessPage() {
         <Link className="tm-text-link" href={request.gateHref}>{tr('이벤트로 돌아가기', 'Back to event')}</Link>
       </form>}
     </section>
-  </div>;
+  </section>;
 }
