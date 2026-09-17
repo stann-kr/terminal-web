@@ -712,6 +712,8 @@ describe('event page states and optional entry', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementationOnce(() => new Promise(resolve => { complete = resolve; }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
     render(<QueryClientProvider client={queryClient}><StatusPage /></QueryClientProvider>);
+    const pendingHeading = screen.getByRole('heading', { level: 1, name: 'STATUS' });
+    expect(pendingHeading.closest('[aria-busy]')).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByRole('status')).toHaveTextContent('불러오는 중');
     expect(screen.queryByText('지난 이벤트 기준')).not.toBeInTheDocument();
     await act(async () => complete(Response.json({}, { status: 500 })));
@@ -720,6 +722,28 @@ describe('event page states and optional entry', () => {
     act(() => { queryClient.setQueryData(eventKeys.list(), []); });
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
     expect(screen.getByRole('status')).toHaveTextContent('기록된 이벤트가 없습니다');
+  });
+
+  it('keeps the visible event and focused action when a background refresh fails', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(Response.json({}, { status: 500 }));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+    queryClient.setQueryData(eventKeys.list(), [event]);
+    window.history.replaceState(null, '', '/home');
+    render(<QueryClientProvider client={queryClient}><TerminalFrame><HomePage /></TerminalFrame></QueryClientProvider>);
+    const main = within(screen.getByRole('main'));
+    const heading = main.getByRole('heading', { name: 'Next event' });
+    const action = main.getByRole('link', { name: '이벤트 보기' });
+    action.focus();
+    await act(async () => {
+      await queryClient.refetchQueries({ queryKey: eventKeys.list() });
+      // Flush React Query's scheduled observer notification after the request.
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+    expect(queryClient.getQueryState(eventKeys.list())?.status).toBe('error');
+    expect(main.getByRole('heading', { name: 'Next event' })).toBe(heading);
+    expect(action).toHaveFocus();
+    expect(action).toHaveAttribute('href', '/gate?event=next');
+    expect(main.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('keeps archived deep links and selects events with one history update while requests are closed', () => {

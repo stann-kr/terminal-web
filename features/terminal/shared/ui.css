@@ -1,5 +1,7 @@
 .tm-eyebrow { font: 0.75rem/1.5 var(--tm-mono); text-transform: uppercase; letter-spacing: .09em; color: var(--tm-muted); }
 .tm-state { font: .75rem/1.5 var(--tm-mono); color: var(--tm-accent); }
+.tm-page-pending { padding: var(--tm-pad); }
+.tm-pending-line { display: flex; align-items: center; gap: .6em; color: var(--tm-accent); font: .75rem/1.5 var(--tm-mono); }
 .tm-cell { min-width: 0; padding: var(--tm-pad); }
 .tm-page-heading { display: grid; grid-template-columns: minmax(0,3fr) minmax(240px,1fr); border-bottom: 1px solid var(--tm-line); align-items: end; }
 .tm-page-heading > div, .tm-page-heading > label { min-width: 0; padding: var(--tm-pad); }

@@ -21,5 +21,7 @@ export function useEventScreen() {
   // An explicit missing ID must never silently show another event's actions.
   const event = eventId ? events.find(event => event.id === eventId) ?? null : getDefaultEvent(candidates, now);
   const props: ScreenProps = { lang, t: (ko, en) => lang === 'ko' ? ko : en, event, events, now };
-  return { ...query, props, eventId };
+  // A background refresh must not replace content already on screen.
+  const phase = query.data !== undefined ? 'ready' : query.isError ? 'error' : 'loading';
+  return { ...query, props, eventId, phase };
 }

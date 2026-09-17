@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAccessRequest } from './useAccessRequest';
-import { Action, EventState } from '@/features/terminal/shared/Ui';
+import { Action, EventState, PagePending } from '@/features/terminal/shared/Ui';
 import { FormField } from '@/features/terminal/forms/FormField';
 import { TerminalText } from '@/features/terminal/motion/TerminalText';
 import { PendingIndicator } from '@/features/terminal/motion/PendingIndicator';
@@ -25,10 +25,11 @@ export default function RequestAccessPage() {
   useEffect(() => { if (submitted) resultRef.current?.focus(); }, [submitted]);
   const details = event && <div className="tm-closed-event"><EventState event={event} t={tr} /><h2>{event.session}</h2><p>{event.date} / {event.time} / {event.venue}</p></div>;
 
-  if (!submitted && (eventState.kind === 'loading' || eventState.kind === 'load-error' || eventState.kind === 'empty' || (eventState.kind === 'inactive' && !needsTargetReview) || (eventState.kind === 'target-changed' && !nextEvent && !isRefreshingEvent))) {
+  if (!submitted && eventState.kind === 'loading') return <PagePending code="GUEST_REQ" t={tr} />;
+  if (!submitted && (eventState.kind === 'load-error' || eventState.kind === 'empty' || (eventState.kind === 'inactive' && !needsTargetReview) || (eventState.kind === 'target-changed' && !nextEvent && !isRefreshingEvent))) {
     return <section className="tm-form-closed tm-cell"><p className="tm-eyebrow">GUEST_REQ / {event?.id ?? 'EVENTS'}</p>
-      <h1 data-motion-title tabIndex={-1}><TerminalText>{eventState.kind === 'loading' ? tr('신청 정보를 불러오는 중', 'Loading request information') : eventState.kind === 'load-error' ? tr('정보를 불러오지 못했습니다.', 'Could not load information.') : tr('현재 신청 가능한\n이벤트가 없습니다.', 'No events are open\nfor guest requests.')}</TerminalText></h1>
-      <div role={eventState.kind === 'load-error' ? 'alert' : 'status'}>{eventState.kind === 'loading' ? t.request.loading : eventState.kind === 'load-error' ? t.request.eventLoadFailed : eventState.kind === 'inactive' ? <><p>{t.request.windowInfo(ACCESS_WINDOW_DAYS)}</p><p>{eventState.window.isElapsed ? t.request.eventElapsed : t.request.windowCountdown(eventState.window.opensInDays ?? 0)}</p></> : t.request.noEvent}</div>
+      <h1 data-motion-title tabIndex={-1}><TerminalText>{eventState.kind === 'load-error' ? tr('정보를 불러오지 못했습니다.', 'Could not load information.') : tr('현재 신청 가능한\n이벤트가 없습니다.', 'No events are open\nfor guest requests.')}</TerminalText></h1>
+      <div role={eventState.kind === 'load-error' ? 'alert' : 'status'}>{eventState.kind === 'load-error' ? t.request.eventLoadFailed : eventState.kind === 'inactive' ? <><p>{t.request.windowInfo(ACCESS_WINDOW_DAYS)}</p><p>{eventState.window.isElapsed ? t.request.eventElapsed : t.request.windowCountdown(eventState.window.opensInDays ?? 0)}</p></> : t.request.noEvent}</div>
       {details}
       {(eventState.kind === 'load-error' || eventState.kind === 'target-changed') && <button type="button" className="tm-button" onClick={request.retryEvent}>{t.request.retry}</button>}
       <div className="tm-action-group"><Action page="gate" event={event?.id}>{tr('이벤트 정보', 'Event details')}</Action><Action page="signal" secondary>{tr('이벤트 소식 받기', 'Get event updates')}</Action></div>

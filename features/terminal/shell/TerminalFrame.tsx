@@ -13,7 +13,7 @@ export function TerminalFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [experience] = useUrlQueryState('experience');
   const { lang, setLang } = useLang();
-  const { props, isLoading, isError } = useEventScreen();
+  const { props, phase } = useEventScreen();
   const page: Page = pathname === '/' ? experience === 'terminal' ? 'entry' : 'home'
     : (Object.keys(pagePaths) as Page[]).find(page => pagePaths[page] === pathname) ?? 'home';
   const [crt, setCrt] = useState(true);
@@ -24,9 +24,8 @@ export function TerminalFrame({ children }: { children: ReactNode }) {
     try { localStorage.setItem('terminal_crt_enabled', String(!previous)); } catch { /* The current session still works. */ }
     return !previous;
   });
-  const state = isLoading ? 'loading' : isError ? 'error' : 'ready';
   return <MotionProvider crt={crt}><div className="tm-application">
-    <Shell page={page} eventId={props.event?.id} viewKey={`${pathname}:${page}:${state}`} motionKey={`${pathname}:${page}:${state}:${page === 'lineup' ? '' : props.event?.id}:${props.event?.status}:${lang}`} lang={lang} t={props.t} setLang={setLang} crt={crt} toggleCrt={toggleCrt}>
+    <Shell page={page} eventId={props.event?.id} viewKey={`${pathname}:${page}:${phase}`} motionKey={`${pathname}:${page}:${phase}:${page === 'lineup' ? '' : props.event?.id}:${props.event?.status}:${lang}`} lang={lang} t={props.t} setLang={setLang} crt={crt} toggleCrt={toggleCrt}>
       <div data-active="true">{children}</div>
     </Shell>
   </div></MotionProvider>;

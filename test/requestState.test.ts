@@ -65,6 +65,9 @@ describe('request event binding and draft preservation', () => {
     localStorage.setItem('terminal_lang', 'ko');
     vi.stubGlobal('fetch', vi.fn(async () => Response.json([{ ...futureEvent, status: 'ARCHIVED' }])));
     render(createElement(LangProvider, null, createElement(RequestAccessPage)));
+    expect(screen.getByRole('heading', { level: 1, name: 'GUEST_REQ' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('불러오는 중');
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     await act(async () => {});
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('현재 신청 가능한 이벤트가 없습니다.');
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();

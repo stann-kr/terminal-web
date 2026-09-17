@@ -5,6 +5,7 @@ import { useUrlQueryState } from '@/lib/useUrlQueryState';
 import type { ReactNode } from 'react';
 import { href, type Page, type ScreenProps, type Translate } from '../events/data';
 import { TerminalText } from '../motion/TerminalText';
+import { PendingIndicator } from '../motion/PendingIndicator';
 import './ui.css';
 
 export function Action({ page, event, artist, children, secondary = false }: { page: Page; event?: string; artist?: string; children: ReactNode; secondary?: boolean }) {
@@ -13,6 +14,13 @@ export function Action({ page, event, artist, children, secondary = false }: { p
 
 export function PageHeading({ code, title, children }: { code: string; title: string; children?: ReactNode }) {
   return <div className="tm-page-heading"><div><p data-motion-copy className="tm-eyebrow">{code}</p><h1 data-motion-title tabIndex={-1}><TerminalText>{title}</TerminalText></h1></div>{children}</div>;
+}
+
+export function PagePending({ code, t }: { code: string; t: Translate }) {
+  return <div className="tm-page-pending" data-readout-region>
+    <div className="tm-pending-line" aria-busy="true"><h1 className="tm-eyebrow">{code}</h1><PendingIndicator active /></div>
+    <p className="tm-sr-only" role="status">{t('이벤트 정보를 불러오는 중입니다.', 'Loading event information.')}</p>
+  </div>;
 }
 
 export function EventPicker({ events, event, t }: Pick<ScreenProps, 'event' | 'events' | 't'> & { page: Page }) {
