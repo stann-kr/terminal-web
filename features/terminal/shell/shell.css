@@ -57,6 +57,7 @@
   text-shadow: none;
 }
 .tm-shell :is(input,textarea,select) { text-shadow: none; }
+.tm-shell[data-crt=true] :where(.tm-eyebrow,.tm-nav-code,.tm-form-hint,.tm-field-error,label,.tm-footer) { --tm-text-glow: 0 0 .65px color-mix(in srgb,currentColor 30%,transparent), 0 0 4px color-mix(in srgb,currentColor 9%,transparent); }
 
 /* Copy only existing borders. Borderless sections stay borderless. */
 .tm-shell[data-crt=true] :where(.tm-cell,.tm-page-heading,.tm-roster,.tm-history-year,.tm-channels > a,.tm-topline,.tm-brand,.tm-navigation,.tm-navigation > a,.tm-footer) { position: relative; }

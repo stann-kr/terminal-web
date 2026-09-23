@@ -26,21 +26,19 @@ export default function TransmitPage() {
   const logRef = useRef<HTMLElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const pageChanged = useRef(false);
-  const previousPage = useRef(currentPage);
   useEffect(() => {
-    if (previousPage.current !== currentPage) pageChanged.current = true;
-    previousPage.current = currentPage;
     if (pageChanged.current && !isFetching) {
       focusNavigationTarget(logRef.current?.querySelector('#transmit-log-title') ?? null);
       pageChanged.current = false;
     }
   }, [currentPage, isFetching]);
+  const changePage = (showPage: () => void) => { pageChanged.current = true; showPage(); };
   useReadoutMotion(logRef, { key: `${lang}:${currentPage}:${isInitialLoad}:${isLogError}:${logs[0]?.id}`, content: ':scope', layout: true });
   useReadoutMotion(formRef, { key: `${formError}:${sent}:${Object.values(fieldErrors).join(',')}`, contentKey: lang, content: ':scope', updates: '.tm-field-error,[role=status]', layout: true });
   const pagination = (position: 'top' | 'bottom') => (totalPages > 1 || currentPage > 1) && <nav className="tm-log-pagination" aria-label={tr(`방명록 페이지 (${position === 'top' ? '위' : '아래'})`, `Guestbook pages (${position})`)}>
-    <button type="button" className="tm-button" aria-label={t.transmit.previousPageLabel} disabled={currentPage <= 1 || isFetching || isInitialLoad || isSubmitting} onClick={state.showPreviousPage}><span>{tr('이전', 'Previous')}</span></button>
+    <button type="button" className="tm-button" aria-label={t.transmit.previousPageLabel} disabled={currentPage <= 1 || isFetching || isInitialLoad || isSubmitting} onClick={() => changePage(state.showPreviousPage)}><span>{tr('이전', 'Previous')}</span></button>
     <span aria-live={position === 'top' ? 'polite' : undefined}>{isLogError ? currentPage : `${currentPage} / ${Math.max(currentPage, totalPages)}`}</span>
-    <button type="button" className="tm-button" aria-label={t.transmit.nextPageLabel} disabled={currentPage >= totalPages || isFetching || isInitialLoad || isLogError || isSubmitting} onClick={state.showNextPage}><span>{tr('다음', 'Next')}</span></button>
+    <button type="button" className="tm-button" aria-label={t.transmit.nextPageLabel} disabled={currentPage >= totalPages || isFetching || isInitialLoad || isLogError || isSubmitting} onClick={() => changePage(state.showNextPage)}><span>{tr('다음', 'Next')}</span></button>
   </nav>;
   return <><PageHeading code="TRANSMIT / PUBLIC GUESTBOOK" title={tr('방명록', 'Guestbook')} />
     <div className="tm-transmit-grid"><section className="tm-transmit-compose tm-cell"><h2 data-motion-copy>{tr('글 남기기', 'Leave a message')}</h2><p className="tm-prose" id="transmit-public-notice">{t.transmit.publicNotice}</p>

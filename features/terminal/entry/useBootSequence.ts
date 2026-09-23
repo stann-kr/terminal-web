@@ -39,6 +39,7 @@ export function useBootSequence(root: RefObject<HTMLElement | null>) {
       .fromTo('[data-entry-phosphor]', { scaleX: 0.025, scaleY: 0.003, opacity: 0 },
         { scaleX: 1, opacity: 0.65, duration: 0.2, ease: 'power2.out' }, 'power+=0.08')
       .to('[data-entry-phosphor]', { scaleY: 1, opacity: 0.08, duration: 0.4, ease: 'expo.out' }, 'power+=0.28')
+      .fromTo('[data-entry-phosphor]', { x: -0.5 }, { x: 0, duration: 0.12, immediateRender: false }, 'power+=0.28')
       .fromTo('[data-entry-power]', { opacity: 1 }, { opacity: 0, duration: 0.5, ease: 'power2.inOut' }, 'power+=0.32');
     OUTPUT_CUES.forEach(([start, complete], index) => {
       sequence.call(() => setOutput(current => ({ ...current, started: index + 1 })), [], `readout+=${start}`)

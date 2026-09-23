@@ -22,7 +22,7 @@ export function Home(props: ScreenProps & { poster: string }) {
   return <article className="tm-home" data-poster={showPoster}>
     <div className="tm-home-title tm-cell">
       <div data-motion-copy className="tm-home-meta"><EventState event={event} t={t} /><span className="tm-eyebrow">{event.id}</span></div>
-      <div className="tm-home-heading"><h1 data-motion-title tabIndex={-1}><TerminalText>{title}</TerminalText>{title !== event.session && <> <span className="tm-home-session">{session}</span></>}</h1><p className="tm-eyebrow">SEOUL / TECHNO</p></div>
+      <div className="tm-home-heading"><h1 data-motion-title tabIndex={-1}><TerminalText afterglow>{title}</TerminalText>{title !== event.session && <> <span className="tm-home-session">{session}</span></>}</h1><p className="tm-eyebrow">SEOUL / TECHNO</p></div>
       <dl className="tm-home-facts">
         <div data-motion-copy><dt>{t('일시', 'Date / time')}</dt><dd><time dateTime={`${event.date}T${event.time.slice(0, 5)}:00+09:00`}>{event.date}</time><span>{event.time}</span></dd></div>
         <div data-motion-copy><dt>{t('장소', 'Venue')}</dt><dd>{event.venue}<span className="tm-home-district">{event.district}</span></dd></div>

@@ -13,7 +13,7 @@ export function EventScreen({ page }: { page: 'home' | 'gate' | 'lineup' | 'stat
   const { t, event } = props;
   if (phase === 'loading') return <PagePending code={page.toUpperCase()} t={t} />;
   if (phase === 'error') return <section className="tm-empty">
-    <PageHeading code={`${page.toUpperCase()} / LOAD ERROR`} title={t('정보를 불러오지 못했습니다.', 'Could not load information.')} />
+    <PageHeading code={`${page.toUpperCase()} / LOAD ERROR`} title={t('정보를 불러오지 못했습니다.', 'Could not load information.')} afterglow={false} />
     <p role="alert">{t('정보를 불러오지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.', 'Could not load information. Check your connection and try again.')}</p>
     <button type="button" className="tm-button" onClick={() => void refetch()}>{t('다시 시도', 'Retry')}</button>
   </section>;

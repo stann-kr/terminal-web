@@ -5,6 +5,7 @@ import type { EntryMode, Lang, Translate } from '../events/data';
 import { BOOT_LINES, useBootSequence } from './useBootSequence';
 import { completeEntryVisit, readEntryVisit } from './visitState';
 import { useReadoutMotion } from '../motion/useReadoutMotion';
+import { TerminalText } from '../motion/TerminalText';
 import '../shared/ui.css';
 import './entry.css';
 
@@ -13,7 +14,7 @@ interface EntryProps { lang: Lang; t: Translate; languageOrigin: 'manual' | 'bro
 function Identity({ t, idle = false }: { t: Translate; idle?: boolean }) {
   return <div className="tm-entry-identity tm-cell">
     <p className="tm-eyebrow">TERMINAL / {idle ? 'IDLE' : 'VISUAL BOOT SEQUENCE'}</p>
-    <h1 tabIndex={-1}>TERMINAL</h1>
+    <h1 tabIndex={-1}><TerminalText afterglow={idle}>TERMINAL</TerminalText></h1>
     <div className="tm-entry-signature"><p>SEOUL / TECHNO</p><p>{idle ? t('이벤트와 라인업을 계속 둘러보세요.', 'Continue exploring events and artists.') : 'A VOYAGE TO THE UNKNOWN SECTOR'}</p></div>
   </div>;
 }

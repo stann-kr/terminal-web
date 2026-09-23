@@ -1,6 +1,9 @@
 .tm-terminal-text { position: relative; display: block; white-space: pre-line; }
 .tm-terminal-text > [data-readout-source] { display: block; }
 .tm-terminal-text > [data-readout-output] { position: absolute; inset: 0; overflow: hidden; pointer-events: none; user-select: none; }
+.tm-terminal-text > [data-readout-ghost] { position: absolute; inset: 0; opacity: 0; pointer-events: none; user-select: none; filter: blur(.65px); transform: translateY(.5px); }
+.tm-shell[data-motion=false] [data-readout-ghost] { display: none; }
+@media (prefers-reduced-motion: reduce),(prefers-contrast: more),(forced-colors: active),print { [data-readout-ghost] { display: none; } }
 .tm-pending-cursor { flex: none; font-family: var(--tm-mono); }
 .tm-shell :is(input,textarea) { caret-color: var(--tm-accent); }
 .tm-button > span,.tm-text-link > span { display: inline-block; max-width: 100%; }

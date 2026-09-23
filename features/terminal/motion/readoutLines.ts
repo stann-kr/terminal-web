@@ -1,5 +1,5 @@
 const textSelector = '.tm-terminal-text,h1,h2,h3,p,dt,dd,time,label,span';
-const excluded = '[hidden],details:not([open]) > :not(summary),.tm-sr-only,[data-readout-source],[data-readout-output],[data-pending-pulse]';
+const excluded = '[hidden],details:not([open]) > :not(summary),.tm-sr-only,[data-readout-source],[data-readout-output],[data-readout-ghost],[data-pending-pulse]';
 const panelSelector = '.tm-cell,.tm-page-heading,.tm-roster,.tm-history-year,.tm-history-entry,.tm-channels > a,.tm-form-field,.tm-consent,.tm-code-block,.tm-contact-result,.tm-artist-data,.tm-contact-notice,.tm-transmit-log li,.tm-log-header,.tm-log-pagination,.tm-action,.tm-button,input,textarea,select';
 
 /** Each surface appears at once; opacity preserves its final footprint. */

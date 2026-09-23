@@ -37,9 +37,10 @@ export function useReadoutMotion(root: RefObject<HTMLElement | null>, { key, act
     const readouts = readoutText(element, containers).map(node => {
       const source = node.querySelector<HTMLElement>('[data-readout-source]');
       const output = node.querySelector<HTMLElement>('[data-readout-output]');
+      const ghost = node.querySelector<HTMLElement>('[data-readout-ghost]');
       const characters = source && output ? Array.from(segmenter.segment(source.textContent ?? ''), item => item.segment) : [];
       const typed = characters.length > 0 && characters.length <= 96;
-      return { ...measureReadout(source ?? node), source, output, characters, typed };
+      return { ...measureReadout(source ?? node), source, output, ghost, characters, typed };
     });
     const panels = layout ? readoutPanels(element, containers) : [];
     const items = [
@@ -91,6 +92,14 @@ export function useReadoutMotion(root: RefObject<HTMLElement | null>, { key, act
         });
         sequence.set(item.node, { clearProps: 'opacity,clipPath' }, position + duration);
       }
+      if (item.ghost && item.source) {
+        const ghost = item.ghost;
+        const text = item.source.textContent ?? '';
+        // One decorative echo fades alongside the next output, without adding a wait.
+        sequence.call(() => writeWordmark(ghost, text, text, false), [], position + duration)
+          .fromTo(ghost, { opacity: 0.14 }, { opacity: 0, duration: 0.9, ease: 'power2.out', immediateRender: false }, position + duration)
+          .call(() => ghost.replaceChildren(), [], position + duration + 0.9);
+      }
       position += duration;
     });
 
@@ -113,7 +122,7 @@ export function useReadoutMotion(root: RefObject<HTMLElement | null>, { key, act
     window.addEventListener('resize', finish);
     document.fonts?.addEventListener('loadingdone', finish);
     return () => {
-      readouts.forEach(item => { item.output?.setAttribute('data-readout-output', ''); item.output?.replaceChildren(); });
+      readouts.forEach(item => { item.output?.setAttribute('data-readout-output', ''); item.output?.replaceChildren(); item.ghost?.replaceChildren(); });
       resize?.disconnect();
       interactionRoot.removeEventListener('pointerdown', finish, true);
       interactionRoot.removeEventListener('wheel', finish);

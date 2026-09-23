@@ -12,8 +12,8 @@ export function Action({ page, event, artist, children, secondary = false }: { p
   return <Link scroll={false} className={`tm-action${secondary ? ' tm-action-secondary' : ''}`} href={href(page, event, artist)}><span>{children}</span></Link>;
 }
 
-export function PageHeading({ code, title, children }: { code: string; title: string; children?: ReactNode }) {
-  return <div className="tm-page-heading"><div><p data-motion-copy className="tm-eyebrow">{code}</p><h1 data-motion-title tabIndex={-1}><TerminalText>{title}</TerminalText></h1></div>{children}</div>;
+export function PageHeading({ code, title, children, afterglow = true }: { code: string; title: string; children?: ReactNode; afterglow?: boolean }) {
+  return <div className="tm-page-heading"><div><p data-motion-copy className="tm-eyebrow">{code}</p><h1 data-motion-title tabIndex={-1}><TerminalText afterglow={afterglow}>{title}</TerminalText></h1></div>{children}</div>;
 }
 
 export function PagePending({ code, t }: { code: string; t: Translate }) {
@@ -26,7 +26,7 @@ export function PagePending({ code, t }: { code: string; t: Translate }) {
 export function EventPicker({ events, event, t }: Pick<ScreenProps, 'event' | 'events' | 't'> & { page: Page }) {
   const [, selectEvent] = useUrlQueryState('event');
   if (events.length < 2) return null;
-  return <label className="tm-event-picker"><span>{t('이벤트 선택', 'Select event')}</span><select id="terminal-event-picker" value={event?.id ?? ''} onChange={e => { selectEvent(e.target.value, { artist: '', view: '' }); }}>{!event && <option value="" disabled>{t('이벤트를 선택해 주세요', 'Choose an event')}</option>}{events.map(item => <option key={item.id} value={item.id}>{item.session} · {item.date}</option>)}</select></label>;
+  return <label className="tm-event-picker"><span>{t('이벤트 선택', 'Select event')}</span><select id="terminal-event-picker" value={event?.id ?? ''} onChange={e => { selectEvent(e.target.value, { artist: '', view: '' }); }}>{!event && <option value="" disabled>{t('이벤트를 선택해 주세요', 'Choose an event')}</option>}{events.map(item => <option key={item.id} value={item.id}>{item.session} · {item.date}</option>)}</select><span className="tm-select-arrow" aria-hidden="true">⌄</span></label>;
 }
 
 export function NoEvent({ t, invalid = false }: { t: Translate; invalid?: boolean }) {

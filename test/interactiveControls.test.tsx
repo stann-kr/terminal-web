@@ -3,6 +3,7 @@ import { renderToString } from 'react-dom/server';
 import { hydrateRoot } from 'react-dom/client';
 import { MotionProvider as AspenMotionProvider } from '../features/terminal/motion/MotionProvider';
 import { useReadoutMotion as useAspenReadout } from '../features/terminal/motion/useReadoutMotion';
+import { TerminalText } from '../features/terminal/motion/TerminalText';
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
@@ -196,6 +197,38 @@ describe('CRT display preferences', () => {
 
 describe('production Aspen frame', () => {
   afterEach(() => { vi.restoreAllMocks(); });
+
+  it('keeps a single decorative afterglow out of the accessible name and clears it on input and policy changes', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    function Content({ text }: { text: string }) {
+      const root = useRef<HTMLElement>(null);
+      useAspenReadout(root, { key: text, content: ':scope' });
+      return <main ref={root}><h1><TerminalText afterglow>{text}</TerminalText></h1></main>;
+    }
+    const { container, rerender, unmount } = render(<AspenMotionProvider crt><Content text="TERMINAL" /></AspenMotionProvider>);
+    const ghost = container.querySelector<HTMLElement>('[data-readout-ghost]')!;
+    act(() => { gsap.globalTimeline.time(gsap.globalTimeline.time() + .25, false); });
+    expect(ghost).toHaveTextContent('TERMINAL');
+    expect(screen.getByRole('heading')).toHaveAccessibleName('TERMINAL');
+    fireEvent.keyDown(screen.getByRole('main'), { key: 'Tab' });
+    expect(ghost).toBeEmptyDOMElement();
+    rerender(<AspenMotionProvider crt><Content text="NEXT" /></AspenMotionProvider>);
+    act(() => { gsap.globalTimeline.time(gsap.globalTimeline.time() + .25, false); });
+    expect(container.querySelectorAll('[data-readout-ghost]')).toHaveLength(1);
+    visibility.mockReturnValue('hidden');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(ghost).toBeEmptyDOMElement();
+    visibility.mockReturnValue('visible');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(ghost).toBeEmptyDOMElement();
+    rerender(<AspenMotionProvider crt={false}><Content text="NEXT" /></AspenMotionProvider>);
+    expect(ghost).toBeEmptyDOMElement();
+    expect(screen.getByRole('heading')).toHaveAccessibleName('NEXT');
+    unmount();
+    expect(gsap.getTweensOf(ghost)).toHaveLength(0);
+    vi.unstubAllGlobals();
+  });
 
   it('keeps verified request fields and validation focus stable after a manual code check', async () => {
     window.history.replaceState(null, '', '/gate/request?event=code-check');
@@ -626,6 +659,29 @@ describe('Transmit draft submission', () => {
       expect(within(page).getByRole('button', { name: '이전 글 페이지' })).toBeDisabled();
       expect(within(page).getByRole('button', { name: '다음 글 페이지' })).toBeEnabled();
     }
+  });
+
+  it('keeps new-draft focus when a successful post automatically returns the log to page one', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
+    for (const page of [1, 2]) queryClient.setQueryData(transmitKeys.list(page), { logs: [postedEntry], total: 21, page, totalPages: 2 });
+    let finish!: (response: Response) => void;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => init?.method === 'POST'
+      ? new Promise<Response>(resolve => { finish = resolve; }) : Response.json(emptyPage));
+    const user = userEvent.setup();
+    render(<QueryClientProvider client={queryClient}><TransmitPage /></QueryClientProvider>);
+    await user.click(screen.getAllByRole('button', { name: '다음 글 페이지' })[0]);
+    await waitFor(() => expect(screen.getAllByText('2 / 2')).toHaveLength(2));
+    const message = screen.getByRole('textbox', { name: /메시지/ });
+    fireEvent.change(screen.getByRole('textbox', { name: '별칭' }), { target: { value: 'Test visitor' } });
+    fireEvent.change(message, { target: { value: 'Posted draft' } });
+    await user.click(screen.getByRole('button', { name: '메시지 게시' }));
+    await waitFor(() => expect(finish).toBeTypeOf('function'));
+    act(() => message.focus());
+    fireEvent.change(message, { target: { value: 'Next draft' } });
+    await act(async () => finish(Response.json(postedEntry)));
+    await waitFor(() => expect(screen.queryByRole('navigation', { name: /방명록 페이지/ })).not.toBeInTheDocument(), { timeout: 2500 });
+    expect(message).toHaveValue('Next draft');
+    expect(message).toHaveFocus();
   });
 
   it('preserves a draft edited during a delayed submission and gives it a new idempotency key', async () => {
