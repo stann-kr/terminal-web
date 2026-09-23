@@ -9,7 +9,7 @@ import { PendingIndicator } from '../motion/PendingIndicator';
 import './ui.css';
 
 export function Action({ page, event, artist, children, secondary = false }: { page: Page; event?: string; artist?: string; children: ReactNode; secondary?: boolean }) {
-  return <Link className={`tm-action${secondary ? ' tm-action-secondary' : ''}`} href={href(page, event, artist)}><span>{children}</span></Link>;
+  return <Link scroll={false} className={`tm-action${secondary ? ' tm-action-secondary' : ''}`} href={href(page, event, artist)}><span>{children}</span></Link>;
 }
 
 export function PageHeading({ code, title, children }: { code: string; title: string; children?: ReactNode }) {
