@@ -602,24 +602,30 @@ describe('Transmit draft submission', () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({}, { status: 500 }));
     const user = userEvent.setup();
     render(<QueryClientProvider client={queryClient}><TransmitPage /></QueryClientProvider>);
-    expect(screen.queryByRole('navigation', { name: '방명록 페이지' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: /방명록 페이지/ })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByRole('textbox', { name: /메시지/ }), { target: { value: 'Keep this draft' } });
     act(() => {
       queryClient.setQueryData(transmitKeys.list(1), { logs: [postedEntry], total: 21, page: 1, totalPages: 2 });
     });
-    const next = await screen.findByRole('button', { name: '다음 글 페이지' });
-    expect(screen.getByRole('button', { name: '이전 글 페이지' })).toBeDisabled();
+    const pages = await screen.findAllByRole('navigation', { name: /방명록 페이지/ });
+    expect(pages).toHaveLength(2);
+    const next = within(pages[1]).getByRole('button', { name: '다음 글 페이지' });
+    for (const page of pages) expect(within(page).getByRole('button', { name: '이전 글 페이지' })).toBeDisabled();
     await user.click(next);
     expect(await screen.findByRole('alert', {}, { timeout: 2_000 })).toHaveTextContent('불러오지 못했습니다');
     expect(fetchMock).toHaveBeenCalledWith('/api/transmit?page=2');
-    expect(screen.getByRole('button', { name: '다음 글 페이지' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '이전 글 페이지' })).toBeEnabled();
-    await user.click(screen.getByRole('button', { name: '이전 글 페이지' }));
+    for (const page of pages) {
+      expect(within(page).getByRole('button', { name: '다음 글 페이지' })).toBeDisabled();
+      expect(within(page).getByRole('button', { name: '이전 글 페이지' })).toBeEnabled();
+    }
+    await user.click(within(pages[0]).getByRole('button', { name: '이전 글 페이지' }));
     expect(await screen.findByText('Hello')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /메시지/ })).toHaveValue('Keep this draft');
-    expect(screen.getByRole('button', { name: '이전 글 페이지' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: '다음 글 페이지' })).toBeEnabled();
+    for (const page of pages) {
+      expect(within(page).getByRole('button', { name: '이전 글 페이지' })).toBeDisabled();
+      expect(within(page).getByRole('button', { name: '다음 글 페이지' })).toBeEnabled();
+    }
   });
 
   it('preserves a draft edited during a delayed submission and gives it a new idempotency key', async () => {
@@ -770,6 +776,8 @@ describe('lineup controls', () => {
       return <button onClick={() => setLang('en')}>EN</button>;
     }
     render(<LangProvider><QueryClientProvider client={queryClient}><LineupPage /><LanguageControl /></QueryClientProvider></LangProvider>);
+    expect(screen.getByRole('link', { name: /ARTIST ONE/ })).not.toBeVisible();
+    await user.click(screen.getByText('아티스트 명단'));
     const trigger = screen.getByRole('link', { name: /ARTIST ONE/ });
     expect(trigger).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('heading', { name: 'ARTIST ONE' })).toBeVisible();
@@ -807,6 +815,7 @@ describe('lineup controls', () => {
     render(<QueryClientProvider client={queryClient}><LineupPage /></QueryClientProvider>);
 
     expect(screen.getByText('Archived event')).toBeInTheDocument();
+    await user.click(screen.getByText('아티스트 명단'));
     expect(screen.getByRole('link', { name: '이벤트 정보' })).toHaveAttribute('href', '/gate?event=archive');
     const push = vi.spyOn(window.history, 'pushState');
     await user.selectOptions(screen.getByRole('combobox', { name: '이벤트 선택' }), 'live');
@@ -814,6 +823,7 @@ describe('lineup controls', () => {
     expect(screen.getByText('Live event')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'LIVE ARTIST' })).toBeInTheDocument();
     expect(screen.queryByText('ARCHIVE ARTIST')).not.toBeInTheDocument();
+    await user.click(screen.getByText('아티스트 명단'));
     expect(screen.getByRole('link', { name: '이벤트 정보' })).toHaveAttribute('href', '/gate?event=live');
     expect(window.location.search).toBe('?lang=ko&event=live');
 

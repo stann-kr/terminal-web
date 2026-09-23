@@ -13,7 +13,7 @@ const headHtml = `
   main { width: 100%; min-height: 100dvh; background: #030303; }
   .label { padding: 12px 24px; font: 700 12px/1.5 ui-monospace, monospace; background: #ff5d00; color: #030303; }
   .content { padding: clamp(24px, 5vw, 48px); }
-  h1 { font-size: clamp(32px, 7vw, 80px); line-height: 1.4; overflow-wrap: anywhere; }
+  h1 { font-size: clamp(28px, 4vw, 56px); line-height: 1.35; overflow-wrap: anywhere; }
   p { margin-block: 20px 28px; color: #a0a0a0; }
   .actions { display: flex; flex-wrap: wrap; gap: 12px; }
   button, a { display: inline-flex; align-items: center; min-height: 48px; padding: 12px 20px; border: 1px solid #8c8c8c; background: transparent; color: inherit; font: inherit; text-decoration: none; cursor: pointer; }

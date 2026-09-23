@@ -1,13 +1,13 @@
 .tm-entry { position: relative; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); flex: 1 0 auto; }
 .tm-entry-identity { border-right: 1px solid var(--tm-line); display: grid; grid-template-rows: auto 1fr auto; align-items: start; gap: clamp(20px,4cqb,38px); min-width: 0; container-type: inline-size; }
 .tm-entry-identity h1 { align-self: center; width: 100%; color: var(--tm-accent); font: clamp(2rem,min(16cqi,24cqb),9rem)/.95 var(--tm-wordmark); letter-spacing: -.025em; white-space: nowrap; text-align: center; }
-.tm-entry-signature { display: grid; gap: 12px; max-width: 40ch; font: .75rem/1.9 var(--tm-mono); color: var(--tm-muted); }
+.tm-entry-signature { display: grid; gap: 12px; max-width: 40ch; font: .875rem/1.8 var(--tm-mono); color: var(--tm-muted); }
 .tm-entry-signature > p:first-child { color: var(--tm-text); }
 .tm-boot-console { display: flex; flex-direction: column; gap: clamp(12px,2cqb,28px); min-width: 0; }
 .tm-boot-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px 20px; }
-.tm-boot-output { font: clamp(.7rem,min(1cqi,2cqb),.875rem)/1.8 var(--tm-mono); }
+.tm-boot-output { font: .875rem/1.8 var(--tm-mono); }
 .tm-boot-prompt { color: var(--tm-accent); margin-bottom: clamp(12px,2cqb,24px); }
-.tm-boot-prompt > span { display: block; font-size: .7rem; color: var(--tm-muted); }
+.tm-boot-prompt > span { display: block; font-size: .75rem; color: var(--tm-muted); }
 .tm-boot-lines { list-style: none; margin: 0; padding: 0; }
 .tm-boot-lines li { display: flex; align-items: baseline; gap: 10px; }
 .tm-boot-lines li > span:last-child { overflow-wrap: anywhere; }
@@ -39,9 +39,9 @@
 @media (max-width: 760px) {
   .tm-entry { grid-template-columns: 1fr; min-height: 0; }
   .tm-entry-identity { border-right: 0; border-bottom: 1px solid var(--tm-line); gap: 22px; }
-  .tm-entry-signature { font-size: .65rem; gap: 3px; }
+  .tm-entry-signature { font-size: .75rem; gap: 8px; }
   .tm-boot-console { gap: 22px; }
-  .tm-boot-output { font-size: .7rem; }
+  .tm-boot-output { font-size: .75rem; }
   .tm-idle-content { gap: clamp(24px,5cqb,40px); }
   .tm-idle-time time { font-size: clamp(2rem,10cqi,4.5rem); }
 }

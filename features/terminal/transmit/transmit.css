@@ -1,7 +1,7 @@
 .tm-transmit-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); flex: 1 0 auto; }
 .tm-transmit-compose { border-right: 1px solid var(--tm-line); }
 .tm-transmit-grid h2 { font-size: 1.25rem; }
-.tm-transmit-compose > .tm-prose { font-size: .875rem; margin-block: clamp(16px,2.5cqb,24px) clamp(18px,3cqb,30px); }
+.tm-transmit-compose > .tm-prose { font-size: 1rem; margin-block: 16px 24px; }
 .tm-transmit-compose form { display: flex; flex-direction: column; gap: clamp(8px,1.5cqb,12px); max-width: 42rem; }
 .tm-transmit-compose textarea { height: clamp(96px,18cqb,164px); min-height: 96px; }
 .tm-transmit-compose label { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: .875rem; }
@@ -12,7 +12,7 @@
 .tm-transmit-log ol { list-style: none; padding: 0; margin-block: 30px; display: flex; flex-direction: column; gap: clamp(24px,4cqb,36px); }
 .tm-transmit-log li > div { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
 .tm-transmit-log h3 { font: 1rem/1.5 var(--tm-mono); color: var(--tm-accent); overflow-wrap: anywhere; }
-.tm-transmit-log li span { font-size: .65rem; color: var(--tm-muted); }
+.tm-transmit-log li span { font-size: .75rem; color: var(--tm-muted); }
 .tm-transmit-log li p { margin-top: 12px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.9; }
 .tm-log-empty { margin-block: 45px; }
 .tm-log-empty > span { font: clamp(4rem,11cqi,10rem)/1 var(--tm-display); color: var(--tm-muted); }

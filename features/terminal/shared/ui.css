@@ -19,7 +19,7 @@
 .tm-action:active:not(:disabled) { background: var(--tm-text); color: var(--tm-bg); }
 .tm-action-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: start; }
 .tm-empty { padding: var(--tm-pad); display: flex; flex-direction: column; align-items: flex-start; gap: 30px; }
-.tm-empty h1 { font: clamp(2rem,7vw,6rem)/1.35 var(--tm-display); max-width: 16ch; word-break: keep-all; }
+.tm-empty h1 { font: var(--tm-title)/1.35 var(--tm-display); max-width: 20ch; word-break: keep-all; overflow-wrap: anywhere; }
 .tm-button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--tm-control-line); background: transparent; text-align: left; }
 @media (hover: hover) { .tm-button:hover:not(:disabled) { border-color: var(--tm-accent); color: var(--tm-accent); } }
 .tm-button:disabled { color: var(--tm-muted); cursor: not-allowed; background: var(--tm-surface); }

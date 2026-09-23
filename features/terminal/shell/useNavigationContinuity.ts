@@ -6,6 +6,15 @@ const entryKey = '__terminalEntry';
 type FocusTarget = { id?: string; href?: string; name?: string };
 type Snapshot = { top: number; focus?: FocusTarget };
 
+/** Capabilities name an arrival point; scrolling remains on the shell's main. */
+export function focusNavigationTarget(target: HTMLElement | null) {
+  if (!target) return;
+  if (document.activeElement !== target) target.focus({ preventScroll: true });
+  const main = target.closest('main');
+  const arrival = target.closest('[data-navigation-section]') ?? target;
+  if (main) main.scrollTop += arrival.getBoundingClientRect().top - main.getBoundingClientRect().top - 16;
+}
+
 /** The shell owns the one scroll surface; Next retains ownership of routing. */
 export function useNavigationContinuity(main: RefObject<HTMLElement | null>, pathname: string, ready: boolean) {
   const current = useRef({ pathname, ready });
@@ -25,7 +34,7 @@ export function useNavigationContinuity(main: RefObject<HTMLElement | null>, pat
     const snapshots = new Map<string, Snapshot>();
     const newId = () => crypto.randomUUID();
     let active = typeof history.state?.[entryKey] === 'string' ? history.state[entryKey] as string : newId();
-    let pending: { id: string; pathname: string; snapshot?: Snapshot; fresh: boolean } | null = null;
+    let pending: { id: string; pathname: string; snapshot?: Snapshot; fresh: boolean; selection: boolean } | null = null;
     let frame = 0;
     let disposed = false;
     let restoring = false;
@@ -63,22 +72,25 @@ export function useNavigationContinuity(main: RefObject<HTMLElement | null>, pat
           const focus = target?.id ? Array.from(element.querySelectorAll<HTMLElement>('[id]')).find(node => node.id === target.id)
             : target?.href ? Array.from(element.querySelectorAll<HTMLAnchorElement>('a[href]')).find(node => node.getAttribute('href') === target.href && node.textContent === target.name)
               : undefined;
+          const arrival = destination.fresh || destination.selection ? element.querySelector<HTMLElement>('[data-navigation-arrival=true]') : null;
           restoring = true;
           element.setAttribute('data-restoring-navigation', 'true');
-          if (destination.fresh || destination.snapshot) {
+          if (arrival) focusNavigationTarget(arrival);
+          else if (destination.fresh || destination.snapshot) {
+            for (let disclosure = focus?.closest('details:not([open])'); disclosure; disclosure = disclosure.parentElement?.closest('details:not([open])')) (disclosure as HTMLDetailsElement).open = true;
             (focus ?? element.querySelector<HTMLElement>('h1') ?? element).focus({ preventScroll: true });
           }
-          element.scrollTop = Math.min(destination.snapshot?.top ?? 0, Math.max(0, element.scrollHeight - element.clientHeight));
+          if (!arrival) element.scrollTop = Math.min(destination.snapshot?.top ?? 0, Math.max(0, element.scrollHeight - element.clientHeight));
           element.removeAttribute('data-restoring-navigation');
           restoring = false;
           save();
         });
       });
     };
-    const navigate = (id: string, fresh: boolean) => {
+    const navigate = (id: string, fresh: boolean, selection = false) => {
       cancelAnimationFrame(frame);
       frame = 0;
-      pending = { id, pathname: window.location.pathname, snapshot: fresh ? undefined : snapshots.get(id), fresh };
+      pending = { id, pathname: window.location.pathname, snapshot: fresh ? undefined : snapshots.get(id), fresh, selection };
       restore();
     };
     const wrappedPush: History['pushState'] = (state, unused, url) => {
@@ -90,7 +102,7 @@ export function useNavigationContinuity(main: RefObject<HTMLElement | null>, pat
       push.call(history, stateWithId(state, id), unused, url);
       const selection = previousPath === window.location.pathname && previousUrl !== window.location.href;
       if (selection && snapshot) snapshots.set(id, snapshot);
-      navigate(id, !selection);
+      navigate(id, !selection, selection);
     };
     const wrappedReplace: History['replaceState'] = (state, unused, url) => {
       const previousUrl = window.location.href;
@@ -99,7 +111,7 @@ export function useNavigationContinuity(main: RefObject<HTMLElement | null>, pat
       const id = pending?.id ?? active;
       replace.call(history, stateWithId(state, id), unused, url);
       if (pending) { pending.pathname = window.location.pathname; restore(); }
-      else if (previousUrl !== window.location.href) navigate(id, previousPath !== window.location.pathname);
+      else if (previousUrl !== window.location.href) navigate(id, previousPath !== window.location.pathname, previousPath === window.location.pathname);
     };
     const pop = () => {
       save();
