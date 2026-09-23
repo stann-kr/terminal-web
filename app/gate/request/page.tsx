@@ -13,7 +13,7 @@ import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
 export default function RequestAccessPage() {
   const request = useAccessRequest();
   const { t, lang, event, eventState, form, fieldErrors, codeState, isCodeVerified, codeError, codeStatus,
-    needsTargetReview, isRefreshingEvent, nextEvent, submitted, isSubmitting, formError } = request;
+    needsTargetReview, isRefreshingEvent, nextEvent, submitted, isSubmitting, formError, invitationLines } = request;
   const tr = (ko: string, en: string) => lang === 'ko' ? ko : en;
   const pending = !submitted && eventState.kind === 'loading';
   const closed = !submitted && (eventState.kind === 'load-error' || eventState.kind === 'empty' || (eventState.kind === 'inactive' && !needsTargetReview) || (eventState.kind === 'target-changed' && !nextEvent && !isRefreshingEvent));
@@ -28,7 +28,6 @@ export default function RequestAccessPage() {
     updates: '.tm-contact-result,.tm-field-error,.tm-form-hint,.tm-target-review', layout: true,
   });
   useEffect(() => { if (submitted) resultRef.current?.focus(); }, [submitted]);
-  useEffect(() => { if (!submitted) pageRef.current?.querySelector('h1')?.focus(); }, [pageStage, submitted]);
   const details = event && <div className="tm-closed-event"><EventState event={event} t={tr} /><h2>{event.session}</h2><p>{event.date} / {event.time} / {event.venue}</p></div>;
 
   if (pending) return <PagePending code="GUEST_REQ" t={tr} />;
@@ -43,9 +42,9 @@ export default function RequestAccessPage() {
   }
 
   return <section ref={pageRef} data-readout-region className="tm-contact-grid" data-kind="request">
-    <section className="tm-contact-context tm-cell"><p className="tm-eyebrow">TERMINAL / GUEST_REQ</p><h1 data-motion-title tabIndex={-1}><TerminalText>{'GUEST\nREQUEST'}</TerminalText></h1>
-      <div data-motion-copy className="tm-contact-context-bottom"><h2>{tr('게스트 신청', 'Guest request')}</h2>{event && <><h3>{event.session}</h3><p className="tm-contact-meta">{event.date} / {event.time}<br />{event.venue}</p></>}
-        {!submitted && <div className="tm-contact-notice">{(event?.invitationLines?.[lang] ?? [tr('초대인에게 받은 인증 코드를 입력해 주세요.', 'Enter the access code from your inviter.')]).filter(line => /[a-zA-Z가-힣\d]/.test(line)).map((line, index) => <p key={index}>{line}</p>)}<p>{t.request.committedSub}</p></div>}
+    <section className="tm-contact-context tm-cell"><p className="tm-eyebrow">TERMINAL / GUEST_REQ</p><h1 data-motion-title tabIndex={-1}><TerminalText>{tr('게스트 신청', 'Guest request')}</TerminalText></h1>
+      <div className="tm-contact-context-bottom">{event && <><h2>{event.session}</h2><p className="tm-contact-meta">{event.date} / {event.time}<br />{event.venue}</p></>}
+        {!submitted && <div className="tm-contact-notice"><p>{t.request.committedSub}</p><details className="tm-invitation"><summary>{tr('초대문·입장 안내 보기', 'Invitation and entry information')}</summary><div className="tm-prose">{invitationLines.map((line, index) => <p key={index}>{line}</p>)}</div></details></div>}
       </div>
     </section>
     <section data-readout-region ref={inputRef} className="tm-contact-input tm-cell">
@@ -63,7 +62,7 @@ export default function RequestAccessPage() {
         {isCodeVerified && <p className="tm-form-hint">{tr('신청 대상', 'Request for')}: {event?.session} / {event?.date}</p>}
         {formError && <p className="tm-field-error" role="alert">{formError}</p>}
         <button className="tm-action tm-submit" disabled={isSubmitting || !isCodeVerified} aria-busy={isSubmitting} type="submit"><span>{isSubmitting ? tr('처리 중…', 'Processing…') : tr('신청 제출', 'Submit request')}</span>{isSubmitting && <PendingIndicator active />}</button>
-        <Link className="tm-text-link" href={request.gateHref}>{tr('이벤트로 돌아가기', 'Back to event')}</Link>
+        <Link scroll={false} className="tm-text-link" href={request.gateHref}>{tr('이벤트로 돌아가기', 'Back to event')}</Link>
       </form>}
     </section>
   </section>;

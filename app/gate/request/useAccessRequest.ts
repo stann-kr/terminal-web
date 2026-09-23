@@ -85,6 +85,8 @@ export function useAccessRequest() {
   const invitationLines = event?.invitationLines?.[lang] ?? t.request.invitationLines;
 
   const verifyCode = useCallback((code: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = null;
     const normalizedCode = code.trim();
     const sequence = ++verificationSequenceRef.current;
 

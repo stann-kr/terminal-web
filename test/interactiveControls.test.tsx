@@ -27,6 +27,7 @@ import { withMinimumLoading } from '../features/terminal/shared/minimumLoading';
 vi.mock('next/navigation', () => ({ usePathname: () => window.location.pathname }));
 import { LangProvider, useLang } from '../lib/langContext';
 import GatePage from '../app/gate/page';
+import RequestAccessPage from '../app/gate/request/page';
 import StatusPage from '../app/status/page';
 import SleepScreen from '../app/_entry/SleepScreen';
 import BootSequence from '../app/_entry/BootSequence';
@@ -195,6 +196,32 @@ describe('CRT display preferences', () => {
 
 describe('production Aspen frame', () => {
   afterEach(() => { vi.restoreAllMocks(); });
+
+  it('keeps verified request fields and validation focus stable after a manual code check', async () => {
+    window.history.replaceState(null, '', '/gate/request?event=code-check');
+    localStorage.setItem('terminal_lang', 'ko');
+    const codeCheck = vi.fn();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+      if (String(input).includes('/code-info')) { codeCheck(); return Response.json({ name: 'Test inviter' }); }
+      return Response.json([{ id: 'code-check', session: 'Test event', subtitle: '', date: new Date(Date.now() + 86_400_000).toISOString().slice(0, 10), time: '23:00 KST', status: 'UPCOMING', venue: 'Test venue', district: '', coords: '', capacity: '', sound: '', artists: [], invitationLines: { ko: ['원문 초대문', '---'], en: ['Original invitation', '---'] } }]);
+    });
+    render(<LangProvider><AspenMotionProvider crt={false}><RequestAccessPage /></AspenMotionProvider></LangProvider>);
+    const code = await screen.findByRole('textbox', { name: '인증 코드' }, { timeout: 2500 });
+    expect(screen.getByText('접수는 입장 확정을 뜻하지 않습니다.')).toBeVisible();
+    fireEvent.click(screen.getByText('초대문·입장 안내 보기'));
+    expect(screen.getByText('원문 초대문')).toBeVisible();
+    expect(screen.getByText('---')).toBeVisible();
+    fireEvent.change(code, { target: { value: 'TEST-CODE' } });
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
+    await waitFor(() => expect(screen.getByRole('textbox', { name: '이름' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: '신청 제출' }));
+    const name = screen.getByRole('textbox', { name: '이름' });
+    await waitFor(() => expect(name).toHaveFocus());
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 600)); });
+    expect(codeCheck).toHaveBeenCalledTimes(1);
+    expect(name).toBeEnabled();
+    expect(name).toHaveFocus();
+  });
 
   function NavigationFixture({ path = '/gate', ready = true }: { path?: string; ready?: boolean }) {
     return <AspenMotionProvider crt={false}><Shell page="gate" pathname={path} ready={ready} viewKey={path} motionKey={path} lang="ko" t={ko => ko} setLang={() => {}} crt={false} toggleCrt={() => {}}>
