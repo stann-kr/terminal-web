@@ -29,6 +29,6 @@ export function EventRecord({ event, events, now, compact = false }: { event: Te
   return <div className={compact ? styles.recordCompact : styles.record}>
     <Panel title="행사 정보" code={event.id}><div className={styles.status}>{statusLabel(event.status)}</div><EventFacts event={event}/>{event.posterUrl && <a className={styles.poster} href={event.posterUrl} target="_blank" rel="noopener noreferrer"><img src={event.posterUrl} alt={`${event.session} 행사 포스터 — 새 탭에서 확대`} /></a>}</Panel>
     <Panel title="공연표" code="RUNNING ORDER"><Lineup event={event} events={events}/><p className={styles.note}>공연 시간은 공개된 원문 기준입니다. TBA는 추후 안내됩니다.</p></Panel>
-    <div className={ui.stack}><Panel title="행사 소개" code={language.toUpperCase()}><FullText paragraphs={paragraphs(event.description,language)} />{paragraphs(event.invitationLines,language).length > 0 && <details><summary>초대 안내 전체 읽기</summary><FullText excerpt={false} paragraphs={paragraphs(event.invitationLines,language)}/></details>}</Panel><Panel title="참여 안내"><EventActions event={event} events={events} now={now}/></Panel></div>
+    <div className={ui.stack}><Panel title="행사 소개" code={language.toUpperCase()}><FullText language={language} paragraphs={paragraphs(event.description,language)} />{paragraphs(event.invitationLines,language).length > 0 && <details><summary>초대 안내 전체 읽기</summary><FullText language={language} excerpt={false} paragraphs={paragraphs(event.invitationLines,language)}/></details>}</Panel><Panel title="참여 안내"><EventActions event={event} events={events} now={now}/></Panel></div>
   </div>;
 }
