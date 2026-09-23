@@ -102,6 +102,7 @@ export function useReadoutMotion(root: RefObject<HTMLElement | null>, { key, act
     resize?.observe(element);
     const interactionRoot = element.closest('main') ?? element;
     const onFocus = (event: FocusEvent) => {
+      if (interactionRoot.hasAttribute('data-restoring-navigation')) return;
       if (event.target instanceof Element && event.target.closest('input,textarea,select,button,a')) finish();
     };
     interactionRoot.addEventListener('pointerdown', finish, true);

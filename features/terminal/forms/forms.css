@@ -15,11 +15,11 @@
 .tm-form-field input { font-family: var(--tm-mono); }
 .tm-code-row { display: flex; gap: 10px; }
 .tm-code-row .tm-button { flex: none; }
-.tm-form-hint { font-size: .75rem; line-height: 1.9; color: var(--tm-muted); }
+.tm-form-hint { font-size: .875rem; line-height: 1.8; color: var(--tm-muted); }
 .tm-code-block .tm-form-hint { margin-top: 12px; }
-.tm-consent label { display: flex; gap: 12px; align-items: start; min-height: 44px; cursor: pointer; font-size: .75rem; line-height: 1.95; word-break: keep-all; }
+.tm-consent label { display: flex; gap: 12px; align-items: start; min-height: 44px; cursor: pointer; font-size: .875rem; line-height: 1.8; word-break: keep-all; overflow-wrap: anywhere; }
 .tm-consent input { flex: none; width: 18px; height: 18px; min-height: 18px; margin: 5px 0 0; accent-color: var(--tm-accent); }
-.tm-field-error { font-size: .8rem; line-height: 1.8; color: var(--tm-alert); }
+.tm-field-error { font-size: .875rem; line-height: 1.8; color: var(--tm-alert); }
 [aria-invalid=true] { border-color: var(--tm-alert); }
 .tm-submit { width: 100%; font-family: var(--tm-body); }
 .tm-submit:disabled { cursor: default; background: #493021; border-color: #745039; color: #beb4ad; }

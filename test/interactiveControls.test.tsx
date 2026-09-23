@@ -21,6 +21,7 @@ import type { Artist, TerminalEvent } from '../lib/events/types';
 import { eventKeys } from '../lib/events/client';
 import LineupPage from '../app/lineup/page';
 import { TerminalFrame } from '../features/terminal/shell/TerminalFrame';
+import { Shell } from '../features/terminal/shell/Shell';
 import { withMinimumLoading } from '../features/terminal/shared/minimumLoading';
 
 vi.mock('next/navigation', () => ({ usePathname: () => window.location.pathname }));
@@ -195,6 +196,95 @@ describe('CRT display preferences', () => {
 describe('production Aspen frame', () => {
   afterEach(() => { vi.restoreAllMocks(); });
 
+  function NavigationFixture({ path = '/gate', ready = true }: { path?: string; ready?: boolean }) {
+    return <AspenMotionProvider crt={false}><Shell page="gate" pathname={path} ready={ready} viewKey={path} motionKey={path} lang="ko" t={ko => ko} setLang={() => {}} crt={false} toggleCrt={() => {}}>
+      <h1 tabIndex={-1}>{path}</h1><a href="/lineup?artist=one">Artist one</a><input id="draft" aria-label="Draft" />
+    </Shell></AspenMotionProvider>;
+  }
+
+  it('restores separate visits to the same URL and preserves Next state through history navigation', async () => {
+    window.history.replaceState({ __NA: true, __PRIVATE_NEXTJS_INTERNALS_TREE: { tree: 'router-owned' } }, '', '/gate');
+    const { rerender } = render(<NavigationFixture />);
+    const main = screen.getByRole('main');
+    Object.defineProperties(main, { scrollHeight: { configurable: true, value: 2400 }, clientHeight: { configurable: true, value: 600 } });
+    const artist = screen.getByRole('link', { name: 'Artist one' });
+    artist.focus();
+    main.scrollTop = 760;
+    fireEvent.scroll(main);
+    const first = window.history.state;
+    act(() => window.history.pushState({ __NA: true, __PRIVATE_NEXTJS_INTERNALS_TREE: { tree: 'second' } }, '', '/gate'));
+    await waitFor(() => expect(main.scrollTop).toBe(0));
+    expect(window.history.state.__NA).toBe(true);
+    expect(window.history.state.__PRIVATE_NEXTJS_INTERNALS_TREE).toEqual({ tree: 'second' });
+    expect(window.history.state).not.toEqual(first);
+    const second = window.history.state;
+    main.scrollTop = 310;
+    fireEvent.scroll(main);
+    act(() => window.history.back());
+    await waitFor(() => expect(main.scrollTop).toBe(760));
+    expect(artist).toHaveFocus();
+    expect(window.history.state).toEqual(first);
+    act(() => window.history.forward());
+    await waitFor(() => expect(main.scrollTop).toBe(310));
+    expect(window.history.state).toEqual(second);
+    rerender(<NavigationFixture ready={false} />);
+    rerender(<NavigationFixture />);
+    expect(main.scrollTop).toBe(310);
+  });
+
+  it.each(['main', 'header'])('cancels delayed restoration when new input starts in the %s', async area => {
+    window.history.replaceState(null, '', '/gate');
+    const { rerender } = render(<NavigationFixture />);
+    const main = screen.getByRole('main');
+    Object.defineProperties(main, { scrollHeight: { configurable: true, value: 2400 }, clientHeight: { configurable: true, value: 600 } });
+    main.scrollTop = 760;
+    fireEvent.scroll(main);
+    act(() => window.history.pushState(null, '', '/lineup'));
+    rerender(<NavigationFixture path="/lineup" />);
+    await waitFor(() => expect(main.scrollTop).toBe(0));
+    rerender(<NavigationFixture path="/lineup" ready={false} />);
+    act(() => window.history.back());
+    await waitFor(() => expect(window.location.pathname).toBe('/gate'));
+    rerender(<NavigationFixture ready={false} />);
+    expect(main.scrollTop).toBe(0);
+    const draft = screen.getByRole('textbox', { name: 'Draft' });
+    const target = area === 'main' ? draft : screen.getByRole('button', { name: 'CRT 화면 효과' });
+    fireEvent.pointerDown(target);
+    target.focus();
+    if (area === 'main') fireEvent.input(draft, { target: { value: 'new input' } });
+    rerender(<NavigationFixture />);
+    await new Promise(resolve => setTimeout(resolve, 60));
+    expect(main.scrollTop).toBe(0);
+    expect(target).toHaveFocus();
+    if (area === 'main') expect(draft).toHaveValue('new input');
+  });
+
+  it('starts a replacement route at its heading without adding a history entry', async () => {
+    window.history.replaceState(null, '', '/gate');
+    const { rerender } = render(<NavigationFixture />);
+    const main = screen.getByRole('main');
+    Object.defineProperties(main, { scrollHeight: { configurable: true, value: 2400 }, clientHeight: { configurable: true, value: 600 } });
+    main.scrollTop = 760;
+    fireEvent.scroll(main);
+    const entries = window.history.length;
+    act(() => window.history.replaceState({ __NA: true }, '', '/lineup'));
+    rerender(<NavigationFixture path="/lineup" />);
+    await waitFor(() => expect(main.scrollTop).toBe(0));
+    expect(screen.getByRole('heading', { name: '/lineup' })).toHaveFocus();
+    expect(window.history.length).toBe(entries);
+  });
+
+  it('closes the production disclosure on outside focus without stealing the new target', async () => {
+    render(<NavigationFixture />);
+    const menu = screen.getByRole('button', { name: /메뉴/ });
+    fireEvent.click(menu);
+    expect(menu).toHaveAttribute('aria-expanded', 'true');
+    const draft = screen.getByRole('textbox', { name: 'Draft' });
+    act(() => draft.focus());
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
+    expect(draft).toHaveFocus();
+  });
+
   it('runs the first readout after hydration and settles it when the user starts interacting', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
@@ -288,7 +378,7 @@ describe('brand text motion', () => {
   }
 
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener() {}, removeEventListener() {} })));
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
   });
@@ -570,7 +660,7 @@ describe('event clock policy updates', () => {
   });
 
   it('shows the Home event countdown in KST, ticks into elapsed time and omits invalid targets', () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     vi.setSystemTime(new Date('2026-09-10T11:59:59+09:00'));
     const { rerender } = render(<EventCountdown event={event} t={(ko) => ko} />);
     expect(screen.getByRole('timer', { name: '이벤트 시작까지 남은 시간' })).toHaveTextContent('T− COUNTDOWN');
@@ -585,7 +675,7 @@ describe('event clock policy updates', () => {
   });
 
   it('opens requests and archives a started event at their boundaries without ticking between them', () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     vi.setSystemTime(new Date('2026-08-11T11:59:59+09:00'));
     const { result } = renderHook(() => useEventClock([event], 30));
     act(() => vi.advanceTimersByTime(0));
@@ -603,7 +693,7 @@ describe('event clock policy updates', () => {
   });
 
   it('recalculates an elapsed event when a background document becomes visible', () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     vi.setSystemTime(new Date('2026-09-10T11:59:59+09:00'));
     const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
     const { result } = renderHook(() => useEventClock([event], 30));
@@ -739,7 +829,7 @@ describe('event page states and optional entry', () => {
   });
 
   it('distinguishes loading, failure and a confirmed empty event registry', async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     let complete!: (response: Response) => void;
     vi.spyOn(globalThis, 'fetch').mockImplementationOnce(() => new Promise(resolve => { complete = resolve; }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
@@ -760,7 +850,8 @@ describe('event page states and optional entry', () => {
   });
 
   it.each([250, 1_500])('reveals a %d ms request after the longer of its duration and one second', async (duration) => {
-    vi.useFakeTimers();
+    // This helper measures elapsed time with performance.now; UI animation clocks stay real in the other cases.
+    vi.useFakeTimers({ toFake: ['Date', 'performance', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     let finish!: (value: string) => void;
     let revealed = false;
     const result = withMinimumLoading(() => new Promise<string>(resolve => { finish = resolve; }));
@@ -780,7 +871,7 @@ describe('event page states and optional entry', () => {
   });
 
   it('releases the minimum wait immediately when its page request is aborted', async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     const controller = new AbortController();
     const result = withMinimumLoading(() => Promise.resolve('event data'), controller.signal);
     await vi.advanceTimersByTimeAsync(250);
@@ -862,7 +953,7 @@ describe('event page states and optional entry', () => {
   });
 
   it('skips Boot only through its control, keeps language choice explicit and enters once', async () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })));
     localStorage.setItem('terminal_lang', 'ko');
     const onComplete = vi.fn();

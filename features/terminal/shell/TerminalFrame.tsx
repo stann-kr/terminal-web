@@ -28,7 +28,7 @@ export function TerminalFrame({ children }: { children: ReactNode }) {
     return !previous;
   });
   return <MotionProvider crt={crt}><div className="tm-application">
-    <Shell page={page} eventId={props.event?.id} viewKey={`${pathname}:${page}:${screenPhase}`} motionKey={`${pathname}:${page}:${screenPhase}:${eventMotionKey}:${lang}`} lang={lang} t={props.t} setLang={setLang} crt={crt} toggleCrt={toggleCrt}>
+    <Shell page={page} eventId={props.event?.id} pathname={pathname} ready={screenPhase !== 'loading'} viewKey={`${pathname}:${page}`} motionKey={`${pathname}:${page}:${screenPhase}:${eventMotionKey}:${lang}`} lang={lang} t={props.t} setLang={setLang} crt={crt} toggleCrt={toggleCrt}>
       <div data-active="true">{children}</div>
     </Shell>
   </div></MotionProvider>;
