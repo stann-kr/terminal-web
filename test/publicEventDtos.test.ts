@@ -48,4 +48,14 @@ describe('public event DTOs', () => {
       [],
     )).toBeNull();
   });
+
+  it.each([
+    { date: '2026-02-31' },
+    { time: '24:00 KST' },
+  ])('rejects event calendar and time values the runtime cannot use: %j', (invalid) => {
+    expect(parsePublicEventRow(
+      { id: 'invalid', data: JSON.stringify({ ...eventData, ...invalid }) },
+      [],
+    )).toBeNull();
+  });
 });

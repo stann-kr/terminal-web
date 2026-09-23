@@ -43,6 +43,9 @@ export async function POST(request: Request) {
     if (!upcomingEvent) {
       return noStoreJson({ error: "NO_UPCOMING_EVENT" }, 404);
     }
+    if (upcomingEvent.rowId !== requestInput.input.eventId) {
+      return noStoreJson({ error: "EVENT_MISMATCH" }, 409);
+    }
     if (!isGateRequestWindowActive(upcomingEvent, now)) {
       return noStoreJson({ error: "REQUEST_PERIOD_INACTIVE" }, 403);
     }

@@ -1,9 +1,22 @@
 import type { EventStatus, TerminalEvent } from './types';
 
-const KST_SUFFIX = ' KST';
+const MILLISECONDS_PER_DAY = 86_400_000;
 
 export function getEventDateTime(event: Pick<TerminalEvent, 'date' | 'time'>): Date {
-  return new Date(`${event.date}T${event.time.replace(KST_SUFFIX, '')}:00+09:00`);
+  const date = /^(\d{4})-(\d{2})-(\d{2})$/.exec(event.date);
+  const time = /^([01]\d|2[0-3]):([0-5]\d)(?: KST)?$/.exec(event.time);
+  if (!date || !time) return new Date(Number.NaN);
+
+  const year = Number(date[1]);
+  const month = Number(date[2]);
+  const day = Number(date[3]);
+  const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const monthLengths = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (month < 1 || month > 12 || day < 1 || day > monthLengths[month - 1]) {
+    return new Date(Number.NaN);
+  }
+
+  return new Date(`${event.date}T${time[1]}:${time[2]}:00+09:00`);
 }
 
 export function isValidEventDateTime(event: Pick<TerminalEvent, 'date' | 'time'>): boolean {
@@ -15,7 +28,18 @@ export function isEventElapsed(
   now: Date = new Date(),
 ): boolean {
   const eventTime = getEventDateTime(event).getTime();
-  return !Number.isNaN(eventTime) && eventTime < now.getTime();
+  return !Number.isNaN(eventTime) && eventTime <= now.getTime();
+}
+
+export function formatEventDate(
+  event: Pick<TerminalEvent, 'date' | 'time'>,
+  locale = 'en-US',
+  options: Intl.DateTimeFormatOptions = { month: 'short', day: '2-digit', year: 'numeric' },
+): string {
+  const date = getEventDateTime(event);
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : date.toLocaleDateString(locale, { ...options, timeZone: 'Asia/Seoul' });
 }
 
 /**
@@ -40,21 +64,75 @@ export function withEffectiveEventStatus<T extends TerminalEvent>(
 }
 
 export function getFutureUpcomingEvent(
-  events: TerminalEvent[],
+  events: readonly TerminalEvent[],
   now: Date = new Date(),
 ): TerminalEvent | null {
   return [...events]
     .filter((event) => getEffectiveEventStatus(event, now) === 'UPCOMING')
-    .sort((a, b) => getEventDateTime(a).getTime() - getEventDateTime(b).getTime())[0] ?? null;
+    .sort((a, b) => compareEventTimes(a, b) || compareEventIds(a, b))[0] ?? null;
 }
 
 export function getArchivedOrElapsedEvents(
-  events: TerminalEvent[],
+  events: readonly TerminalEvent[],
   now: Date = new Date(),
 ): TerminalEvent[] {
   return events
     .filter((event) => getEffectiveEventStatus(event, now) === 'ARCHIVED')
-    .sort((a, b) => getEventDateTime(b).getTime() - getEventDateTime(a).getTime());
+    .sort((a, b) => compareEventTimes(b, a) || compareEventIds(a, b));
+}
+
+function compareEventIds(a: TerminalEvent, b: TerminalEvent): number {
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+function compareEventTimes(a: TerminalEvent, b: TerminalEvent): number {
+  const aTime = getEventDateTime(a).getTime();
+  const bTime = getEventDateTime(b).getTime();
+  return (Number.isNaN(aTime) ? -Infinity : aTime) - (Number.isNaN(bTime) ? -Infinity : bTime);
+}
+
+export function getLiveEvents(
+  events: readonly TerminalEvent[],
+  now: Date = new Date(),
+): TerminalEvent[] {
+  return events
+    .filter((event) => getEffectiveEventStatus(event, now) === 'LIVE')
+    .sort((a, b) => compareEventTimes(b, a) || compareEventIds(a, b));
+}
+
+export function getDefaultEvent(
+  events: readonly TerminalEvent[],
+  now: Date = new Date(),
+): TerminalEvent | null {
+  const event = getLiveEvents(events, now)[0]
+    ?? getFutureUpcomingEvent(events, now)
+    ?? getArchivedOrElapsedEvents(events, now)[0];
+  return event ? withEffectiveEventStatus(event, now) : null;
+}
+
+export function selectEvent(
+  events: readonly TerminalEvent[],
+  requestedEventId?: string | null,
+  now: Date = new Date(),
+): TerminalEvent | null {
+  const requestedEvent = events.find((event) => event.id === requestedEventId);
+  return requestedEvent ? withEffectiveEventStatus(requestedEvent, now) : getDefaultEvent(events, now);
+}
+
+export function getEventBoundaryTimes(
+  events: readonly TerminalEvent[],
+  accessWindowDays?: number,
+): number[] {
+  const times = events
+    .filter((event) => event.status === 'UPCOMING')
+    .flatMap((event) => {
+      const startsAt = getEventDateTime(event).getTime();
+      if (Number.isNaN(startsAt)) return [];
+      return accessWindowDays !== undefined && Number.isFinite(accessWindowDays) && accessWindowDays >= 0
+        ? [startsAt - accessWindowDays * MILLISECONDS_PER_DAY, startsAt]
+        : [startsAt];
+    });
+  return [...new Set(times)].sort((a, b) => a - b);
 }
 
 export interface RequestWindowState {
@@ -77,8 +155,8 @@ export function getRequestWindowState(
   const millisecondsUntil = eventTime - now.getTime();
   const isElapsed = millisecondsUntil <= 0;
   const daysUntil = isElapsed
-    ? Math.min(-1, Math.floor(millisecondsUntil / 86_400_000))
-    : Math.ceil(millisecondsUntil / 86_400_000);
+    ? Math.min(-1, Math.floor(millisecondsUntil / MILLISECONDS_PER_DAY))
+    : Math.ceil(millisecondsUntil / MILLISECONDS_PER_DAY);
   const opensInDays = isElapsed ? null : Math.max(0, daysUntil - accessWindowDays);
 
   return {

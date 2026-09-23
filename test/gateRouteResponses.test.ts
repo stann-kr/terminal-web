@@ -31,6 +31,7 @@ vi.mock('@/lib/signal/createSignalSubscription', () => ({
 }));
 
 const requestBody = {
+  eventId: 'event-1',
   accessCode: 'ARTIST-01',
   name: 'Guest Name',
   email: 'guest@example.com',
@@ -117,6 +118,57 @@ describe('opaque public success responses', () => {
     expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
   });
 
+  it.each(['request', 'code-info'])('rejects stale %s event selection before reading artists or writing', async (route) => {
+    const { POST } = route === 'request'
+      ? await import('../app/api/gate/request/route')
+      : await import('../app/api/gate/code-info/route');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-01T12:00:00+09:00'));
+    const body = route === 'request'
+      ? { ...requestBody, eventId: 'previous-event' }
+      : { code: 'ARTIST-01', eventId: 'previous-event' };
+
+    const response = await responseDetails(await POST(new Request(`https://terminal.test/api/gate/${route}`, {
+      method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json' },
+    })));
+
+    expect(response).toEqual({ status: 409, cacheControl: 'no-store', body: { error: 'EVENT_MISMATCH' } });
+    expect(mocks.listGateArtistRowsByEvent).not.toHaveBeenCalled();
+    expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
+  });
+
+  it.each(['request', 'code-info'])('tells legacy %s clients to provide the displayed event before database access', async (route) => {
+    const { POST } = route === 'request'
+      ? await import('../app/api/gate/request/route')
+      : await import('../app/api/gate/code-info/route');
+    const { eventId: _eventId, ...legacyRequestBody } = requestBody;
+    const body = route === 'request' ? legacyRequestBody : { code: 'ARTIST-01' };
+
+    const response = await responseDetails(await POST(new Request(`https://terminal.test/api/gate/${route}`, {
+      method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json' },
+    })));
+
+    expect(response).toEqual({ status: 400, cacheControl: 'no-store', body: { error: 'EVENT_ID_REQUIRED' } });
+    expect(mocks.listGateEventRows).not.toHaveBeenCalled();
+    expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['outside request window', '2026-06-01T12:00:00+09:00', 403, 'REQUEST_PERIOD_INACTIVE'],
+    ['capacity reached', '2026-08-01T12:00:00+09:00', 409, 'GUEST_LIMIT_REACHED'],
+  ])('preserves %s rejection for the matched event', async (_label, now, status, error) => {
+    const { POST } = await import('../app/api/gate/request/route');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(now));
+    mocks.createAccessRequestAtomically.mockResolvedValue({ status: 'guest_limit_reached' });
+
+    const response = await responseDetails(await POST(new Request('https://terminal.test/api/gate/request', {
+      method: 'POST', body: JSON.stringify(requestBody), headers: { 'content-type': 'application/json' },
+    })));
+    expect(response).toEqual({ status, cacheControl: 'no-store', body: { error } });
+    if (error === 'REQUEST_PERIOD_INACTIVE') expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
+  });
+
   it('returns only the matched artist name from the code-info route', async () => {
     const { POST } = await import('../app/api/gate/code-info/route');
     vi.useFakeTimers();
@@ -126,7 +178,7 @@ describe('opaque public success responses', () => {
       'https://terminal.test/api/gate/code-info',
       {
         method: 'POST',
-        body: JSON.stringify({ code: 'artist-01' }),
+        body: JSON.stringify({ code: 'artist-01', eventId: 'event-1' }),
         headers: { 'content-type': 'application/json' },
       },
     )));
@@ -142,7 +194,7 @@ describe('opaque public success responses', () => {
     );
   });
 
-  it('returns an opaque empty result without reading artists when no Gate event exists', async () => {
+  it('reports an unavailable event separately from an invalid code without reading artists', async () => {
     const { POST } = await import('../app/api/gate/code-info/route');
     mocks.listGateEventRows.mockResolvedValue([]);
 
@@ -150,15 +202,15 @@ describe('opaque public success responses', () => {
       'https://terminal.test/api/gate/code-info',
       {
         method: 'POST',
-        body: JSON.stringify({ code: 'ARTIST-01' }),
+        body: JSON.stringify({ code: 'ARTIST-01', eventId: 'event-1' }),
         headers: { 'content-type': 'application/json' },
       },
     )));
 
     expect(response).toEqual({
-      status: 200,
+      status: 404,
       cacheControl: 'no-store',
-      body: { name: null },
+      body: { error: 'NO_UPCOMING_EVENT' },
     });
     expect(mocks.listGateArtistRowsByEvent).not.toHaveBeenCalled();
   });
@@ -176,7 +228,7 @@ describe('opaque public success responses', () => {
       'https://terminal.test/api/gate/code-info',
       {
         method: 'POST',
-        body: JSON.stringify({ code: 'ARTIST-01' }),
+        body: JSON.stringify({ code: 'ARTIST-01', eventId: 'event-1' }),
         headers: { 'content-type': 'application/json' },
       },
     )));

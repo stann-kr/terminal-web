@@ -11,7 +11,7 @@ import next from "eslint-config-next";
  */
 const eslintConfig = [
   {
-    ignores: [".next/**", "node_modules/**", "out/**", ".open-next/**", ".wrangler/**", "migrations/**"],
+    ignores: [".next/**", "node_modules/**", "out/**", ".open-next/**", ".wrangler/**", "migrations/**", ".docs/**", ".design-archive/**"],
   },
   ...next,
   {

@@ -1,160 +1,43 @@
-# terminal-2 — STANN OS LIVE
+# TERMINAL
 
-terminal-2 is the STANN OS LIVE surface for `https://terminal.stann.kr`.
+서울 기반 테크노 플랫폼. 행사 일정과 공연표, 참여 아티스트와 지난 행사 기록을 탐색하고 게스트 신청·소식 신청·방문자 로그를 이용합니다.
 
-- Surface role: LIVE
-- SYS.ID: TM-02
-- Related surfaces:
-  - HUB: `https://stann.kr`
-  - ARCHIVE: `https://lumo.stann.kr`
-  - LIVE: `https://terminal.stann.kr`
+## 실행
 
-## Stack
+Node.js 22 이상과 npm을 사용합니다.
 
-- Next.js 16 App Router
-- React 19
-- Tailwind CSS
-- TanStack Query
-- Cloudflare OpenNext
-- Cloudflare D1 + Drizzle schema
-- Docker for local/container workflows
-
-## Local development
-
-Node.js 22 or newer is required.
-
-```bash
+```sh
 npm ci
+npx wrangler d1 migrations apply terminal-db --local
 npm run dev
 ```
 
-Default dev URL:
+로컬 주소는 http://localhost:3005 입니다. API는 같은 출처의 `/api/*`를 사용하며 로컬 D1 데이터는 `.wrangler/state`에 저장됩니다. 초기 행사 자료는 로컬 DB에 준비해야 합니다. 조회 실패를 빈 행사로 대체하거나 정적 행사 배열을 운영 데이터로 사용하지 않습니다.
 
-```text
-http://localhost:3005
-```
+## 화면
 
-## Verification
+- `/`: 대표 행사, 기록 요약, 최근 방문자 글
+- `/events`, `/events/:eventId`: 행사 탐색과 상세
+- `/artists`, `/artists/:artistKey`: 아티스트 명부와 출연 이력
+- `/archive`: 연도·장소·행사명으로 탐색하는 지난 기록
+- `/transmit`: 공개 글 작성과 5건 단위 목록
+- `/signal`: 행사 소식 수신 연락처 저장
+- `/about`: 소개와 공식 채널
+- `/events/:eventId/request`: 선택 행사 게스트 신청
 
-Run these before treating the project as healthy:
+기존 `/home`, `/gate`, `/gate/request`, `/lineup`, `/status`, `/link` 주소는 새 화면으로 연결됩니다.
 
-```bash
-npm audit --omit=dev
-npm run db:check-history
+## 검증
+
+```sh
 npm test
 npm run lint
 npm run typecheck
-npm run build
-npm run smoke:http
-npm run build:worker
-npm run test:d1
-npx wrangler deploy --env production --dry-run
-```
-
-For Worker HTTP smoke, run `npm run cf:preview` and then run `SMOKE_BASE_URL=http://127.0.0.1:8787 SMOKE_API=1 npm run smoke:http` in another terminal.
-
-`npm run build` intentionally runs `scripts/check-token-sync.mjs` first through the `prebuild` hook. This confirms the local STANN OS token copy at `app/stann-os.css` matches the expected canonical token hash.
-
-`npm ci` applies and verifies the bundled `use-scramble` security patch. The same check runs after a regular `npm install`.
-
-## Cloudflare / OpenNext
-
-Build an environment-specific Cloudflare Worker bundle:
-
-```bash
-npm run build:worker:development
-npm run build:worker:production
-```
-
-Run the development configuration in a local Cloudflare preview:
-
-```bash
-npm run cf:preview
-```
-
-Deployment targets are explicit:
-
-```bash
-npm run deploy:development
-npm run deploy:production
-```
-
-Cloudflare Workers Builds is the only automatic deployment path. A `dev` push deploys the fixed `terminal-2-dev` Worker and a `main` push deploys the production `terminal-2` Worker. GitHub Actions performs validation only.
-
-Important: production deployment requires separate approval. D1 migrations, secrets, bindings, and routes are not automatically changed by Worker code deployment and must be applied and verified as separate operations.
-
-## D1
-
-Configuration:
-
-- `wrangler.toml`
-- `drizzle.config.ts`
-- `lib/db/schema.ts`
-- `migrations/*.sql`
-- `migrations/meta/*.json`
-- `scripts/migration-history.lock.json`
-
-D1 binding name:
-
-```text
-DB
-```
-
-Remote databases are separated by environment:
-
-- development: `terminal-db-dev`
-- production: `terminal-db`
-
-The repository history currently contains 10 continuous migrations, `0000` through `0009`. Migration `0009_normalize_transmit_created_at.sql` rebuilds `transmit_logs.created_at` as ISO timestamp `TEXT NOT NULL` after normalizing supported legacy values.
-
-Migration history is append-only. Before validation or generation, the guard requires continuous unique SQL prefixes, exact journal/SQL tags, one snapshot per SQL file with a valid `id`/`prevId` chain, and exact path + SHA-256 matches against the lock:
-
-```bash
+npm run postinstall && npm run build
 npm run db:check-history
+npm run test:d1
 ```
 
-Generate a schema migration only through the guarded wrapper with an explicit lowercase snake_case name:
+빌드 실행 후 `npm start`로 서버를 열고 `SMOKE_API=1 npm run smoke:http`로 페이지·호환 주소·공개 조회를 확인할 수 있습니다. HTTP/DOM 검증은 실제 브라우저나 실기기 검증을 대신하지 않습니다.
 
-```bash
-npm run db:generate -- --name add_example_column
-```
-
-The wrapper validates the current structure and lock, stages Drizzle output outside the repository, requires the next prefix, permits only the journal update plus one new SQL and snapshot, preserves every existing migration file, and then atomically advances the lock. Do not run `drizzle-kit generate` or `npx drizzle-kit generate` directly. `npm run db:lock-history` is only for creating the initial lock after a complete, reviewed reconciliation; it refuses to replace an existing lock.
-
-Local migration apply example with an explicit environment:
-
-```bash
-npx wrangler d1 migrations apply DB --env development --local
-```
-
-Development and production remote histories are separate. Inspect and apply each target independently; applying one environment is not evidence that the other is current:
-
-```bash
-npx wrangler d1 migrations list DB --env development --remote
-npx wrangler d1 migrations apply DB --env development --remote
-
-npx wrangler d1 migrations list DB --env production --remote
-npx wrangler d1 migrations apply DB --env production --remote
-```
-
-Every remote apply is a database write and requires separate approval plus environment-specific preflight and post-apply verification. Worker deployment never applies D1 migrations automatically.
-
-## Public write endpoints
-
-These routes accept public writes and must be protected by validation, body guards, and abuse controls before high-traffic public use:
-
-- `POST /api/gate/request`
-- `POST /api/signal`
-- `POST /api/transmit`
-
-Current local contracts include exact JSON media-type and streaming byte guards, runtime DTO validation, a Cloudflare rate-limit binding interface, and a server-side Turnstile validator. Broad public launch still requires the real binding/secret, client token flow, and verified Signal unsubscribe/retention operations.
-
-## Documentation
-
-Public project documentation:
-
-- [Documentation overview](docs/README.md)
-- [Requirements](docs/REQUIREMENTS.md)
-- [Technical specification](docs/TECH_SPEC.md)
-- [Change log](docs/CHANGE_LOG.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
+[기능 계약](docs/REQUIREMENTS.md) · [기술 구성](docs/TECH_SPEC.md) · [디자인 시스템](docs/DESIGN.md)

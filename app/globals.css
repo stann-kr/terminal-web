@@ -1,125 +1,40 @@
-@import "./stann-os.css";
-
-@font-face {
-  font-family: 'ProcrastinatingPixie';
-  src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+@font-face { font-family: 'Space Mono'; src: url('/fonts/reference-terminal/SpaceMono-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Space Mono'; src: url('/fonts/reference-terminal/SpaceMono-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Syncopate'; src: url('/fonts/reference-terminal/Syncopate-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: Orbit; src: url('/fonts/Orbit-Regular.ttf') format('truetype'); font-display: swap; }
+:root {
+  color-scheme: dark;
+  --color-bg-base: 8 14 19;
+  --color-bg-panel: 13 23 30;
+  --color-text-primary: 213 230 239;
+  --color-text-subdued: 175 203 220;
+  --color-text-muted: 142 166 181;
+  --color-accent-primary: 175 203 220;
+  --color-accent-tertiary: 168 198 217;
+  --color-accent-alert: 244 167 160;
+  --bg: rgb(var(--color-bg-base)); --panel: rgb(var(--color-bg-panel));
+  --ink: rgb(var(--color-text-primary)); --ice: rgb(var(--color-accent-primary));
+  --muted: rgb(var(--color-text-muted)); --danger: rgb(var(--color-accent-alert));
+  --line: #405763; --faint: #263b47; --display: 'Syncopate', Orbit, sans-serif;
+  --mono: 'Space Mono', Orbit, monospace;
 }
-
-@font-face {
-  font-family: 'Orbit';
-  src: url('/fonts/Orbit-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  html, body {
-    font-family: 'Orbit', monospace;
-  }
-
-  :root {
-    /* Base Colors - Monochrome Blueprint Theme */
-    --color-bg-base: 5 6 10;
-    --color-bg-panel: 10 13 20;
-    --color-bg-panel-border: 31 38 51;
-    --color-bg-overlay: 12 12 16; /* #0c0c10 */
-
-    --color-text-primary: 214 229 237;
-    --color-text-subdued: 140 155 165;
-    --color-text-muted: 112 124 134;
-
-    /* Semantic Accents - Monochromatic & Sterile */
-    --color-accent-primary: 214 229 237;   /* Icy Blue (포스터 메인 컬러와 동일) */
-    --color-accent-secondary: 140 155 165; /* Muted Icy Blue (투명도/명도로 계층 구분) */
-    --color-accent-tertiary: 112 124 134;  /* AA-readable Dark Icy Blue */
-    
-    /* Status Colors — STANN OS 상태색 역할(stann-os.css E섹션)과 값 일치
-       alert = --os-status-alert(#b34747 = 179 71 71) · warn = --os-status-warn(#b39847 = 179 152 71) */
-    --color-accent-alert: 205 88 88;       /* AA-readable muted red */
-    --color-accent-warn: 179 152 71;       /* Muted Gold (채도 빠진 건조한 노랑) */
-
-    /* ─── Typography Scale ──────────────────────────────────────────────────── */
-    /* mobile base — 장식용(home ASCII, 카운트다운) */
-    --text-pico:    0.5rem;      /* 8px  */
-    --text-nano:    0.5625rem;   /* 9px  */
-    /* content scale */
-    --text-micro:   0.625rem;    /* 10px - LabelText/MetaText 모바일, 뱃지 */
-    --text-caption: 0.6875rem;   /* 11px - ArtistRow meta 등 */
-    --text-small:   0.75rem;     /* 12px - body 모바일, label 데스크톱, input */
-    --text-body:    0.875rem;    /* 14px - body 데스크톱, heading 모바일 */
-    --text-heading: 1rem;        /* 16px - HeadingText 데스크톱 */
-    --text-h2:      1.25rem;     /* 20px - PageHeader 모바일 */
-    --text-h1:      1.5rem;      /* 24px - TitleText 모바일, PageHeader 데스크톱 */
-    --text-title:   1.875rem;    /* 30px - TitleText 데스크톱 */
-    --text-hero:    3rem;        /* 48px - home TERMINAL 모바일 */
-    --text-display: 6rem;        /* 96px - home TERMINAL 데스크톱 */
-  }
-}
-
-@layer utilities {
-  .text-shadow-glow-primary {
-    text-shadow: 0 0 16px rgb(var(--color-accent-primary) / 0.4);
-  }
-  .text-shadow-glow-secondary {
-    text-shadow: 0 0 16px rgb(var(--color-accent-secondary) / 0.4);
-  }
-  .text-shadow-glow-alert {
-    text-shadow: 0 0 16px rgb(var(--color-accent-alert) / 0.4);
-  }
-  .text-shadow-glow-warn {
-    text-shadow: 0 0 16px rgb(var(--color-accent-warn) / 0.4);
-  }
-  .text-shadow-glow-tertiary {
-    text-shadow: 0 0 16px rgb(var(--color-accent-tertiary) / 0.4);
-  }
-}
-
-/* 셀렉션 — 액센트 배경 (STANN OS 불변 글루) */
-::selection {
-  background: rgb(var(--color-accent-primary));
-  color: rgb(var(--color-bg-base));
-}
-
-/* 포커스 가시화 — STANN OS 불변 글루 (canon: 2px accent, offset 2px) */
-:focus-visible {
-  outline: 2px solid rgb(var(--color-accent-primary));
-  outline-offset: 2px;
-}
-
-.skip-link {
-  position: fixed;
-  left: 1rem;
-  top: 1rem;
-  z-index: 100;
-  transform: translateY(calc(-100% - 2rem));
-  border: 1px solid rgb(var(--color-accent-primary));
-  background: rgb(var(--color-bg-base));
-  color: rgb(var(--color-text-primary));
-  padding: 0.75rem 1rem;
-  font-family: var(--font-jetbrains), monospace;
-  font-size: 0.875rem;
-  transition: transform 120ms ease-out;
-}
-
-.skip-link:focus-visible {
-  transform: translateY(0);
-}
-
-/* reduced-motion 전역 가드 (STANN OS 공통 — 디코드·스캔라인·CRT 즉시 표시 폴백) */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
-}
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--ink); scrollbar-color: var(--line) var(--bg); }
+body { margin: 0; font: 14px/1.65 var(--mono); overflow-wrap: anywhere; }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; text-underline-offset: 4px; }
+button, summary { cursor: pointer; }
+button:disabled { cursor: wait; opacity: .6; }
+:focus-visible { outline: 2px solid var(--ice); outline-offset: 4px; }
+::selection { background: var(--ice); color: var(--bg); }
+h1,h2,h3,p,dl,dd,ul,ol { margin: 0; }
+ul,ol { padding: 0; list-style: none; }
+img { max-width: 100%; height: auto; }
+input,select,textarea { min-width: 0; max-width: 100%; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 0; padding: 10px 12px; min-height: 44px; font-size: 16px; }
+textarea { resize: vertical; }
+input[type=checkbox] { min-height: 22px; width: 22px; height: 22px; accent-color: var(--ice); }
+button { color: inherit; }
+summary { min-height: 44px; padding-block: 10px; color: var(--ice); }
+details[open] > summary { margin-bottom: 10px; }
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@gsap/react": "2.1.2",
     "@opennextjs/cloudflare": "^1.18.1",
     "@react-three/fiber": "9.3.0",
     "@react-three/postprocessing": "^3.0.4",
@@ -10,7 +11,8 @@
     "cross-env": "^7.0.3",
     "drizzle-orm": "^0.45.2",
     "framer-motion": "12.23.12",
-    "next": "^16.2.11",
+    "gsap": "3.15.0",
+    "next": "^16.3.3",
     "patch-package": "^8.0.1",
     "postprocessing": "^6.39.0",
     "react": "^19.0.0",
@@ -31,7 +33,7 @@
     "autoprefixer": "^10.4.21",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.16.0",
-    "eslint-config-next": "^16.2.11",
+    "eslint-config-next": "^16.3.3",
     "jsdom": "^30.0.1",
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.17",
@@ -41,7 +43,7 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "name": "next-app",
+  "name": "terminal-web",
   "private": true,
   "scripts": {
     "prebuild": "node scripts/check-token-sync.mjs",
@@ -67,7 +69,7 @@
   },
   "version": "0.1.0",
   "overrides": {
-    "sharp": "0.35.3",
+    "sharp": "0.35.4",
     "next": {
       "postcss": "8.5.26"
     }

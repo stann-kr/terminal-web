@@ -17,17 +17,18 @@ function contrast(a: number[], b: number[]): number {
 }
 
 describe('terminal content color contract', () => {
-  it('keeps muted, tertiary, and alert text at AA contrast on the base surface', async () => {
+  it('keeps text and primary actions readable on workspace surfaces', async () => {
     const css = await readFile('app/globals.css', 'utf8');
     const token = (name: string) => {
       const match = css.match(new RegExp(`--${name}:\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)`));
       expect(match, `${name} token`).not.toBeNull();
       return match!.slice(1).map(Number);
     };
-    const background = token('color-bg-base');
-
-    for (const name of ['color-text-muted', 'color-accent-tertiary', 'color-accent-alert']) {
-      expect(contrast(token(name), background), name).toBeGreaterThanOrEqual(4.5);
+    for (const surface of ['color-bg-base', 'color-bg-panel']) {
+      for (const name of ['color-text-primary', 'color-text-subdued', 'color-text-muted', 'color-accent-tertiary', 'color-accent-alert']) {
+        expect(contrast(token(name), token(surface)), `${name} on ${surface}`).toBeGreaterThanOrEqual(4.5);
+      }
     }
+    expect(contrast(token('color-bg-base'), token('color-accent-primary'))).toBeGreaterThanOrEqual(4.5);
   });
 });

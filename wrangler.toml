@@ -47,6 +47,7 @@ binding = "ASSETS"
 
 [[env.development.d1_databases]]
 binding = "DB"
-database_name = "terminal-db-dev"
-database_id = "97a46d35-7674-4992-be95-a813d97b39a3"
+# Development and production intentionally share live data. Local previews stay local.
+database_name = "terminal-db"
+database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
