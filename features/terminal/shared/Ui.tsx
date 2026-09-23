@@ -35,5 +35,5 @@ export function NoEvent({ t, invalid = false }: { t: Translate; invalid?: boolea
 
 export function EventState({ event, t }: Pick<ScreenProps, 'event' | 't'>) {
   if (!event) return null;
-  return <span className="tm-state">{event.status === 'ARCHIVED' ? t('지난 이벤트', 'PAST EVENT') : event.status === 'LIVE' ? t('진행 중', 'LIVE') : t('예정된 이벤트', 'UPCOMING')}</span>;
+  return <span className="tm-state" data-state={event.status}>{event.status === 'ARCHIVED' ? t('지난 이벤트', 'PAST EVENT') : event.status === 'LIVE' ? t('진행 중', 'LIVE') : t('예정된 이벤트', 'UPCOMING')}</span>;
 }

@@ -41,6 +41,7 @@ import PageLayout from '../components/shell/PageLayout';
 import { useTerminalScreen } from '../components/shell/useTerminalScreen';
 import EventSummary from '../components/events/EventSummary';
 import HomePage from '../app/home/page';
+import { Home as HomeScreen } from '../features/terminal/events/EventScreens';
 import SignalPage from '../app/signal/page';
 import { gsap, ScrollTrigger, revealTerminalReadout } from '../lib/motion/gsap';
 
@@ -460,12 +461,14 @@ describe('production Aspen frame', () => {
     expect(screen.getAllByRole('main')).toHaveLength(1);
     expect(screen.getByRole('link', { name: '본문으로 건너뛰기' })).toHaveAttribute('href', '#main-content');
     const nav = within(screen.getByRole('navigation', { name: '주요 메뉴' }));
-    expect(nav.getByRole('link', { name: /소식 신청/ })).toHaveAttribute('aria-current', 'page');
-    expect(nav.getByRole('link', { name: /게스트 신청/ })).toHaveAttribute('href', '/gate/request');
+    expect(nav.getByRole('link', { name: /소식 받기/ })).toHaveAttribute('aria-current', 'page');
+    expect(nav.getByRole('link', { name: /COMMS/ })).toHaveAttribute('aria-current', 'location');
+    expect(nav.getByRole('link', { name: /EVENTS/ })).toHaveAttribute('href', '/gate');
+    expect(nav.queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
     await user.type(screen.getByRole('textbox', { name: '이메일' }), 'draft@example.com');
     const menu = screen.getByRole('button', { name: /메뉴/ });
     await user.click(menu);
-    nav.getByRole('link', { name: /방명록/ }).focus();
+    within(document.getElementById(menu.getAttribute('aria-controls')!)!).getByRole('link', { name: /방명록/ }).focus();
     await user.keyboard('{Escape}');
     expect(menu).toHaveFocus();
     expect(menu).toHaveAttribute('aria-expanded', 'false');
@@ -967,6 +970,22 @@ describe('event page states and optional entry', () => {
     expect(within(main).getByRole('heading', { name: 'Next event' })).toBeInTheDocument();
     expect(within(main).getByRole('timer')).toHaveAccessibleName('이벤트 시작까지 남은 시간');
     expect(main.querySelector('a[href^="/gate?"]')).toHaveAttribute('href', '/gate?event=next');
+  });
+
+  it.each([
+    { status: 'UPCOMING' as const, now: '2099-09-01T00:00:00+09:00', earlier: false, open: true },
+    { status: 'UPCOMING' as const, now: '2099-07-01T00:00:00+09:00', earlier: false, open: false },
+    { status: 'UPCOMING' as const, now: '2099-09-01T00:00:00+09:00', earlier: true, open: false },
+    { status: 'LIVE' as const, now: '2099-09-01T00:00:00+09:00', earlier: false, open: false },
+    { status: 'ARCHIVED' as const, now: '2099-09-01T00:00:00+09:00', earlier: false, open: false },
+  ])('offers Home requests only for the eligible event ($status, earlier=$earlier, open=$open)', ({ status, now, earlier, open }) => {
+    const selected = { ...event, status };
+    const events = earlier ? [selected, { ...event, id: 'earlier', date: '2099-09-03' }] : [selected];
+    render(<HomeScreen event={selected} events={events} now={new Date(now)} lang="ko" t={ko => ko} poster="" />);
+    const request = screen.queryByRole('link', { name: '게스트 신청' });
+    if (open) expect(request).toHaveAttribute('href', '/gate/request?event=next');
+    else expect(request).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '라인업 보기' })).toHaveAttribute('href', '/lineup?event=next');
   });
 
   it('distinguishes loading, failure and a confirmed empty event registry', async () => {

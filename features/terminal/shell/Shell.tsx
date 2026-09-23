@@ -10,15 +10,21 @@ import { useNavigationContinuity } from './useNavigationContinuity';
 import '../motion/motion.css';
 import './shell.css';
 
-const directory: { page: Page; code: string; ko: string; en: string }[] = [
-  { page: 'gate', code: 'GATE', ko: '이벤트', en: 'Events' },
-  { page: 'lineup', code: 'LINEUP', ko: '라인업', en: 'Lineup' },
-  { page: 'request', code: 'GUEST_REQ', ko: '게스트 신청', en: 'Guest request' },
-  { page: 'status', code: 'STATUS', ko: '이벤트 기록', en: 'History' },
-  { page: 'transmit', code: 'TRANSMIT', ko: '방명록', en: 'Guestbook' },
-  { page: 'signal', code: 'SIGNAL', ko: '소식 신청', en: 'Updates' },
-  { page: 'about', code: 'ABOUT', ko: '소개', en: 'About' },
-];
+const directory = [
+  { page: 'gate', code: 'EVENT FILE', ko: '행사 정보', en: 'Event details', group: 'events' },
+  { page: 'lineup', code: 'LINEUP', ko: '라인업', en: 'Lineup', group: 'events' },
+  { page: 'status', code: 'ARCHIVE', ko: '지난 행사', en: 'Archive', group: 'events' },
+  { page: 'transmit', code: 'TRANSMIT', ko: '방명록', en: 'Guestbook', group: 'comms' },
+  { page: 'signal', code: 'SIGNAL', ko: '소식 받기', en: 'Updates', group: 'comms' },
+  { page: 'link', code: 'CHANNELS', ko: '공식 채널', en: 'Channels', group: 'comms' },
+  { page: 'about', code: 'ABOUT', ko: '터미널 소개', en: 'About TERMINAL', group: 'about' },
+  { page: 'entry', code: 'ENTER', ko: '터미널 체험', en: 'Terminal experience', group: 'about' },
+] satisfies { page: Page; code: string; ko: string; en: string; group: string }[];
+const groups = [
+  { id: 'events', page: 'gate', code: 'EVENTS', ko: '이벤트', en: 'Events' },
+  { id: 'comms', page: 'transmit', code: 'COMMS', ko: '소통', en: 'Communications' },
+  { id: 'about', page: 'about', code: 'ABOUT', ko: '소개', en: 'About' },
+] satisfies { id: string; page: Page; code: string; ko: string; en: string }[];
 
 export function Shell({ page, eventId, viewKey, pathname, ready, motionKey, lang, t, setLang, crt, toggleCrt, children }: { page: Page; eventId?: string; viewKey: string; pathname: string; ready: boolean; motionKey: string; lang: Lang; t: Translate; setLang: (lang: Lang) => void; crt: boolean; toggleCrt: () => void; children: ReactNode }) {
   const [menu, setMenu] = useState(false);
@@ -62,35 +68,50 @@ export function Shell({ page, eventId, viewKey, pathname, ready, motionKey, lang
     };
   }, [menu]);
   useEffect(() => {
-    const media = window.matchMedia('(min-width: 900px)');
+    const media = window.matchMedia('(min-width: 768px)');
     let focused = document.activeElement;
     const rememberFocus = (event: FocusEvent) => { if (event.target instanceof Element) focused = event.target; };
     const close = () => {
       // CSS may hide the focused node before matchMedia dispatches its change.
       if (!media.matches && extraRef.current?.contains(focused)) menuRef.current?.focus({ preventScroll: true });
-      if (media.matches && (focused === menuRef.current || focused?.classList.contains('tm-mobile-channels'))) document.getElementById('tm-brand')?.focus({ preventScroll: true });
+      if (media.matches && (focused === menuRef.current || extraRef.current?.contains(focused))) document.getElementById('tm-brand')?.focus({ preventScroll: true });
       setMenu(false);
     };
     document.addEventListener('focusin', rememberFocus);
     media.addEventListener('change', close);
     return () => { media.removeEventListener('change', close); document.removeEventListener('focusin', rememberFocus); };
   }, []);
-  const navLink = (item: typeof directory[number]) => <Link key={item.page} scroll={false} href={href(item.page, ['gate', 'lineup', 'request'].includes(item.page) ? eventId : undefined)} aria-current={page === item.page ? 'page' : undefined} onClick={() => { setMenu(false); if (page === item.page && window.matchMedia('(max-width: 899px)').matches) menuRef.current?.focus({ preventScroll: true }); }}><span className="tm-nav-code">{item.code}</span><span>{item[lang]}</span></Link>;
-  const currentExtra = directory.slice(3).find(item => item.page === page);
-  return <div ref={shellRef} className="tm-shell" data-crt={crt} data-motion={enabled}>
-    <a hidden={page === 'entry'} className="tm-skip" href="#main-content" onClick={e => { e.preventDefault(); mainRef.current?.focus(); }}>{t('본문으로 건너뛰기', 'Skip to content')}</a>
-    <header ref={headerRef} hidden={page === 'entry'} className="tm-header" onKeyDown={e => { if (e.key === 'Escape' && menu) { setMenu(false); menuRef.current?.focus(); } }}>
-      <div className="tm-topline"><Link id="tm-brand" className="tm-brand" scroll={false} href={href('home')}><span className="tm-wordmark">TERMINAL</span><span className="tm-brand-location">{' // SEOUL'}</span></Link><div className="tm-utilities"><Link className="tm-channel-link" scroll={false} href={href('link')}>{t('공식 채널', 'Channels')}</Link><button type="button" aria-label={t('CRT 화면 효과', 'CRT display effects')} aria-pressed={crt} onClick={toggleCrt}>CRT <span aria-hidden="true">{crt ? '■' : '□'}</span></button><button type="button" aria-label={t('영어로 보기', 'Switch to Korean')} onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')}>{lang === 'ko' ? 'EN' : 'KO'}</button><button ref={menuRef} className="tm-menu-toggle" hidden={page === 'entry'} type="button" aria-expanded={menu} aria-controls="tm-extra-navigation" onClick={() => setMenu(!menu)}><span>{t('메뉴', 'Menu')} [{menu ? '−' : '+'}]</span>{(currentExtra || page === 'link') && <span className="tm-current-page">{currentExtra?.code ?? 'LINK'}</span>}</button></div></div>
-      <nav hidden={page === 'entry'} ref={navigationRef} id="tm-navigation" className="tm-navigation" data-open={menu} aria-label={t('주요 메뉴', 'Main navigation')}>
-        {directory.slice(0, 3).map(navLink)}
-        <div ref={extraRef} id="tm-extra-navigation" className="tm-extra-navigation">
-          {directory.slice(3).map(navLink)}
-          <Link className="tm-mobile-channels" scroll={false} href={href('link')} aria-current={page === 'link' ? 'page' : undefined} onClick={() => setMenu(false)}><span>{t('공식 채널', 'Channels')}</span></Link>
+  const currentGroup = page === 'request' || page === 'home' ? 'events' : directory.find(item => item.page === page)?.group ?? 'events';
+  const navLink = (item: typeof directory[number]) => <Link key={item.page} scroll={false}
+    href={href(item.page, ['gate', 'lineup'].includes(item.page) ? eventId : undefined)}
+    aria-current={page === item.page ? 'page' : undefined}
+    onClick={() => { setMenu(false); if (page === item.page && window.matchMedia('(max-width: 767px)').matches) menuRef.current?.focus({ preventScroll: true }); }}>
+    <span className="tm-nav-code">{item.code}</span><span>{item[lang]}</span>
+  </Link>;
+  return <div ref={shellRef} className="tm-shell" data-crt={crt} data-motion={enabled} data-entry={entry}>
+    <a hidden={entry} className="tm-skip" href="#main-content" onClick={e => { e.preventDefault(); mainRef.current?.focus(); }}>{t('본문으로 건너뛰기', 'Skip to content')}</a>
+    <aside className="tm-stub tm-stub-left" hidden={entry} aria-hidden="true"><span>STANN OS / LIVE</span><strong>TERMINAL</strong><span>SEOUL / KR</span></aside>
+    <header ref={headerRef} hidden={entry} className="tm-header" onKeyDown={e => { if (e.key === 'Escape' && menu) { setMenu(false); menuRef.current?.focus(); } }}>
+      <div className="tm-topline">
+        <Link id="tm-brand" className="tm-brand" scroll={false} href={href('home')}><span className="tm-wordmark">TERMINAL</span><span className="tm-brand-location">SEOUL / TECHNO PLATFORM</span></Link>
+        <div className="tm-screen-designation"><span>STANN OS / LIVE</span><strong>{page === 'home' ? 'EVENT OVERVIEW' : page === 'request' ? 'GUEST REQUEST' : page.toUpperCase()}</strong></div>
+        <div className="tm-utilities">
+          <button type="button" aria-label={t('CRT 화면 효과', 'CRT display effects')} aria-pressed={crt} onClick={toggleCrt}>CRT <span aria-hidden="true">{crt ? '■' : '□'}</span></button>
+          <button type="button" aria-label={t('영어로 보기', 'Switch to Korean')} onClick={() => setLang(lang === 'ko' ? 'en' : 'ko')}>{lang === 'ko' ? 'EN' : 'KO'}</button>
+          <button ref={menuRef} className="tm-menu-toggle" type="button" aria-expanded={menu} aria-controls="tm-extra-navigation" onClick={() => setMenu(!menu)}>{t('메뉴', 'Menu')} [{menu ? '−' : '+'}]</button>
+        </div>
+      </div>
+      <nav ref={navigationRef} id="tm-navigation" className="tm-navigation" data-open={menu} aria-label={t('주요 메뉴', 'Main navigation')}>
+        <div className="tm-navigation-groups">{groups.map(group => <Link key={group.id} scroll={false} href={href(group.page, group.id === 'events' ? eventId : undefined)} aria-current={page !== 'home' && currentGroup === group.id ? 'location' : undefined} onClick={() => setMenu(false)}><span className="tm-nav-code">{group.code}</span><span>{group[lang]}</span></Link>)}</div>
+        <div className="tm-subnavigation">{directory.filter(item => item.group === currentGroup).map(navLink)}</div>
+        <div ref={extraRef} id="tm-extra-navigation" className="tm-extra-navigation" hidden={!menu}>
+          {groups.map(group => <section key={group.id}><h2>{group.code}</h2>{directory.filter(item => item.group === group.id).map(navLink)}</section>)}
         </div>
       </nav>
     </header>
     <main ref={mainRef} id="main-content" tabIndex={-1} className="tm-main">{children}</main>
-    <footer hidden={page === 'entry'} className="tm-footer"><span>STANN OS / LIVE</span><span className="tm-path">{pagePaths[page]}</span><Link href={href('link')}>{t('공식 채널', 'Official channels')}</Link></footer>
+    <footer hidden={entry} className="tm-footer"><div><span>STANN OS / LIVE</span><span className="tm-path">{pagePaths[page]}</span></div><span className="tm-footer-wordmark" aria-hidden="true">TERMINAL</span><Link href={href('link')}>{t('공식 채널', 'Official channels')} <span aria-hidden="true">↗</span></Link></footer>
+    <aside className="tm-stub tm-stub-right" hidden={entry} aria-hidden="true"><span>{eventId ?? 'EVENT DIRECTORY'}</span><strong>{page === 'home' ? 'COMMAND ACCESS' : currentGroup.toUpperCase()}</strong><span>KST / UTC+09</span></aside>
     {crt && <CrtSurface main={mainRef} viewKey={viewKey} motionKey={motionKey} />}
   </div>;
 }
