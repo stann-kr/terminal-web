@@ -50,7 +50,7 @@
 }
 .tm-shell[data-crt=true] :where(h1,h2,h3,p,dt,dd,time,label,a,button,span) { text-shadow: var(--tm-text-glow); }
 .tm-shell[data-crt=true] :where(h1,h2,h3,.tm-wordmark,.tm-countdown dd) {
-  --tm-text-glow: 0 0 1px color-mix(in srgb,currentColor 55%,transparent), 0 0 6px color-mix(in srgb,currentColor 25%,transparent), 0 0 16px color-mix(in srgb,currentColor 10%,transparent);
+  --tm-text-glow: 0 0 1px color-mix(in srgb,currentColor 70%,transparent), 0 0 7px color-mix(in srgb,currentColor 38%,transparent), 0 0 22px color-mix(in srgb,currentColor 18%,transparent);
 }
 .tm-shell[data-crt=true] :where(.tm-action:not(.tm-action-secondary),.tm-action:not(.tm-action-secondary) *,.tm-navigation a[aria-current],.tm-navigation a[aria-current] *,.tm-roster a[aria-current],.tm-roster a[aria-current] *,.tm-channels a:hover,.tm-channels a:hover *) {
   --tm-text-glow: none;
@@ -78,7 +78,7 @@
 .tm-glass > div { position: absolute; inset: 0; }
 .tm-phosphor {
   opacity: .65;
-  background: radial-gradient(ellipse at 48% 48%,#ff641310,transparent 74%),radial-gradient(ellipse at 52% 42%,#e9dfcc09,transparent 66%);
+  background: radial-gradient(ellipse at 48% 48%,#ff641318,transparent 74%),radial-gradient(ellipse at 52% 42%,#e9dfcc0d,transparent 66%);
 }
 .tm-shell[data-motion=true] .tm-phosphor { animation: tm-phosphor-idle 9.7s ease-in-out infinite; }
 @keyframes tm-phosphor-idle {
@@ -88,10 +88,26 @@
   82% { opacity: .7; }
 }
 .tm-grain {
-  opacity: .035;
+  opacity: .065;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' seed='12' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cpath fill='white' filter='url(%23n)' d='M0 0h128v128H0z'/%3E%3C/svg%3E");
   background-size: 128px 128px;
 }
+.tm-glass > .tm-grain { inset: -12%; }
+.tm-shell[data-motion=true] .tm-grain { animation: tm-grain-drift 280ms steps(1,end) infinite; }
+@keyframes tm-grain-drift {
+  0%,100% { transform: translate(0,0); }
+  20% { transform: translate(-3%,2%); }
+  40% { transform: translate(2%,-3%); }
+  60% { transform: translate(-2%,-1%); }
+  80% { transform: translate(3%,3%); }
+}
+/* A broad, low-energy sweep travels over the glass, never over the layout coordinates. */
+.tm-glass > .tm-scan-glow { inset: 0 0 auto; height: 24%; opacity: 0; transform: translateY(-110%); background: linear-gradient(transparent 0%,#ff792600 25%,#ffb97e14 78%,#ffd7ad26 94%,#fff0d646 98%,transparent 100%); mix-blend-mode: screen; }
+.tm-shell[data-motion=true] .tm-scan-glow { opacity: .55; animation: tm-scan-pass 7.8s linear infinite; }
+@keyframes tm-scan-pass { to { transform: translateY(530%); } }
+.tm-persistence { opacity: 0; mix-blend-mode: screen; }
+.tm-persistence-title { position: absolute; display: block; margin: 0; filter: blur(1.1px); text-shadow: 1px 0 2px #ffb77999,0 0 14px #ff5d0066; }
+.tm-shell[data-motion=false] :is(.tm-persistence,.tm-scan-glow) { display: none; }
 .tm-raster {
   opacity: .75;
   background: repeating-linear-gradient(180deg,transparent 0 1px,#00000030 1.35px,#0000000d 1.75px,transparent 2px);
@@ -105,12 +121,13 @@
 .tm-shell-charge { background: radial-gradient(ellipse at 50% 48%,#ffe2b818,#ff64130a 48%,transparent 78%); opacity: 0; }
 .tm-shell:has(input:focus,textarea:focus,select:focus) .tm-raster { opacity: .2; }
 .tm-shell:has(input:focus,textarea:focus,select:focus) .tm-grain { opacity: .012; }
-.tm-shell:has(input:focus,textarea:focus,select:focus) .tm-phosphor { animation-play-state: paused; }
+.tm-shell:has(input:focus,textarea:focus,select:focus) :is(.tm-phosphor,.tm-grain,.tm-scan-glow) { animation-play-state: paused; }
+.tm-shell:has(input:focus,textarea:focus,select:focus) .tm-scan-glow { opacity: 0; }
 @media (max-width: 899px) {
   .tm-glass { opacity: .75; }
   .tm-raster { opacity: .6; }
 }
-@media (prefers-reduced-motion: reduce) { .tm-phosphor { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .tm-phosphor,.tm-grain,.tm-scan-glow { animation: none !important; } .tm-persistence,.tm-scan-glow { display: none; } }
 @media (prefers-contrast: more),(forced-colors: active),print {
   .tm-glass { display: none; }
   .tm-shell[data-crt=true] { --tm-line: #86817a; }

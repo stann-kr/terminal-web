@@ -4,6 +4,7 @@ import { hydrateRoot } from 'react-dom/client';
 import { MotionProvider as AspenMotionProvider } from '../features/terminal/motion/MotionProvider';
 import { useReadoutMotion as useAspenReadout } from '../features/terminal/motion/useReadoutMotion';
 import { TerminalText } from '../features/terminal/motion/TerminalText';
+import { CrtSurface } from '../features/terminal/motion/CrtSurface';
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
@@ -197,6 +198,53 @@ describe('CRT display preferences', () => {
 
 describe('production Aspen frame', () => {
   afterEach(() => { vi.restoreAllMocks(); });
+
+  it('leaves only the outgoing public title as phosphor and clears it on input, resize and policy changes', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ x: 0, y: 0, top: 0, left: 0, right: 600, bottom: 300, width: 600, height: 300, toJSON() {} });
+    function Surface({ title, crt = true, afterglow = true, view = title }: { title: string; crt?: boolean; afterglow?: boolean; view?: string }) {
+      const main = useRef<HTMLElement>(null);
+      return <AspenMotionProvider crt={crt}><main ref={main}><h1><TerminalText afterglow={afterglow}>{title}</TerminalText></h1><input aria-label="Draft" defaultValue="Private draft" /><p role="alert">Private error</p></main><CrtSurface main={main} viewKey={view} motionKey={title} /></AspenMotionProvider>;
+    }
+    const { container, rerender, unmount } = render(<Surface title="HOME" />);
+    const echo = container.querySelector('.tm-persistence')!;
+    rerender(<Surface title="GATE" />);
+    expect(echo).toHaveTextContent('HOME');
+    expect(echo).not.toHaveTextContent('Private');
+    expect(screen.getAllByRole('heading')).toHaveLength(1);
+    expect(screen.getByRole('heading')).toHaveAccessibleName('GATE');
+    rerender(<Surface title="LINEUP" />);
+    expect(echo.children).toHaveLength(1);
+    expect(echo).toHaveTextContent('GATE');
+    fireEvent.input(screen.getByRole('textbox'), { target: { value: 'New draft' } });
+    expect(echo).toBeEmptyDOMElement();
+    expect(screen.getByRole('textbox')).toHaveValue('New draft');
+    rerender(<Surface title="ABOUT" />);
+    expect(echo).toHaveTextContent('LINEUP');
+    fireEvent(window, new Event('resize'));
+    expect(echo).toBeEmptyDOMElement();
+    rerender(<Surface title="STATUS" />);
+    rerender(<Surface title="LINK" />);
+    expect(echo).toHaveTextContent('STATUS');
+    visibility.mockReturnValue('hidden');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(echo).toBeEmptyDOMElement();
+    visibility.mockReturnValue('visible');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(echo).toBeEmptyDOMElement();
+    rerender(<Surface title="HOME" />);
+    rerender(<Surface title="HOME" crt={false} />);
+    expect(echo).toBeEmptyDOMElement();
+    rerender(<Surface title="Event A" view="gate" />);
+    rerender(<Surface title="Invalid event" view="gate" afterglow={false} />);
+    expect(echo).toBeEmptyDOMElement();
+    rerender(<Surface title="Event B" view="gate" />);
+    expect(echo).toBeEmptyDOMElement();
+    unmount();
+    expect(gsap.getTweensOf(echo)).toHaveLength(0);
+    vi.unstubAllGlobals();
+  });
 
   it('keeps a single decorative afterglow out of the accessible name and clears it on input and policy changes', () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));

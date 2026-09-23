@@ -97,8 +97,8 @@ export function useReadoutMotion(root: RefObject<HTMLElement | null>, { key, act
         const text = item.source.textContent ?? '';
         // One decorative echo fades alongside the next output, without adding a wait.
         sequence.call(() => writeWordmark(ghost, text, text, false), [], position + duration)
-          .fromTo(ghost, { opacity: 0.14 }, { opacity: 0, duration: 0.9, ease: 'power2.out', immediateRender: false }, position + duration)
-          .call(() => ghost.replaceChildren(), [], position + duration + 0.9);
+          .fromTo(ghost, { opacity: 0.38 }, { opacity: 0, duration: 1.2, ease: 'power2.out', immediateRender: false }, position + duration)
+          .call(() => ghost.replaceChildren(), [], position + duration + 1.2);
       }
       position += duration;
     });

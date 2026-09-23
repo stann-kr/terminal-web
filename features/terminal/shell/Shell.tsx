@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { href, pagePaths, type Lang, type Page, type Translate } from '../events/data';
 import { gsap, useGSAP, useMotionEnabled } from '../motion/MotionProvider';
 import { useReadoutMotion } from '../motion/useReadoutMotion';
+import { CrtSurface } from '../motion/CrtSurface';
 import { useNavigationContinuity } from './useNavigationContinuity';
 import '../motion/motion.css';
 import './shell.css';
@@ -90,6 +91,6 @@ export function Shell({ page, eventId, viewKey, pathname, ready, motionKey, lang
     </header>
     <main ref={mainRef} id="main-content" tabIndex={-1} className="tm-main">{children}</main>
     <footer hidden={page === 'entry'} className="tm-footer"><span>STANN OS / LIVE</span><span className="tm-path">{pagePaths[page]}</span><Link href={href('link')}>{t('공식 채널', 'Official channels')}</Link></footer>
-    {crt && <div className="tm-glass" aria-hidden="true"><div className="tm-phosphor" /><div className="tm-grain" /><div className="tm-raster" /><div className="tm-vignette" /><div className="tm-reflection" /><div data-shell-charge className="tm-shell-charge" /></div>}
+    {crt && <CrtSurface main={mainRef} viewKey={viewKey} motionKey={motionKey} />}
   </div>;
 }
