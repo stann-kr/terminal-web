@@ -8,18 +8,18 @@ Node.js 22 이상과 npm을 사용합니다.
 
 ```sh
 npm ci
-npx wrangler d1 migrations apply terminal-db --local
+npx wrangler login
 npm run dev
 ```
 
-로컬 주소는 http://localhost:3005 입니다. API는 같은 출처의 `/api/*`를 사용하며 로컬 D1 데이터는 `.wrangler/state`에 저장됩니다. 초기 행사 자료는 로컬 DB에 준비해야 합니다. 조회 실패를 빈 행사로 대체하거나 정적 행사 배열을 운영 데이터로 사용하지 않습니다.
+로컬 주소는 http://localhost:3005 입니다. API는 같은 출처의 `/api/*`를 사용하며, `npm run dev`와 `npm start`는 Wrangler의 원격 바인딩으로 운영 D1 `terminal-db`에 연결합니다. 해당 Cloudflare 계정의 접근 권한이 필요합니다. 로컬 화면에서 폼을 제출해도 운영 DB에 저장되므로 연결 확인은 GET 조회로 진행합니다. `.wrangler/state`의 과거 로컬 사본은 미리보기 데이터로 사용하지 않습니다. 조회 실패를 빈 행사로 대체하거나 정적 행사 배열을 운영 데이터로 사용하지 않습니다.
 
 ## 화면
 
 - `/`: 대표 행사, 기록 요약, 최근 방문자 글
 - `/events`, `/events/:eventId`: 행사 탐색과 상세
 - `/artists`, `/artists/:artistKey`: 아티스트 명부와 출연 이력
-- `/archive`: 연도·장소·행사명으로 탐색하는 지난 기록
+- `/archive`: 최신순 지난 행사 기록과 전체 집계
 - `/transmit`: 공개 글 작성과 5건 단위 목록
 - `/signal`: 행사 소식 수신 연락처 저장
 - `/about`: 소개와 공식 채널

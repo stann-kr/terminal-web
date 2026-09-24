@@ -19,7 +19,7 @@ export function Archive() {
         <p>{event.subtitle}</p><p>{event.venue} · {event.time.replace(' KST','')} KST</p>
         <ul>{publicArtists(event).map(artist => <li key={artist.id}>{artist.name}</li>)}</ul>
         {event.artists.length > publicArtists(event).length && <small>추가 공개 예정 {event.artists.length-publicArtists(event).length}팀</small>}
-        <span>전체 행사 기록 ↗</span>
+        <span>전체 행사 기록</span>
       </Link>)}</div> : <StateNotice title="아직 지난 행사 기록이 없습니다">행사가 끝나면 이곳에서 기록을 확인할 수 있습니다.</StateNotice>}
         <Pagination page={page} totalPages={totalPages} href={page => `/archive?page=${page}`}/>
       </div>

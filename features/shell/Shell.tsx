@@ -18,7 +18,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <nav className={styles.navigation} aria-label="주 메뉴">{navigation.map(([href,label,ko], index) => <Link key={href} href={href} aria-current={(href === '/' ? pathname === '/' : pathname.startsWith(href)) ? 'page' : undefined}><span className={styles.number}>0{index + 1}</span><span>{label}<small>{ko}</small></span></Link>)}</nav>
         <div className={styles.language} aria-label="콘텐츠 언어"><span>CONTENT</span>{(['ko','en'] as const).map(lang => <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>{lang.toUpperCase()}</button>)}</div>
       </header>
-      <main id="main" tabIndex={-1} className={styles.main}>{children}</main>
+      <main id="main" aria-label="본문" tabIndex={0} className={styles.main}>{children}</main>
       <footer className={styles.footer}>
         <div className={styles.imprint}><div className={styles.barcode} aria-hidden="true"/><span>MUSIC / PEOPLE / RECORDS</span></div>
         <div className={styles.footerCenter}><nav aria-label="보조 메뉴"><Link href="/signal">SIGNAL · 소식 신청</Link><Link href="/about">ABOUT · 소개 / 채널</Link></nav><span>ALL EVENT TIMES / KST</span></div>

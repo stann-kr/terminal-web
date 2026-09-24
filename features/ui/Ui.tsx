@@ -9,7 +9,7 @@ export function Panel({ title, code, children, className = '' }: { title: string
   return <section className={`${styles.panel} ${className}`}><h2 className={styles.sectionTitle}>{title}{code && <span>{code}</span>}</h2>{children}</section>;
 }
 export function Action({ href, children, primary = false }: { href: string; children: ReactNode; primary?: boolean }) {
-  return <Link className={`${styles.action} ${primary ? styles.primary : ''}`} href={href}>{children}<span aria-hidden="true">↗</span></Link>;
+  return <Link className={`${styles.action} ${primary ? styles.primary : ''}`} href={href}>{children}</Link>;
 }
 export function Facts({ rows }: { rows: readonly (readonly [string, ReactNode])[] }) {
   return <dl className={styles.facts}>{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value === '' || value == null ? '미정' : value}</dd></div>)}</dl>;

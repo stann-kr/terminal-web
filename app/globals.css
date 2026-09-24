@@ -19,8 +19,7 @@
   --mono: 'Space Mono', Orbit, monospace;
 }
 * { box-sizing: border-box; }
-html { background: var(--bg); color: var(--ink); scrollbar-color: var(--line) var(--bg); scrollbar-gutter: stable; }
-@supports not (scrollbar-gutter: stable) { html { overflow-y: scroll; } }
+html { background: var(--bg); color: var(--ink); scrollbar-color: var(--line) var(--bg); }
 body { margin: 0; font: 14px/1.65 var(--mono); overflow-wrap: anywhere; }
 button, input, select, textarea { font: inherit; }
 button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }

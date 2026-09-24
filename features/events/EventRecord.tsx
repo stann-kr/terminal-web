@@ -33,7 +33,7 @@ export function Lineup({ event, events, stages = false }: { event: TerminalEvent
   const hidden = event.artists.length - visible.length;
   function identity(artist: Artist) {
     const profile = profileForAppearance(profiles,event.id,artist.id);
-    return <>{profile ? <Link href={artistHref(profile.key)}>{artist.name} ↗</Link> : artist.name}<small>{artist.origin}</small></>;
+    return <>{profile ? <Link href={artistHref(profile.key)}>{artist.name}</Link> : artist.name}<small>{artist.origin}</small></>;
   }
   return <>
     {stages ? <div className={styles.stageBoard}>
