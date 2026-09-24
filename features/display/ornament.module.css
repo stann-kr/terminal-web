@@ -1,0 +1,33 @@
+.ornament { position: relative; min-width: 0; width: 100%; margin-block: 20px; padding: 12px; border: 1px dashed var(--line); color: var(--ice); pointer-events: none; overflow: hidden; background: linear-gradient(rgb(var(--color-accent-primary) / .045) 1px,transparent 1px),linear-gradient(90deg,rgb(var(--color-accent-primary) / .045) 1px,transparent 1px); background-size: 20px 20px; }
+.registration { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.registration i { width: 5px; height: 5px; border: 1px solid currentColor; }
+.registration i:nth-child(2) { width: 36px; height: 3px; border: 0; background: repeating-linear-gradient(90deg,currentColor 0 3px,transparent 3px 6px); opacity: .5; }
+.drawing { display: block; width: 100%; height: 180px; stroke: currentColor; stroke-width: 1; }
+.drawing * { vector-effect: non-scaling-stroke; }
+.guide { opacity: .4; }
+.node { fill: var(--amber); stroke: var(--amber); }
+.node:nth-of-type(2n) { --phase: -.8s; }
+.trace { stroke: var(--amber); stroke-dasharray: 6 180; opacity: .8; }
+.ruler { margin-top: 8px; height: 5px; opacity: .5; background: repeating-linear-gradient(90deg,currentColor 0 1px,transparent 1px 8px); }
+.matrix { display: grid; grid-template-columns: repeat(8,minmax(0,1fr)); gap: 6px; padding-block: 16px; }
+.matrix i { height: 18px; border: 1px solid var(--line); background: rgb(var(--color-accent-primary) / .12); }
+.matrix i:nth-child(3n) { background: var(--ice); opacity: .5; }
+.matrix .node { background: var(--amber); border-color: var(--amber); opacity: .8; }
+.compact { margin-block: 16px; padding: 9px; }
+.compact .drawing { height: 88px; }
+.compact .matrix { padding-block: 10px; gap: 4px; }
+.compact .matrix i { height: 10px; }
+.ornament[data-active=false] .node { fill: var(--ice); stroke: var(--ice); background: var(--ice); border-color: var(--ice); opacity: .45; }
+.ornament[data-active=false] .trace { stroke: var(--ice); }
+@keyframes nodeBlink { 0%,64%,100% { opacity: .9; } 65%,84% { opacity: .18; } }
+@keyframes orbitBreathe { 0%,100% { opacity: .45; } 50% { opacity: 1; } }
+@keyframes traceStep { to { stroke-dashoffset: -186; } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) {
+  .ornament[data-active=true] .node { animation: nodeBlink 2.8s steps(1,end) var(--phase,0s) infinite; }
+  .ornament[data-active=true] .orbits { animation: orbitBreathe 5.6s ease-in-out infinite; }
+  .ornament[data-active=true] .trace { animation: traceStep 8s linear infinite; }
+  .ornament[data-active=true] .registration i:first-child { animation: nodeBlink 3.6s steps(1,end) -.9s infinite; }
+}
+@media(max-width:700px) { .drawing { height: 120px; }.ornament { margin-block: 16px; }.compact .drawing { height: 64px; } }
+@media(max-height:600px) { .drawing { height: 110px; }.compact .drawing { height: 60px; } }
+@media(forced-colors:active) { .ornament { display: none; } }

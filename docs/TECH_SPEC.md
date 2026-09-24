@@ -6,10 +6,11 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 
 - `app`: URL, metadata, server route 진입점, 오류 복구
 - `features/shell`: 프레임, 주 메뉴와 콘텐츠 언어
-- `features/events`: 행사 조회·선택·상세·기록
+- `features/events`: 행사 조회·통합 카드 목록·상세·기록
 - `features/artists`: 인물 식별과 공개 출연 이력
 - `features/home`, `features/about`: 개요와 편집 콘텐츠
 - `features/access`, `features/signal`, `features/transmit`: 각 입력 상태와 요청
+- `features/display`: 순차 표시·상태 점멸·장식 도형·공통 모션 정책
 - `features/ui`: 중립 control, HTTP 오류, 표시 primitive
 - `lib/events`, `lib/gate`, `lib/signal`, `lib/transmit`: 기존 서버 domain과 repository
 

@@ -17,15 +17,16 @@ npm run dev
 ## 화면
 
 - `/`: 대표 행사, 기록 요약, 최근 방문자 글
-- `/events`, `/events/:eventId`: 행사 탐색과 상세
+- `/events`, `/events/:eventId`: 예정·진행·지난 행사를 모은 카드 목록과 상세
 - `/artists`, `/artists/:artistKey`: 아티스트 명부와 출연 이력
-- `/archive`: 최신순 지난 행사 기록과 전체 집계
 - `/transmit`: 공개 글 작성과 5건 단위 목록
 - `/signal`: 행사 소식 수신 연락처 저장
 - `/about`: 소개와 공식 채널
 - `/events/:eventId/request`: 선택 행사 게스트 신청
 
-기존 `/home`, `/gate`, `/gate/request`, `/lineup`, `/status`, `/link` 주소는 새 화면으로 연결됩니다.
+기존 `/home`, `/gate`, `/gate/request`, `/lineup`, `/archive`, `/status`, `/link` 주소는 새 화면으로 연결됩니다.
+
+반복 점멸과 도형 효과는 하단 `FX` 버튼으로 끌 수 있으며, 운영체제의 모션 감소 설정도 따릅니다.
 
 ## 검증
 

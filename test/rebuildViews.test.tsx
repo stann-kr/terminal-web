@@ -1,10 +1,10 @@
 import { afterEach,describe,expect,it,vi } from 'vitest';
-import { act,cleanup,render,screen,within } from '@testing-library/react';
+import { act,cleanup,fireEvent,render,screen,within } from '@testing-library/react';
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { Events,EventDetail } from '../features/events/Events';
 import { Artists } from '../features/artists/Artists';
-import { Archive } from '../features/events/Archive';
+import { Shell } from '../features/shell/Shell';
 import { Home } from '../features/home/Home';
 import { EventCountdown } from '../features/home/EventCountdown';
 import { EventsData } from '../features/events/data';
@@ -32,7 +32,12 @@ describe('rebuild public views',()=>{
     expect(screen.getByRole('link',{name:/STANN LUMO/})).toHaveAttribute('href','/artists/stann-lumo');
     expect(screen.getByText('2회')).toBeInTheDocument();
   });
-  it('treats archived-only data as no upcoming event with a path to records',()=>{view(<Events/>);expect(screen.getByText('다음 행사 미정')).toBeInTheDocument();expect(screen.getByRole('link',{name:/지난 행사 기록/})).toHaveAttribute('href','/archive');expect(screen.queryByRole('link',{name:/게스트 신청/})).not.toBeInTheDocument();});
+  it('keeps past events accessible in the unified list when no event is upcoming',()=>{
+    view(<Events/>);
+    expect(screen.getByRole('link',{name:/Past event/})).toHaveAttribute('href','/events/OLD');
+    expect(screen.getByText('지난 행사').nextElementSibling).toHaveTextContent('1');
+    expect(screen.queryByRole('link',{name:/게스트 신청/})).not.toBeInTheDocument();
+  });
   it('hides private names in real archive lineups and closes expired requests',()=>{view(<EventDetail eventId="OLD"/>);expect(screen.getByRole('heading',{name:'Past event',level:1})).toBeInTheDocument();expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();expect(screen.getByRole('link',{name:/VISIBLE ARTIST/})).toHaveAttribute('href','/artists/appearance%3AOLD%3APUBLIC');expect(screen.queryByRole('link',{name:/게스트 신청/})).not.toBeInTheDocument();});
   it('shows all public artists without search or filters, including from old filtered URLs',()=>{
     navigation.search=new URLSearchParams('q=PRIVATE&origin=US&sort=count');
@@ -42,20 +47,20 @@ describe('rebuild public views',()=>{
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
-  it('shows all archived records and totals without using old search or filters',()=>{
+  it('shows upcoming and past records together without reviving removed filters',()=>{
     navigation.search=new URLSearchParams('q=absent&year=2024&venue=OTHER');
-    view(<Archive/>,[event,{...event,id:'FUTURE',session:'Future event',date:'2099-01-01',status:'UPCOMING'}]);
+    view(<Events/>,[event,{...event,id:'FUTURE',session:'Future event',date:'2099-01-01',status:'UPCOMING'}]);
     expect(screen.getByRole('heading',{name:'Past event'})).toBeInTheDocument();
-    expect(screen.queryByText('Future event')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:'Future event'})).toBeInTheDocument();
     expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();
-    expect(screen.getByText('전체 기록 집계')).toBeInTheDocument();
+    expect(screen.getByText('이벤트 현황')).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    expect(screen.getByText('행사').nextElementSibling).toHaveTextContent('1');
+    expect(screen.getByText('지난 행사').nextElementSibling).toHaveTextContent('1');
   });
   it.each([
     {path:'/artists',Component:Artists,pageSize:12,lastName:'ARTIST 12'},
-    {path:'/archive',Component:Archive,pageSize:4,lastName:'EVENT 04'},
+    {path:'/events',Component:Events,pageSize:4,lastName:'EVENT 04'},
   ])('preserves $path pagination and drops removed filters from page links',({path,Component,pageSize,lastName})=>{
     navigation.search=new URLSearchParams('page=2&q=absent&origin=US&sort=count&year=1900&venue=OTHER');
     const events=Array.from({length:pageSize+1},(_,index)=>{
@@ -67,6 +72,38 @@ describe('rebuild public views',()=>{
     expect(screen.getByText('2 / 2')).toBeInTheDocument();
     expect(screen.getByRole('link',{name:'← 이전'})).toHaveAttribute('href',`${path}?page=1`);
     expect(screen.getAllByRole('heading',{level:2,name:/^(ARTIST|EVENT) /})).toHaveLength(1);
+  });
+  it('orders live, upcoming by start time, then past events and updates an expired card at its boundary',()=>{
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
+    view(<Events/>,[
+      event,
+      {...event,id:'LATER',session:'Later event',date:'2026-11-28',time:'23:30',status:'UPCOMING'},
+      {...event,id:'NEXT',session:'Next event',date:'2026-11-28',time:'23:00',status:'UPCOMING'},
+      {...event,id:'LIVE',session:'Live event',date:'2026-11-28',time:'22:00',status:'LIVE'},
+    ]);
+    expect(screen.getAllByRole('heading',{level:2}).slice(0,4).map(node=>node.textContent)).toEqual(['Live event','Next event','Later event','Past event']);
+    const card=screen.getByRole('heading',{name:'Next event'}).closest('a')!;
+    expect(within(card).getByText('예정')).toBeInTheDocument();
+    expect(card).toHaveAttribute('data-event-state','UPCOMING');
+    act(()=>vi.advanceTimersByTime(1000));
+    expect(within(card).getByText('행사 기록')).toBeInTheDocument();
+    expect(card).toHaveAttribute('data-event-state','ARCHIVED');
+    expect(screen.getAllByRole('heading',{level:2}).slice(0,4).map(node=>node.textContent)).toEqual(['Live event','Later event','Next event','Past event']);
+    expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();
+  });
+  it('removes the archive menu and lets users turn off effects without replacing the page',()=>{
+    view(<Shell><input aria-label="초안" defaultValue="keep this"/></Shell>);
+    const menu=screen.getByRole('navigation',{name:'주 메뉴'});
+    expect(within(menu).getAllByRole('link')).toHaveLength(4);
+    expect(within(menu).queryByRole('link',{name:/ARCHIVE/})).not.toBeInTheDocument();
+    const draft=screen.getByRole('textbox',{name:'초안'});
+    const toggle=screen.getByRole('button',{name:'화면 효과'});
+    expect(toggle).toHaveAttribute('aria-pressed','true');
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-pressed','false');
+    expect(draft).toHaveValue('keep this');
+    expect(screen.getByRole('textbox',{name:'초안'})).toBe(draft);
   });
   it('keeps the Home clock after an event starts, then counts down to the newly registered next event',()=>{
     vi.useFakeTimers();

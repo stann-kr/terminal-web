@@ -13,7 +13,7 @@ export function useDisplayMotion(root: RefObject<HTMLDivElement | null>, key: st
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     const contrast = window.matchMedia('(forced-colors: active)');
     const connection = (navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }).connection;
-    const enabled = () => !reduced.matches && !contrast.matches && !connection?.saveData && document.visibilityState !== 'hidden';
+    const enabled = () => !element.hasAttribute('data-effects-off') && !reduced.matches && !contrast.matches && !connection?.saveData && document.visibilityState !== 'hidden';
     const readout = createReadout(element,enabled);
     const policyChanged = () => {
       element.toggleAttribute('data-display-paused',!enabled());
@@ -24,6 +24,7 @@ export function useDisplayMotion(root: RefObject<HTMLDivElement | null>, key: st
       try { readout.reveal(); } catch { readout.finish(); }
     };
     const observer = new MutationObserver(records => {
+      if (records.some(record => record.type === 'attributes')) policyChanged();
       if (records.some(record => Array.from(record.addedNodes).some(node => node instanceof HTMLElement && !node.closest('[data-readout-live]')))) reveal();
     });
     const onFocus = (event: FocusEvent) => {
@@ -31,7 +32,7 @@ export function useDisplayMotion(root: RefObject<HTMLDivElement | null>, key: st
     };
     policyChanged();
     reveal();
-    observer.observe(element,{childList:true,subtree:true});
+    observer.observe(element,{childList:true,subtree:true,attributes:true,attributeFilter:['data-effects-off']});
     element.addEventListener('pointerdown',readout.finish,true);
     element.addEventListener('keydown',readout.finish,true);
     element.addEventListener('wheel',readout.finish,{passive:true});

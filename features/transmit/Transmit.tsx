@@ -7,13 +7,14 @@ import { PageHeading, Pagination, Panel, ui } from '@/features/ui/Ui';
 import { Field, FormError, formStyles } from '@/features/ui/Form';
 import { ApiError, errorMessage, postJson } from '@/features/ui/http';
 import { pageNumber } from '@/features/events/model';
+import { Ornament } from '@/features/display/Ornament';
 import { LiveValue } from '@/features/display/Display';
 import { Feed, useTransmit } from './Feed';
 import styles from './transmit.module.css';
 export function Transmit() {
   const params=useSearchParams(),router=useRouter(),client=useQueryClient();
   const page=pageNumber(params.get('page')), query=useTransmit(page);
-  return <><PageHeading title="방문자 로그"/><div className={styles.layout}><Panel title="기록 남기기" code="WRITE"><TransmitForm onPosted={() => { void client.invalidateQueries({ queryKey:['transmit'] }); if(page !== 1) router.replace('/transmit',{scroll:false}); }}/></Panel><Panel title="공개 로그" code={query.data ? `${query.data.total} RECORDS` : 'READ'}><Feed page={page}/>{query.data && <Pagination page={page} totalPages={query.data.totalPages} href={page => `/transmit?page=${page}`}/>}</Panel></div></>;
+  return <><PageHeading title="방문자 로그"/><div className={styles.layout}><Panel title="기록 남기기" code="WRITE"><TransmitForm onPosted={() => { void client.invalidateQueries({ queryKey:['transmit'] }); if(page !== 1) router.replace('/transmit',{scroll:false}); }}/></Panel><Panel title="공개 로그" code={query.data ? `${query.data.total} RECORDS` : 'READ'}><Feed page={page}/>{query.data && <Pagination page={page} totalPages={query.data.totalPages} href={page => `/transmit?page=${page}`}/>}<Ornament variant="circuit" compact/></Panel></div></>;
 }
 export function TransmitForm({ onPosted }: { onPosted: () => void }) {
   const [draft,setDraft] = useState({handle:'',message:''});

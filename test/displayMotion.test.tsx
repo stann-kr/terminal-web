@@ -80,9 +80,9 @@ describe('display safety and lifecycle',()=>{
   });
 });
 
-function Screen({page='home',value=59,extra=false}:{page?:string;value?:number;extra?:boolean}) {
+function Screen({page='home',value=59,extra=false,effects=true}:{page?:string;value?:number;extra?:boolean;effects?:boolean}) {
   const ref=useRef<HTMLDivElement>(null);useDisplayMotion(ref,page);
-  return <div ref={ref} data-testid="display"><main><section data-readout-panel=""><h2 data-readout-row="">{page}</h2><button>열기</button><LiveValue value={value}/>{extra&&<p data-readout-row="">새 로그</p>}</section></main></div>;
+  return <div ref={ref} data-testid="display" data-effects-off={effects ? undefined : ''}><main><section data-readout-panel=""><h2 data-readout-row="">{page}</h2><button>열기</button><LiveValue value={value}/>{extra&&<p data-readout-row="">새 로그</p>}</section></main></div>;
 }
 describe('display integration',()=>{
   it('keeps the screen available if decorative measurement fails',()=>{
@@ -129,6 +129,20 @@ describe('display integration',()=>{
     expect(screen.getByTestId('display')).toHaveAttribute('data-display-paused');
     await act(async()=>rerender(<Screen extra/>));
     expect(screen.getByText('새 로그').style.clipPath).toBe('');
+  });
+  it('settles an active readout when effects are switched off and does not replay it on resume',async()=>{
+    const {rerender}=render(<Screen/>);
+    const heading=screen.getByRole('heading');
+    expect(heading.style.clipPath).not.toBe('');
+    await act(async()=>rerender(<Screen effects={false}/>));
+    expect(screen.getByTestId('display')).toHaveAttribute('data-display-paused');
+    expect(heading.style.clipPath).toBe('');
+    await act(async()=>rerender(<Screen effects={false} extra/>));
+    expect(screen.getByText('새 로그').style.clipPath).toBe('');
+    await act(async()=>rerender(<Screen extra/>));
+    expect(screen.getByTestId('display')).not.toHaveAttribute('data-display-paused');
+    expect(heading.style.clipPath).toBe('');
+    expect(screen.getByRole('button',{name:'열기'})).toBeEnabled();
   });
   it('shows query activity only while a real query promise is pending',async()=>{
     const client=new QueryClient({defaultOptions:{queries:{retry:false}}});disposals.push(()=>client.clear());
