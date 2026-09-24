@@ -1,20 +1,25 @@
 'use client';
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent, type KeyboardEvent } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { commandDirectory, runCommand } from './commands';
 import { createTerminalSessionStore } from './session';
+import { PrintedResponse } from './PrintedResponse';
 import styles from './terminal.module.css';
 
 export function HomeTerminal({ events, language = 'ko' }: { events: readonly TerminalEvent[]; language?: 'ko'|'en' }) {
   const [store] = useState(createTerminalSessionStore);
   const session = useSyncExternalStore(store.subscribe,store.getSnapshot,store.getServerSnapshot);
   const { entries,history,draft:input } = session;
+  const [printQueue,setPrintQueue] = useState<number[]>([]);
   const field = useRef<HTMLInputElement>(null), output = useRef<HTMLDivElement>(null);
+  const followOutput = useRef(true);
+  const printComplete = useCallback((id?: number) => setPrintQueue(queue => id === undefined ? [] : queue.filter(item => item !== id)),[]);
+  const followPrint = useCallback(() => { if (followOutput.current && output.current) output.current.scrollTop = output.current.scrollHeight; },[]);
   const composing = useRef(false), position = useRef<number|null>(null), draft = useRef('');
   const setInput = (value: string) => store.update(session => ({...session,draft:value}));
   useEffect(() => {
-    if (output.current) output.current.scrollTop = output.current.scrollHeight;
-  },[entries]);
+    followPrint();
+  },[entries,followPrint]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,6 +29,8 @@ export function HomeTerminal({ events, language = 'ko' }: { events: readonly Ter
     const result = runCommand(command,events,new Date(),{language,history:commands});
     position.current = null; draft.current = '';
     const entry = {id:(entries.at(-1)?.id ?? -1)+1,command,text:result.text,error:result.error};
+    followOutput.current = true;
+    setPrintQueue(queue => result.clear ? [] : [...queue.filter(id => id > entry.id-200),entry.id]);
     store.update(session => ({...session,draft:'',history:commands,entries:result.clear ? [] : [...session.entries,entry]}));
     field.current?.focus();
   }
@@ -32,6 +39,7 @@ export function HomeTerminal({ events, language = 'ko' }: { events: readonly Ter
       if (event.key === 'Enter') event.preventDefault();
       return;
     }
+    if (event.key === 'Escape') { setPrintQueue([]); return; }
     if (event.altKey || event.ctrlKey || event.metaKey || !['ArrowUp','ArrowDown'].includes(event.key) || !history.length) return;
     event.preventDefault();
     if (position.current === null) {
@@ -42,12 +50,12 @@ export function HomeTerminal({ events, language = 'ko' }: { events: readonly Ter
     position.current = next >= history.length ? null : next;
     setInput(position.current === null ? draft.current : history[position.current]);
   }
-  return <div className={styles.terminal} data-readout-live="">
-    <p id="terminal-help" className={styles.label}>명령어를 입력한 뒤 Enter로 실행합니다. help로 사용법을 확인하고 위·아래 방향키로 이전 입력을 불러올 수 있습니다.</p>
-    <div ref={output} className={styles.output} role="log" aria-label="명령어 실행 기록" aria-live="polite" aria-relevant="additions" tabIndex={0}>
+  return <div className={styles.terminal} data-readout-live="" data-printing={printQueue.length > 0}>
+    <p id="terminal-help" className={styles.label}>명령어를 입력한 뒤 Enter로 실행합니다. help로 사용법을 확인하고 위·아래 방향키로 이전 입력을 불러올 수 있습니다. Esc로 출력 중인 내용을 바로 펼칩니다.</p>
+    <div ref={output} className={styles.output} role="log" aria-label="명령어 실행 기록" aria-live="polite" aria-relevant="additions" tabIndex={0} onScroll={event => { const node=event.currentTarget; followOutput.current=node.scrollHeight-node.scrollTop-node.clientHeight < 32; }}>
       {entries.length ? entries.map(entry => <div key={entry.id} className={styles.entry}>
         {entry.command && <p className={styles.command}><span aria-hidden="true">CMD&gt; </span>{entry.command}</p>}
-        <pre data-error={entry.error || undefined}>{entry.text}</pre>
+        <PrintedResponse {...entry} mode={printQueue[0] === entry.id ? 'printing' : printQueue.includes(entry.id) ? 'waiting' : 'done'} onComplete={printComplete} onPrint={followPrint}/>
       </div>) : !history.length && <div className={styles.directory}>
         <p className={styles.directoryTitle}>TERMINAL / SEOUL</p>
         <p className={styles.directoryLabel}>COMMAND DIRECTORY_</p>

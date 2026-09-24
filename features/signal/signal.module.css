@@ -6,5 +6,8 @@
 .signalMatrix i[data-dim=true] { border: 1px solid var(--line); background: transparent; color: var(--line); }
 .signalMatrix i[data-accent=true] { background: var(--amber); }
 @keyframes signalBlocks { 0%,60%,100% { background: var(--amber); } 61%,84% { background: var(--ice); } }
-@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .signalMatrix i[data-accent=true] { animation: signalBlocks 2.8s steps(1,end) infinite; } }
+.signalMatrix[data-state=sending] i[data-accent=true] { background: var(--amber); }
+.signalMatrix[data-state=saved] i[data-accent=true] { background: var(--ice); outline: 1px solid var(--ice); outline-offset: 2px; }
+.signalMatrix[data-state=error] i[data-accent=true] { background: var(--danger); }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .signalMatrix[data-state=sending] i { animation: signalBlocks 1.4s steps(1,end) infinite; } }
 @media(forced-colors:active) { .signalMatrix { display: none; } }

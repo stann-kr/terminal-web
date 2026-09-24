@@ -1,15 +1,16 @@
 import { afterEach,describe,expect,it,vi } from 'vitest';
-import { act,cleanup,fireEvent,render,screen,within } from '@testing-library/react';
+import { act,cleanup,fireEvent,render,screen,waitFor,within } from '@testing-library/react';
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { Events,EventDetail } from '../features/events/Events';
 import { Artists,ArtistDetail } from '../features/artists/Artists';
 import { Shell } from '../features/shell/Shell';
+import { Transmit } from '../features/transmit/Transmit';
 import { Home } from '../features/home/Home';
 import { EventCountdown } from '../features/home/EventCountdown';
 import { EventsData } from '../features/events/data';
 const navigation=vi.hoisted(()=>({search:new URLSearchParams()}));
-vi.mock('next/navigation',()=>({useSearchParams:()=>navigation.search,usePathname:()=>'/',useRouter:()=>({push:vi.fn()})}));
+vi.mock('next/navigation',()=>({useSearchParams:()=>navigation.search,usePathname:()=>'/',useRouter:()=>({push:vi.fn(),replace:vi.fn()})}));
 const event:TerminalEvent={id:'OLD',session:'Past event',subtitle:'A past night',date:'2025-03-07',time:'23:00',venue:'FAUST',district:'SEOUL',coords:'',capacity:'',sound:'',status:'ARCHIVED',artists:[{id:'PUBLIC',name:'VISIBLE ARTIST',origin:'KR',dock:'1',time:'TBA',status:'ARCHIVED'},{id:'PRIVATE',name:'PRIVATE NAME',origin:'KR',dock:'1',time:'TBA',status:'CLASSIFIED'}]};
 const clients:QueryClient[]=[];
 function view(node:React.ReactNode,events:TerminalEvent[]=[event]) { const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});clients.push(client);client.setQueryData(['events'],events);client.setQueryData(['transmit',1],{logs:[],total:0,page:1,totalPages:0});return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>); }
@@ -152,4 +153,28 @@ describe('rebuild public views',()=>{
   });
   it('keeps home useful when the API has no events',()=>{view(<Home/>,[]);expect(screen.getByText('공개된 행사가 아직 없습니다')).toBeInTheDocument();expect(screen.getByRole('link',{name:/소식 신청/})).toHaveAttribute('href','/signal');});
   it('does not present a failed event query as zero records',async()=>{vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('{}',{status:500})));const client=new QueryClient({defaultOptions:{queries:{retry:false}}});clients.push(client);render(<QueryClientProvider client={client}><EventsData>{()=> <p>DATA ZERO</p>}</EventsData></QueryClientProvider>);expect(await screen.findByRole('alert')).toHaveTextContent('행사 기록을 불러오지 못했습니다');expect(screen.queryByText('DATA ZERO')).not.toBeInTheDocument();});
+});
+
+describe('public log activity',() => {
+  it('tracks initial load, refresh, failure and retry without discarding the last public logs',async () => {
+    let resolve!:(value:Response)=>void;
+    vi.stubGlobal('fetch',vi.fn(() => new Promise<Response>(done => {resolve=done;})));
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}});clients.push(client);
+    const {container}=render(<QueryClientProvider client={client}><Transmit/></QueryClientProvider>);
+    const indicator=() => container.querySelector('[aria-hidden=true][data-state]')!;
+    const result={logs:[{id:'1',handle:'PUBLIC',message:'보존할 로그',ts:'2026.09.24',createdAt:'2026-09-24T00:00:00Z'}],page:1,total:1,totalPages:1};
+    expect(indicator()).toHaveAttribute('data-state','loading');
+    await act(async () => {resolve(new Response(JSON.stringify(result)));});
+    await waitFor(() => expect(indicator()).toHaveAttribute('data-state','ready'));
+    act(() => {void client.invalidateQueries({queryKey:['transmit']});});
+    await waitFor(() => expect(indicator()).toHaveAttribute('data-state','loading'));
+    expect(screen.getByText('보존할 로그')).toBeInTheDocument();
+    await act(async () => {resolve(new Response(JSON.stringify({error:'UNAVAILABLE'}),{status:503}));});
+    await waitFor(() => expect(indicator()).toHaveAttribute('data-state','error'));
+    expect(screen.getByText('보존할 로그')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button',{name:'다시 불러오기'}));
+    await waitFor(() => expect(indicator()).toHaveAttribute('data-state','loading'));
+    await act(async () => {resolve(new Response(JSON.stringify(result)));});
+    await waitFor(() => expect(indicator()).toHaveAttribute('data-state','ready'));
+  });
 });

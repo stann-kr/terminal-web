@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { HomeTerminal } from '../features/home/terminal/HomeTerminal';
 import { runCommand } from '../features/home/terminal/commands';
 import { TERMINAL_SESSION_KEY } from '../features/home/terminal/session';
@@ -11,7 +11,7 @@ const artist: Artist = {id:'PUBLIC',name:'VISIBLE ARTIST',origin:'KR',dock:'1',t
 const old: TerminalEvent = {id:'OLD',session:'지난 행사',date:'2025-01-01',time:'23:00',status:'ARCHIVED',subtitle:'',venue:'SEOUL',district:'',coords:'',capacity:'',sound:'',artists:[artist,{...artist,id:'PRIVATE',name:'PRIVATE ARTIST',status:'CLASSIFIED'}],description:{ko:'한국어 소개',en:'English description'}};
 const next: TerminalEvent = {...old,id:'TRM-03',session:'다음 행사',date:'2099-01-01',status:'UPCOMING',artists:[]};
 const now = new Date('2026-09-24T00:00:00Z');
-afterEach(() => {cleanup();vi.restoreAllMocks();push.mockReset();sessionStorage.clear();});
+afterEach(() => {cleanup();vi.restoreAllMocks();vi.unstubAllGlobals();vi.useRealTimers();push.mockReset();sessionStorage.clear();});
 function submit(command: string) {
   fireEvent.change(screen.getByRole('textbox',{name:'터미널 명령어'}),{target:{value:command}});
   fireEvent.submit(screen.getByRole('form',{name:'사이트 명령어'}));
@@ -110,5 +110,73 @@ describe('home text terminal',() => {
     expect(screen.getByRole('log')).toHaveTextContent('VISIBLE ARTIST');
     expect(screen.getByText('기록 저장을 사용할 수 없어 현재 화면에서만 유지됩니다.')).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toBeEnabled();
+  });
+});
+
+function visibleResponses() { return Array.from(screen.getByRole('log').querySelectorAll('pre > [aria-hidden=true]')); }
+describe('terminal character printing',() => {
+  it('prints whole graphemes and line breaks in command order, while saving full responses immediately',() => {
+    vi.useFakeTimers();
+    const unicode={...old,id:'가🙂'};
+    render(<HomeTerminal events={[unicode,next]}/>);
+    submit('open 가🙂'); submit('artists');
+    expect(visibleResponses().map(node => node.textContent)).toEqual(['','']);
+    const saved=JSON.parse(sessionStorage.getItem(TERMINAL_SESSION_KEY)!);
+    expect(saved.entries[0].text).toContain('한국어 소개');
+    act(() => {vi.advanceTimersByTime(16);});
+    expect(visibleResponses()[0].textContent).toBe('가');
+    expect(visibleResponses()[1].textContent).toBe('');
+    act(() => {vi.advanceTimersByTime(16);});
+    expect(visibleResponses()[0].textContent).toBe('가🙂');
+    act(() => {vi.runAllTimers();});
+    expect(visibleResponses()[0].textContent).toBe(runCommand('open 가🙂',[unicode,next],now).text);
+    expect(visibleResponses()[0].textContent).toContain('\n');
+    act(() => {vi.advanceTimersByTime(16);});
+    expect(visibleResponses()[1].textContent).toBe('V');
+    expect(screen.getByRole('textbox')).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole('textbox'),{key:'Escape'});
+    expect(visibleResponses()[1].textContent).toBe('VISIBLE ARTIST / KR');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('cancels printing on clear/unmount and restores complete scrollback without replay',() => {
+    vi.useFakeTimers();
+    const view=render(<HomeTerminal events={[old,next]}/>);
+    submit('events');
+    act(() => {vi.advanceTimersByTime(16);});
+    submit('clear');
+    act(() => {vi.runAllTimers();});
+    expect(screen.getByRole('log')).toBeEmptyDOMElement();
+    submit('artists');
+    view.unmount();
+    act(() => {vi.runAllTimers();});
+    expect(screen.queryByRole('log')).not.toBeInTheDocument();
+    render(<HomeTerminal events={[old,next]}/>);
+    expect(visibleResponses()[0].textContent).toBe('VISIBLE ARTIST / KR');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it.each(['effects','reduced','contrast','hidden','saveData'])('settles pending output when %s disables motion and never replays it',async policy => {
+    vi.useFakeTimers();
+    class Media extends EventTarget { matches=false; }
+    const reduced=new Media(),contrast=new Media();
+    vi.stubGlobal('matchMedia',(query:string) => query.includes('reduced-motion') ? reduced : contrast);
+    const connection=Object.assign(new EventTarget(),{saveData:false});
+    vi.stubGlobal('navigator',{connection});
+    render(<div data-testid="frame"><HomeTerminal events={[old,next]}/></div>);
+    submit('events'); submit('artists');
+    act(() => {vi.advanceTimersByTime(16);});
+    expect(visibleResponses()[0].textContent).toBe('T');
+    await act(async () => {
+      if(policy === 'effects') screen.getByTestId('frame').setAttribute('data-effects-off','');
+      if(policy === 'reduced' || policy === 'contrast') { const media=policy === 'reduced' ? reduced : contrast; media.matches=true;media.dispatchEvent(new Event('change')); }
+      if(policy === 'hidden') { vi.spyOn(document,'visibilityState','get').mockReturnValue('hidden'); document.dispatchEvent(new Event('visibilitychange')); }
+      if(policy === 'saveData') { connection.saveData=true;connection.dispatchEvent(new Event('change')); }
+    });
+    expect(visibleResponses()[0].textContent).toBe(runCommand('events',[old,next]).text);
+    expect(visibleResponses()[1].textContent).toBe('VISIBLE ARTIST / KR');
+    expect(vi.getTimerCount()).toBe(0);
+    screen.getByTestId('frame').removeAttribute('data-effects-off');
+    submit('artists');
+    fireEvent.keyDown(screen.getByRole('textbox'),{key:'Escape'});
+    expect(visibleResponses()[0].textContent).toBe(runCommand('events',[old,next]).text);
   });
 });

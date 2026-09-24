@@ -80,9 +80,25 @@ describe('transmit UI',()=>{
   });
 });
 describe('signal UI',()=>{
-  it('requires consent and only describes the stored contact result',async()=>{
-    const fetch=vi.fn().mockResolvedValue(json({ok:true}));vi.stubGlobal('fetch',fetch);const user=userEvent.setup();render(<Signal/>);
+  it.each([true,false])('requires consent and syncs the matrix with the actual request result (saved=%s)',async saved=>{
+    let resolve!:(value:Response)=>void;
+    const fetch=vi.fn().mockReturnValue(new Promise<Response>(done=>{resolve=done;}));vi.stubGlobal('fetch',fetch);
+    const user=userEvent.setup();const {container}=render(<Signal/>);
+    const matrix=container.querySelector('[aria-hidden=true][data-state]')!;
+    expect(matrix).toHaveAttribute('data-state','idle');
     await user.type(screen.getByLabelText(/^이메일/),'reader@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'reader');await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));expect(fetch).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('checkbox'));await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));expect(await screen.findByRole('heading',{name:'소식 신청을 저장했습니다'})).toBeInTheDocument();expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({email:'reader@example.test',instagram:'reader',consent:true});
+    await user.click(screen.getByRole('checkbox'));await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));
+    expect(matrix).toHaveAttribute('data-state','sending');
+    expect(screen.getByRole('button',{name:'저장 중…'})).toBeDisabled();
+    await act(async()=>{resolve(saved?json({ok:true}):json({error:'UNAVAILABLE'},503));});
+    if(saved) {
+      expect(await screen.findByRole('heading',{name:'소식 신청을 저장했습니다'})).toBeInTheDocument();
+      expect(matrix).toHaveAttribute('data-state','saved');
+    } else {
+      expect(await screen.findByRole('alert')).toBeInTheDocument();
+      expect(matrix).toHaveAttribute('data-state','error');
+      expect(screen.getByLabelText(/^이메일/)).toHaveValue('reader@example.test');
+    }
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({email:'reader@example.test',instagram:'reader',consent:true});
   });
 });
