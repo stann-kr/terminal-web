@@ -11,7 +11,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const { language, setLanguage } = useLanguage();
   return <div className={styles.frame}>
     <a href="#main" className={styles.skip}>본문으로 이동</a>
-    <div className={styles.rail} aria-hidden="true"><span>TERMINAL / SEOUL</span><span>STANN LUMO</span></div>
+    <div className={styles.rail} aria-hidden="true"><span>TERMINAL / SEOUL</span><span className={styles.railTitle}>STANN LUMO</span><span>MUSIC / PEOPLE / RECORDS</span></div>
     <div className={styles.core}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">TERMINAL<span>SEOUL TECHNO PLATFORM</span></Link>
@@ -20,8 +20,12 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
       <nav className={styles.navigation} aria-label="주 메뉴">{navigation.map(([href,label,ko], index) => <Link key={href} href={href} aria-current={(href === '/' ? pathname === '/' : pathname.startsWith(href)) ? 'page' : undefined}><span className={styles.number}>0{index + 1}</span><span>{label}<small>{ko}</small></span><span aria-hidden="true">↗</span></Link>)}</nav>
       <main id="main" tabIndex={-1} className={styles.main}>{children}</main>
-      <footer className={styles.footer}><span>TERMINAL — MUSIC & PEOPLE</span><nav aria-label="보조 메뉴"><Link href="/signal">SIGNAL · 소식 신청</Link><Link href="/about">ABOUT · 소개 / 채널</Link></nav><span>ALL EVENT TIMES / KST</span></footer>
+      <footer className={styles.footer}>
+        <div className={styles.imprint}><div className={styles.barcode} aria-hidden="true"/><span>MUSIC / PEOPLE / RECORDS</span></div>
+        <div className={styles.footerCenter}><nav aria-label="보조 메뉴"><Link href="/signal">SIGNAL · 소식 신청</Link><Link href="/about">ABOUT · 소개 / 채널</Link></nav><span>ALL EVENT TIMES / KST</span></div>
+        <div className={styles.signature}><div className={styles.symbols} aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M5 5l14 14M19 5 5 19"/><circle cx="12" cy="12" r="8"/></svg><svg viewBox="0 0 24 24"><path d="M4 18 12 4l8 14H4Zm4-5h8M12 9v8"/></svg></div><div className={styles.wordmark}>TERMINAL<small>STANN LUMO / SEOUL</small></div></div>
+      </footer>
     </div>
-    <div className={`${styles.rail} ${styles.right}`} aria-hidden="true"><span>ARCHIVE & CONTINUITY</span><span>TERMINAL</span></div>
+    <div className={`${styles.rail} ${styles.right}`} aria-hidden="true"><span>EVENTS / ARTISTS</span><span className={styles.railTitle}>ARCHIVE & CONTINUITY</span><span>TERMINAL / KST</span></div>
   </div>;
 }
