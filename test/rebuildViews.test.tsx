@@ -3,7 +3,7 @@ import { act,cleanup,fireEvent,render,screen,within } from '@testing-library/rea
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { Events,EventDetail } from '../features/events/Events';
-import { Artists } from '../features/artists/Artists';
+import { Artists,ArtistDetail } from '../features/artists/Artists';
 import { Shell } from '../features/shell/Shell';
 import { Home } from '../features/home/Home';
 import { EventCountdown } from '../features/home/EventCountdown';
@@ -30,7 +30,19 @@ describe('rebuild public views',()=>{
     ]);
     expect(screen.getAllByRole('heading',{name:'STANN LUMO'})).toHaveLength(1);
     expect(screen.getByRole('link',{name:/STANN LUMO/})).toHaveAttribute('href','/artists/stann-lumo');
-    expect(screen.getByText('2회')).toBeInTheDocument();
+    expect(screen.queryByText('참여 행사')).not.toBeInTheDocument();
+    expect(screen.queryByText('최근 출연')).not.toBeInTheDocument();
+    expect(screen.queryByText('2회')).not.toBeInTheDocument();
+  });
+  it('keeps the artist biography and source events without attendance or recency summaries',()=>{
+    view(<ArtistDetail artistKey="appearance:OLD:PUBLIC"/>,[{...event,artists:[{...event.artists[0],description:'Artist biography'}]}]);
+    expect(screen.getByRole('heading',{name:'VISIBLE ARTIST',level:1})).toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:/출연 기록/})).toBeInTheDocument();
+    expect(screen.getAllByRole('link',{name:/Past event/})[0]).toHaveAttribute('href','/events/OLD');
+    expect(screen.queryByText('참여 행사')).not.toBeInTheDocument();
+    expect(screen.queryByText('최근 출연')).not.toBeInTheDocument();
+    expect(screen.queryByText('APPEARANCES')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Artist biography').length).toBeGreaterThan(0);
   });
   it('keeps past events accessible in the unified list when no event is upcoming',()=>{
     view(<Events/>);

@@ -26,3 +26,6 @@
 @media(max-width:1100px) { .terminal { min-height: 310px; }.output { max-height: 360px; } }
 @media(max-width:700px) { .prompt input { font-size: 16px; }.directory dl > div { grid-template-columns: 110px minmax(0,1fr); } }
 @media(forced-colors:active) { .cursor { background: CanvasText; }.terminal { text-shadow: none; } }
+
+.entry { flex-shrink: 0; }
+.storageNotice { color: var(--amber); font-size: 10px; padding-block: 8px; }
