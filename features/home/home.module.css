@@ -14,14 +14,14 @@
 .intro { display: grid; gap: 16px; margin-top: 24px; padding-top: 14px; border-top: 1px dashed var(--line); color: var(--muted); font-size: 11px; }
 @media(max-width:1100px) { .dashboard { min-height: 0; grid-template-columns: 220px minmax(0,1fr); }.columnActions { margin-top: 0; }.dashboard > :last-child { grid-column: 1/-1; border-top: 1px dashed var(--line); padding-top: 20px; }.featured { border-right: 0; padding-right: 0; } }
 @media(max-width:700px) { .dashboard { display: flex; flex-direction: column; }.featured { order: -1; padding: 0 0 24px; border: 0; border-bottom: 1px dashed var(--line); }.stats { display: flex; gap: 12px; }.stats li { flex: 1; }.stats a { display: flex; flex-wrap: wrap; gap: 8px; }.stats a > span:first-child { width: 100%; }.stats strong { font-size: 24px; }.intro { margin-top: 20px; }.featured h2 { font-size: clamp(25px,7.5vw,42px); } }
-.countdown { margin-block: 20px 22px; padding: 10px; border: 1px solid var(--line); box-shadow: inset 0 0 0 3px var(--bg),inset 0 0 0 4px var(--faint); color: var(--ice); background: rgb(0 0 0 / .25); }
+.countdown { container-type: inline-size; margin-block: 20px 22px; padding: 10px; border: 1px solid var(--line); box-shadow: inset 0 0 0 3px var(--bg),inset 0 0 0 4px var(--faint); color: var(--ice); background: rgb(0 0 0 / .25); }
 .countdownMode { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 9px; letter-spacing: .04em; }
 .countdownMode > :last-child { color: var(--muted); }
 .countdownUnits { display: grid; grid-template-columns: minmax(0,1.3fr) repeat(3,minmax(0,1fr)); gap: 5px; margin-top: 10px; font-variant-numeric: tabular-nums; }
 .countdownUnits > div { min-width: 0; display: flex; flex-direction: column-reverse; justify-content: end; gap: 6px; padding: 8px 3px 5px; border: 1px solid var(--line); text-align: center; background: rgb(var(--color-accent-primary) / .035); }
 .countdownUnits dt { font-size: 10px; color: var(--muted); }
 .countdownUnits dd { font-size: clamp(20px,2.4vw,32px); line-height: 1.1; }
-.countdownUnits > :first-child dd { font-size: clamp(28px,3.4vw,46px); }
+.countdownUnits > :first-child dd { font-size: clamp(24px,10cqi,46px); }
 
 /* Paired rectangular registers: fixed slats light in alternating banks. */
 .homeRelay { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-block: 16px 24px; padding: 10px 12px; border-inline: 2px solid var(--line); background: linear-gradient(var(--line),var(--line)) center / 1px 100% no-repeat; pointer-events: none; }
