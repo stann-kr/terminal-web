@@ -5,6 +5,16 @@ import { accessAvailability, paragraphs } from '../features/events/model';
 const artist=(id:string,status:Artist['status']='CONFIRMED'):Artist=>({id,name:'SAME NAME',origin:'KR',dock:'1',time:'TBA',status});
 const event=(id:string,artists:Artist[],date='2026-10-01'):TerminalEvent=>({id,session:id,subtitle:'',date,time:'23:00',venue:'Venue',district:'Seoul',coords:'',capacity:'',sound:'',status:'UPCOMING',artists});
 describe('public artist archive',()=>{
+  it('groups the confirmed identities into three people and four public appearances',()=>{
+    const profiles=buildArtistArchive([
+      event('TRM-01',[artist('01-A'),artist('01-B'),artist('01-C')]),
+      event('TRM-02',[artist('02-A'),artist('02-B','CLASSIFIED')]),
+    ]);
+    expect(profiles.map(profile=>profile.key).sort()).toEqual(['marcus-l','nusnoom','stann-lumo']);
+    expect(profiles.every(profile=>profile.verified)).toBe(true);
+    expect(profiles.find(profile=>profile.key==='stann-lumo')).toMatchObject({eventCount:2});
+    expect(profiles.reduce((count,profile)=>count+profile.appearances.length,0)).toBe(4);
+  });
   it('keeps names independent until appearances have an explicit reviewed mapping',()=>{
     const events=[event('A',[artist('1')]),event('B',[artist('2')])];
     expect(buildArtistArchive(events)).toHaveLength(2);
