@@ -7,7 +7,6 @@ import { EventFacts } from '@/features/events/EventRecord';
 import { Action, Loading, PageHeading, Panel, StateNotice, ui } from '@/features/ui/Ui';
 import { Consent, Field, FormError, FormPanel, formStyles } from '@/features/ui/Form';
 import { ApiError, errorMessage, postJson } from '@/features/ui/http';
-import { Ornament } from '@/features/display/Ornament';
 import styles from './access.module.css';
 
 export function Access({ eventId }: { eventId: string }) {
@@ -19,7 +18,7 @@ export function Access({ eventId }: { eventId: string }) {
   return <><PageHeading title="게스트 신청"/><div className={styles.layout}><Panel title={event?.session ?? '행사 정보'} code={eventId}>
     {query.isError && <StateNotice error title="행사 정보를 불러오지 못했습니다" retry={() => void query.refetch()}/>}
     {event ? <><EventFacts event={event}/><div className={ui.actions}><Action href={eventHref(event.id)}>행사 상세</Action></div></> : query.isPending ? <Loading/> : !query.isError && <StateNotice error title="신청할 행사를 찾을 수 없습니다"><Action href="/events">행사 목록 확인</Action></StateNotice>}
-    <Ornament variant="scan" compact/></Panel><FormPanel title="게스트 신청서" code="ACCESS"><AccessForm key={eventId} eventId={eventId} availability={availability}/></FormPanel></div></>;
+    <div className={styles.accessLatch} aria-hidden="true"><i/><span/><i/></div></Panel><FormPanel title="게스트 신청서" code="ACCESS"><AccessForm key={eventId} eventId={eventId} availability={availability}/></FormPanel></div></>;
 }
 export function AccessForm({ eventId, availability = { canRequest: true, message: '' } }: { eventId: string; availability?: { canRequest: boolean; message: string } }) {
   const [code,setCode] = useState('');

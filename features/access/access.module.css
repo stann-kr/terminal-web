@@ -2,3 +2,12 @@
 .legend { padding: 0 0 14px; color: var(--muted); font-size: 11px; }.code { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }.codeMessage { min-height: 1em; font-size: 12px; color: var(--ice); }.inviter { padding: 10px 12px; border: 1px dashed var(--line); font-size: 12px; color: var(--muted); }.inviter strong { color: var(--ice); margin-left: 16px; }.contacts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media(max-width:850px) { .layout { grid-template-columns: minmax(0,1fr); gap: 26px; }.contacts { grid-template-columns: minmax(0,1fr); } }
 @media(max-width:400px) { .code { grid-template-columns: minmax(0,1fr); } }
+
+.accessLatch { display: flex; justify-content: center; align-items: center; gap: 8px; height: 84px; margin-block: 20px; padding-inline: 20%; pointer-events: none; }
+.accessLatch i { width: 36%; height: 34px; border: 2px solid var(--ice); border-right: 0; }
+.accessLatch i:last-child { border: 2px solid var(--ice); border-left: 0; }
+.accessLatch span { width: 4px; height: 16px; flex-shrink: 0; background: var(--amber); }
+@keyframes latchLeft { 0%,25%,100% { transform: translateX(-18%); } 45%,70% { transform: translateX(0); } }
+@keyframes latchRight { 0%,25%,100% { transform: translateX(18%); } 45%,70% { transform: translateX(0); } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .accessLatch i:first-child { animation: latchLeft 5.6s steps(3,end) infinite; }.accessLatch i:last-child { animation: latchRight 5.6s steps(3,end) infinite; } }
+@media(forced-colors:active) { .accessLatch { display: none; } }

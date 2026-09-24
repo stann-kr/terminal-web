@@ -21,3 +21,15 @@
 .countdownUnits dt { font-size: 10px; color: var(--muted); }
 .countdownUnits dd { font-size: clamp(22px,2.6vw,34px); line-height: 1.1; }
 .countdownUnits > :first-child dd { font-size: clamp(42px,4.5vw,64px); }
+
+/* HOME: one horizontal scan; the index decoration stays still. */
+.homeScan { position: relative; height: 40px; margin-block: 16px; overflow: hidden; pointer-events: none; }
+.homeScan::before { content: ''; position: absolute; inset: calc(50% - 1px) 0 auto; height: 2px; background: repeating-linear-gradient(90deg,var(--line) 0 10px,transparent 10px 20px); }
+.homeScan i { position: absolute; top: calc(50% - 5px); left: 0; width: calc(100% - 10px); height: 10px; }
+.homeScan i::before { content: ''; display: block; width: 10px; height: 10px; background: var(--ice); }
+.homeScan[data-active=true] i::before { background: var(--amber); box-shadow: 0 0 8px rgb(var(--amber-rgb) / .3); }
+.indexMark { display: grid; gap: 8px; margin-block: 22px; padding: 12px 0 12px 12px; border-left: 3px solid var(--line); pointer-events: none; }
+.indexMark i { display: block; height: 2px; width: 70%; background: var(--line); }.indexMark i:nth-child(2) { width: 40%; }.indexMark i:last-child { width: 55%; background: var(--ice); }
+@keyframes homeScan { from { transform: translateX(0); } to { transform: translateX(100%); } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .homeScan[data-active=true] i { animation: homeScan 5s linear infinite; } }
+@media(forced-colors:active) { .homeScan,.indexMark { display: none; } }

@@ -9,12 +9,13 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 - `features/events`: 행사 조회·통합 카드 목록·상세·기록
 - `features/artists`: 인물 식별과 공개 출연 이력
 - `features/home`, `features/about`: 개요와 편집 콘텐츠
+- `features/home/terminal`: 사이트 명령어 해석·입력·기록과 허용된 경로 이동
 - `features/access`, `features/signal`, `features/transmit`: 각 입력 상태와 요청
-- `features/display`: 순차 표시·상태 점멸·장식 도형·공통 모션 정책
+- `features/display`: 순차 표시·상태 점멸·공통 모션 정책
 - `features/ui`: 중립 control, HTTP 오류, 표시 primitive
 - `lib/events`, `lib/gate`, `lib/signal`, `lib/transmit`: 기존 서버 domain과 repository
 
-스타일은 각 capability의 CSS Module이 소유합니다. `app/globals.css`는 토큰·font·reset·중립 요소만 포함합니다. STANN OS 공용 원본 token과 patch verifier는 별도로 유지합니다.
+스타일과 페이지별 전용 장식은 각 capability의 CSS Module이 소유합니다. 이벤트 목록과 archive 명령은 같은 정렬·페이지 크기 계약을 사용하며, focus query는 데이터 도착 후 지정된 카드로 스크롤과 포커스를 이동합니다. `app/globals.css`는 토큰·font·reset·중립 요소만 포함합니다. STANN OS 공용 원본 token과 patch verifier는 별도로 유지합니다.
 
 ## 공개 API
 

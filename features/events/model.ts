@@ -1,11 +1,22 @@
 import type { Artist, TerminalEvent } from '@/lib/events/types';
-import { getFutureUpcomingEvent, getRequestWindowState } from '@/lib/events/lifecycle';
+import { getArchivedOrElapsedEvents, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, withEffectiveEventStatus } from '@/lib/events/lifecycle';
 import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
 
 export const isPublicArtist = (artist: Artist) => artist.status === 'CONFIRMED' || artist.status === 'ARCHIVED';
 export const publicArtists = (event: TerminalEvent) => event.artists.filter(isPublicArtist);
 export const eventHref = (id: string) => `/events/${encodeURIComponent(id)}`;
 export const statusLabel = (status: TerminalEvent['status']) => ({ LIVE: '진행 중', UPCOMING: '예정', ARCHIVED: '행사 기록' })[status];
+export const EVENT_PAGE_SIZE = 4;
+export function orderEventDirectory(events: readonly TerminalEvent[], now = new Date()) {
+  const effective = events.map(event => withEffectiveEventStatus(event,now));
+  const upcoming = effective.filter(event => event.status === 'UPCOMING').sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || a.id.localeCompare(b.id));
+  return [...getLiveEvents(effective,now),...upcoming,...getArchivedOrElapsedEvents(effective,now)];
+}
+export function archiveDirectoryHref(events: readonly TerminalEvent[], now = new Date()) {
+  const ordered = orderEventDirectory(events,now);
+  const index = ordered.findIndex(event => event.status === 'ARCHIVED');
+  return index < 0 ? null : `/events?page=${Math.floor(index/EVENT_PAGE_SIZE)+1}&focus=${encodeURIComponent(ordered[index].id)}`;
+}
 export function paragraphs(value: unknown, language: 'ko'|'en'): string[] {
   if (typeof value === 'string') return value.trim() ? value.split(/\n\s*\n/).filter(Boolean) : [];
   if (Array.isArray(value)) return value.filter((item): item is string => typeof item === 'string' && !!item.trim());

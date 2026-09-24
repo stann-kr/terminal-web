@@ -4,7 +4,6 @@ import Link from 'next/link';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { useLanguage } from '@/features/shell/Providers';
 import { Action, Facts, FullText, Panel, ui } from '@/features/ui/Ui';
-import { Ornament } from '@/features/display/Ornament';
 import { buildArtistArchive, profileForAppearance, artistHref } from '@/features/artists/model';
 import { accessAvailability, eventHref, paragraphs, publicArtists, statusLabel } from './model';
 import styles from './events.module.css';
@@ -34,7 +33,7 @@ export function Lineup({ event, events, stages = false }: { event: TerminalEvent
     const profile = profileForAppearance(profiles,event.id,artist.id);
     return <>{profile ? <Link href={artistHref(profile.key)}>{artist.name}</Link> : artist.name}<small>{artist.origin}</small></>;
   }
-  if (!visible.length) return <Ornament active={event.status !== 'ARCHIVED'}/>;
+  if (!visible.length) return null;
   return <>
     {stages ? <div className={styles.stageBoard}>
       {[...new Set(visible.map(artist => artist.dock || 'TBA'))].map(dock => <section className={styles.stage} key={dock} aria-label={`무대 ${dock}`}>
@@ -51,7 +50,7 @@ export function EventRecord({ event, events, now, compact = false }: { event: Te
   const { language } = useLanguage();
   return <div className={compact ? styles.recordCompact : styles.record}>
     <Panel title={event.session} code={event.id}><p className={ui.muted}>{event.subtitle}</p><div data-event-state={event.status} className={styles.status}>{statusLabel(event.status)}</div><EventFacts event={event} modular/>{event.posterUrl && <a className={styles.poster} href={event.posterUrl} target="_blank" rel="noopener noreferrer"><img src={event.posterUrl} alt={`${event.session} 행사 포스터 — 새 탭에서 확대`}/></a>}<div className={ui.actions}><Action href="/events">이벤트 목록</Action></div></Panel>
-    <Panel title="공연표" code="RUNNING ORDER" className={styles.runningOrder}><Lineup event={event} events={events} stages/></Panel>
-    <div className={ui.stack}><Panel title="행사 소개" code={language.toUpperCase()}><div className={styles.annotation}><FullText language={language} paragraphs={paragraphs(event.description,language)}/>{paragraphs(event.invitationLines,language).length > 0 && <details><summary>초대 안내 전체 읽기</summary><FullText language={language} excerpt={false} paragraphs={paragraphs(event.invitationLines,language)}/></details>}</div></Panel><Panel title="참여 안내"><EventActions event={event} events={events} now={now}/><Ornament variant="scan" compact active={event.status !== 'ARCHIVED'}/></Panel></div>
+    <Panel title="공연표" code="RUNNING ORDER" className={styles.runningOrder}><Lineup event={event} events={events} stages/><div className={styles.stageShutters} aria-hidden="true" data-active={event.status !== 'ARCHIVED'}>{Array.from({length:7},(_,index) => <i key={index} style={{animationDelay:`${index * -.4}s`}}/>)}</div></Panel>
+    <div className={ui.stack}><Panel title="행사 소개" code={language.toUpperCase()}><div className={styles.annotation}><FullText language={language} paragraphs={paragraphs(event.description,language)}/>{paragraphs(event.invitationLines,language).length > 0 && <details><summary>초대 안내 전체 읽기</summary><FullText language={language} excerpt={false} paragraphs={paragraphs(event.invitationLines,language)}/></details>}</div></Panel><Panel title="참여 안내"><EventActions event={event} events={events} now={now}/><div className={styles.recordRule} aria-hidden="true"/></Panel></div>
   </div>;
 }

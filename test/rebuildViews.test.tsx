@@ -9,7 +9,7 @@ import { Home } from '../features/home/Home';
 import { EventCountdown } from '../features/home/EventCountdown';
 import { EventsData } from '../features/events/data';
 const navigation=vi.hoisted(()=>({search:new URLSearchParams()}));
-vi.mock('next/navigation',()=>({useSearchParams:()=>navigation.search,usePathname:()=>'/'}));
+vi.mock('next/navigation',()=>({useSearchParams:()=>navigation.search,usePathname:()=>'/',useRouter:()=>({push:vi.fn()})}));
 const event:TerminalEvent={id:'OLD',session:'Past event',subtitle:'A past night',date:'2025-03-07',time:'23:00',venue:'FAUST',district:'SEOUL',coords:'',capacity:'',sound:'',status:'ARCHIVED',artists:[{id:'PUBLIC',name:'VISIBLE ARTIST',origin:'KR',dock:'1',time:'TBA',status:'ARCHIVED'},{id:'PRIVATE',name:'PRIVATE NAME',origin:'KR',dock:'1',time:'TBA',status:'CLASSIFIED'}]};
 const clients:QueryClient[]=[];
 function view(node:React.ReactNode,events:TerminalEvent[]=[event]) { const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});clients.push(client);client.setQueryData(['events'],events);client.setQueryData(['transmit',1],{logs:[],total:0,page:1,totalPages:0});return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>); }

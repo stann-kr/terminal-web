@@ -45,3 +45,22 @@
 .status[data-event-state=UPCOMING],.status[data-event-state=LIVE],.protocolLabel[data-open=true] { color: var(--amber); border-color: var(--amber); }
 @media(max-width:1100px) { .record { grid-template-columns: minmax(200px,.8fr) minmax(0,1.2fr); }.record > :last-child { grid-column: 1/-1; grid-template-columns: 1fr 1fr; }.directory { grid-template-columns: minmax(0,1fr); } }
 @media(max-width:700px) { .record,.record > :last-child { display: grid; grid-template-columns: minmax(0,1fr); gap: 24px; }.cards { grid-template-columns: minmax(0,1fr); }.lineup li { grid-template-columns: 30px minmax(0,1fr) auto; gap: 8px; }.runningOrder { padding: 12px; }.stageBoard { padding: 10px; }.stageSlots { gap: 8px; }.stageSlots li { padding: 8px; }.slotCode { font-size: 8px; }.slotArtist { font-size: 12px; }.cardHeader { flex-wrap: wrap; }.card h2 { font-size: 19px; } }
+
+/* EVENTS directory: open bays. Event detail: vertical shutters. */
+.eventSlots { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); grid-auto-rows: 36px; gap: 10px; padding: 16px; margin-block: 22px; border: 1px dashed var(--line); pointer-events: none; }
+.eventSlots i { border: 1px solid var(--ice); background: rgb(var(--color-accent-primary) / .045); }
+.eventSlots i[data-dim=true] { border-color: var(--faint); background: transparent; }
+.eventSlots[data-active=true] i[data-accent=true] { border-color: var(--amber); background: rgb(var(--amber-rgb) / .13); }
+.cardBlank { min-height: 80px; margin-block: 8px; border-block: 1px solid var(--faint); background: linear-gradient(var(--line),var(--line)) 0 50% / 35% 2px no-repeat,linear-gradient(var(--line),var(--line)) 100% 50% / 15% 2px no-repeat; pointer-events: none; }
+.stageShutters { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 12px; height: 96px; margin-block: 22px 6px; padding-block: 10px; border-block: 1px solid var(--line); pointer-events: none; }
+.stageShutters i { background: rgb(var(--color-accent-primary) / .12); border-inline: 1px solid var(--ice); transform-origin: center; transform: scaleY(.6); }
+.stageShutters i:nth-child(4) { background: rgb(var(--amber-rgb) / .12); border-color: var(--amber); }
+.recordRule { height: 18px; margin-top: 18px; border-left: 8px solid var(--line); border-bottom: 1px solid var(--line); width: 70%; pointer-events: none; }
+@keyframes eventBays { 0%,65%,100% { border-color: var(--amber); background: rgb(var(--amber-rgb) / .13); } 66%,85% { border-color: var(--line); background: transparent; } }
+@keyframes stageShutters { 0%,20%,100% { transform: scaleY(.3); } 42%,68% { transform: scaleY(1); } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) {
+  .eventSlots[data-active=true] i[data-accent=true] { animation: eventBays 3.2s steps(1,end) infinite; }
+  .stageShutters[data-active=true] i { animation: stageShutters 6s cubic-bezier(.65,0,.35,1) infinite; }
+}
+@media(max-width:700px) { .eventSlots { grid-auto-rows: 26px; gap: 8px; padding: 12px; }.stageShutters { height: 76px; gap: 8px; } }
+@media(forced-colors:active) { .eventSlots,.stageShutters,.recordRule,.cardBlank { display: none; } }

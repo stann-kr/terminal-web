@@ -1,0 +1,16 @@
+.terminal { display: flex; flex-direction: column; flex: 1; min-height: 320px; min-width: 0; border: 1px solid var(--ice); background: rgb(0 0 0 / .35); }
+.banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--ice); font-size: 9px; letter-spacing: .06em; }
+.banner i { width: 6px; height: 6px; background: var(--ice); }
+.hint { padding: 12px 12px 0; color: var(--muted); font-size: 10px; }
+.output { flex: 1; min-height: 180px; max-height: min(48dvh,480px); overflow-y: auto; overscroll-behavior: contain; padding: 16px 12px; font-size: 11px; line-height: 1.8; }
+.welcome { color: var(--muted); }
+.entry + .entry { margin-top: 16px; }
+.command { color: var(--amber); margin-bottom: 4px; }
+.entry pre { margin: 0; font: inherit; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.entry pre[data-error=true] { color: var(--danger); }
+.prompt { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 8px; border-top: 1px solid var(--line); color: var(--amber); }
+.prompt input { width: 100%; padding: 8px 4px; border: 0; background: transparent; color: var(--ice); caret-color: var(--amber); font-size: 16px; }
+.prompt button { min-width: 44px; min-height: 44px; border: 1px solid var(--line); background: transparent; color: var(--ice); font-size: 10px; }
+.prompt button:hover { border-color: var(--ice); background: var(--panel); }
+.label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media(max-width:1100px) { .terminal { min-height: 300px; }.output { max-height: 300px; } }

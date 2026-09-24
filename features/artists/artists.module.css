@@ -9,3 +9,17 @@
 @media(max-width:900px) { .grid { grid-template-columns: repeat(3,minmax(0,1fr)); } }
 @media(max-width:700px) { .grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.cellHeader { flex-wrap: wrap; }.detail { grid-template-columns: minmax(0,1fr); }.timeline { --date-column: 64px; }.chronology { padding: 12px; } }
 @media(max-width:360px) { .grid { grid-template-columns: minmax(0,1fr); } }
+
+/* Directory barcode and profile frames each belong to their own screen. */
+.rosterCode { display: flex; align-items: stretch; gap: 5px; height: 62px; margin-block: 26px 16px; padding-block: 8px; border-block: 1px solid var(--line); pointer-events: none; }
+.rosterCode i { background: var(--line); opacity: .45; }.rosterCode i:nth-child(4n) { border-block: 7px solid var(--bg); }.rosterCode i:nth-child(7n) { background: var(--amber); }
+.profileMark { position: relative; height: 160px; margin-block: 22px; pointer-events: none; }
+.profileMark i { position: absolute; inset: 8px 10%; border: 1px solid var(--line); }
+.profileMark i:nth-child(2) { inset: 26px 23%; border-color: var(--ice); animation-delay: -.8s; }
+.profileMark i:nth-child(3) { inset: 44px 36%; border-color: var(--amber); animation-delay: -1.6s; }
+.profileMark span { position: absolute; width: 6px; height: 6px; top: calc(50% - 3px); left: calc(50% - 3px); background: var(--ice); }
+@keyframes rosterCode { 0%,70%,100% { opacity: .35; } 71%,85% { opacity: 1; } }
+@keyframes profileFrames { 0%,100% { transform: scale(.9); opacity: .45; } 50% { transform: scale(1); opacity: 1; } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .rosterCode i { animation: rosterCode 6s steps(1,end) infinite; }.profileMark i { animation-name: profileFrames; animation-duration: 6s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; } }
+@media(max-width:700px) { .rosterCode { gap: 3px; height: 48px; }.profileMark { height: 140px; } }
+@media(forced-colors:active) { .rosterCode,.profileMark { display: none; } }
