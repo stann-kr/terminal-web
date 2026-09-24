@@ -10,7 +10,7 @@ import { Action, Facts, FullText, PageHeading, Panel, StateNotice, ui } from '@/
 import styles from './home.module.css';
 export function Home() {
   const { language } = useLanguage();
-  return <><PageHeading code="01 / HOME" title="음악과 사람, 이어지는 기록"><p>서울의 테크노 플랫폼 TERMINAL.<br/>다음 만남과 지난 밤의 기록을 확인하세요.</p></PageHeading><EventsData>{(events,now) => {
+  return <><PageHeading title="음악과 사람, 이어지는 기록"/><EventsData>{(events,now) => {
     const event = getDefaultEvent(events,now);
     const archived = events.filter(event => event.status === 'ARCHIVED');
     const profiles = buildArtistArchive(events);

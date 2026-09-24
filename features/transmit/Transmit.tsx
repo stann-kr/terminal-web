@@ -12,7 +12,7 @@ import styles from './transmit.module.css';
 export function Transmit() {
   const params=useSearchParams(),router=useRouter(),client=useQueryClient();
   const page=pageNumber(params.get('page')), query=useTransmit(page);
-  return <><PageHeading code="05 / TRANSMIT" title="방문자 로그"><p>남기고 싶은 말, 지난 밤의 기억.<br/>모두에게 공개되는 기록입니다.</p></PageHeading><div className={styles.layout}><Panel title="기록 남기기" code="WRITE"><TransmitForm onPosted={() => { void client.invalidateQueries({ queryKey:['transmit'] }); if(page !== 1) router.replace('/transmit',{scroll:false}); }}/></Panel><Panel title="공개 로그" code={query.data ? `${query.data.total} RECORDS` : 'READ'}><Feed page={page}/>{query.data && <Pagination page={page} totalPages={query.data.totalPages} href={page => `/transmit?page=${page}`}/>}</Panel></div></>;
+  return <><PageHeading title="방문자 로그"/><div className={styles.layout}><Panel title="기록 남기기" code="WRITE"><TransmitForm onPosted={() => { void client.invalidateQueries({ queryKey:['transmit'] }); if(page !== 1) router.replace('/transmit',{scroll:false}); }}/></Panel><Panel title="공개 로그" code={query.data ? `${query.data.total} RECORDS` : 'READ'}><Feed page={page}/>{query.data && <Pagination page={page} totalPages={query.data.totalPages} href={page => `/transmit?page=${page}`}/>}</Panel></div></>;
 }
 export function TransmitForm({ onPosted }: { onPosted: () => void }) {
   const [draft,setDraft] = useState({handle:'',message:''});

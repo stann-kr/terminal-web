@@ -15,7 +15,7 @@ export function Access({ eventId }: { eventId: string }) {
   const availability = event && !query.isError
     ? accessAvailability(event,query.events!,query.now)
     : { canRequest: false, message: query.isPending ? '행사 정보를 확인하고 있습니다.' : query.isError ? '최신 행사 정보를 확인한 뒤 다시 시도해 주세요.' : '신청할 공개 행사 기록을 찾을 수 없습니다.' };
-  return <><PageHeading code="ACCESS / GUEST REQUEST" title="게스트 신청"><p>초대 코드를 확인한 뒤 연락처를 입력하세요.<br/>신청 저장은 입장 확정이나 티켓 발급이 아닙니다.</p></PageHeading><div className={styles.layout}><Panel title={event?.session ?? '행사 정보'} code={eventId}>
+  return <><PageHeading title="게스트 신청"/><div className={styles.layout}><Panel title={event?.session ?? '행사 정보'} code={eventId}>
     {query.isError && <StateNotice error title="행사 정보를 불러오지 못했습니다" retry={() => void query.refetch()}/>}
     {event ? <><EventFacts event={event}/><div className={ui.actions}><Action href={eventHref(event.id)}>행사 상세</Action></div></> : query.isPending ? <Loading/> : !query.isError && <StateNotice error title="신청할 행사를 찾을 수 없습니다"><Action href="/events">행사 목록 확인</Action></StateNotice>}
     </Panel><FormPanel title="게스트 신청서" code="ACCESS"><AccessForm key={eventId} eventId={eventId} availability={availability}/></FormPanel></div></>;

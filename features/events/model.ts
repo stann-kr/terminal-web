@@ -23,4 +23,3 @@ export function accessAvailability(event: TerminalEvent, events: TerminalEvent[]
   return { canRequest: window.isActive, message: window.isActive ? '게스트 신청을 접수하고 있습니다.' : `행사 시작 30일 전부터 신청할 수 있습니다. ${window.opensInDays ?? 0}일 후 열립니다.` };
 }
 export function pageNumber(value: string | null, max = 1000) { return value && /^[1-9]\d*$/.test(value) && Number(value) <= max ? Number(value) : 1; }
-export function pageHref(path: string, params: URLSearchParams | { toString(): string }, page: number) { const next = new URLSearchParams(params.toString()); next.set('page',String(page)); return `${path}?${next}`; }

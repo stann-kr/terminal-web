@@ -2,8 +2,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import styles from './ui.module.css';
 
-export function PageHeading({ code, title, children }: { code: string; title: string; children?: ReactNode }) {
-  return <header className={styles.pageHeading}><p className={styles.screenCode}><span>TERMINAL DIRECTORY</span>{code}</p><h1>{title}</h1>{children && <div className={styles.lead}>{children}</div>}</header>;
+export function PageHeading({ title }: { title: string }) {
+  return <h1 className={styles.srOnly}>{title}</h1>;
 }
 export function Panel({ title, code, children, className = '' }: { title: string; code?: string; children: ReactNode; className?: string }) {
   return <section className={`${styles.panel} ${className}`}><h2 className={styles.sectionTitle}>{title}{code && <span>{code}</span>}</h2>{children}</section>;

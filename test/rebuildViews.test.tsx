@@ -33,9 +33,41 @@ describe('rebuild public views',()=>{
     expect(screen.getByText('2회')).toBeInTheDocument();
   });
   it('treats archived-only data as no upcoming event with a path to records',()=>{view(<Events/>);expect(screen.getByText('다음 행사 미정')).toBeInTheDocument();expect(screen.getByRole('link',{name:/지난 행사 기록/})).toHaveAttribute('href','/archive');expect(screen.queryByRole('link',{name:/게스트 신청/})).not.toBeInTheDocument();});
-  it('hides private names in real archive lineups and closes expired requests',()=>{view(<EventDetail eventId="OLD"/>);expect(screen.getByRole('heading',{name:'Past event'})).toBeInTheDocument();expect(screen.getByText('추가 공개 예정 1팀')).toBeInTheDocument();expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();expect(screen.getByRole('link',{name:/VISIBLE ARTIST/})).toHaveAttribute('href','/artists/appearance%3AOLD%3APUBLIC');expect(screen.queryByRole('link',{name:/게스트 신청/})).not.toBeInTheDocument();});
-  it('restores artist search from URL without putting private slots in results',()=>{navigation.search=new URLSearchParams('q=PRIVATE');view(<Artists/>);expect(screen.getByLabelText('이름 검색')).toHaveValue('PRIVATE');expect(screen.getByText('조건에 맞는 아티스트가 없습니다')).toBeInTheDocument();expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();});
-  it('uses URL archive filters and computes zero without calling it missing data',()=>{navigation.search=new URLSearchParams('year=2024&venue=FAUST');view(<Archive/>);expect(screen.getByText('조건에 맞는 기록이 없습니다')).toBeInTheDocument();expect(screen.getAllByText('0').length).toBeGreaterThan(0);expect(screen.getByLabelText('연도')).toHaveValue('2024');});
+  it('hides private names in real archive lineups and closes expired requests',()=>{view(<EventDetail eventId="OLD"/>);expect(screen.getByRole('heading',{name:'Past event',level:1})).toBeInTheDocument();expect(screen.getByText('추가 공개 예정 1팀')).toBeInTheDocument();expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();expect(screen.getByRole('link',{name:/VISIBLE ARTIST/})).toHaveAttribute('href','/artists/appearance%3AOLD%3APUBLIC');expect(screen.queryByRole('link',{name:/게스트 신청/})).not.toBeInTheDocument();});
+  it('shows all public artists without search or filters, including from old filtered URLs',()=>{
+    navigation.search=new URLSearchParams('q=PRIVATE&origin=US&sort=count');
+    view(<Artists/>);
+    expect(screen.getByRole('heading',{name:'VISIBLE ARTIST'})).toBeInTheDocument();
+    expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  });
+  it('shows all archived records and totals without using old search or filters',()=>{
+    navigation.search=new URLSearchParams('q=absent&year=2024&venue=OTHER');
+    view(<Archive/>,[event,{...event,id:'FUTURE',session:'Future event',date:'2099-01-01',status:'UPCOMING'}]);
+    expect(screen.getByRole('heading',{name:'Past event'})).toBeInTheDocument();
+    expect(screen.queryByText('Future event')).not.toBeInTheDocument();
+    expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();
+    expect(screen.getByText('전체 기록 집계')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.getByText('행사').nextElementSibling).toHaveTextContent('1');
+  });
+  it.each([
+    {path:'/artists',Component:Artists,pageSize:12,lastName:'ARTIST 12'},
+    {path:'/archive',Component:Archive,pageSize:4,lastName:'EVENT 04'},
+  ])('preserves $path pagination and drops removed filters from page links',({path,Component,pageSize,lastName})=>{
+    navigation.search=new URLSearchParams('page=2&q=absent&origin=US&sort=count&year=1900&venue=OTHER');
+    const events=Array.from({length:pageSize+1},(_,index)=>{
+      const number=String(index).padStart(2,'0');
+      return {...event,id:`EVENT ${number}`,session:`EVENT ${number}`,artists:[{...event.artists[0],name:`ARTIST ${number}`}]};
+    });
+    view(<Component/>,events);
+    expect(screen.getByRole('heading',{name:lastName})).toBeInTheDocument();
+    expect(screen.getByText('2 / 2')).toBeInTheDocument();
+    expect(screen.getByRole('link',{name:'← 이전'})).toHaveAttribute('href',`${path}?page=1`);
+    expect(screen.getAllByRole('heading',{level:2,name:/^(ARTIST|EVENT) /})).toHaveLength(1);
+  });
   it('keeps home useful when the API has no events',()=>{view(<Home/>,[]);expect(screen.getByText('공개된 행사가 아직 없습니다')).toBeInTheDocument();expect(screen.getByRole('link',{name:/소식 신청/})).toHaveAttribute('href','/signal');});
   it('does not present a failed event query as zero records',async()=>{vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('{}',{status:500})));const client=new QueryClient({defaultOptions:{queries:{retry:false}}});clients.push(client);render(<QueryClientProvider client={client}><EventsData>{()=> <p>DATA ZERO</p>}</EventsData></QueryClientProvider>);expect(await screen.findByRole('alert')).toHaveTextContent('행사 기록을 불러오지 못했습니다');expect(screen.queryByText('DATA ZERO')).not.toBeInTheDocument();});
 });
