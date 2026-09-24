@@ -1,8 +1,8 @@
 .layout { display: grid; grid-template-columns: minmax(220px,280px) minmax(0,650px); gap: 30px; justify-content: center; align-items: start; }.layout > :first-child { padding: 16px; border: 1px dashed var(--line); background: rgb(var(--color-accent-primary) / .025); font-size: 13px; }
 @media(max-width:700px) { .layout { grid-template-columns: minmax(0,1fr); gap: 24px; } }
 
-.signalMatrix { display: grid; grid-template-columns: repeat(8,minmax(0,1fr)); gap: 3px; margin-block: 22px; pointer-events: none; }
-.signalMatrix i { display: grid; place-items: center; height: 26px; background: var(--ice); color: var(--bg); font: 8px/1 var(--mono); text-shadow: none; }
+.signalMatrix { display: grid; grid-template-columns: repeat(8,minmax(0,1fr)); gap: 2px; margin-block: 22px; pointer-events: none; }
+.signalMatrix i { display: grid; place-items: center; aspect-ratio: 1; background: var(--ice); color: var(--bg); font: 7px/1 var(--mono); text-shadow: none; }
 .signalMatrix i[data-dim=true] { border: 1px solid var(--line); background: transparent; color: var(--line); }
 .signalMatrix i[data-accent=true] { background: var(--amber); }
 @keyframes signalBlocks { 0%,60%,100% { background: var(--amber); } 61%,84% { background: var(--ice); } }

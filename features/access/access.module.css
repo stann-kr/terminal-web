@@ -3,11 +3,10 @@
 @media(max-width:850px) { .layout { grid-template-columns: minmax(0,1fr); gap: 26px; }.contacts { grid-template-columns: minmax(0,1fr); } }
 @media(max-width:400px) { .code { grid-template-columns: minmax(0,1fr); } }
 
-.accessLatch { display: flex; justify-content: center; align-items: center; gap: 8px; height: 84px; margin-block: 20px; padding-inline: 20%; pointer-events: none; }
-.accessLatch i { width: 36%; height: 34px; border: 2px solid var(--ice); border-right: 0; }
-.accessLatch i:last-child { border: 2px solid var(--ice); border-left: 0; }
-.accessLatch span { width: 4px; height: 16px; flex-shrink: 0; background: var(--amber); }
-@keyframes latchLeft { 0%,25%,100% { transform: translateX(-18%); } 45%,70% { transform: translateX(0); } }
-@keyframes latchRight { 0%,25%,100% { transform: translateX(18%); } 45%,70% { transform: translateX(0); } }
-@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .accessLatch i:first-child { animation: latchLeft 5.6s steps(3,end) infinite; }.accessLatch i:last-child { animation: latchRight 5.6s steps(3,end) infinite; } }
-@media(forced-colors:active) { .accessLatch { display: none; } }
+/* Reference 15 scan-line; a rectangular seal preserves the approved straight geometry. */
+.accessScan { position: relative; display: grid; place-items: center; height: 120px; margin-block: 22px; overflow: hidden; border: 1px solid var(--line); background: rgb(var(--color-accent-primary) / .035); pointer-events: none; }
+.accessScan > i { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--ice); box-shadow: 0 0 8px rgb(var(--color-accent-primary) / .5); }
+.accessScan > span { display: flex; gap: 5px; border: 1px solid var(--ice); padding: 8px; }.accessScan b { width: 10px; height: 24px; border: 1px solid var(--line); }.accessScan b:nth-child(2) { background: var(--line); }
+@keyframes accessSweep { 0%,100% { transform: translateY(0); } 50% { transform: translateY(116px); } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .accessScan > i { animation: accessSweep 3s ease-in-out infinite; } }
+@media(forced-colors:active) { .accessScan { display: none; } }

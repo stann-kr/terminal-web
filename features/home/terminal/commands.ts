@@ -2,15 +2,16 @@ import type { TerminalEvent } from '@/lib/events/types';
 import { archiveDirectoryHref, eventHref, orderEventDirectory, statusLabel } from '@/features/events/model';
 
 export type CommandResult = { text: string; href?: string; clear?: boolean; error?: boolean };
-const help = [
-  'events       이벤트 목록',
-  'artists      아티스트 목록',
-  'archive      지난 행사 기록',
-  'ls           행사 ID 보기',
-  'open <ID>    행사 상세 열기',
-  'clear        화면 지우기',
-  'help         명령어 안내',
-].join('\n');
+export const commandDirectory = [
+  ['events','이벤트 목록'],
+  ['artists','아티스트 목록'],
+  ['archive','지난 행사 기록'],
+  ['ls','행사 ID 보기'],
+  ['open <ID>','행사 상세 열기'],
+  ['clear','화면 지우기'],
+  ['help','명령어 안내'],
+] as const;
+const help = commandDirectory.map(([command,description]) => `${command.padEnd(13)}${description}`).join('\n');
 
 export function runCommand(input: string, events: readonly TerminalEvent[], now = new Date()): CommandResult {
   const [name = '',...args] = input.trim().split(/\s+/);

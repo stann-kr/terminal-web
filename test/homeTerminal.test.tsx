@@ -25,8 +25,12 @@ describe('home site terminal',() => {
   });
   it('shows help, lists actual public event IDs, and clears the output',() => {
     render(<HomeTerminal events={[old,next]}/>);
-    submit('help');
     const log=screen.getByRole('log',{name:'명령어 실행 기록'});
+    expect(within(log).getByText('events')).toBeInTheDocument();
+    expect(within(log).getByText('artists')).toBeInTheDocument();
+    expect(within(log).getByText('archive')).toBeInTheDocument();
+    expect(screen.getByRole('button',{name:'명령어 실행'})).toBeEnabled();
+    submit('help');
     expect(log).toHaveTextContent('open <ID>');
     submit('ls');
     expect(log).toHaveTextContent('TRM-03');

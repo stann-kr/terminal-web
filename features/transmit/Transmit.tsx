@@ -13,7 +13,7 @@ import styles from './transmit.module.css';
 export function Transmit() {
   const params=useSearchParams(),router=useRouter(),client=useQueryClient();
   const page=pageNumber(params.get('page')), query=useTransmit(page);
-  return <><PageHeading title="방문자 로그"/><div className={styles.layout}><Panel title="기록 남기기" code="WRITE"><TransmitForm onPosted={() => { void client.invalidateQueries({ queryKey:['transmit'] }); if(page !== 1) router.replace('/transmit',{scroll:false}); }}/></Panel><Panel title="공개 로그" code={query.data ? `${query.data.total} RECORDS` : 'READ'}><Feed page={page}/>{query.data && <Pagination page={page} totalPages={query.data.totalPages} href={page => `/transmit?page=${page}`}/>}<div className={styles.printout} aria-hidden="true">{[94,62,82,48,72].map((width,index) => <i key={index} style={{width:`${width}%`,animationDelay:`${index * -.8}s`}}/>)}</div></Panel></div></>;
+  return <><PageHeading title="방문자 로그"/><div className={styles.layout}><Panel title="기록 남기기" code="WRITE"><TransmitForm onPosted={() => { void client.invalidateQueries({ queryKey:['transmit'] }); if(page !== 1) router.replace('/transmit',{scroll:false}); }}/></Panel><Panel title="공개 로그" code={query.data ? `${query.data.total} RECORDS` : 'READ'}><Feed page={page}/>{query.data && <Pagination page={page} totalPages={query.data.totalPages} href={page => `/transmit?page=${page}`}/>}<div className={styles.feedRule} aria-hidden="true"/></Panel></div></>;
 }
 export function TransmitForm({ onPosted }: { onPosted: () => void }) {
   const [draft,setDraft] = useState({handle:'',message:''});

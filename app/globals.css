@@ -1,6 +1,7 @@
 @font-face { font-family: 'Space Mono'; src: url('/fonts/reference-terminal/SpaceMono-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Space Mono'; src: url('/fonts/reference-terminal/SpaceMono-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
 @font-face { font-family: 'Syncopate'; src: url('/fonts/reference-terminal/Syncopate-Bold.ttf') format('truetype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Syncopate'; src: url('/fonts/reference-terminal/Syncopate-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: Orbit; src: url('/fonts/Orbit-Regular.ttf') format('truetype'); font-display: swap; }
 :root {
   color-scheme: dark;

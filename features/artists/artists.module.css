@@ -10,16 +10,11 @@
 @media(max-width:700px) { .grid { grid-template-columns: repeat(2,minmax(0,1fr)); }.cellHeader { flex-wrap: wrap; }.detail { grid-template-columns: minmax(0,1fr); }.timeline { --date-column: 64px; }.chronology { padding: 12px; } }
 @media(max-width:360px) { .grid { grid-template-columns: minmax(0,1fr); } }
 
-/* Directory barcode and profile frames each belong to their own screen. */
-.rosterCode { display: flex; align-items: stretch; gap: 5px; height: 62px; margin-block: 26px 16px; padding-block: 8px; border-block: 1px solid var(--line); pointer-events: none; }
-.rosterCode i { background: var(--line); opacity: .45; }.rosterCode i:nth-child(4n) { border-block: 7px solid var(--bg); }.rosterCode i:nth-child(7n) { background: var(--amber); }
-.profileMark { position: relative; height: 160px; margin-block: 22px; pointer-events: none; }
-.profileMark i { position: absolute; inset: 8px 10%; border: 1px solid var(--line); }
-.profileMark i:nth-child(2) { inset: 26px 23%; border-color: var(--ice); animation-delay: -.8s; }
-.profileMark i:nth-child(3) { inset: 44px 36%; border-color: var(--amber); animation-delay: -1.6s; }
-.profileMark span { position: absolute; width: 6px; height: 6px; top: calc(50% - 3px); left: calc(50% - 3px); background: var(--ice); }
-@keyframes rosterCode { 0%,70%,100% { opacity: .35; } 71%,85% { opacity: 1; } }
-@keyframes profileFrames { 0%,100% { transform: scale(.9); opacity: .45; } 50% { transform: scale(1); opacity: 1; } }
-@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .rosterCode i { animation: rosterCode 6s steps(1,end) infinite; }.profileMark i { animation-name: profileFrames; animation-duration: 6s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; } }
-@media(max-width:700px) { .rosterCode { gap: 3px; height: 48px; }.profileMark { height: 140px; } }
-@media(forced-colors:active) { .rosterCode,.profileMark { display: none; } }
+/* Reference 08: state belongs to the record cell, with a restrained border pulse. */
+.cell[data-upcoming=true] { border-color: var(--amber); background: rgb(var(--amber-rgb) / .035); }
+.registryEnd { height: 10px; margin-top: 24px; border-block: 1px solid var(--line); background: repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 18px); opacity: .55; pointer-events: none; }
+.profileStamp { display: grid; justify-items: center; gap: 8px; margin-block: 22px; padding: 18px 12px; border: 1px solid var(--line); outline: 1px solid var(--faint); outline-offset: -5px; color: var(--ice); pointer-events: none; }
+.profileStamp span { font: 400 9px/1.5 var(--display); letter-spacing: .14em; }.profileStamp strong { font: 400 48px/1 var(--display); }.profileStamp small { font-size: 9px; color: var(--muted); }
+@keyframes artistCell { 0%,100% { border-color: var(--amber); } 50% { border-color: var(--line); } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .cell[data-upcoming=true] { animation: artistCell 2s ease-in-out infinite; } }
+@media(forced-colors:active) { .registryEnd,.profileStamp { display: none; } }

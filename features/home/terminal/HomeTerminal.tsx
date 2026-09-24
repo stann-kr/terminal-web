@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TerminalEvent } from '@/lib/events/types';
-import { runCommand } from './commands';
+import { commandDirectory, runCommand } from './commands';
 import styles from './terminal.module.css';
 
 type Entry = { id: number; command: string; text: string; error?: boolean };
@@ -45,18 +45,25 @@ export function HomeTerminal({ events }: { events: readonly TerminalEvent[] }) {
     setInput(position.current === null ? draft.current : history.current[position.current]);
   }
   return <div className={styles.terminal} data-readout-live="">
-    <div className={styles.banner}><span>TERMINAL / COMMAND</span><i aria-hidden="true"/></div>
-    <p id="terminal-help" className={styles.hint}>help · events · artists · archive</p>
+    <p id="terminal-help" className={styles.label}>명령어를 입력한 뒤 Enter로 실행합니다. help로 사용법을 확인하고 위·아래 방향키로 이전 입력을 불러올 수 있습니다.</p>
     <div ref={output} className={styles.output} role="log" aria-label="명령어 실행 기록" aria-live="polite" aria-relevant="additions" tabIndex={0}>
       {entries.length ? entries.map(entry => <div key={entry.id} className={styles.entry}>
-        {entry.command && <p className={styles.command}><span aria-hidden="true">&gt; </span>{entry.command}</p>}
+        {entry.command && <p className={styles.command}><span aria-hidden="true">CMD&gt; </span>{entry.command}</p>}
         <pre data-error={entry.error || undefined}>{entry.text}</pre>
-      </div>) : <p className={styles.welcome}>명령어를 입력해 탐색하세요.<br/>help로 사용법을 볼 수 있습니다.</p>}
+      </div>) : <div className={styles.directory}>
+        <p className={styles.directoryTitle}>TERMINAL / SEOUL</p>
+        <p className={styles.directoryLabel}>COMMAND DIRECTORY_</p>
+        <dl>{commandDirectory.map(([command,description]) => <div key={command}><dt>{command}</dt><dd>{description}</dd></div>)}</dl>
+        <p className={styles.ready}><span aria-hidden="true">&gt;&gt; </span>명령어 입력 후 ENTER</p>
+      </div>}
     </div>
     <form className={styles.prompt} aria-label="사이트 명령어" onSubmit={submit}>
-      <label htmlFor="terminal-command" className={styles.label}>터미널 명령어</label><span aria-hidden="true">&gt;</span>
-      <input ref={field} id="terminal-command" value={input} maxLength={120} aria-describedby="terminal-help" autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="help" onChange={event => {setInput(event.target.value);position.current=null;}} onKeyDown={keyDown} onCompositionStart={() => {composing.current=true;}} onCompositionEnd={() => {composing.current=false;}}/>
-      <button type="submit">실행</button>
+      <label htmlFor="terminal-command" className={styles.label}>터미널 명령어</label><span aria-hidden="true" className={styles.promptLabel}>CMD&gt;</span>
+      <span className={styles.inputArea} data-empty={input.length === 0}>
+        <input ref={field} id="terminal-command" value={input} maxLength={120} aria-describedby="terminal-help" autoComplete="off" autoCapitalize="none" spellCheck={false} onChange={event => {setInput(event.target.value);position.current=null;}} onKeyDown={keyDown} onCompositionStart={() => {composing.current=true;}} onCompositionEnd={() => {composing.current=false;}}/>
+        <i aria-hidden="true" className={styles.cursor}/>
+      </span>
+      <button type="submit" aria-label="명령어 실행">[ENTER]</button>
     </form>
   </div>;
 }
