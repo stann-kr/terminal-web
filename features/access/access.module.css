@@ -1,4 +1,4 @@
-.layout { display: grid; grid-template-columns: minmax(240px,.7fr) minmax(0,1.4fr); gap: 40px; max-width: 1200px; }.layout > :last-child { border: 1px solid var(--line); padding: 24px; background: var(--panel); }
+.layout { display: grid; grid-template-columns: minmax(220px,300px) minmax(0,650px); justify-content: center; gap: 30px; align-items: start; }.layout > :first-child { padding: 16px; border: 1px solid var(--line); background: rgb(0 0 0 / .25); }
 .legend { padding: 0 0 14px; color: var(--muted); font-size: 11px; }.code { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }.codeMessage { min-height: 1em; font-size: 12px; color: var(--ice); }.inviter { padding: 10px 12px; border: 1px dashed var(--line); font-size: 12px; color: var(--muted); }.inviter strong { color: var(--ice); margin-left: 16px; }.contacts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media(max-width:850px) { .layout { grid-template-columns: minmax(0,1fr); gap: 26px; }.contacts { grid-template-columns: minmax(0,1fr); } }
-@media(max-width:400px) { .layout > :last-child { padding: 16px; }.code { grid-template-columns: minmax(0,1fr); } }
+@media(max-width:400px) { .code { grid-template-columns: minmax(0,1fr); } }

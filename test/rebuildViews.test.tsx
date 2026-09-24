@@ -1,5 +1,5 @@
 import { afterEach,describe,expect,it,vi } from 'vitest';
-import { cleanup,render,screen } from '@testing-library/react';
+import { cleanup,render,screen,within } from '@testing-library/react';
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { Events,EventDetail } from '../features/events/Events';
@@ -14,6 +14,14 @@ const clients:QueryClient[]=[];
 function view(node:React.ReactNode,events:TerminalEvent[]=[event]) { const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});clients.push(client);client.setQueryData(['events'],events);client.setQueryData(['transmit',1],{logs:[],total:0,page:1,totalPages:0});return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>); }
 afterEach(()=>{cleanup();clients.splice(0).forEach(client=>client.clear());navigation.search=new URLSearchParams();vi.unstubAllGlobals();});
 describe('rebuild public views',()=>{
+  it('groups the public running order by stage without adding private artist cells',()=>{
+    view(<EventDetail eventId="OLD"/>,[{...event,artists:[...event.artists,{...event.artists[0],id:'SECOND',dock:'2',name:'SECOND ARTIST',time:'02:00–03:00'}]}]);
+    expect(within(screen.getByRole('region',{name:'무대 1'})).getByRole('link',{name:/VISIBLE ARTIST/})).toBeInTheDocument();
+    expect(within(screen.getByRole('region',{name:'무대 2'})).getByRole('link',{name:/SECOND ARTIST/})).toBeInTheDocument();
+    expect(within(screen.getByRole('region',{name:'무대 2'})).getByText('02:00–03:00')).toBeInTheDocument();
+    expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();
+    expect(screen.getByText('추가 공개 예정 1팀')).toBeInTheDocument();
+  });
   it('links repeated confirmed appearances to one canonical artist profile',()=>{
     const publicArtist=event.artists[0];
     view(<Artists/>,[

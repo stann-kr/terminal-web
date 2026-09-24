@@ -15,10 +15,9 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className={styles.core}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">TERMINAL<span>SEOUL TECHNO PLATFORM</span></Link>
-        <div className={styles.identity}><span>EVENTS / PEOPLE / RECORDS</span><span>서울에서 이어지는 음악과 사람의 기록</span></div>
+        <nav className={styles.navigation} aria-label="주 메뉴">{navigation.map(([href,label,ko], index) => <Link key={href} href={href} aria-current={(href === '/' ? pathname === '/' : pathname.startsWith(href)) ? 'page' : undefined}><span className={styles.number}>0{index + 1}</span><span>{label}<small>{ko}</small></span></Link>)}</nav>
         <div className={styles.language} aria-label="콘텐츠 언어"><span>CONTENT</span>{(['ko','en'] as const).map(lang => <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>{lang.toUpperCase()}</button>)}</div>
       </header>
-      <nav className={styles.navigation} aria-label="주 메뉴">{navigation.map(([href,label,ko], index) => <Link key={href} href={href} aria-current={(href === '/' ? pathname === '/' : pathname.startsWith(href)) ? 'page' : undefined}><span className={styles.number}>0{index + 1}</span><span>{label}<small>{ko}</small></span><span aria-hidden="true">↗</span></Link>)}</nav>
       <main id="main" tabIndex={-1} className={styles.main}>{children}</main>
       <footer className={styles.footer}>
         <div className={styles.imprint}><div className={styles.barcode} aria-hidden="true"/><span>MUSIC / PEOPLE / RECORDS</span></div>
