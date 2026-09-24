@@ -17,6 +17,7 @@
   --muted: rgb(var(--color-text-muted)); --danger: rgb(var(--color-accent-alert));
   --line: #34647a; --faint: #1b3440; --display: 'Syncopate', Orbit, sans-serif;
   --mono: 'Space Mono', Orbit, monospace;
+  --display-response: 120ms; --display-ease: cubic-bezier(.23,1,.32,1);
 }
 * { box-sizing: border-box; }
 html { background: var(--bg); color: var(--ink); scrollbar-color: var(--line) var(--bg); }
@@ -38,3 +39,4 @@ button { color: inherit; }
 summary { min-height: 44px; padding-block: 10px; color: var(--ice); }
 details[open] > summary { margin-bottom: 10px; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+[data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation-play-state: paused !important; }

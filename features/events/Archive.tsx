@@ -14,7 +14,7 @@ export function Archive() {
     const profiles = buildArtistArchive(archived), fullyMapped = profiles.every(profile => profile.verified);
     const venues = [...new Set(archived.map(event => event.venue))];
     return <div className={styles.archive}>
-      <div>{archived.length ? <div className={styles.cards}>{archived.slice((page-1)*4,page*4).map(event => <Link key={event.id} className={styles.card} href={eventHref(event.id)}>
+      <div>{archived.length ? <div className={styles.cards}>{archived.slice((page-1)*4,page*4).map(event => <Link data-readout-panel="" key={event.id} className={styles.card} href={eventHref(event.id)}>
         <div className={styles.cardHeader}><div><small>{event.id} / {event.date}</small><h2>{event.session}</h2></div><span className={styles.recordStamp}>ARCHIVED</span></div>
         <p>{event.subtitle}</p><p>{event.venue} · {event.time.replace(' KST','')} KST</p>
         <ul>{publicArtists(event).map(artist => <li key={artist.id}>{artist.name}</li>)}</ul>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { getEventDateTime } from '@/lib/events/lifecycle';
 import type { TerminalEvent } from '@/lib/events/types';
+import { LiveValue } from '@/features/display/Display';
 import styles from './home.module.css';
 
 export function EventCountdown({ event }: { event: Pick<TerminalEvent, 'date' | 'time'> }) {
@@ -38,6 +39,6 @@ export function EventCountdown({ event }: { event: Pick<TerminalEvent, 'date' | 
   ] as const;
   return <section className={styles.countdown} role="timer" aria-live="off" aria-label={remaining ? '이벤트 시작까지 남은 시간' : '이벤트 시작 후 경과 시간'}>
     <div className={styles.countdownMode}><span>{remaining ? 'T- COUNTDOWN' : 'T+ ELAPSED'}</span><span>{remaining ? '이벤트 시작까지' : '이벤트 시작 이후'}</span></div>
-    <dl className={styles.countdownUnits}>{units.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{now === null ? '—' : String(value).padStart(2, '0')}</dd></div>)}</dl>
+    <dl className={styles.countdownUnits}>{units.map(([label, value]) => <div key={label}><dt>{label}</dt><dd><LiveValue value={now === null ? '—' : String(value).padStart(2, '0')}/></dd></div>)}</dl>
   </section>;
 }

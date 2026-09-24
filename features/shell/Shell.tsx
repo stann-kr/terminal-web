@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
+import { DataActivity, DisplaySurface } from '@/features/display/Display';
+import { useDisplayMotion } from '@/features/display/useDisplayMotion';
 import { useLanguage } from './Providers';
 import styles from './shell.module.css';
 
@@ -9,14 +11,17 @@ const navigation = [['/', 'HOME', '홈'], ['/events', 'EVENTS', '이벤트'], ['
 export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { language, setLanguage } = useLanguage();
-  return <div className={styles.frame}>
+  const frame = useRef<HTMLDivElement>(null);
+  useDisplayMotion(frame,`${pathname}:${language}`);
+  return <div ref={frame} className={styles.frame}>
+    <DisplaySurface/>
     <a href="#main" className={styles.skip}>본문으로 이동</a>
     <div className={styles.rail} aria-hidden="true"><span>TERMINAL / SEOUL</span><span className={styles.railTitle}>STANN LUMO</span><span>MUSIC / PEOPLE / RECORDS</span></div>
     <div className={styles.core}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">TERMINAL<span>SEOUL TECHNO PLATFORM</span></Link>
         <nav className={styles.navigation} aria-label="주 메뉴">{navigation.map(([href,label,ko], index) => <Link key={href} href={href} aria-current={(href === '/' ? pathname === '/' : pathname.startsWith(href)) ? 'page' : undefined}><span className={styles.number}>0{index + 1}</span><span>{label}<small>{ko}</small></span></Link>)}</nav>
-        <div className={styles.language} aria-label="콘텐츠 언어"><span>CONTENT</span>{(['ko','en'] as const).map(lang => <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>{lang.toUpperCase()}</button>)}</div>
+        <div className={styles.language} aria-label="콘텐츠 언어"><span>CONTENT</span><DataActivity/>{(['ko','en'] as const).map(lang => <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>{lang.toUpperCase()}</button>)}</div>
       </header>
       <main id="main" aria-label="본문" tabIndex={0} className={styles.main}>{children}</main>
       <footer className={styles.footer}>

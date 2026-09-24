@@ -6,13 +6,13 @@ export function PageHeading({ title }: { title: string }) {
   return <h1 className={styles.srOnly}>{title}</h1>;
 }
 export function Panel({ title, code, children, className = '' }: { title: string; code?: string; children: ReactNode; className?: string }) {
-  return <section className={`${styles.panel} ${className}`}><h2 className={styles.sectionTitle}>{title}{code && <span>{code}</span>}</h2>{children}</section>;
+  return <section data-readout-panel="" className={`${styles.panel} ${className}`}><h2 data-readout-row="" className={styles.sectionTitle}>{title}{code && <span>{code}</span>}</h2>{children}</section>;
 }
 export function Action({ href, children, primary = false }: { href: string; children: ReactNode; primary?: boolean }) {
   return <Link className={`${styles.action} ${primary ? styles.primary : ''}`} href={href}>{children}</Link>;
 }
 export function Facts({ rows }: { rows: readonly (readonly [string, ReactNode])[] }) {
-  return <dl className={styles.facts}>{rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value === '' || value == null ? '미정' : value}</dd></div>)}</dl>;
+  return <dl className={styles.facts}>{rows.map(([label, value]) => <div key={label} data-readout-row=""><dt>{label}</dt><dd>{value === '' || value == null ? '미정' : value}</dd></div>)}</dl>;
 }
 export function StateNotice({ title, children, error = false, retry }: { title: string; children?: ReactNode; error?: boolean; retry?: () => void }) {
   return <div className={`${styles.notice} ${error ? styles.error : ''}`} role={error ? 'alert' : 'status'}><p className={styles.eyebrow}>{error ? 'READ ERROR' : 'INFORMATION'}</p><h2>{title}</h2>{children && <div>{children}</div>}{retry && <button type="button" className={styles.button} onClick={retry}>다시 불러오기</button>}</div>;
@@ -25,6 +25,6 @@ export function Pagination({ page, totalPages, href }: { page: number; totalPage
 export function FullText({ paragraphs, excerpt = true, language }: { paragraphs: string[]; excerpt?: boolean; language?: 'ko'|'en' }) {
   if (!paragraphs.length) return null;
   const text = paragraphs.join('\n\n');
-  return <div className={styles.prose} lang={language}>{excerpt && text.length > 260 ? <><p>{text.slice(0,240)}…</p><details><summary lang="ko">전체 읽기</summary>{paragraphs.map((p,i) => <p key={i}>{p}</p>)}</details></> : paragraphs.map((p,i) => <p key={i}>{p}</p>)}</div>;
+  return <div className={styles.prose} lang={language}>{excerpt && text.length > 260 ? <><p data-readout-row="">{text.slice(0,240)}…</p><details><summary lang="ko">전체 읽기</summary>{paragraphs.map((p,i) => <p data-readout-row="" key={i}>{p}</p>)}</details></> : paragraphs.map((p,i) => <p data-readout-row="" key={i}>{p}</p>)}</div>;
 }
 export { styles as ui };

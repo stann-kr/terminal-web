@@ -19,3 +19,9 @@
 .prose { line-height: 1.9; font-size: 13px; }.prose p { white-space: pre-wrap; margin-bottom: 14px; }
 .muted { color: var(--muted); font-size: 12px; }
 .stack { display: grid; gap: 18px; align-content: start; }.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.action,.button { position: relative; transition: color var(--display-response) var(--display-ease),background-color var(--display-response) var(--display-ease),border-color var(--display-response) var(--display-ease); }
+.action:active,.button:active:not(:disabled) { background: var(--ink); color: var(--bg); border-color: var(--ink); text-shadow: none; }
+.primary { text-shadow: none; }
+.button[aria-busy=true]::after { content: ''; position: absolute; right: 5px; top: calc(50% - 4px); width: 3px; height: 8px; background: currentColor; }
+@keyframes pendingCursor { 0%,55% { opacity: 1; } 56%,100% { opacity: .25; } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .button[aria-busy=true]::after,.loading > span { animation: pendingCursor .7s steps(1,end) infinite; } }

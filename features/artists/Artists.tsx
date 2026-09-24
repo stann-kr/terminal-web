@@ -13,8 +13,8 @@ export function Artists() {
     const profiles = buildArtistArchive(events).sort((a,b) => a.name.localeCompare(b.name,'ko') || a.key.localeCompare(b.key));
     const totalPages = Math.ceil(profiles.length/12), page = Math.min(pageNumber(params.get('page')), Math.max(totalPages,1));
     return <>
-      <p className={styles.count}>{profiles.length}개 기록</p>
-      {profiles.length ? <div className={styles.grid}>{profiles.slice((page-1)*12,page*12).map(profile => <Link className={styles.cell} key={profile.key} href={artistHref(profile.key)}>
+      <p data-readout-row="" className={styles.count}>{profiles.length}개 기록</p>
+      {profiles.length ? <div className={styles.grid}>{profiles.slice((page-1)*12,page*12).map(profile => <Link data-readout-panel="" className={styles.cell} key={profile.key} href={artistHref(profile.key)}>
         <span className={styles.cellHeader}><span>ARTIST / {profile.origin}</span><span>{profile.appearances.some(row => row.event.status === 'LIVE') ? 'LIVE 출연' : profile.appearances.some(row => row.event.status === 'UPCOMING') ? '예정 출연' : '출연 기록'}</span></span>
         <h2>{profile.name}</h2><Facts rows={[["참여 행사",`${profile.eventCount}회`],["최근 출연",profile.appearances[0].event.date]]}/>
         <div className={styles.years}>{[...new Set(profile.appearances.map(row => row.event.date.slice(0,4)))].sort().map(year => <span key={year}>{year}</span>)}</div>

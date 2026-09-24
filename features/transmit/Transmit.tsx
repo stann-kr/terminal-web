@@ -7,6 +7,7 @@ import { PageHeading, Pagination, Panel, ui } from '@/features/ui/Ui';
 import { Field, FormError, formStyles } from '@/features/ui/Form';
 import { ApiError, errorMessage, postJson } from '@/features/ui/http';
 import { pageNumber } from '@/features/events/model';
+import { LiveValue } from '@/features/display/Display';
 import { Feed, useTransmit } from './Feed';
 import styles from './transmit.module.css';
 export function Transmit() {
@@ -38,5 +39,5 @@ export function TransmitForm({ onPosted }: { onPosted: () => void }) {
     } catch(error) { setError(error); if(error instanceof ApiError && error.code==='IDEMPOTENCY_CONFLICT') attempt.current=null; }
     finally { submitting.current=false;setPending(false); }
   }
-  return <form className={formStyles.form} onSubmit={submit}><div className={styles.counter}><span>MESSAGE LENGTH</span><strong>{draft.message.length}<small>/280</small></strong></div><FormError message={error?errorMessage(error):''}/>{receipt && <div role="status" className={styles.receipt}>기록을 저장했습니다. {receipt.handle} · {receipt.ts} KST</div>}<Field id="transmit-handle" label="공개 닉네임" required maxLength={96} autoComplete="nickname" value={draft.handle} onChange={event=>edit({handle:event.target.value})}/><div className={formStyles.field}><label htmlFor="transmit-message">메시지 <span>필수</span></label><textarea id="transmit-message" required maxLength={280} rows={5} value={draft.message} onChange={event=>edit({message:event.target.value})}/></div><button disabled={pending} className={`${ui.button} ${ui.primary}`}>{pending?'전송 중…':'기록 전송'}</button></form>;
+  return <form aria-busy={pending} className={formStyles.form} onSubmit={submit}><div className={styles.counter}><span>MESSAGE LENGTH</span><strong><LiveValue value={draft.message.length}/><small>/280</small></strong></div><FormError message={error?errorMessage(error):''}/>{receipt && <div role="status" className={styles.receipt}>기록을 저장했습니다. {receipt.handle} · {receipt.ts} KST</div>}<Field id="transmit-handle" label="공개 닉네임" required maxLength={96} autoComplete="nickname" value={draft.handle} onChange={event=>edit({handle:event.target.value})}/><div className={formStyles.field}><label htmlFor="transmit-message">메시지 <span>필수</span></label><textarea id="transmit-message" required maxLength={280} rows={5} value={draft.message} onChange={event=>edit({message:event.target.value})}/></div><button aria-busy={pending} disabled={pending} className={`${ui.button} ${ui.primary}`}>{pending?'전송 중…':'기록 전송'}</button></form>;
 }

@@ -14,7 +14,7 @@ export function EventFacts({ event, modular = false }: { event: TerminalEvent; m
     { label: 'VENUE', rows: [['장소', event.venue], ['지역', event.district], ['좌표', event.coords]] },
     { label: 'EVENT SYSTEM', rows: [['사운드', event.sound], ['수용 규모', event.capacity]] },
   ];
-  if (modular) return <div className={styles.factModules}>{groups.map(group => <div key={group.label} className={styles.factModule}><p lang="en">{group.label}</p><Facts rows={group.rows.map(([label,value]) => [label,value])}/></div>)}</div>;
+  if (modular) return <div className={styles.factModules}>{groups.map(group => <div key={group.label} className={styles.factModule}><p data-readout-row="" lang="en">{group.label}</p><Facts rows={group.rows.map(([label,value]) => [label,value])}/></div>)}</div>;
   return <Facts rows={[["일시 / KST", `${event.date} · ${event.time.replace(' KST','')}`],["장소", event.venue],["지역",event.district],["좌표",event.coords],["사운드",event.sound],["수용 규모",event.capacity]]}/>;
 }
 export function EventActions({ event, events, now }: { event: TerminalEvent; events: TerminalEvent[]; now: Date }) {
@@ -36,10 +36,10 @@ export function Lineup({ event, events, stages = false }: { event: TerminalEvent
   return <>
     {stages ? <div className={styles.stageBoard}>
       {[...new Set(visible.map(artist => artist.dock || 'TBA'))].map(dock => <section className={styles.stage} key={dock} aria-label={`무대 ${dock}`}>
-        <h3><span>STAGE {dock}</span><span>공개 공연표</span></h3>
+        <h3 data-readout-row=""><span>STAGE {dock}</span><span>공개 공연표</span></h3>
         <ul className={styles.stageSlots}>{visible.filter(artist => (artist.dock || 'TBA') === dock).map(artist => <li key={artist.id}>
-          <div className={styles.slotCode}>{artist.id}<span>{artist.status === 'ARCHIVED' ? 'ARCHIVE' : 'CONFIRMED'}</span></div>
-          <div className={styles.slotArtist}>{identity(artist)}</div><p className={styles.slotTime}><span>TIME</span>{artist.time}</p>
+          <div data-readout-row="" className={styles.slotCode}>{artist.id}<span>{artist.status === 'ARCHIVED' ? 'ARCHIVE' : 'CONFIRMED'}</span></div>
+          <div className={styles.slotArtist}>{identity(artist)}</div><p data-readout-row="" className={styles.slotTime}><span>TIME</span>{artist.time}</p>
         </li>)}</ul>
       </section>)}
     </div> : <ul className={styles.lineup}>{visible.map(artist => <li key={artist.id}><span className={styles.dock}>{artist.dock}</span><div>{identity(artist)}</div><time>{artist.time}</time></li>)}</ul>}
