@@ -123,26 +123,41 @@ describe('terminal character printing',() => {
     expect(visibleResponses().map(node => node.textContent)).toEqual(['','']);
     const saved=JSON.parse(sessionStorage.getItem(TERMINAL_SESSION_KEY)!);
     expect(saved.entries[0].text).toContain('한국어 소개');
-    act(() => {vi.advanceTimersByTime(16);});
+    act(() => {vi.advanceTimersByTime(6);});
     expect(visibleResponses()[0].textContent).toBe('가');
     expect(visibleResponses()[1].textContent).toBe('');
-    act(() => {vi.advanceTimersByTime(16);});
+    act(() => {vi.advanceTimersByTime(6);});
     expect(visibleResponses()[0].textContent).toBe('가🙂');
     act(() => {vi.runAllTimers();});
     expect(visibleResponses()[0].textContent).toBe(runCommand('open 가🙂',[unicode,next],now).text);
     expect(visibleResponses()[0].textContent).toContain('\n');
-    act(() => {vi.advanceTimersByTime(16);});
+    act(() => {vi.advanceTimersByTime(6);});
     expect(visibleResponses()[1].textContent).toBe('V');
     expect(screen.getByRole('textbox')).toHaveFocus();
     fireEvent.keyDown(screen.getByRole('textbox'),{key:'Escape'});
     expect(visibleResponses()[1].textContent).toBe('VISIBLE ARTIST / KR');
     expect(vi.getTimerCount()).toBe(0);
   });
+  it('finishes a long multiline reply within 1.25 seconds without truncating saved or visible content',() => {
+    vi.useFakeTimers();
+    const longEvent={...old,description:{ko:Array.from({length:120},(_,i) => `${i}번째 기록 — 한글🙂`).join('\n'),en:''}};
+    render(<HomeTerminal events={[longEvent]}/>);
+    submit(`open ${longEvent.id}`);
+    const expected=runCommand(`open ${longEvent.id}`,[longEvent],now).text;
+    expect(expected.length).toBeGreaterThan(1500);
+    expect(visibleResponses()[0].textContent).toBe('');
+    act(() => {vi.advanceTimersByTime(1250);});
+    expect(visibleResponses()[0].textContent).toBe(expected);
+    expect(visibleResponses()[0]).toHaveAttribute('data-printing','false');
+    expect(JSON.parse(sessionStorage.getItem(TERMINAL_SESSION_KEY)!).entries[0].text).toBe(expected);
+    expect(screen.getByRole('textbox')).toHaveFocus();
+    expect(vi.getTimerCount()).toBe(0);
+  });
   it('cancels printing on clear/unmount and restores complete scrollback without replay',() => {
     vi.useFakeTimers();
     const view=render(<HomeTerminal events={[old,next]}/>);
     submit('events');
-    act(() => {vi.advanceTimersByTime(16);});
+    act(() => {vi.advanceTimersByTime(6);});
     submit('clear');
     act(() => {vi.runAllTimers();});
     expect(screen.getByRole('log')).toBeEmptyDOMElement();
@@ -163,7 +178,7 @@ describe('terminal character printing',() => {
     vi.stubGlobal('navigator',{connection});
     render(<div data-testid="frame"><HomeTerminal events={[old,next]}/></div>);
     submit('events'); submit('artists');
-    act(() => {vi.advanceTimersByTime(16);});
+    act(() => {vi.advanceTimersByTime(6);});
     expect(visibleResponses()[0].textContent).toBe('T');
     await act(async () => {
       if(policy === 'effects') screen.getByTestId('frame').setAttribute('data-effects-off','');

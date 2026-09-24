@@ -23,13 +23,21 @@ export function PrintedResponse({ id, text, error, mode, onComplete, onPrint }: 
     const characters = typeof Intl.Segmenter === 'function'
       ? Array.from(new Intl.Segmenter('ko',{granularity:'grapheme'}).segment(text),part => part.segment)
       : Array.from(text);
+    const batchSize = Math.max(1,Math.ceil(characters.length / 140));
+    const started = performance.now();
     const print = () => {
       if (stopped) return;
       if (disabled()) { finish(true); return; }
-      if (index >= characters.length) { finish(); return; }
-      const character = characters[index++];
-      buffer += character; setPrinted(buffer);
-      timer = setTimeout(print,character === '\n' ? 90 : 16);
+      // Long replies must not hold the following command behind a slow typewriter.
+      if (index >= characters.length || performance.now()-started >= 1200) { finish(); return; }
+      let character = '';
+      for (let count = 0; count < batchSize && index < characters.length; count++) {
+        character = characters[index++];
+        buffer += character;
+        if (character === '\n') break;
+      }
+      setPrinted(buffer);
+      timer = setTimeout(print,character === '\n' ? 24 : 6);
     };
     const observer = new MutationObserver(policyChanged);
     for (let parent = root.current?.parentElement; parent; parent = parent.parentElement) observer.observe(parent,{attributes:true,attributeFilter:['data-effects-off','data-display-paused']});
@@ -37,7 +45,7 @@ export function PrintedResponse({ id, text, error, mode, onComplete, onPrint }: 
     contrast?.addEventListener('change',policyChanged);
     connection?.addEventListener('change',policyChanged);
     document.addEventListener('visibilitychange',policyChanged);
-    if (disabled()) finish(true); else timer = setTimeout(print,16);
+    if (disabled()) finish(true); else timer = setTimeout(print,6);
     return () => {
       stop(); observer.disconnect();
       reduced?.removeEventListener('change',policyChanged);

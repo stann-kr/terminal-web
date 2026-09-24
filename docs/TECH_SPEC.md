@@ -15,7 +15,7 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 - `features/ui`: 중립 control, HTTP 오류, 표시 primitive
 - `lib/events`, `lib/gate`, `lib/signal`, `lib/transmit`: 기존 서버 domain과 repository
 
-스타일과 페이지별 전용 장식은 각 capability의 CSS Module이 소유합니다. 이벤트 목록과 터미널 출력은 같은 행사 정렬과 공개 아티스트 경계를 사용합니다. 터미널은 router를 호출하지 않고 sessionStorage에 명령·출력·초안을 보관합니다. useSyncExternalStore의 빈 서버 스냅샷으로 hydration을 유지하며 저장 실패는 메모리 동작으로 복구합니다. 입력할 때는 초안만 저장하고 전체 출력은 명령 실행 때 저장합니다. PrintedResponse가 일시적인 출력 진행을 소유하며 grapheme 단위 16ms, 줄바꿈 뒤 90ms 간격으로 표시합니다. 명령 응답은 순차 출력하고 clear/unmount에서 타이머를 취소합니다. FX OFF·모션 감소·고대비·save-data·숨겨진 탭에서는 전체 응답을 즉시 표시합니다. 접근성 로그에는 완성된 응답을 한 번 제공하고 문자별 시각 변경은 읽기 대상에서 제외합니다. 공개 로그 장식은 해당 페이지 query의 isFetching/error/data 상태에 연결하고, 신청·전송 장식은 실제 pending/checking 상태에 연결합니다. `app/globals.css`는 토큰·font·reset·중립 요소만 포함합니다. STANN OS 공용 원본 token과 patch verifier는 별도로 유지합니다.
+스타일과 페이지별 전용 장식은 각 capability의 CSS Module이 소유합니다. 이벤트 목록과 터미널 출력은 같은 행사 정렬과 공개 아티스트 경계를 사용합니다. 터미널은 router를 호출하지 않고 sessionStorage에 명령·출력·초안을 보관합니다. useSyncExternalStore의 빈 서버 스냅샷으로 hydration을 유지하며 저장 실패는 메모리 동작으로 복구합니다. 입력할 때는 초안만 저장하고 전체 출력은 명령 실행 때 저장합니다. PrintedResponse가 일시적인 출력 진행을 소유하며 grapheme 단위 6ms, 줄바꿈 뒤 24ms 간격으로 표시합니다. 긴 응답은 grapheme을 묶어 출력하고 1.2초 이후 첫 타이머에서 완성된 응답으로 전환해 대기열 지연을 제한합니다. 명령 응답은 순차 출력하고 clear/unmount에서 타이머를 취소합니다. FX OFF·모션 감소·고대비·save-data·숨겨진 탭에서는 전체 응답을 즉시 표시합니다. 접근성 로그에는 완성된 응답을 한 번 제공하고 문자별 시각 변경은 읽기 대상에서 제외합니다. 공개 로그 장식은 해당 페이지 query의 isFetching/error/data 상태에 연결하고, 신청·전송 장식은 실제 pending/checking 상태에 연결합니다. `app/globals.css`는 토큰·font·reset·중립 요소만 포함합니다. STANN OS 공용 원본 token과 patch verifier는 별도로 유지합니다.
 
 ## 공개 API
 

@@ -8,22 +8,20 @@
 .signalText { display: inline-flex; align-items: center; gap: 6px; }
 .signalText i { flex-shrink: 0; width: 5px; height: 5px; border: 1px solid currentColor; }
 .signalText[data-active=true] { color: var(--amber); }
-.signalText[data-active=true] i { background: currentColor; }
-@keyframes signalTint { 0%,68%,100% { color: var(--amber); } 69%,86% { color: var(--ice); } }
-@keyframes signalBlink { 0%,58%,100% { opacity: 1; } 59%,82% { opacity: .2; } }
+.signalText[data-active=true] i { background: currentColor; box-shadow: 0 0 5px rgb(var(--amber-rgb) / .45); }
+@keyframes signalBlink { 0%,8% { opacity: 1; } 32%,100% { opacity: .35; } }
 @keyframes grainDrift { 0%,100% { transform: translate(0,0); } 25% { transform: translate(2px,-1px); } 50% { transform: translate(-1px,2px); } 75% { transform: translate(-2px,-1px); } }
 @keyframes sweep { from { transform: translateY(0); } to { transform: translateY(540%); } }
-@keyframes queryPulse { 0%,100% { opacity: .3; } 40% { opacity: 1; } }
-@keyframes valueSettle { from { opacity: .65; } to { opacity: 1; } }
+@keyframes queryPulse { 0%,10% { opacity: 1; } 35%,100% { opacity: .3; } }
+@keyframes valueSettle { from { text-shadow: 0 0 8px rgb(var(--color-accent-primary) / .7); } to { text-shadow: 0 0 5px rgb(var(--color-accent-primary) / .48); } }
 @media(prefers-reduced-motion:no-preference) and (forced-colors:none) {
   .grain { animation: grainDrift 4s steps(1,end) infinite; }
   .sweep { animation: sweep 12s linear infinite; }
-  .activity[data-busy=true] i { animation: queryPulse .6s steps(2,end) infinite; }
-  .activity[data-busy=true] i:nth-child(2) { animation-delay: .12s; }
-  .activity[data-busy=true] i:nth-child(3) { animation-delay: .24s; }
-  .value { animation: valueSettle .18s ease-out both; }
-  .signalText[data-active=true] { animation: signalTint 3.2s steps(1,end) infinite; }
-  .signalText[data-active=true] i { animation: signalBlink 2.4s steps(1,end) infinite; }
+  .activity[data-busy=true] i { animation: queryPulse .72s linear infinite; }
+  .activity[data-busy=true] i:nth-child(2) { animation-delay: .045s; }
+  .activity[data-busy=true] i:nth-child(3) { animation-delay: .09s; }
+  .value { animation: valueSettle .12s ease-out both; }
+  .signalText[data-active=true] i { animation: signalBlink .9s linear infinite; }
 }
 :global([data-display-paused]) :is(.grain,.sweep,.activity i,.value) { animation: none; }
 @media(max-width:700px) { .surface { box-shadow: inset 0 0 45px rgb(0 0 0 / .2); }.activity { margin-right: 5px; gap: 2px; }.activity i { width: 2px; } }

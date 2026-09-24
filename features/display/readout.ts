@@ -53,19 +53,20 @@ export function createReadout(root: HTMLElement, enabled: () => boolean = () => 
     active.add(context);
     try { context.add(() => {
       const sequence = gsap.timeline({ paused:true, defaults:{ ease:'none' }, onComplete:() => settle(context) });
-      const delayFor = (node: HTMLElement) => Math.max(0,Math.min(4,panels.findIndex(panel => panel.node === node || panel.node.contains(node)))) * .045;
-      panels.forEach(({node}) => sequence.fromTo(node,{opacity:.55},{opacity:1,duration:.14},delayFor(node)));
+      // Overlap the panel ignition and line passes; even dense screens settle within 310ms.
+      const delayFor = (node: HTMLElement) => Math.max(0,Math.min(4,panels.findIndex(panel => panel.node === node || panel.node.contains(node)))) * .016;
+      panels.forEach(({node}) => sequence.fromTo(node,{opacity:.8},{opacity:1,duration:.08,ease:'power2.out'},delayFor(node)));
       const offsets = new Map<HTMLElement,number>();
       rows.forEach(({node,bottoms}) => {
         const owner = panels.find(panel => panel.node.contains(node))?.node ?? root;
         const offset = offsets.get(owner) ?? 0;
-        const start = .08 + delayFor(node);
+        const start = .016 + delayFor(node);
         sequence.set(node,{clipPath:'inset(0 0 100% 0)',immediateRender:true},0);
-        bottoms.forEach((bottom,index) => sequence.set(node,{clipPath:`inset(-0.15em -0.15em ${bottom ? `${bottom}px` : '-0.15em'} -0.15em)`},start+Math.min(14,offset+index)*.035));
-        sequence.to(node,{opacity:1,duration:.12},start+Math.min(14,offset+bottoms.length)*.035);
+        bottoms.forEach((bottom,index) => sequence.set(node,{clipPath:`inset(-0.15em -0.15em ${bottom ? `${bottom}px` : '-0.15em'} -0.15em)`},start+Math.min(14,offset+index)*.012));
+        sequence.to(node,{opacity:1,duration:.06},start+Math.min(14,offset+bottoms.length)*.012);
         offsets.set(owner,offset+bottoms.length);
       });
-      meters.forEach(({node}) => sequence.fromTo(node,{scaleX:0},{scaleX:1,duration:.24,ease:'power2.out'},.12+delayFor(node)));
+      meters.forEach(({node}) => sequence.fromTo(node,{scaleX:0},{scaleX:1,duration:.14,ease:'power3.out'},.032+delayFor(node)));
       sequence.play();
     }); } catch { settle(context); }
   }
