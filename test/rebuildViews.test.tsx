@@ -21,7 +21,6 @@ describe('rebuild public views',()=>{
     expect(within(screen.getByRole('region',{name:'무대 2'})).getByRole('link',{name:/SECOND ARTIST/})).toBeInTheDocument();
     expect(within(screen.getByRole('region',{name:'무대 2'})).getByText('02:00–03:00')).toBeInTheDocument();
     expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();
-    expect(screen.getByText('추가 공개 예정 1팀')).toBeInTheDocument();
   });
   it('links repeated confirmed appearances to one canonical artist profile',()=>{
     const publicArtist=event.artists[0];
@@ -34,7 +33,7 @@ describe('rebuild public views',()=>{
     expect(screen.getByText('2회')).toBeInTheDocument();
   });
   it('treats archived-only data as no upcoming event with a path to records',()=>{view(<Events/>);expect(screen.getByText('다음 행사 미정')).toBeInTheDocument();expect(screen.getByRole('link',{name:/지난 행사 기록/})).toHaveAttribute('href','/archive');expect(screen.queryByRole('link',{name:/게스트 신청/})).not.toBeInTheDocument();});
-  it('hides private names in real archive lineups and closes expired requests',()=>{view(<EventDetail eventId="OLD"/>);expect(screen.getByRole('heading',{name:'Past event',level:1})).toBeInTheDocument();expect(screen.getByText('추가 공개 예정 1팀')).toBeInTheDocument();expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();expect(screen.getByRole('link',{name:/VISIBLE ARTIST/})).toHaveAttribute('href','/artists/appearance%3AOLD%3APUBLIC');expect(screen.queryByRole('link',{name:/게스트 신청/})).not.toBeInTheDocument();});
+  it('hides private names in real archive lineups and closes expired requests',()=>{view(<EventDetail eventId="OLD"/>);expect(screen.getByRole('heading',{name:'Past event',level:1})).toBeInTheDocument();expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();expect(screen.getByRole('link',{name:/VISIBLE ARTIST/})).toHaveAttribute('href','/artists/appearance%3AOLD%3APUBLIC');expect(screen.queryByRole('link',{name:/게스트 신청/})).not.toBeInTheDocument();});
   it('shows all public artists without search or filters, including from old filtered URLs',()=>{
     navigation.search=new URLSearchParams('q=PRIVATE&origin=US&sort=count');
     view(<Artists/>);

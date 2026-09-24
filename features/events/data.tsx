@@ -22,6 +22,6 @@ export function useEvents() {
 }
 export function EventsData({ children }: { children: (events: TerminalEvent[], now: Date) => ReactNode }) {
   const query = useEvents();
-  if (!query.events) return query.isError ? <StateNotice error title="행사 기록을 불러오지 못했습니다" retry={() => void query.refetch()}>행사 수를 확인할 수 없습니다. 다시 조회해 주세요.</StateNotice> : <Loading />;
+  if (!query.events) return query.isError ? <StateNotice error title="행사 기록을 불러오지 못했습니다" retry={() => void query.refetch()}/> : <Loading />;
   return <>{query.isError && <StateNotice error title="최신 정보를 불러오지 못했습니다" retry={() => void query.refetch()}>아래는 마지막으로 확인한 기록입니다.</StateNotice>}{children(query.events, query.now)}</>;
 }

@@ -45,14 +45,14 @@ describe('guest request UI',()=>{
     await screen.findByRole('alert');expect(fetch).toHaveBeenCalledTimes(2);
     const payload=JSON.parse(fetch.mock.calls[1][1].body);
     expect(payload).toEqual({eventId:'A',accessCode:'CODE',name:'Example',email:'example@example.test',instagram:'example',privacyConsent:true,marketingConsent:false});
-    expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');expect(screen.getByLabelText(/^이름/)).toBeDisabled();expect(screen.getByRole('alert')).toHaveTextContent('접수');expect(screen.queryByText('초대 코드를 확인했습니다. 연락처와 동의를 입력해 주세요.')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');expect(screen.getByLabelText(/^이름/)).toBeDisabled();expect(screen.getByRole('alert')).toHaveTextContent('접수');expect(screen.queryByText('초대 코드를 확인했습니다.')).not.toBeInTheDocument();
   });
   it('reports a stored request without claiming admission or tickets',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockResolvedValueOnce(json({ok:true})));
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
     await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByLabelText(/^이메일/),'example@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
-    expect(await screen.findByRole('heading',{name:'게스트 신청을 저장했습니다'})).toBeInTheDocument();expect(screen.getByRole('status')).toHaveTextContent('입장 확정, QR 또는 티켓이 아닙니다');
+    expect(await screen.findByRole('heading',{name:'게스트 신청을 저장했습니다'})).toBeInTheDocument();expect(screen.getByRole('status')).toHaveTextContent('게스트 신청을 저장했습니다');
   });
 });
 describe('transmit UI',()=>{

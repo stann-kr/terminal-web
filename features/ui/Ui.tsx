@@ -23,7 +23,7 @@ export function Pagination({ page, totalPages, href }: { page: number; totalPage
   return <nav aria-label="페이지 이동" className={styles.pagination}>{page > 1 ? <Link href={href(page - 1)}>← 이전</Link> : <span>이전</span>}<span aria-live="polite">{page} / {Math.max(totalPages,1)}</span>{page < totalPages ? <Link href={href(page + 1)}>다음 →</Link> : <span>다음</span>}</nav>;
 }
 export function FullText({ paragraphs, excerpt = true, language }: { paragraphs: string[]; excerpt?: boolean; language?: 'ko'|'en' }) {
-  if (!paragraphs.length) return <p className={styles.muted}>등록된 소개가 없습니다.</p>;
+  if (!paragraphs.length) return null;
   const text = paragraphs.join('\n\n');
   return <div className={styles.prose} lang={language}>{excerpt && text.length > 260 ? <><p>{text.slice(0,240)}…</p><details><summary lang="ko">전체 읽기</summary>{paragraphs.map((p,i) => <p key={i}>{p}</p>)}</details></> : paragraphs.map((p,i) => <p key={i}>{p}</p>)}</div>;
 }

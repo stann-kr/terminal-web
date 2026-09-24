@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { buildArtistArchive } from '@/features/artists/model';
-import { Facts, PageHeading, Panel, Pagination, StateNotice, ui } from '@/features/ui/Ui';
+import { Facts, PageHeading, Panel, Pagination, StateNotice } from '@/features/ui/Ui';
 import { EventsData } from './data';
 import { eventHref, pageNumber, publicArtists } from './model';
 import styles from './events.module.css';
@@ -18,15 +18,12 @@ export function Archive() {
         <div className={styles.cardHeader}><div><small>{event.id} / {event.date}</small><h2>{event.session}</h2></div><span className={styles.recordStamp}>ARCHIVED</span></div>
         <p>{event.subtitle}</p><p>{event.venue} · {event.time.replace(' KST','')} KST</p>
         <ul>{publicArtists(event).map(artist => <li key={artist.id}>{artist.name}</li>)}</ul>
-        {event.artists.length > publicArtists(event).length && <small>추가 공개 예정 {event.artists.length-publicArtists(event).length}팀</small>}
         <span>전체 행사 기록</span>
-      </Link>)}</div> : <StateNotice title="아직 지난 행사 기록이 없습니다">행사가 끝나면 이곳에서 기록을 확인할 수 있습니다.</StateNotice>}
+      </Link>)}</div> : <StateNotice title="아직 지난 행사 기록이 없습니다"/>}
         <Pagination page={page} totalPages={totalPages} href={page => `/archive?page=${page}`}/>
       </div>
       <Panel title="전체 기록 집계" code="ALL YEARS" className={styles.archiveSummary}>
-        <p className={ui.muted}>전체 연도 · 전체 장소</p>
         <Facts rows={[["행사",archived.length],[fullyMapped ? '공개 아티스트' : '공개 출연 기록',fullyMapped ? profiles.length : archived.reduce((sum,event) => sum+publicArtists(event).length,0)],...venues.map(venue => [venue, archived.filter(event => event.venue === venue).length] as const)]}/>
-        {!fullyMapped && <p className={ui.muted}>인물이 확정되지 않은 기록은 출연별로 집계합니다.</p>}
       </Panel>
     </div>;
   }}</EventsData></>;

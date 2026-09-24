@@ -1,2 +1,2 @@
-.layout { display: grid; grid-template-columns: minmax(220px,280px) minmax(0,650px); gap: 30px; justify-content: center; align-items: start; }.layout > :first-child { padding: 16px; border: 1px dashed var(--line); background: rgb(var(--color-accent-primary) / .025); font-size: 13px; }.note { margin-block: 24px; color: var(--muted); font-size: 12px; }
+.layout { display: grid; grid-template-columns: minmax(220px,280px) minmax(0,650px); gap: 30px; justify-content: center; align-items: start; }.layout > :first-child { padding: 16px; border: 1px dashed var(--line); background: rgb(var(--color-accent-primary) / .025); font-size: 13px; }
 @media(max-width:700px) { .layout { grid-template-columns: minmax(0,1fr); gap: 24px; } }
