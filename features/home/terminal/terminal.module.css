@@ -1,7 +1,7 @@
 /* Reference 12: terminal-window, bottom-aligned output, dashed CMD prompt. */
-.terminal { display: flex; flex-direction: column; flex: 1; min-height: 360px; min-width: 0; padding: 10px 10px 4px; border: 1px solid var(--ice); color: var(--ice); background: repeating-linear-gradient(0deg,var(--bg) 0 2px,rgb(var(--color-accent-primary) / .035) 2px 4px); text-shadow: 0 0 3px rgb(var(--color-accent-primary) / .45); }
-/* A zero basis keeps long history scrollable without sizing the surrounding panel. */
-.output { display: flex; flex-direction: column; flex: 1; height: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 0; font: 11px/1.65 var(--mono); scrollbar-width: thin; }
+.terminal { position: relative; contain: size; overflow: hidden; display: flex; flex-direction: column; flex: 1; min-height: 360px; min-width: 0; padding: 10px 10px 4px; border: 1px solid var(--ice); color: var(--ice); background: repeating-linear-gradient(0deg,var(--bg) 0 2px,rgb(var(--color-accent-primary) / .035) 2px 4px); text-shadow: 0 0 3px rgb(var(--color-accent-primary) / .45); }
+/* Keep absolute assistive text inside the log, so it cannot enlarge the page scroll area. */
+.output { position: relative; display: flex; flex-direction: column; flex: 1; height: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 0; font: 11px/1.65 var(--mono); scrollbar-width: thin; }
 .directory,.entry:first-child { margin-top: auto; }
 .directoryTitle { font: 400 12px/1.5 var(--display); letter-spacing: .12em; margin-bottom: 18px; }
 .directoryLabel { font-size: 9px; letter-spacing: .1em; color: var(--muted); padding-bottom: 6px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
