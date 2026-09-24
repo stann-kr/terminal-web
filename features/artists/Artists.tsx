@@ -21,7 +21,7 @@ export function Artists() {
         <h2>{profile.name}</h2><Facts rows={[["참여 행사",`${profile.eventCount}회`],["최근 출연",profile.appearances[0].event.date]]}/>
         <div className={styles.years}>{[...new Set(profile.appearances.map(row => row.event.date.slice(0,4)))].sort().map(year => <span key={year}>{year}</span>)}</div>
       </Link>)}</div> : <StateNotice title="아직 공개된 아티스트 기록이 없습니다"/>}
-      <Pagination page={page} totalPages={totalPages} href={page => `/artists?page=${page}`}/><Ornament variant="circuit" compact/>
+      <Pagination page={page} totalPages={totalPages} href={page => `/artists?page=${page}`}/><Ornament variant="scan" compact/>
     </>;
   }}</EventsData></>;
 }

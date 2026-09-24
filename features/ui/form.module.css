@@ -7,8 +7,8 @@
 .formHeading { text-align: center; padding-bottom: 18px; border-bottom: 2px solid var(--ice); }
 .formHeading h2 { font-size: 12px; font-weight: 400; letter-spacing: .12em; margin-top: 8px; color: var(--muted); }
 .formCode { font: 700 clamp(20px,2.3vw,28px)/1.2 var(--display); letter-spacing: .12em; color: var(--ice); }
-.seal { width: 56px; height: 28px; border: 1px solid var(--ice); border-radius: 50% 0; transform: rotate(45deg); position: relative; margin: 8px auto 26px; }
-.seal::after { content: ''; position: absolute; top: 6px; left: 15px; width: 14px; height: 14px; border: 1px solid var(--ice); border-radius: 50%; }
+.seal { width: 44px; height: 28px; border: 1px solid var(--ice); position: relative; margin: 8px auto 20px; }
+.seal::after { content: ''; position: absolute; inset: 5px; border: 1px solid var(--ice); background: repeating-linear-gradient(90deg,transparent 0 5px,var(--line) 5px 6px); }
 .consent { border-top: 1px dashed var(--line); }
 .terminalForm { transition: box-shadow var(--display-response) var(--display-ease); }
 .terminalForm:focus-within { box-shadow: 0 0 28px rgb(var(--color-accent-primary) / .16); }

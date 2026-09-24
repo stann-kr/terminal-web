@@ -20,7 +20,7 @@ export function EventFacts({ event, modular = false }: { event: TerminalEvent; m
 }
 export function EventActions({ event, events, now }: { event: TerminalEvent; events: TerminalEvent[]; now: Date }) {
   const access = accessAvailability(event,events,now);
-  return <div className={styles.accessProtocol}>
+  return <div className={styles.accessProtocol} data-open={access.canRequest}>
     <p data-open={access.canRequest} className={styles.protocolLabel} lang="en">{access.canRequest ? 'ACCESS OPEN' : event.status === 'ARCHIVED' ? 'ARCHIVE RECORD' : 'ACCESS INFO'}</p>
     <p className={ui.muted}>{access.message}</p>
     {access.canRequest && <Action primary href={`${eventHref(event.id)}/request`}>게스트 신청</Action>}
@@ -52,6 +52,6 @@ export function EventRecord({ event, events, now, compact = false }: { event: Te
   return <div className={compact ? styles.recordCompact : styles.record}>
     <Panel title={event.session} code={event.id}><p className={ui.muted}>{event.subtitle}</p><div data-event-state={event.status} className={styles.status}>{statusLabel(event.status)}</div><EventFacts event={event} modular/>{event.posterUrl && <a className={styles.poster} href={event.posterUrl} target="_blank" rel="noopener noreferrer"><img src={event.posterUrl} alt={`${event.session} 행사 포스터 — 새 탭에서 확대`}/></a>}<div className={ui.actions}><Action href="/events">이벤트 목록</Action></div></Panel>
     <Panel title="공연표" code="RUNNING ORDER" className={styles.runningOrder}><Lineup event={event} events={events} stages/></Panel>
-    <div className={ui.stack}><Panel title="행사 소개" code={language.toUpperCase()}><div className={styles.annotation}><FullText language={language} paragraphs={paragraphs(event.description,language)}/>{paragraphs(event.invitationLines,language).length > 0 && <details><summary>초대 안내 전체 읽기</summary><FullText language={language} excerpt={false} paragraphs={paragraphs(event.invitationLines,language)}/></details>}</div></Panel><Panel title="참여 안내"><EventActions event={event} events={events} now={now}/><Ornament variant="circuit" compact active={event.status !== 'ARCHIVED'}/></Panel></div>
+    <div className={ui.stack}><Panel title="행사 소개" code={language.toUpperCase()}><div className={styles.annotation}><FullText language={language} paragraphs={paragraphs(event.description,language)}/>{paragraphs(event.invitationLines,language).length > 0 && <details><summary>초대 안내 전체 읽기</summary><FullText language={language} excerpt={false} paragraphs={paragraphs(event.invitationLines,language)}/></details>}</div></Panel><Panel title="참여 안내"><EventActions event={event} events={events} now={now}/><Ornament variant="scan" compact active={event.status !== 'ARCHIVED'}/></Panel></div>
   </div>;
 }
