@@ -29,7 +29,8 @@ button, a, input, select, textarea, summary { -webkit-tap-highlight-color: trans
 a { color: inherit; text-underline-offset: 4px; }
 button, summary { cursor: pointer; }
 button:disabled { cursor: wait; opacity: .6; }
-:focus-visible { outline: 2px solid var(--ice); outline-offset: 4px; }
+:focus { outline: none; }
+:is(a[href],button,summary):focus-visible { text-decoration-line: underline; text-decoration-thickness: 2px; text-underline-offset: .3em; }
 ::selection { background: var(--ice); color: var(--bg); }
 h1,h2,h3,p,dl,dd,ul,ol { margin: 0; }
 ul,ol { padding: 0; list-style: none; }

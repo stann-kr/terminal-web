@@ -24,7 +24,7 @@
 .navigation a:hover:not([aria-current]) { background: var(--panel); }
 .number { font-size: 9px; opacity: .7; }
 .main { position: relative; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; scroll-padding-block: 8px; padding: 6px; margin-inline: -6px; outline: none; }
-.main:focus-visible { outline: 1px solid var(--line); outline-offset: 0; }
+.main:focus-visible { box-shadow: inset 0 2px 0 var(--ice); }
 @supports not (scrollbar-gutter: stable) { .main { overflow-y: scroll; } }
 .footer { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin-top: 30px; padding-top: 16px; border-top: 2px solid var(--ice); font-size: 10px; color: var(--muted); }
 .imprint { display: grid; gap: 7px; color: var(--ice); font-size: 9px; letter-spacing: .08em; }
@@ -49,3 +49,5 @@
 .effects { display: inline-flex; align-items: center; min-height: 44px; gap: 7px; padding: 0 4px; border: 0; background: transparent; color: var(--muted); font-size: 10px; }
 .effects::before { content: ''; width: 4px; height: 4px; background: currentColor; }
 .effects[aria-pressed=true] { color: var(--amber); }
+
+@media(forced-colors:active) { .main:focus-visible { border-top: 2px solid Highlight; padding-top: 4px; } }

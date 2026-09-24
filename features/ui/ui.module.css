@@ -4,9 +4,9 @@
 .sectionTitle { display: flex; justify-content: space-between; gap: 10px; font: 400 11px/1.5 var(--display); color: var(--ice); border-bottom: 1px solid var(--line); padding-bottom: 5px; margin-bottom: 12px; letter-spacing: .12em; }
 .sectionTitle span { color: var(--muted); font: 9px/1.7 var(--mono); letter-spacing: .04em; }
 .action,.button { min-height: 44px; display: inline-flex; align-items: center; justify-content: space-between; gap: 18px; text-align: left; padding: 10px 14px; background: transparent; border: 1px solid var(--line); text-decoration: none; font-size: 12px; color: var(--ice); }
-.action:hover,.button:hover { background: var(--panel); border-color: var(--ice); }
+.action:hover,.button:hover,.action:focus-visible,.button:focus-visible { background: var(--panel); border-color: var(--ice); }
 .primary { background: var(--ice); color: var(--bg); border-color: var(--ice); }
-.primary:hover { background: var(--ink); color: var(--bg); }
+.primary:hover,.primary:focus-visible { background: var(--ink); color: var(--bg); }
 .facts { display: grid; }
 .facts > div { display: grid; grid-template-columns: minmax(65px,.7fr) minmax(0,1.3fr); gap: 14px; border-bottom: 1px solid var(--faint); padding-block: 6px; font-size: 12px; }
 .facts dt { color: var(--muted); }.facts dd { text-align: right; color: var(--ice); }

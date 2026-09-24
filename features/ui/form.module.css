@@ -12,8 +12,12 @@
 .consent { border-top: 1px dashed var(--line); }
 .terminalForm { transition: box-shadow var(--display-response) var(--display-ease); }
 .terminalForm:focus-within { box-shadow: 0 0 28px rgb(var(--color-accent-primary) / .16); }
-.field :is(input,textarea):focus-visible { border-color: var(--ice); }
+.field :is(input,textarea):focus-visible { border-color: var(--ice); box-shadow: inset 0 -2px 0 var(--ice); }
+.field:has(:focus-visible) label,.consent:has(input:focus-visible) > span { text-decoration-line: underline; text-decoration-thickness: 2px; text-underline-offset: .3em; }
+.error:focus-visible { box-shadow: inset 3px 0 0 var(--danger); }
 .success,.error { position: relative; }
 .success::after,.error::after { content: ''; position: absolute; inset: -1px; border: 1px solid currentColor; box-shadow: 0 0 12px currentColor; opacity: 0; pointer-events: none; }
 @keyframes resultAcknowledge { from { opacity: .45; } to { opacity: 0; } }
 @media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .success::after,.error::after { animation: resultAcknowledge .24s ease-out; } }
+
+@media(forced-colors:active) { .error:focus-visible { text-decoration-line: underline; text-decoration-thickness: 2px; } }
