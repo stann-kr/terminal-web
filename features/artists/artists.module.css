@@ -44,6 +44,7 @@
 }
 :global([data-display-paused]) .glyphSegment { animation: none; }
 .profileSignal { position: relative; display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-block: 18px 22px; padding: 22px 18px 18px; border: 1px solid var(--ice); outline: 1px solid var(--line); outline-offset: -6px; color: var(--ice); pointer-events: none; }
-.profileSignal span { grid-column: 1/-1; font: 700 10px/1.4 var(--mono); letter-spacing: .12em; color: var(--bg); background: var(--ice); padding: 4px 6px; text-shadow: none; }.profileSignal strong { grid-column: 1/-1; font: 400 clamp(26px,3.2vw,48px)/1.3 var(--display); overflow-wrap: anywhere; letter-spacing: -.04em; padding-block: 8px 16px; }
+.profileSignal span { grid-column: 1/-1; font: 700 10px/1.4 var(--mono); letter-spacing: .12em; color: var(--bg); background: var(--ice); padding: 4px 6px; text-shadow: none; }.profileSignal strong { grid-column: 1/-1; font: 400 clamp(22px,2vw,30px)/1.3 var(--display); overflow-wrap: anywhere; letter-spacing: -.04em; padding-block: 0 16px; }
+.profileSignal .profileName { font: 700 clamp(28px,3vw,42px)/1.15 var(--display); padding-block: 10px 0; text-wrap: balance; }
 .profileSignal i { height: 18px; border: 1px solid var(--line); background: repeating-linear-gradient(90deg,var(--line) 0 2px,transparent 2px 5px); }.profileSignal i:last-child { border-color: var(--amber); background: rgb(var(--amber-rgb) / .12); }
 @media(forced-colors:active) { .registryEnd,.profileSignal,.artistGlyph { display: none; }.cell { min-height: 0; }.cell[data-featured=true] { border: 3px double CanvasText; box-shadow: none; }.cell:is(:hover,:focus-visible) h2 { color: HighlightText; background: Highlight; } }

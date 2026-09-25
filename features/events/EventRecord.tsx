@@ -12,10 +12,9 @@ export function EventFacts({ event, modular = false }: { event: TerminalEvent; m
   const groups = [
     { label: 'DATE / TIME', rows: [['날짜', event.date], ['시작 / KST', event.time.replace(' KST','')]] },
     { label: 'VENUE', rows: [['장소', event.venue], ['지역', event.district], ['좌표', event.coords]] },
-    { label: 'EVENT SYSTEM', rows: [['사운드', event.sound], ['수용 규모', event.capacity]] },
   ];
   if (modular) return <div className={styles.factModules}>{groups.map(group => <div key={group.label} className={styles.factModule}><p data-readout-row="" lang="en">{group.label}</p><Facts rows={group.rows.map(([label,value]) => [label,value])}/></div>)}</div>;
-  return <Facts rows={[["일시 / KST", `${event.date} · ${event.time.replace(' KST','')}`],["장소", event.venue],["지역",event.district],["좌표",event.coords],["사운드",event.sound],["수용 규모",event.capacity]]}/>;
+  return <Facts rows={[["일시 / KST", `${event.date} · ${event.time.replace(' KST','')}`],["장소", event.venue],["지역",event.district],["좌표",event.coords]]}/>;
 }
 export function EventActions({ event, events, now }: { event: TerminalEvent; events: TerminalEvent[]; now: Date }) {
   const access = accessAvailability(event,events,now);
