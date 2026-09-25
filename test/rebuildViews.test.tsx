@@ -45,6 +45,19 @@ describe('rebuild public views',()=>{
     expect(screen.queryByText('APPEARANCES')).not.toBeInTheDocument();
     expect(screen.getAllByText('Artist biography').length).toBeGreaterThan(0);
   });
+  it('highlights only the canonical STANN LUMO without changing appearance status or link names',()=>{
+    const publicArtist={...event.artists[0],name:'STANN LUMO'};
+    view(<Artists/>,[
+      {...event,id:'TRM-01',artists:[{...publicArtist,id:'01-A'}]},
+      {...event,artists:[publicArtist]},
+    ]);
+    const cards=screen.getAllByRole('link',{name:/^ARTIST \/ KR\s*출연 기록 STANN LUMO$/});
+    expect(cards).toHaveLength(2);
+    const canonical=cards.find(card=>card.getAttribute('href')==='/artists/stann-lumo')!;
+    expect(canonical).toHaveAttribute('data-featured','true');
+    expect(canonical).toHaveAttribute('data-upcoming','false');
+    expect(cards.find(card=>card!==canonical)).not.toHaveAttribute('data-featured');
+  });
   it('keeps past events accessible in the unified list when no event is upcoming',()=>{
     view(<Events/>);
     expect(screen.getByRole('link',{name:/Past event/})).toHaveAttribute('href','/events/OLD');

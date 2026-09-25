@@ -7,6 +7,7 @@ import { useLanguage } from '@/features/shell/Providers';
 import { Action, FullText, PageHeading, Pagination, Panel, StateNotice, ui } from '@/features/ui/Ui';
 import { SignalText } from '@/features/display/Display';
 import { artistHref, buildArtistArchive } from './model';
+import { ArtistGlyph } from './ArtistGlyph';
 import styles from './artists.module.css';
 export function Artists() {
   const params = useSearchParams();
@@ -15,9 +16,9 @@ export function Artists() {
     const totalPages = Math.ceil(profiles.length/12), page = Math.min(pageNumber(params.get('page')), Math.max(totalPages,1));
     return <>
       <p data-readout-row="" className={styles.count}>{profiles.length}개 기록</p>
-      {profiles.length ? <div className={styles.grid}>{profiles.slice((page-1)*12,page*12).map(profile => <Link data-readout-panel="" data-upcoming={profile.appearances.some(row => row.event.status !== 'ARCHIVED')} className={styles.cell} key={profile.key} href={artistHref(profile.key)}>
+      {profiles.length ? <div className={styles.grid}>{profiles.slice((page-1)*12,page*12).map(profile => <Link data-readout-panel="" data-upcoming={profile.appearances.some(row => row.event.status !== 'ARCHIVED')} data-featured={profile.key === 'stann-lumo' || undefined} className={styles.cell} key={profile.key} href={artistHref(profile.key)}>
         <span className={styles.cellHeader}><span>ARTIST / {profile.origin}</span><SignalText active={profile.appearances.some(row => row.event.status !== 'ARCHIVED')}>{profile.appearances.some(row => row.event.status === 'LIVE') ? 'LIVE 출연' : profile.appearances.some(row => row.event.status === 'UPCOMING') ? '예정 출연' : '출연 기록'}</SignalText></span>
-        <h2>{profile.name}</h2><div className={styles.artistGlyph} aria-hidden="true"><i/><i/><i/><i/></div>
+        <ArtistGlyph name={profile.name}/><h2>{profile.name}</h2>
       </Link>)}</div> : <StateNotice title="아직 공개된 아티스트 기록이 없습니다"/>}
       <Pagination page={page} totalPages={totalPages} href={page => `/artists?page=${page}`}/><div className={styles.registryEnd} aria-hidden="true"/>
     </>;
