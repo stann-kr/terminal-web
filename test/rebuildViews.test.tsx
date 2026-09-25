@@ -9,13 +9,24 @@ import { Transmit } from '../features/transmit/Transmit';
 import { Home } from '../features/home/Home';
 import { EventCountdown } from '../features/home/EventCountdown';
 import { EventsData } from '../features/events/data';
-const navigation=vi.hoisted(()=>({search:new URLSearchParams()}));
-vi.mock('next/navigation',()=>({useSearchParams:()=>navigation.search,usePathname:()=>'/',useRouter:()=>({push:vi.fn(),replace:vi.fn()})}));
+const navigation=vi.hoisted(()=>({search:new URLSearchParams(),pathname:'/'}));
+vi.mock('next/navigation',()=>({useSearchParams:()=>navigation.search,usePathname:()=>navigation.pathname,useRouter:()=>({push:vi.fn(),replace:vi.fn()})}));
 const event:TerminalEvent={id:'OLD',session:'Past event',subtitle:'A past night',date:'2025-03-07',time:'23:00',venue:'FAUST',district:'SEOUL',coords:'',capacity:'',sound:'',status:'ARCHIVED',artists:[{id:'PUBLIC',name:'VISIBLE ARTIST',origin:'KR',dock:'1',time:'TBA',status:'ARCHIVED'},{id:'PRIVATE',name:'PRIVATE NAME',origin:'KR',dock:'1',time:'TBA',status:'CLASSIFIED'}]};
 const clients:QueryClient[]=[];
 function view(node:React.ReactNode,events:TerminalEvent[]=[event]) { const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});clients.push(client);client.setQueryData(['events'],events);client.setQueryData(['transmit',1],{logs:[],total:0,page:1,totalPages:0});return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>); }
-afterEach(()=>{cleanup();clients.splice(0).forEach(client=>client.clear());navigation.search=new URLSearchParams();vi.unstubAllGlobals();vi.useRealTimers();vi.restoreAllMocks();});
+afterEach(()=>{cleanup();clients.splice(0).forEach(client=>client.clear());navigation.search=new URLSearchParams();navigation.pathname='/';vi.unstubAllGlobals();vi.useRealTimers();vi.restoreAllMocks();});
 describe('rebuild public views',()=>{
+  it('continues keyboard navigation in main after a route change without stealing focus on ordinary renders',()=>{
+    const {rerender}=view(<Shell><input aria-label="초안"/></Shell>);
+    const field=screen.getByRole('textbox',{name:'초안'});
+    field.focus();
+    rerender(<QueryClientProvider client={clients[0]}><Shell><input aria-label="초안"/></Shell></QueryClientProvider>);
+    expect(field).toHaveFocus();
+    navigation.pathname='/artists';
+    rerender(<QueryClientProvider client={clients[0]}><Shell><p>STANN LUMO</p></Shell></QueryClientProvider>);
+    expect(screen.getByRole('main')).toHaveFocus();
+    expect(screen.getByRole('link',{name:/ARTISTS/})).toHaveAttribute('aria-current','page');
+  });
   it('groups the public running order by stage without adding private artist cells',()=>{
     view(<EventDetail eventId="OLD"/>,[{...event,artists:[...event.artists,{...event.artists[0],id:'SECOND',dock:'2',name:'SECOND ARTIST',time:'02:00–03:00'}]}]);
     expect(within(screen.getByRole('region',{name:'무대 1'})).getByRole('link',{name:/VISIBLE ARTIST/})).toBeInTheDocument();

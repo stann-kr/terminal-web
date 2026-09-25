@@ -52,10 +52,19 @@ describe('guest request UI',()=>{
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
     await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByLabelText(/^이메일/),'example@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
-    expect(await screen.findByRole('heading',{name:'게스트 신청을 저장했습니다'})).toBeInTheDocument();expect(screen.getByRole('status')).toHaveTextContent('게스트 신청을 저장했습니다');
+    expect(await screen.findByRole('heading',{name:'게스트 신청을 저장했습니다'})).toBeInTheDocument();expect(screen.getByRole('status')).toHaveTextContent('게스트 신청을 저장했습니다');expect(screen.getByRole('status')).toHaveFocus();
   });
 });
 describe('transmit UI',()=>{
+  it('refreshes saved data but never navigates from a form that was left during submission',async()=>{
+    let resolve!:(value:Response)=>void;
+    vi.stubGlobal('fetch',vi.fn().mockReturnValue(new Promise<Response>(done=>{resolve=done;})));
+    const onPosted=vi.fn(),onSaved=vi.fn(),user=userEvent.setup();
+    const view=render(<TransmitForm onPosted={onPosted} onSaved={onSaved}/>);
+    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));
+    view.unmount();await act(async()=>{resolve(json(log,201));});
+    expect(onSaved).toHaveBeenCalledOnce();expect(onPosted).not.toHaveBeenCalled();
+  });
   it('retries the same uncertain write with the same key, then changes the key for changed content',async()=>{
     const fetch=vi.fn().mockRejectedValue(new TypeError('offline'));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();render(<TransmitForm onPosted={vi.fn()}/>);
@@ -94,11 +103,32 @@ describe('signal UI',()=>{
     if(saved) {
       expect(await screen.findByRole('heading',{name:'소식 신청을 저장했습니다'})).toBeInTheDocument();
       expect(matrix).toHaveAttribute('data-state','saved');
+      expect(screen.getByRole('status')).toHaveFocus();
     } else {
       expect(await screen.findByRole('alert')).toBeInTheDocument();
       expect(matrix).toHaveAttribute('data-state','error');
       expect(screen.getByLabelText(/^이메일/)).toHaveValue('reader@example.test');
     }
     expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({email:'reader@example.test',instagram:'reader',consent:true});
+  });
+});
+
+describe('field error recovery',()=>{
+  it.each(['access','signal'] as const)('clears only the edited field validation error in %s',async form=>{
+    const fetch=vi.fn();
+    if(form==='access') fetch.mockResolvedValueOnce(json({name:'INVITER'}));
+    fetch.mockResolvedValue(json({error:'INVALID_EMAIL_FORMAT'},400));vi.stubGlobal('fetch',fetch);
+    const user=userEvent.setup();render(form==='access'?<AccessForm eventId="A"/>:<Signal/>);
+    if(form==='access') {
+      await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
+      await user.type(screen.getByLabelText(/^이름/),'Example');
+    }
+    const email=screen.getByLabelText(/^이메일/),instagram=screen.getByRole('textbox',{name:/인스타그램 ID/});
+    await user.type(email,'old@example.test');await user.type(instagram,'example');
+    await user.click(screen.getAllByRole('checkbox')[0]);await user.click(screen.getByRole('button',{name:form==='access'?'게스트 신청 저장':'소식 신청 저장'}));
+    await screen.findByRole('alert');expect(email).toHaveAttribute('aria-invalid','true');
+    await user.type(instagram,'_changed');expect(email).toHaveAttribute('aria-invalid','true');
+    await user.clear(email);await user.type(email,'correct@example.test');
+    expect(email).not.toHaveAttribute('aria-invalid');expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

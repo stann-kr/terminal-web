@@ -15,6 +15,9 @@
 .field :is(input,textarea):focus-visible { border-color: var(--ice); box-shadow: inset 0 -2px 0 var(--ice); }
 .field:has(:focus-visible) label,.consent:has(input:focus-visible) > span { text-decoration-line: underline; text-decoration-thickness: 2px; text-underline-offset: .3em; }
 .error:focus-visible { box-shadow: inset 3px 0 0 var(--danger); }
+.success:focus-visible { box-shadow: inset 3px 0 0 var(--ice); }
+.hint { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.consent,.error { word-break: keep-all; overflow-wrap: anywhere; }
 .success,.error { position: relative; }
 .success::after,.error::after { content: ''; position: absolute; inset: -1px; border: 1px solid currentColor; box-shadow: 0 0 12px currentColor; opacity: 0; pointer-events: none; }
 @keyframes resultAcknowledge { from { opacity: .45; } to { opacity: 0; } }

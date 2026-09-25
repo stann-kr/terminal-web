@@ -25,6 +25,6 @@ export function Pagination({ page, totalPages, href }: { page: number; totalPage
 export function FullText({ paragraphs, excerpt = true, language }: { paragraphs: string[]; excerpt?: boolean; language?: 'ko'|'en' }) {
   if (!paragraphs.length) return null;
   const text = paragraphs.join('\n\n');
-  return <div className={styles.prose} lang={language}>{excerpt && text.length > 260 ? <><p data-readout-row="">{text.slice(0,240)}…</p><details><summary lang="ko">전체 읽기</summary>{paragraphs.map((p,i) => <p data-readout-row="" key={i}>{p}</p>)}</details></> : paragraphs.map((p,i) => <p data-readout-row="" key={i}>{p}</p>)}</div>;
+  return <div className={styles.prose} lang={language}>{excerpt && text.length > 260 ? <><p data-readout-row="">{text.slice(0,240)}…</p><details><summary lang="ko"><span className={styles.readMore}>전체 읽기</span><span className={styles.readLess}>접기</span></summary>{paragraphs.map((p,i) => <p data-readout-row="" key={i}>{p}</p>)}</details></> : paragraphs.map((p,i) => <p data-readout-row="" key={i}>{p}</p>)}</div>;
 }
 export { styles as ui };

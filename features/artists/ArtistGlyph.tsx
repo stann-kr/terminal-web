@@ -15,7 +15,7 @@ export function ArtistGlyph({ name }: { name: string }) {
   const initials = name.trim().split(/\s+/u).slice(0, 2).map(word => Array.from(word)[0]?.toUpperCase() ?? '');
   const width = initials.length * 56 + (initials.length - 1) * 10;
 
-  return <div className={styles.artistGlyph} aria-hidden="true">
+  return <div className={styles.artistGlyph} data-readout-instrument="" aria-hidden="true">
     <svg viewBox="0 0 160 96" focusable="false">
       {initials.map((letter, index) => <g key={index} transform={`translate(${(160 - width) / 2 + index * 66} 8)`}>
         {stencils[letter]

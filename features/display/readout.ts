@@ -3,6 +3,7 @@ import { gsap } from 'gsap';
 const panelSelector = '[data-readout-panel]';
 const rowSelector = '[data-readout-row]';
 const meterSelector = '[data-readout-meter]';
+const instrumentSelector = '[data-readout-instrument]';
 const excluded = '[hidden],form,[role="alert"],[role="status"],[role="timer"],[data-readout-live],details:not([open]) > :not(summary)';
 const controls = 'input,textarea,select,button,a,[contenteditable="true"]';
 
@@ -33,12 +34,12 @@ export function createReadout(root: HTMLElement, enabled: () => boolean = () => 
 
   function reveal() {
     if (disposed) return;
-    const candidates = Array.from(root.querySelectorAll<HTMLElement>(`${panelSelector},${rowSelector},${meterSelector}`)).filter(node => !seen.has(node));
+    const candidates = Array.from(root.querySelectorAll<HTMLElement>(`${panelSelector},${rowSelector},${meterSelector},${instrumentSelector}`)).filter(node => !seen.has(node));
     candidates.forEach(node => seen.add(node));
     if (!enabled() || root.contains(document.activeElement) && document.activeElement?.matches('input,textarea,select,[contenteditable="true"]')) return;
     const viewport = (root.querySelector('main') ?? root).getBoundingClientRect();
     // Measure first. Layout-free environments retain fully readable static content.
-    const measured = candidates.filter(node => !node.closest(excluded) && (node.matches(meterSelector) || !node.closest('[aria-hidden="true"]'))).map(node => ({ node,bounds:node.getBoundingClientRect() }))
+    const measured = candidates.filter(node => !node.closest(excluded) && (node.matches(`${meterSelector},${instrumentSelector}`) || !node.closest('[aria-hidden="true"]'))).map(node => ({ node,bounds:node.getBoundingClientRect() }))
       .filter(({bounds}) => bounds.width > 0 && bounds.height > 0 && bounds.bottom > viewport.top && bounds.top < viewport.bottom);
     const allPanels = measured.filter(({node}) => node.matches(panelSelector) && !node.querySelector('form,input,textarea,select,[role="alert"],[role="status"]'));
     const panels = allPanels.filter(({node}) => !allPanels.some(parent => parent.node !== node && parent.node.contains(node)));
@@ -46,7 +47,8 @@ export function createReadout(root: HTMLElement, enabled: () => boolean = () => 
       .filter(({node}) => !node.parentElement?.closest(rowSelector))
       .map(({node,bounds}) => ({ node,bottoms:lineBottoms(node,bounds.bottom) })).filter(row => row.bottoms.length);
     const meters = measured.filter(({node}) => node.matches(meterSelector));
-    if (!panels.length && !rows.length && !meters.length) return;
+    const instruments = measured.filter(({node}) => node.matches(instrumentSelector));
+    if (!panels.length && !rows.length && !meters.length && !instruments.length) return;
 
     // A completed batch releases its target references instead of accumulating in the route context.
     const context = gsap.context(() => {},root);
@@ -55,7 +57,7 @@ export function createReadout(root: HTMLElement, enabled: () => boolean = () => 
       const sequence = gsap.timeline({ paused:true, defaults:{ ease:'none' }, onComplete:() => settle(context) });
       // Overlap the panel ignition and line passes; even dense screens settle within 310ms.
       const delayFor = (node: HTMLElement) => Math.max(0,Math.min(4,panels.findIndex(panel => panel.node === node || panel.node.contains(node)))) * .016;
-      panels.forEach(({node}) => sequence.fromTo(node,{opacity:.8},{opacity:1,duration:.08,ease:'power2.out'},delayFor(node)));
+      panels.forEach(({node}) => sequence.fromTo(node,{opacity:.6,y:6},{opacity:1,y:0,duration:.18,ease:'power3.out'},delayFor(node)));
       const offsets = new Map<HTMLElement,number>();
       rows.forEach(({node,bottoms}) => {
         const owner = panels.find(panel => panel.node.contains(node))?.node ?? root;
@@ -67,6 +69,7 @@ export function createReadout(root: HTMLElement, enabled: () => boolean = () => 
         offsets.set(owner,offset+bottoms.length);
       });
       meters.forEach(({node}) => sequence.fromTo(node,{scaleX:0},{scaleX:1,duration:.14,ease:'power3.out'},.032+delayFor(node)));
+      instruments.forEach(({node},index) => sequence.fromTo(node,{clipPath:'inset(0 100% 0 0)',opacity:.4},{clipPath:'inset(0 0% 0 0)',opacity:1,duration:.2,ease:'power2.out'},.02+Math.min(index,4)*.016));
       sequence.play();
     }); } catch { settle(context); }
   }

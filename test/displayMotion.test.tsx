@@ -65,6 +65,19 @@ describe('display safety and lifecycle',()=>{
     motion.dispose();const after=row.cloneNode(true) as HTMLElement;root.querySelector('section')!.appendChild(after);
     motion.reveal();expect(after.style.clipPath).toBe('');
   });
+  it('settles decorative instrument reveals without leaving transformed panels or clipped artwork',()=>{
+    const root=fixture();
+    const instrument=document.createElement('div');
+    instrument.setAttribute('data-readout-instrument','');instrument.setAttribute('aria-hidden','true');
+    root.querySelector('section')!.appendChild(instrument);
+    const motion=createReadout(root);disposals.push(motion.dispose);
+    motion.reveal();
+    expect(instrument.style.clipPath).not.toBe('');
+    motion.finish();
+    expect(instrument.style.clipPath).toBe('');
+    expect(instrument.style.opacity).toBe('');
+    expect(root.querySelector<HTMLElement>('section')!.style.transform).toBe('');
+  });
   it('keeps content static when disabled, focused on an input, or without layout geometry',()=>{
     const root=fixture();let enabled=false;
     const motion=createReadout(root,()=>enabled);disposals.push(motion.dispose);

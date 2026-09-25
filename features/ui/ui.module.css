@@ -17,9 +17,17 @@
 .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); margin-top: 20px; font-size: 12px; }
 .pagination > * { min-height: 44px; display: flex; align-items: center; }.pagination > span { color: var(--muted); }
 .prose { line-height: 1.9; font-size: 13px; }.prose p { white-space: pre-wrap; margin-bottom: 14px; }
+.prose:lang(ko) { word-break: keep-all; overflow-wrap: anywhere; }
+.readLess,.prose details[open] .readMore,.prose:has(> details[open]) > p { display: none; }
+.prose details[open] .readLess { display: inline; }
 .muted { color: var(--muted); font-size: 12px; }
 .stack { display: grid; gap: 18px; align-content: start; }.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 .action,.button { position: relative; transition: color var(--display-response) var(--display-ease),background-color var(--display-response) var(--display-ease),border-color var(--display-response) var(--display-ease); }
+.action::before,.button::before { content: ''; position: absolute; inset: 4px auto 4px 0; width: 2px; background: currentColor; transform: scaleY(0); transform-origin: center; transition: transform 160ms var(--display-ease); pointer-events: none; }
+.action:focus-visible::before,.button:focus-visible::before { transform: scaleY(1); }
+@media(hover:hover) and (pointer:fine) { .action:hover::before,.button:hover:not(:disabled)::before { transform: scaleY(1); } }
+@keyframes textExpand { from { opacity: .6; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) { .prose details[open] > p { animation: textExpand 160ms var(--display-ease) both; } }
 .action:active,.button:active:not(:disabled) { background: var(--ink); color: var(--bg); border-color: var(--ink); text-shadow: none; }
 .primary { text-shadow: none; }
 .button[aria-busy=true]::after { content: ''; position: absolute; right: 5px; top: calc(50% - 4px); width: 3px; height: 8px; background: currentColor; }

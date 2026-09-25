@@ -11,4 +11,7 @@
 .aboutModules > div { position: relative; min-width: 0; border: 1px solid var(--line); padding: 10px 12px 16px; background: rgb(var(--color-accent-primary) / .025); }
 .aboutModules span { display: block; width: fit-content; font-size: 9px; color: var(--bg); background: var(--ice); padding: 1px 5px; margin-bottom: 12px; text-shadow: none; }.aboutModules strong { font: 400 12px/1.4 var(--display); letter-spacing: .1em; color: var(--ice); }.aboutModules i { position: absolute; left: 12px; right: 12px; bottom: 7px; height: 2px; background: var(--line); }
 .aboutModules > div:last-child i { background: var(--amber); }
+.channels strong { transition: transform 180ms var(--display-ease); }
+.channels a:focus-visible { color: var(--ice); background: var(--panel); }
+@media(hover:hover) and (pointer:fine) { .channels a:hover strong { transform: translateX(6px); } }
 @media(forced-colors:active) { .aboutModules { display: none; } }

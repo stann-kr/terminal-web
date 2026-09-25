@@ -41,7 +41,7 @@ export function EventDetail({ eventId }: { eventId: string }) {
 }
 
 function EventSlots({ active }: { active: boolean }) {
-  return <div className={styles.eventSlots} data-active={active} aria-hidden="true">{Array.from({length:24},(_,index) =>
+  return <div data-readout-instrument="" className={styles.eventSlots} data-active={active} aria-hidden="true">{Array.from({length:24},(_,index) =>
     <i key={index} data-dim={[2,4,10,13,19,22].includes(index)} data-accent={index === 7 || index === 8} style={{animationDelay:`${index % 4 * -.7}s`}}/>
   )}</div>;
 }

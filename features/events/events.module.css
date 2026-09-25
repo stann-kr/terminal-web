@@ -29,6 +29,11 @@
 .cardFooter { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: auto; border-top: 1px solid var(--line); padding-top: 10px; color: var(--card-accent); font-size: 10px; }
 .cardSignal { display: flex; gap: 4px; }
 .cardSignal i { width: 4px; height: 8px; background: currentColor; opacity: .4; }
+.cardFooter > span:first-child { transition: transform 180ms var(--display-ease); }
+@keyframes cardSelect { 0% { opacity: .25; transform: scaleY(.5); } 40%,100% { opacity: 1; transform: scaleY(1); } }
+@media(hover:hover) and (pointer:fine) {
+  .card:hover .cardFooter > span:first-child { transform: translateX(4px); }
+}
 .directorySummary { padding: 16px; border: 1px solid var(--line); background: rgb(0 0 0 / .2); }
 .nextEvent { border-top: 1px dashed var(--line); padding-top: 12px; }
 .nextEvent p { color: var(--muted); font-size: 10px; }
@@ -39,6 +44,10 @@
   .card:is([data-event-state=UPCOMING],[data-event-state=LIVE])::after { animation: eventFrame 1s linear infinite; }
   .card:is([data-event-state=UPCOMING],[data-event-state=LIVE]) .cardSignal i { animation: eventLamp 1s linear infinite; }
   .card .cardSignal i:nth-child(2) { animation-delay: -.06s; }.card .cardSignal i:nth-child(3) { animation-delay: -.12s; }.card .cardSignal i:nth-child(4) { animation-delay: -.18s; }
+  @media(hover:hover) and (pointer:fine) {
+    .card:hover .cardSignal i { animation: cardSelect 240ms var(--display-ease) both; }
+    .card:hover .cardSignal i:nth-child(2) { animation-delay: 30ms; }.card:hover .cardSignal i:nth-child(3) { animation-delay: 60ms; }.card:hover .cardSignal i:nth-child(4) { animation-delay: 90ms; }
+  }
 }
 .status[data-event-state=UPCOMING],.status[data-event-state=LIVE],.protocolLabel[data-open=true] { color: var(--amber); border-color: var(--amber); }
 .card::after { content: ''; position: absolute; inset: -2px; border: 1px solid var(--card-accent); box-shadow: 0 0 8px rgb(var(--amber-rgb) / .18); opacity: 0; pointer-events: none; }

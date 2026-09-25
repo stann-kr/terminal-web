@@ -24,11 +24,13 @@
 .artistGlyph { position: relative; display: grid; place-items: center; min-height: 138px; padding: 4px 12px 14px; color: var(--card-accent); pointer-events: none; }
 .artistGlyph::before,.artistGlyph::after { content: ''; position: absolute; top: 10px; bottom: 24px; width: 6px; border-block: 1px solid currentColor; opacity: .35; }
 .artistGlyph::before { left: 0; border-left: 1px solid currentColor; }.artistGlyph::after { right: 0; border-right: 1px solid currentColor; }
+.artistGlyph::before,.artistGlyph::after { transition: transform 180ms var(--display-ease),opacity 180ms linear; }
 .artistGlyph svg { display: block; width: 100%; max-width: 208px; height: 120px; overflow: hidden; fill: currentColor; }
 .glyphSegment { opacity: .78; }.glyphSegment:nth-child(2) { opacity: .48; }
 .glyphFallback { font: 700 64px/1 var(--mono); }
 .glyphRail { position: absolute; bottom: 0; display: flex; gap: 4px; }
 .glyphRail i { width: 18px; height: 3px; background: currentColor; opacity: .25; }.glyphRail i:nth-child(2) { width: 36px; opacity: .65; }
+.glyphRail i { transform-origin: center; transition: transform 180ms var(--display-ease),opacity 180ms linear; }
 .cell:focus-visible .glyphSegment { opacity: 1; }
 @keyframes glyphBlink { 0%,8%,100% { opacity: .48; } 1%,5% { opacity: 1; } }
 @media(prefers-reduced-motion:no-preference) and (forced-colors:none) {
@@ -41,6 +43,16 @@
   .cell[data-featured=true]:hover { background: rgb(var(--amber-rgb) / .07); }
   .cell:hover h2 { color: var(--bg); background: var(--card-accent); border-color: var(--card-accent); text-shadow: none; }
   .cell:hover .glyphSegment { opacity: 1; }
+  .cell:hover .artistGlyph::before { transform: translateX(4px); opacity: .85; }
+  .cell:hover .artistGlyph::after { transform: translateX(-4px); opacity: .85; }
+  .cell:hover .glyphRail i:nth-child(2) { transform: scaleX(1.25); opacity: 1; }
+}
+.cell:focus-visible .artistGlyph::before,.cell:focus-visible .artistGlyph::after { opacity: 1; }
+@keyframes recordExpand { from { opacity: .55; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes profileRegister { 0%,85%,100% { transform: scaleX(.35); opacity: .35; } 12%,65% { transform: scaleX(1); opacity: .9; } }
+@media(prefers-reduced-motion:no-preference) and (forced-colors:none) {
+  .timeline details[open] > div { animation: recordExpand 180ms var(--display-ease) both; }
+  .profileSignal i:nth-last-child(2) { transform-origin: left; animation: profileRegister 3.6s var(--display-ease) infinite; }
 }
 :global([data-display-paused]) .glyphSegment { animation: none; }
 .profileSignal { position: relative; display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-block: 18px 22px; padding: 22px 18px 18px; border: 1px solid var(--ice); outline: 1px solid var(--line); outline-offset: -6px; color: var(--ice); pointer-events: none; }

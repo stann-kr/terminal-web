@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { DataActivity, DisplaySurface } from '@/features/display/Display';
 import { useDisplayMotion } from '@/features/display/useDisplayMotion';
 import { useLanguage } from './Providers';
@@ -12,7 +12,14 @@ export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { language, setLanguage } = useLanguage();
   const frame = useRef<HTMLDivElement>(null);
+  const main = useRef<HTMLElement>(null), previousPath = useRef(pathname);
   const [effects,setEffects] = useState(true);
+  const activeIndex = navigation.findIndex(([href]) => href === '/' ? pathname === '/' : pathname.startsWith(href));
+  useEffect(() => {
+    if (previousPath.current === pathname) return;
+    previousPath.current = pathname;
+    main.current?.focus({preventScroll:true});
+  },[pathname]);
   useDisplayMotion(frame,`${pathname}:${language}`);
   return <div ref={frame} className={styles.frame} data-effects-off={effects ? undefined : ''}>
     <DisplaySurface/>
@@ -21,10 +28,10 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className={styles.core}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">TERMINAL<span>SEOUL TECHNO PLATFORM</span></Link>
-        <nav className={styles.navigation} aria-label="주 메뉴">{navigation.map(([href,label,ko], index) => <Link key={href} href={href} aria-current={(href === '/' ? pathname === '/' : pathname.startsWith(href)) ? 'page' : undefined}><span className={styles.number}>0{index + 1}</span><span>{label}<small>{ko}</small></span></Link>)}</nav>
+        <nav className={styles.navigation} aria-label="주 메뉴" data-active={activeIndex >= 0} style={{'--nav-position':`${Math.max(0,activeIndex)*100}%`} as CSSProperties}>{navigation.map(([href,label,ko], index) => <Link key={href} href={href} aria-current={index === activeIndex ? 'page' : undefined}><span className={styles.number}>0{index + 1}</span><span>{label}<small>{ko}</small></span></Link>)}</nav>
         <div className={styles.language} aria-label="콘텐츠 언어"><span>CONTENT</span><DataActivity/>{(['ko','en'] as const).map(lang => <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>{lang.toUpperCase()}</button>)}</div>
       </header>
-      <main id="main" aria-label="본문" tabIndex={0} className={styles.main}>{children}</main>
+      <main ref={main} id="main" aria-label="본문" tabIndex={0} className={styles.main}>{children}</main>
       <footer className={styles.footer}>
         <div className={styles.imprint}><div className={styles.barcode} aria-hidden="true"/><span>MUSIC / PEOPLE / RECORDS</span></div>
         <div className={styles.footerCenter}><nav aria-label="보조 메뉴"><Link href="/signal">SIGNAL · 소식 신청</Link><Link href="/about">ABOUT · 소개 / 채널</Link><button type="button" className={styles.effects} aria-label="화면 효과" aria-pressed={effects} onClick={() => setEffects(value => !value)}>FX {effects ? 'ON' : 'OFF'}</button></nav><span>ALL EVENT TIMES / KST</span></div>

@@ -43,5 +43,6 @@ summary { min-height: 44px; padding-block: 10px; color: var(--ice); }
 details[open] > summary { margin-bottom: 10px; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation-play-state: paused !important; }
+[data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { transition: none !important; }
 
 [data-effects-off] *,[data-effects-off] *::before,[data-effects-off] *::after { animation: none !important; transition: none !important; }
