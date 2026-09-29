@@ -2,7 +2,10 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useIsFetching } from '@tanstack/react-query';
 import { DataActivity } from '@/features/display/Display';
+import { Blocks } from '@/features/display/Blocks';
+import { Barcode, Ticks } from '@/features/display/Instruments';
 import { useDisplayPolicy } from '@/features/display/useDisplayPolicy';
 import { ConsoleDock } from '@/features/console/ConsoleDock';
 import { CONSOLE_INPUT_ID } from '@/features/console/Console';
@@ -36,7 +39,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const frame = useRef<HTMLDivElement>(null);
   const main = useRef<HTMLElement>(null), boot = useRef<HTMLDivElement>(null);
   const previousPath = useRef(pathname);
-  const [effects, setEffects] = useState(true);
+  const fetching = useIsFetching() > 0;
   // The raster wipe is keyed by navigation, not by remounting the route; the first render has none.
   const [route, setRoute] = useState({ path: pathname, wipe: false });
   if (route.path !== pathname) setRoute({ path: pathname, wipe: true });
@@ -58,7 +61,8 @@ export function Shell({ children }: { children: ReactNode }) {
   }, [route]);
 
   useEffect(() => {
-    const timer = setTimeout(() => boot.current?.removeAttribute('data-play'), 600);
+    // The boot log prints for ~650ms and retracts by ~950ms; the marker is cleared after it.
+    const timer = setTimeout(() => boot.current?.removeAttribute('data-play'), 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -83,7 +87,7 @@ export function Shell({ children }: { children: ReactNode }) {
   }, [pathname, router]);
 
   return (
-    <div ref={frame} className={styles.frame} data-effects-off={effects ? undefined : ''}>
+    <div ref={frame} className={styles.frame}>
       <a href="#main" className={styles.skip}>본문으로 이동</a>
       <header className={styles.top}>
         <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">
@@ -106,16 +110,6 @@ export function Shell({ children }: { children: ReactNode }) {
         </nav>
         <div className={styles.system}>
           <Clock />
-          <button
-            type="button"
-            className={styles.fx}
-            aria-label="화면 효과"
-            aria-pressed={effects}
-            onClick={() => setEffects(value => !value)}
-          >
-            <i aria-hidden="true" />
-            <span aria-hidden="true">FX</span>
-          </button>
           <div className={styles.language} role="group" aria-label="콘텐츠 언어">
             {(['ko', 'en'] as const).map(lang => (
               <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>
@@ -130,7 +124,18 @@ export function Shell({ children }: { children: ReactNode }) {
           <span className={styles.srOnly}>현재 위치 </span>
           guest@terminal:{shellPath(pathname)}
         </p>
+        <Ticks count={48} major={8} marker className={styles.statusScale} />
+        <Blocks cols={8} motion="scan" step={fetching ? 60 : 240} tone={fetching ? 'amber' : 'ice'} className={styles.statusBlocks} />
         <DataActivity />
+      </div>
+      <p className={styles.rail} aria-hidden="true">
+        <span>TERMINAL SYSTEMS</span>
+        <b>SEOUL NODE</b>
+        <span>T-03 INTERFACE</span>
+      </p>
+      <div className={styles.ruler} aria-hidden="true">
+        <Ticks count={40} major={10} vertical />
+        <i className={styles.rulerMarker} />
       </div>
       <main ref={main} id="main" aria-label="본문" tabIndex={0} className={styles.main} data-wipe={route.wipe || undefined}>
         {children}
@@ -150,8 +155,19 @@ export function Shell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <p className={styles.zone}>ALL EVENT TIMES / KST</p>
+        <Barcode value={pathname} className={styles.hintCode} />
       </footer>
-      <div ref={boot} className={styles.boot} aria-hidden="true" suppressHydrationWarning />
+      <div className={styles.screenFx} aria-hidden="true">
+        <i className={styles.band} />
+        <i className={styles.grain} />
+        <i className={styles.wipeLine} />
+      </div>
+      <div ref={boot} className={styles.boot} aria-hidden="true" suppressHydrationWarning>
+        <p>TERMINAL SYSTEMS / SEOUL NODE</p>
+        <p>T-03 INTERFACE <span>··········</span> ONLINE</p>
+        <p>READING EVENT RECORDS <span>····</span></p>
+        <p>&gt;&gt; <i /></p>
+      </div>
       <script type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: bootScript }} />
     </div>
   );

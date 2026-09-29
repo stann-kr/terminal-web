@@ -8,6 +8,8 @@ import {
   getLiveEvents,
 } from '@/lib/events/lifecycle';
 import { LiveValue } from '@/features/display/Display';
+import { Blocks } from '@/features/display/Blocks';
+import { Ticks } from '@/features/display/Instruments';
 import {
   Action,
   Facts,
@@ -128,6 +130,16 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
           ['지난 행사', <LiveValue key="archived" value={archived.length} />],
         ]}
       />
+      <div className={styles.bays}>
+        <Blocks
+          cols={6}
+          rows={4}
+          step={110}
+          lit={[0, 1, 3, 5, 6, 9, 11, 12, 14, 15, 16, 18, 20, 21, 23]}
+          accent={next || live.length > 0 ? [7, 8] : []}
+        />
+        <Ticks count={30} major={5} marker />
+      </div>
       {next && (
         <div className={styles.nextEvent}>
           <p>NEXT / 다음 행사</p>

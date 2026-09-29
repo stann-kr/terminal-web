@@ -9,6 +9,12 @@
   margin-inline: auto;
   padding: 18px clamp(16px, 2.6vw, 44px) 10px;
   overflow: hidden;
+  /* Halation: every glyph bleeds a little light, as on a real phosphor screen. */
+  text-shadow: 0 0 .6px currentColor, 0 0 7px rgb(var(--color-accent-primary) / .22);
+  timeline-scope: --main-scroll;
+}
+.frame :is(input, textarea) {
+  text-shadow: none;
 }
 /* Barely-there scanlines; the only screen texture. FX OFF and forced colors drop it. */
 .frame::after {
@@ -17,15 +23,9 @@
   inset: 0;
   z-index: 20;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgb(0 0 0 / .2) 0 1px, transparent 1px 3px);
-  opacity: .4;
-}
-.frame[data-effects-off] {
-  --glow: none;
-  --glow-amber: none;
-}
-.frame[data-effects-off]::after {
-  display: none;
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 58%, rgb(0 0 0 / .55) 100%),
+    repeating-linear-gradient(0deg, rgb(0 0 0 / .28) 0 1px, transparent 1px 3px);
 }
 .srOnly {
   position: absolute;
@@ -151,28 +151,6 @@
   color: var(--muted);
   font-size: var(--text-meta);
 }
-.fx {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-inline: 10px;
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--muted);
-  font-size: var(--text-meta);
-  letter-spacing: .12em;
-}
-.fx i {
-  width: 6px;
-  height: 6px;
-  border: 1px solid currentColor;
-}
-.fx[aria-pressed=true] {
-  color: var(--amber);
-}
-.fx[aria-pressed=true] i {
-  background: currentColor;
-}
 .language {
   display: flex;
 }
@@ -193,7 +171,6 @@
   border-color: var(--ice);
   color: var(--bg);
 }
-.fx:hover,
 .language button:hover:not([aria-pressed=true]) {
   color: var(--ice);
   border-color: var(--ice);
@@ -211,10 +188,79 @@
   letter-spacing: .06em;
 }
 .path {
+  flex-shrink: 0;
+  max-width: 48%;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* The status scale fills the free space between the path and the scanner. */
+.statusScale {
+  flex: 1;
+  min-width: 40px;
+  opacity: .8;
+}
+.statusBlocks {
+  width: 104px;
+  flex-shrink: 0;
+}
+
+/* ── Edge instruments: a printed rail on the left, a scroll-linked ruler on the right. ── */
+.rail {
+  position: absolute;
+  top: 120px;
+  bottom: 120px;
+  left: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 14px;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .3em;
+  pointer-events: none;
+}
+.rail > * {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+.rail b {
+  color: var(--ice);
+  font: 700 10px/1 var(--display);
+  letter-spacing: .24em;
+}
+.ruler {
+  position: absolute;
+  top: 150px;
+  bottom: 110px;
+  right: 8px;
+  width: 12px;
+  pointer-events: none;
+}
+.rulerMarker {
+  position: absolute;
+  left: -9px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-block: 4px solid transparent;
+  border-left: 6px solid var(--amber);
+  filter: drop-shadow(0 0 3px rgb(var(--amber-rgb) / .7));
+}
+@keyframes rulerTrack {
+  from { top: 0; }
+  to { top: calc(100% - 8px); }
+}
+@supports (animation-timeline: scroll()) {
+  /* The marker follows the real scroll position of main. */
+  .rulerMarker {
+    animation: rulerTrack linear both;
+    animation-timeline: --main-scroll;
+  }
 }
 
 /* ── Main ──────────────────────────────────────────────────────────────── */
@@ -229,6 +275,7 @@
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scroll-padding-block: 12px;
+  scroll-timeline: --main-scroll block;
   outline: none;
 }
 .main:focus-visible {
@@ -303,37 +350,130 @@
 .zone {
   white-space: nowrap;
 }
+.hintCode {
+  width: 84px;
+  height: 14px;
+  opacity: .55;
+}
 
-/* ── Motion: raster power-on (first visit) and route wipe ──────────────── */
+/* ── Screen effects: rolling refresh band, grain, flicker and the wipe's leading line. ── */
+.screenFx {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  overflow: hidden;
+  pointer-events: none;
+}
+.band {
+  position: absolute;
+  inset: -25% 0 auto;
+  height: 22%;
+  background: linear-gradient(transparent, rgb(var(--color-accent-primary) / .045) 60%, rgb(var(--color-accent-primary) / .07) 62%, transparent);
+}
+.grain {
+  position: absolute;
+  inset: -8px;
+  opacity: .055;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' fill='%23fff' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.wipeLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--ice);
+  box-shadow: 0 0 12px 2px rgb(var(--color-accent-primary) / .6);
+  opacity: 0;
+}
+@keyframes bandRoll {
+  from { transform: translateY(0); }
+  to { transform: translateY(620%); }
+}
+@keyframes grainShift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(3px, -2px); }
+  50% { transform: translate(-2px, 3px); }
+  75% { transform: translate(-3px, -1px); }
+}
+/* Irregular, very small brightness dips, like an ageing tube. */
+@keyframes flicker {
+  0%, 17%, 19%, 61%, 63%, 100% { opacity: 1; }
+  18% { opacity: .92; }
+  62% { opacity: .95; }
+}
+@keyframes wipeLine {
+  0% { top: 150px; opacity: 1; }
+  100% { top: 100%; opacity: .6; }
+}
+
+/* ── Power-on: a short boot log, then the black field retracts in scan steps. ── */
 .boot {
   display: none;
 }
-@keyframes bootRaster {
-  from { clip-path: inset(0 0 0 0); }
-  to { clip-path: inset(100% 0 0 0); }
+.boot p {
+  font-size: var(--text-ui);
+  letter-spacing: .1em;
+  color: var(--ice);
+  clip-path: inset(0 100% 0 0);
+}
+.boot p span {
+  color: var(--line);
+}
+.boot p i {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  vertical-align: -2px;
+  background: var(--ice);
+}
+@keyframes bootRetract {
+  0%, 68% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(100% 0 0 0); }
+}
+@keyframes bootLine {
+  to { clip-path: inset(0 0 0 0); }
 }
 @keyframes rasterWipe {
   from { clip-path: inset(0 0 100% 0); }
   to { clip-path: inset(0 0 0 0); }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  /* A black field retracts downward in scan steps; a single 1px line leads it. */
+  .frame {
+    animation: flicker 7s steps(1, end) infinite;
+  }
+  .band {
+    animation: bandRoll 9s linear infinite;
+  }
+  .grain {
+    animation: grainShift .5s steps(1, end) infinite;
+  }
   .boot[data-play] {
-    display: block;
+    display: grid;
+    align-content: start;
+    gap: 6px;
     position: fixed;
     inset: 0;
     z-index: 25;
+    padding: clamp(24px, 6vh, 64px) clamp(20px, 5vw, 72px);
     background: var(--bg);
     border-top: 1px solid var(--ice);
     pointer-events: none;
-    animation: bootRaster 420ms steps(14, end) forwards;
+    animation: bootRetract 950ms steps(16, end) forwards;
   }
+  .boot[data-play] p {
+    animation: bootLine 150ms steps(12, end) forwards;
+  }
+  .boot[data-play] p:nth-child(2) { animation-delay: 140ms; }
+  .boot[data-play] p:nth-child(3) { animation-delay: 300ms; }
+  .boot[data-play] p:nth-child(4) { animation-delay: 460ms; }
   .main[data-wipe] {
-    animation: rasterWipe 240ms steps(12, end);
+    animation: rasterWipe 260ms steps(12, end);
   }
-}
-.frame[data-effects-off] .boot {
-  display: none;
+  .frame:has(.main[data-wipe]) .wipeLine {
+    animation: wipeLine 260ms steps(12, end);
+  }
 }
 
 /* ── Touch and narrow screens ──────────────────────────────────────────── */
@@ -381,6 +521,9 @@
   }
   .keyHints { display: none; }
   .zone { display: none; }
+  .hintCode { display: none; }
+  .statusScale { display: none; }
+  .statusBlocks { width: 64px; }
   .secondary { margin-left: 0; }
   .hints { justify-content: space-between; column-gap: 8px; }
 }
@@ -389,8 +532,11 @@
   .top { padding-bottom: 8px; }
   .brand small { display: none; }
 }
+@media (max-width: 1280px) {
+  .rail, .ruler { display: none; }
+}
 @media (forced-colors: active) {
-  .frame::after { display: none; }
+  .frame::after, .screenFx, .rail, .ruler { display: none; }
   .main:focus-visible { border-top: 2px solid Highlight; }
   .tab[aria-current=page] { border: 2px solid Highlight; }
 }

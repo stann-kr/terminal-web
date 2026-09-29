@@ -18,10 +18,11 @@
 .panel {
   min-width: 0;
 }
-/* Section header: a label on a 1px rule, code on the right. No filled bars. */
+/* Section header: a decoded label on a 1px rule, a framed code tag on the right. */
 .sectionTitle {
+  position: relative;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 4px 12px;
@@ -32,9 +33,34 @@
   font: 400 var(--text-meta)/1.5 var(--display);
   letter-spacing: .14em;
 }
-.sectionTitle span {
+/* A short bright segment at the rule's start, like a printed register mark. */
+.sectionTitle::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 28px;
+  height: 1px;
+  background: var(--ice);
+  box-shadow: 0 0 6px rgb(var(--color-accent-primary) / .7);
+}
+.titleText {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.titleText::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--ice);
+  box-shadow: 0 0 6px rgb(var(--color-accent-primary) / .6);
+}
+.code {
+  padding: 0 6px;
+  border: 1px solid var(--line);
   color: var(--muted);
-  font: var(--text-meta)/1.5 var(--mono);
+  font: var(--text-meta)/1.6 var(--mono);
   letter-spacing: .1em;
 }
 

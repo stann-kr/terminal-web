@@ -188,7 +188,7 @@ describe('terminal character printing',() => {
     expect(visibleResponses()[0].textContent).toBe('VISIBLE ARTIST / KR');
     expect(vi.getTimerCount()).toBe(0);
   });
-  it.each(['effects','reduced','contrast','hidden','saveData'])('settles pending output when %s disables motion and never replays it',async policy => {
+  it.each(['reduced','contrast','hidden','saveData'])('settles pending output when %s disables motion and never replays it',async policy => {
     vi.useFakeTimers();
     class Media extends EventTarget { matches=false; }
     const reduced=new Media(),contrast=new Media();
@@ -200,7 +200,6 @@ describe('terminal character printing',() => {
     act(() => {vi.advanceTimersByTime(6);});
     expect(visibleResponses()[0].textContent).toBe('T');
     await act(async () => {
-      if(policy === 'effects') screen.getByTestId('frame').setAttribute('data-effects-off','');
       if(policy === 'reduced' || policy === 'contrast') { const media=policy === 'reduced' ? reduced : contrast; media.matches=true;media.dispatchEvent(new Event('change')); }
       if(policy === 'hidden') { vi.spyOn(document,'visibilityState','get').mockReturnValue('hidden'); document.dispatchEvent(new Event('visibilitychange')); }
       if(policy === 'saveData') { connection.saveData=true;connection.dispatchEvent(new Event('change')); }
@@ -208,7 +207,6 @@ describe('terminal character printing',() => {
     expect(visibleResponses()[0].textContent).toBe(runCommand('events',[old,next]).text);
     expect(visibleResponses()[1].textContent).toBe('VISIBLE ARTIST / KR');
     expect(vi.getTimerCount()).toBe(0);
-    screen.getByTestId('frame').removeAttribute('data-effects-off');
     submit('artists');
     fireEvent.keyDown(screen.getByRole('textbox'),{key:'Escape'});
     expect(visibleResponses()[0].textContent).toBe(runCommand('events',[old,next]).text);

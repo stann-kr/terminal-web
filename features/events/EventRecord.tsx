@@ -4,6 +4,8 @@ import Link from 'next/link';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { useLanguage } from '@/features/shell/Providers';
 import { Action, Facts, FullText, Panel, ui } from '@/features/ui/Ui';
+import { Blocks } from '@/features/display/Blocks';
+import { Barcode, Corners } from '@/features/display/Instruments';
 import {
   buildArtistArchive,
   profileForAppearance,
@@ -135,6 +137,7 @@ export function Lineup({
                 key={dock}
                 aria-label={`무대 ${dock}`}
               >
+                <Corners />
                 <h3>
                   <span>STAGE {dock}</span>
                   <span>공개 공연표</span>
@@ -201,6 +204,15 @@ export function EventRecord({
         className={styles.runningOrder}
       >
         <Lineup event={event} events={events} stages />
+        <div className={styles.nodes}>
+          <Blocks
+            cols={8}
+            rows={2}
+            step={130}
+            lit={[0, 3, 4, 7, 8, 9, 12, 15]}
+            accent={event.status !== 'ARCHIVED' ? [8, 9] : []}
+          />
+        </div>
       </Panel>
       <div className={ui.stack}>
         <EventIntroduction event={event} language={language} />
@@ -220,6 +232,10 @@ function EventOverview({ event }: { event: TerminalEvent }) {
         {statusLabel(event.status)}
       </div>
       <EventFacts event={event} modular />
+      <div className={styles.recordCode}>
+        <Barcode value={event.id} />
+        <span aria-hidden="true">{event.id}</span>
+      </div>
       {event.posterUrl && (
         <a
           className={styles.poster}

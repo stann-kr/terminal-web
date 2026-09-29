@@ -68,3 +68,13 @@
   .channels a { grid-template-columns: 4ch minmax(0, 1fr); }
   .host { grid-column: 2; }
 }
+.statement > span {
+  display: block;
+}
+.console {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 28px;
+  padding: 12px;
+  border: 1px solid var(--line);
+}

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { Decode } from '@/features/display/Decode';
 import styles from './ui.module.css';
 
 export function PageHeading({ title }: { title: string }) {
@@ -18,9 +19,9 @@ export function Panel({
 }) {
   return (
     <section className={`${styles.panel} ${className}`}>
-      <h2 className={styles.sectionTitle}>
-        {title}
-        {code && <span>{code}</span>}
+      <h2 className={styles.sectionTitle} aria-label={title}>
+        <span className={styles.titleText} aria-hidden="true"><Decode text={title} /></span>
+        {code && <span className={styles.code} aria-hidden="true">{code}</span>}
       </h2>
       {children}
     </section>

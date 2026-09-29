@@ -1,6 +1,9 @@
 'use client';
 import { useLanguage } from '@/features/shell/Providers';
 import { FullText, PageHeading, Panel } from '@/features/ui/Ui';
+import { Blocks } from '@/features/display/Blocks';
+import { Ticks } from '@/features/display/Instruments';
+import { Decode } from '@/features/display/Decode';
 import styles from './about.module.css';
 const copy = {
   ko: [
@@ -34,13 +37,15 @@ export function About() {
 function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
   return (
     <Panel title="TERMINAL" code="SEOUL">
-      <p className={styles.statement}>
-        MUSIC.
-        <br />
-        PEOPLE.
-        <br />
-        CONTINUITY.
+      <p className={styles.statement} aria-label="MUSIC. PEOPLE. CONTINUITY.">
+        <span aria-hidden="true"><Decode text="MUSIC." duration={380} /></span>
+        <span aria-hidden="true"><Decode text="PEOPLE." duration={520} /></span>
+        <span aria-hidden="true"><Decode text="CONTINUITY." duration={700} /></span>
       </p>
+      <div className={styles.console}>
+        <Blocks cols={24} rows={2} step={80} lit={[1, 2, 6, 11, 12, 17, 20, 26, 27, 31, 38, 44, 45]} accent={[33]} />
+        <Ticks count={48} major={8} labels />
+      </div>
       <FullText
         language={language}
         excerpt={false}

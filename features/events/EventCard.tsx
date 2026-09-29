@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
+import { Blocks } from '@/features/display/Blocks';
 import { eventHref, publicArtists, statusLabel } from './model';
 import styles from './events.module.css';
 
@@ -46,6 +47,14 @@ export function EventCard({
       <span className={styles.recordStamp}>
         <i aria-hidden="true" />
         {statusLabel(event.status)}
+        <Blocks
+          cols={4}
+          motion={event.status === 'ARCHIVED' ? 'still' : 'scan'}
+          step={140}
+          tone={event.status === 'ARCHIVED' ? 'ice' : 'amber'}
+          lit={event.status === 'ARCHIVED' ? [0, 1] : []}
+          className={styles.cardLamp}
+        />
       </span>
     </Link>
   );

@@ -134,3 +134,24 @@ form[aria-busy=true] .counter {
     gap: 36px;
   }
 }
+/* Real message length as a 28-segment gauge: amber while sending, alert near the limit. */
+.gauge {
+  gap: 2px;
+}
+.gauge i:nth-child(n) {
+  aspect-ratio: .5;
+}
+.console {
+  position: relative;
+}
+@keyframes logIn {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .logs li { animation: logIn 280ms steps(10, end) both; }
+  .logs li:nth-child(2) { animation-delay: 60ms; }
+  .logs li:nth-child(3) { animation-delay: 120ms; }
+  .logs li:nth-child(4) { animation-delay: 180ms; }
+  .logs li:nth-child(5) { animation-delay: 240ms; }
+}

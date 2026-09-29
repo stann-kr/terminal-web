@@ -69,13 +69,15 @@
   font-variant-numeric: tabular-nums;
 }
 .statusTrack {
-  height: 7px;
-  border: 1px solid var(--line);
+  gap: 2px;
 }
-.statusTrack i {
-  display: block;
-  height: 100%;
-  background: var(--ice);
+.statusTrack i:nth-child(n) {
+  aspect-ratio: 1.6;
+}
+.register {
+  display: grid;
+  gap: 6px;
+  margin-top: 24px;
 }
 .intro {
   margin-top: 28px;
@@ -88,6 +90,7 @@
 
 /* ── Featured event: the one framed window on the screen. ────────────────── */
 .featured {
+  position: relative;
   min-width: 0;
   border: 1px solid var(--frame);
 }
@@ -116,7 +119,7 @@
   border-left: 1px solid var(--frame);
   font-variant-numeric: tabular-nums;
 }
-.featured > :not(.recordHeader) {
+.featured > :not(.recordHeader, [aria-hidden]) {
   margin-inline: clamp(18px, 2.6vw, 36px);
 }
 .featured h2 {
@@ -137,6 +140,22 @@
   color: var(--muted);
   font-size: var(--text-meta);
   letter-spacing: .08em;
+}
+
+/* Seconds sweep under the countdown: one cell per real second, plus the event's printed code. */
+.sweep {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.sweep > :first-child {
+  flex: 1;
+  max-width: 520px;
+}
+.featuredCode {
+  width: 96px;
+  height: 18px;
+  margin-left: auto;
 }
 
 /* Timecode countdown: one framed readout, units printed under each group. */
@@ -256,7 +275,7 @@
   .recordHeader > :first-child {
     flex: 1;
   }
-  .featured > :not(.recordHeader) {
+  .featured > :not(.recordHeader, [aria-hidden]) {
     margin-inline: 14px;
   }
   .countdownUnits {
@@ -273,7 +292,4 @@
   .stats strong {
     font-size: 24px;
   }
-}
-@media (forced-colors: active) {
-  .statusTrack i { background: CanvasText; }
 }

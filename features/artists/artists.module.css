@@ -104,6 +104,7 @@
 }
 .cell:is(:hover, :focus-visible) .glyphSegment {
   opacity: 1;
+  animation: none;
   transition-duration: 0s;
 }
 
@@ -195,11 +196,73 @@
   color: var(--ice);
 }
 
+.cellScan {
+  gap: 2px;
+  padding: 0 14px 12px;
+}
+.cellScan i:nth-child(n) {
+  aspect-ratio: 3;
+}
+.countRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.countRow .count {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+.countScale {
+  flex: 1;
+  max-width: 520px;
+  margin-left: auto;
+}
+.profileSignal {
+  position: relative;
+}
+.profileFoot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+.profileFoot > :first-child {
+  flex: 1;
+}
+/* Stencil cut bands blink at staggered phases, like a lamp test. */
+@keyframes glyphBlink {
+  0%, 8%, 100% { opacity: .4; }
+  1%, 5% { opacity: 1; }
+}
+@keyframes cellIn {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
 @keyframes recordExpand {
   from { clip-path: inset(0 0 100% 0); }
   to { clip-path: inset(0 0 0 0); }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .glyphSegment:nth-child(2) {
+    animation: glyphBlink 3.2s steps(1, end) infinite;
+  }
+  .cell:nth-child(3n + 2) .glyphSegment:nth-child(2) { animation-delay: -1.1s; }
+  .cell:nth-child(3n) .glyphSegment:nth-child(2) { animation-delay: -2.2s; }
+  .cell {
+    animation: cellIn 320ms steps(8, end) both;
+  }
+  .cell:nth-child(2) { animation-delay: 50ms; }
+  .cell:nth-child(3) { animation-delay: 100ms; }
+  .cell:nth-child(4) { animation-delay: 150ms; }
+  .cell:nth-child(5) { animation-delay: 200ms; }
+  .cell:nth-child(6) { animation-delay: 250ms; }
+  .cell:nth-child(7) { animation-delay: 300ms; }
+  .cell:nth-child(8) { animation-delay: 350ms; }
   .timeline details[open] > div {
     animation: recordExpand 200ms steps(8, end) both;
   }

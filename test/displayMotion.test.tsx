@@ -21,23 +21,22 @@ afterEach(()=>{
   cleanup();disposals.splice(0).forEach(dispose=>dispose());
   policies.clear();vi.restoreAllMocks();vi.unstubAllGlobals();
 });
-function Screen({effects=true}:{effects?:boolean}) {
+function Screen() {
   const ref=useRef<HTMLDivElement>(null);useDisplayPolicy(ref);
-  return <div ref={ref} data-testid="display" data-effects-off={effects ? undefined : ''}><main><h2>행사 정보</h2><button>열기</button></main></div>;
+  return <div ref={ref} data-testid="display"><main><h2>행사 정보</h2><button>열기</button></main></div>;
 }
 describe('display motion policy',()=>{
   it('starts without a paused marker so server and hydrated markup match',()=>{
     render(<Screen/>);
     expect(screen.getByTestId('display')).not.toHaveAttribute('data-display-paused');
   });
-  it.each(['effects','reduced','contrast','hidden','saveData'])('pauses all display motion while %s applies and resumes afterwards',async policy=>{
+  it.each(['reduced','contrast','hidden','saveData'])('pauses all display motion while %s applies and resumes afterwards',async policy=>{
     const connection=Object.assign(new EventTarget(),{saveData:false});
     vi.stubGlobal('navigator',{connection});
     const visibility=vi.spyOn(document,'visibilityState','get').mockReturnValue('visible');
-    const {rerender}=render(<Screen/>);
+    render(<Screen/>);
     const display=screen.getByTestId('display');
     const apply=async(on:boolean)=>act(async()=>{
-      if(policy==='effects') rerender(<Screen effects={!on}/>);
       if(policy==='reduced') policies.get('(prefers-reduced-motion: reduce)')!.set(on);
       if(policy==='contrast') policies.get('(forced-colors: active)')!.set(on);
       if(policy==='hidden') { visibility.mockReturnValue(on ? 'hidden' : 'visible');document.dispatchEvent(new Event('visibilitychange')); }

@@ -73,6 +73,5 @@ button { color: inherit; }
 summary { min-height: 44px; padding-block: 10px; color: var(--ice); }
 details[open] > summary { margin-bottom: 10px; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
-/* Paused displays (FX OFF, reduced motion, forced colors, save-data, hidden tab) drop motion instead of freezing it mid-frame. */
+/* Paused displays (reduced motion, forced colors, save-data, hidden tab) drop motion instead of freezing it mid-frame. */
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }
-[data-effects-off] *,[data-effects-off] *::before,[data-effects-off] *::after { animation: none !important; transition: none !important; }

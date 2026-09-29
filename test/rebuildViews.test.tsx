@@ -132,18 +132,14 @@ describe('rebuild public views',()=>{
     expect(screen.getAllByRole('heading',{level:2}).slice(0,4).map(node=>node.textContent)).toEqual(['Live event','Later event','Next event','Past event']);
     expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();
   });
-  it('removes the archive menu and lets users turn off effects without replacing the page',()=>{
+  it('keeps four main menu links without the archive menu or a screen-effect toggle',()=>{
     view(<Shell><input aria-label="초안" defaultValue="keep this"/></Shell>);
     const menu=screen.getByRole('navigation',{name:'주 메뉴'});
     expect(within(menu).getAllByRole('link')).toHaveLength(4);
     expect(within(menu).queryByRole('link',{name:/ARCHIVE/})).not.toBeInTheDocument();
-    const draft=screen.getByRole('textbox',{name:'초안'});
-    const toggle=screen.getByRole('button',{name:'화면 효과'});
-    expect(toggle).toHaveAttribute('aria-pressed','true');
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute('aria-pressed','false');
-    expect(draft).toHaveValue('keep this');
-    expect(screen.getByRole('textbox',{name:'초안'})).toBe(draft);
+    // Motion follows the OS reduced-motion, contrast and save-data settings instead of an FX switch.
+    expect(screen.queryByRole('button',{name:'화면 효과'})).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox',{name:'초안'})).toHaveValue('keep this');
   });
   it('keeps the Home clock after an event starts, then counts down to the newly registered next event',()=>{
     vi.useFakeTimers();

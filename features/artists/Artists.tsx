@@ -5,6 +5,7 @@ import { pageNumber } from '@/features/events/model';
 import { PageHeading, Pagination, StateNotice } from '@/features/ui/Ui';
 import { buildArtistArchive } from './model';
 import { ArtistCard } from './ArtistCard';
+import { Ticks } from '@/features/display/Instruments';
 import styles from './artists.module.css';
 
 export function Artists() {
@@ -25,9 +26,10 @@ export function Artists() {
             );
           return (
             <>
-              <p className={styles.count}>
-                {profiles.length}개 기록
-              </p>
+              <div className={styles.countRow}>
+                <p className={styles.count}>{profiles.length}개 기록</p>
+                <Ticks count={48} major={6} marker className={styles.countScale} />
+              </div>
               {profiles.length ? (
                 <div className={styles.grid}>
                   {profiles.slice((page - 1) * 12, page * 12).map((profile) => (

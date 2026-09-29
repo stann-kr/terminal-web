@@ -18,7 +18,7 @@ export function PrintedResponse({ id, text, error, mode, onComplete, onPrint }: 
     let stopped = false, index = 0, buffer = '';
     const stop = () => { stopped = true; clearTimeout(timer); };
     const finish = (all = false) => { stop(); onComplete(all ? undefined : id); };
-    const disabled = () => reduced?.matches || contrast?.matches || connection?.saveData || document.visibilityState === 'hidden' || !!root.current?.closest('[data-effects-off],[data-display-paused]');
+    const disabled = () => reduced?.matches || contrast?.matches || connection?.saveData || document.visibilityState === 'hidden' || !!root.current?.closest('[data-display-paused]');
     const policyChanged = () => { if (disabled()) finish(true); };
     const characters = typeof Intl.Segmenter === 'function'
       ? Array.from(new Intl.Segmenter('ko',{granularity:'grapheme'}).segment(text),part => part.segment)
@@ -40,7 +40,7 @@ export function PrintedResponse({ id, text, error, mode, onComplete, onPrint }: 
       timer = setTimeout(print,character === '\n' ? 24 : 6);
     };
     const observer = new MutationObserver(policyChanged);
-    for (let parent = root.current?.parentElement; parent; parent = parent.parentElement) observer.observe(parent,{attributes:true,attributeFilter:['data-effects-off','data-display-paused']});
+    for (let parent = root.current?.parentElement; parent; parent = parent.parentElement) observer.observe(parent,{attributes:true,attributeFilter:['data-display-paused']});
     reduced?.addEventListener('change',policyChanged);
     contrast?.addEventListener('change',policyChanged);
     connection?.addEventListener('change',policyChanged);

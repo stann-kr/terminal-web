@@ -17,7 +17,7 @@
 .cards,
 .cardsHead,
 .card {
-  --columns: 84px minmax(0, 1fr) 132px minmax(120px, 176px) 104px;
+  --columns: 84px minmax(0, 1fr) 132px minmax(120px, 176px) 148px;
 }
 .cards {
   display: grid;
@@ -107,17 +107,29 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
   color: var(--card-accent);
   font-size: var(--text-meta);
   letter-spacing: .08em;
 }
-.recordStamp i {
+.recordStamp > i {
   width: 6px;
   height: 6px;
   border: 1px solid currentColor;
 }
-.card[data-event-state=UPCOMING] .recordStamp i,
-.card[data-event-state=LIVE] .recordStamp i {
+.cardLamp {
+  width: 40px;
+  flex-shrink: 0;
+  margin-left: 4px;
+  gap: 2px;
+}
+/* Inside the inverse selection bar the lamp prints in the background colour. */
+.card:is(:hover, :focus-visible) .cardLamp {
+  --tone: var(--bg);
+  --tone-rgb: var(--color-bg-base);
+}
+.card[data-event-state=UPCOMING] .recordStamp > i,
+.card[data-event-state=LIVE] .recordStamp > i {
   background: currentColor;
 }
 .card:hover,
@@ -139,6 +151,13 @@
 .directorySummary {
   position: sticky;
   top: 0;
+}
+.bays {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 12px;
+  border: 1px solid var(--line);
 }
 .nextEvent {
   display: grid;
@@ -227,8 +246,24 @@
   gap: 20px;
 }
 .stage {
+  position: relative;
   min-width: 0;
   border: 1px solid var(--frame);
+}
+.nodes {
+  max-width: 340px;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px dashed var(--line);
+}
+.recordCode {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: var(--text-meta);
+  letter-spacing: .14em;
 }
 .stage h3 {
   display: flex;
@@ -375,6 +410,22 @@
 }
 .accessProtocol > a {
   width: 100%;
+}
+
+/* Rows print in one after another, in raster steps. */
+@keyframes rowIn {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .card,
+  .stageSlots li {
+    animation: rowIn 300ms steps(10, end) both;
+  }
+  .card:nth-of-type(2), .stageSlots li:nth-child(2) { animation-delay: 70ms; }
+  .card:nth-of-type(3), .stageSlots li:nth-child(3) { animation-delay: 140ms; }
+  .card:nth-of-type(4), .stageSlots li:nth-child(4) { animation-delay: 210ms; }
+  .card:nth-of-type(5), .stageSlots li:nth-child(5) { animation-delay: 280ms; }
 }
 
 @media (max-width: 1180px) {

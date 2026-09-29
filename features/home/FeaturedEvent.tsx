@@ -7,6 +7,9 @@ import {
 } from '@/features/events/model';
 import { Action, Facts, FullText, StateNotice } from '@/features/ui/Ui';
 import { SignalText } from '@/features/display/Display';
+import { Blocks } from '@/features/display/Blocks';
+import { Barcode, Corners } from '@/features/display/Instruments';
+import { Decode } from '@/features/display/Decode';
 import { EventCountdown } from './EventCountdown';
 import styles from './home.module.css';
 
@@ -36,11 +39,23 @@ export function FeaturedEvent({
           {event.status === 'ARCHIVED' && (
             <p className={styles.noUpcoming}>다음 행사 미정</p>
           )}
-          <h2>{event.session}</h2>
+          <Corners crosses />
+          <h2 aria-label={event.session}>
+            <span aria-hidden="true"><Decode text={event.session} duration={640} /></span>
+          </h2>
           <p className={styles.subtitle}>
             {event.subtitle}
           </p>
           <EventCountdown event={event} />
+          <div className={styles.sweep}>
+            <Blocks
+              cols={20}
+              motion="scan"
+              step={1000}
+              tone={event.status === 'ARCHIVED' ? 'ice' : 'amber'}
+            />
+            <Barcode value={event.id} className={styles.featuredCode} />
+          </div>
           <Facts
             rows={[
               [

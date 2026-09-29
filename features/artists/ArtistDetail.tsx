@@ -12,6 +12,9 @@ import {
   ui,
 } from '@/features/ui/Ui';
 import { buildArtistArchive, type ArtistProfile } from './model';
+import { Blocks } from '@/features/display/Blocks';
+import { Barcode, Corners } from '@/features/display/Instruments';
+import { Decode } from '@/features/display/Decode';
 import styles from './artists.module.css';
 
 export function ArtistDetail({ artistKey }: { artistKey: string }) {
@@ -55,7 +58,12 @@ function ArtistProfileSummary({ profile }: { profile: ArtistProfile }) {
           <span>ARTIST FILE</span>
           <span>{profile.origin}</span>
         </p>
-        <strong className={styles.profileName}>{profile.name}</strong>
+        <strong className={styles.profileName}><Decode text={profile.name} duration={640} /></strong>
+        <div className={styles.profileFoot}>
+          <Blocks cols={14} step={110} lit={[2, 3, 7, 11]} accent={[12]} />
+          <Barcode value={profile.key} />
+        </div>
+        <Corners crosses />
       </div>
       <div className={ui.actions}>
         <Action href="/artists">전체 아티스트</Action>

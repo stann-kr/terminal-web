@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { SignalText } from '@/features/display/Display';
 import { artistHref, type ArtistProfile } from './model';
 import { ArtistGlyph } from './ArtistGlyph';
+import { Blocks } from '@/features/display/Blocks';
 import styles from './artists.module.css';
 
 export function ArtistCard({ profile }: { profile: ArtistProfile }) {
@@ -29,6 +30,14 @@ export function ArtistCard({ profile }: { profile: ArtistProfile }) {
         </SignalText>
       </span>
       <ArtistGlyph name={profile.name} />
+      <Blocks
+        cols={10}
+        motion="scan"
+        step={120}
+        offset={Array.from(profile.key).reduce((sum, char) => sum + char.charCodeAt(0), 0) % 10 * 120}
+        tone={profile.appearances.some((row) => row.event.status !== 'ARCHIVED') ? 'amber' : 'ice'}
+        className={styles.cellScan}
+      />
       <h2>{profile.name}</h2>
     </Link>
   );

@@ -55,3 +55,7 @@
 @media (max-width: 860px) {
   .layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
 }
+.matrix {
+  max-width: 280px;
+  margin-block: 16px 24px;
+}

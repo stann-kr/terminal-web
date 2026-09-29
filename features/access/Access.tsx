@@ -12,6 +12,7 @@ import {
 } from '@/features/ui/Ui';
 import { FormPanel } from '@/features/ui/Form';
 import { AccessForm } from './AccessForm';
+import { Blocks } from '@/features/display/Blocks';
 import styles from './access.module.css';
 
 export function Access({ eventId }: { eventId: string }) {
@@ -57,6 +58,10 @@ function AccessEventSummary({
   const event = query.events?.find((event) => event.id === eventId);
   return (
     <Panel title={event?.session ?? '행사 정보'} code={eventId}>
+      <div className={styles.accessScan} aria-hidden="true">
+        <i />
+        <Blocks cols={6} rows={2} step={120} lit={[0, 2, 7, 9]} accent={[4]} />
+      </div>
       {query.isError && (
         <StateNotice
           error

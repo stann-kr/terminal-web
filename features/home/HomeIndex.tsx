@@ -4,6 +4,8 @@ import { publicArtists } from '@/features/events/model';
 import { buildArtistArchive } from '@/features/artists/model';
 import { Action, Panel } from '@/features/ui/Ui';
 import { LiveValue, SignalText } from '@/features/display/Display';
+import { Blocks } from '@/features/display/Blocks';
+import { Ticks } from '@/features/display/Instruments';
 import styles from './home.module.css';
 
 export function HomeIndex({ events }: { events: TerminalEvent[] }) {
@@ -49,19 +51,31 @@ export function HomeIndex({ events }: { events: TerminalEvent[] }) {
               <SignalText active={count > 0 && status !== 'ARCHIVED'}>
                 {status}
               </SignalText>
-              <span className={styles.statusTrack} aria-hidden="true">
-                <i
-                  style={{
-                    width: `${events.length ? (count / events.length) * 100 : 0}%`,
-                  }}
-                />
-              </span>
+              <Blocks
+                cols={12}
+                motion="still"
+                tone={status === 'ARCHIVED' ? 'ice' : 'amber'}
+                lit={Array.from(
+                  { length: events.length ? Math.round((count / events.length) * 12) : 0 },
+                  (_, index) => index,
+                )}
+                className={styles.statusTrack}
+              />
               <span>
                 {count}/{events.length}
               </span>
             </div>
           );
         })}
+      </div>
+      <div className={styles.register}>
+        <Blocks
+          cols={12}
+          rows={2}
+          lit={[1, 4, 5, 9, 13, 14, 18, 22]}
+          accent={events.some((event) => event.status !== 'ARCHIVED') ? [6] : []}
+        />
+        <Ticks count={24} major={6} labels />
       </div>
       <div className={styles.intro}>
         <p>

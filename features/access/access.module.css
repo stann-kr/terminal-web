@@ -53,3 +53,39 @@
 @media (max-width: 400px) {
   .code { grid-template-columns: minmax(0, 1fr); }
 }
+/* Access scan: a line sweeps the seal while an event lookup, code check or request is running. */
+.accessScan {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 96px;
+  margin-bottom: 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  pointer-events: none;
+}
+.accessScan > div {
+  width: 132px;
+}
+.accessScan > i {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--ice);
+  box-shadow: 0 0 10px rgb(var(--color-accent-primary) / .6);
+  opacity: .35;
+}
+.layout:has([aria-busy=true]) .accessScan > i,
+.layout[data-fetching=true] .accessScan > i {
+  background: var(--amber);
+  opacity: 1;
+}
+@keyframes accessSweep {
+  from { transform: translateY(0); }
+  to { transform: translateY(94px); }
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .accessScan > i { animation: accessSweep 2.4s linear infinite; }
+  .layout:has([aria-busy=true]) .accessScan > i,
+  .layout[data-fetching=true] .accessScan > i { animation-duration: .72s; }
+}
