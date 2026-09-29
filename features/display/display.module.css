@@ -20,7 +20,19 @@
   opacity: 1;
 }
 .value {
+  display: inline-flex;
   color: inherit;
+}
+.window {
+  display: inline-block;
+  overflow: hidden;
+  white-space: pre;
+}
+.glyph {
+  display: inline-block;
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .glyph { animation: glyphRoll var(--q8) var(--settle) backwards; }
 }
 .signalText {
   display: inline-flex;

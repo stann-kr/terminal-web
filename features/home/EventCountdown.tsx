@@ -54,7 +54,7 @@ export function EventCountdown({
         <span>{remaining ? 'T- COUNTDOWN' : 'T+ ELAPSED'}</span>
         <span>{remaining ? '이벤트 시작까지' : '이벤트 시작 이후'}</span>
       </div>
-      <dl className={styles.countdownUnits}>
+      <dl className={styles.countdownUnits} data-cells="">
         {units.map(([label, value]) => (
           <div key={label}>
             <dt>{label}</dt>

@@ -1,12 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { DataActivity } from '@/features/display/Display';
+import { Morph } from '@/features/display/Morph';
 import { useDisplayPolicy } from '@/features/display/useDisplayPolicy';
 import { Clock } from './Clock';
 import { Ticker } from './Ticker';
 import { useLanguage } from './Providers';
+import { ConsoleCursor } from './ConsoleCursor';
+import { motionAllowed, useLastPress, usePlateReveal, useSmoothWheel, useSweepDirection, type PingPoint } from './useConsoleMotion';
 import styles from './shell.module.css';
 
 const navigation = [
@@ -27,34 +30,50 @@ export function Shell({ children }: { children: ReactNode }) {
   const main = useRef<HTMLElement>(null);
   const previousPath = useRef(pathname);
   const activeIndex = navigation.findIndex(({ href }) => href === '/' ? pathname === '/' : pathname.startsWith(href));
+  const lastPressRef = useLastPress();
+  const [ping, setPing] = useState<PingPoint | null>(null);
   useDisplayPolicy(frame);
+  usePlateReveal(main);
+  useSweepDirection();
+  useSmoothWheel();
 
   useEffect(() => {
     if (previousPath.current === pathname) return;
     previousPath.current = pathname;
     // A real route change lands keyboard focus on the new page.
     main.current?.focus({ preventScroll: true });
-  }, [pathname]);
+    // The console acknowledges the command where it was given: a ring burst.
+    const press = lastPressRef.current;
+    if (!press || performance.now() - press.at > 1500 || !motionAllowed() || frame.current?.hasAttribute('data-display-paused')) return;
+    lastPressRef.current = null;
+    setPing(press);
+    const done = window.setTimeout(() => setPing(null), 1000);
+    return () => window.clearTimeout(done);
+  }, [pathname, lastPressRef]);
 
   return (
-    <div ref={frame} className={styles.frame}>
+    <div ref={frame} className={styles.frame} data-kick={ping ? '' : undefined}>
       <a href="#main" className={styles.skip}>본문으로 이동</a>
       <header className={styles.top} data-surface="deep">
         <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">
           <span className={styles.brandMark}>TERMINAL</span>
         </Link>
         <nav className={styles.tabs} aria-label="주 메뉴">
-          {navigation.map((item, index) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={styles.tab}
-              aria-current={index === activeIndex ? 'page' : undefined}
-            >
-              <span aria-hidden="true" className={styles.tabIndex}>{item.index}</span>
-              <span className={styles.tabLabel}>{item.label} <small>{item.ko}</small></span>
-            </Link>
-          ))}
+          {navigation.map((item, index) => {
+            const tab = (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={styles.tab}
+                aria-current={index === activeIndex ? 'page' : undefined}
+              >
+                <span aria-hidden="true" className={styles.tabIndex}>{item.index}</span>
+                <span className={styles.tabLabel}>{item.label} <small>{item.ko}</small></span>
+              </Link>
+            );
+            // The gold current tab is one object that travels between tabs.
+            return index === activeIndex ? <Morph key={item.href} name="tab-current" kind="slide">{tab}</Morph> : tab;
+          })}
         </nav>
         <div className={styles.system}>
           <DataActivity />
@@ -72,6 +91,8 @@ export function Shell({ children }: { children: ReactNode }) {
       <main ref={main} id="main" aria-label="본문" tabIndex={-1} className={styles.main}>
         {children}
       </main>
+      {ping && <NavPing key={ping.at} point={ping} />}
+      <ConsoleCursor />
       <footer className={styles.foot} data-surface="deep">
         <nav className={styles.secondary} aria-label="보조 메뉴">
           {secondary.map(item => (
@@ -83,6 +104,17 @@ export function Shell({ children }: { children: ReactNode }) {
         <Ticker />
         <p className={`${styles.node} ${styles.brandNode}`} aria-hidden="true">TERMINAL</p>
       </footer>
+    </div>
+  );
+}
+
+/** The command lands where it was given: three rings burst from that point on sixteenth notes. */
+function NavPing({ point }: { point: PingPoint }) {
+  return (
+    <div className={styles.ping} aria-hidden="true" style={{ '--px': `${point.x}px`, '--py': `${point.y}px` } as CSSProperties}>
+      <b />
+      <b />
+      <b />
     </div>
   );
 }

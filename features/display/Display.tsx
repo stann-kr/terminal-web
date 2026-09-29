@@ -15,9 +15,20 @@ export function DataActivity() {
   );
 }
 
+/**
+ * A readout that rolls like a mechanical counter: each character sits in its own window and only
+ * the characters that changed drop in, so a ticking second rolls one digit, not the whole number.
+ */
 export function LiveValue({ value }: { value: string | number }) {
-  // The keyed child remounts per value so the short phosphor settle replays on real changes only.
-  return <span><span key={value} className={styles.value}>{value}</span></span>;
+  return (
+    <span className={styles.value}>
+      {[...String(value)].map((glyph, index) => (
+        <span key={index} className={styles.window}>
+          <span key={glyph} className={styles.glyph}>{glyph}</span>
+        </span>
+      ))}
+    </span>
+  );
 }
 
 export function SignalText({ children, active = false }: { children: ReactNode; active?: boolean }) {

@@ -54,7 +54,7 @@ export function Events() {
                 className={styles.listing}
               >
                 {ordered.length ? (
-                  <div className={styles.cards}>
+                  <div className={styles.cards} data-cells="">
                     <p className={styles.cardsHead} aria-hidden="true">
                       <span>ID</span>
                       <span>SESSION</span>
@@ -153,7 +153,7 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
         </div>
       )}
       <Panel title="연도·장소" label="Register" surface="navy" className={styles.register}>
-        <ul className={styles.yearCells}>
+        <ul className={styles.yearCells} data-cells="">
           {years.map((year) => (
             <li key={year}>
               <b>{year}</b>

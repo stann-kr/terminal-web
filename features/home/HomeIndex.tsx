@@ -28,7 +28,7 @@ export function HomeIndex({ events }: { events: TerminalEvent[] }) {
   const sessions = [...events].sort((a, b) => b.date.localeCompare(a.date));
   return (
     <Panel title="축적된 기록" label="Session archive" surface="navy" className={styles.archive}>
-      <ul className={styles.counters}>
+      <ul className={styles.counters} data-cells="">
         {stats.map(([href, label, count]) => (
           <li key={label}>
             <Link href={href}>
@@ -43,7 +43,7 @@ export function HomeIndex({ events }: { events: TerminalEvent[] }) {
       {sessions.length > 0 && (
         <>
           <Sub>Sessions</Sub>
-          <ul className={styles.sessions}>
+          <ul className={styles.sessions} data-cells="">
             {sessions.map((event) => (
               <li key={event.id}>
                 <Link href={eventHref(event.id)} data-state={event.status}>

@@ -114,7 +114,7 @@ export function Facts({
   rows: readonly (readonly [string, ReactNode])[];
 }) {
   return (
-    <dl className={styles.facts}>
+    <dl className={styles.facts} data-cells="">
       {rows.map(([label, value]) => (
         <div key={label}>
           <dt>{label}</dt>

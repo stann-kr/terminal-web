@@ -131,7 +131,7 @@
   text-align: left;
   text-decoration: none;
   text-transform: uppercase;
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 /* Every occurrence of TERMINAL is set in the brand face. */
 .brandWord {
@@ -182,8 +182,15 @@
 }
 .action:hover,
 .button:hover:not(:disabled) {
-  background: var(--hi);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
+}
+/* A pressed key flashes inverse, like a backlit switch taking the command. */
+.action:active,
+.button:active:not(:disabled) {
+  box-shadow: inset 0 0 0 100vmax var(--on-hi);
+  color: var(--hi);
+  transition: none;
 }
 .action:focus-visible,
 .button:focus-visible {
@@ -306,11 +313,16 @@
   background: var(--well);
   color: var(--ink);
   text-decoration: none;
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .pagination a:hover {
-  background: var(--hi);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
+}
+.pagination a:active {
+  box-shadow: inset 0 0 0 100vmax var(--on-hi);
+  color: var(--hi);
+  transition: none;
 }
 
 /* ── Prose ───────────────────────────────────────────────────────────────── */

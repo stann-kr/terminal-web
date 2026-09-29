@@ -62,7 +62,7 @@
   color: rgb(255 248 240 / .2);
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .pulse { animation: ringOut 1.875s linear infinite; }
+  .pulse { animation: ringOut var(--bar) linear infinite; }
 }
 .featuredHead {
   display: flex;
@@ -226,7 +226,7 @@
   font-variant-numeric: tabular-nums;
 }
 .counters a > * {
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .counters a:focus-visible {
   outline-offset: 2px;
@@ -271,7 +271,7 @@
 }
 .sessions a,
 .rosterCells a {
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .sessions a:focus-visible {
   outline-offset: 2px;
@@ -425,16 +425,17 @@
   white-space: nowrap;
 }
 
-/* Hover lights a card up in the plate's highlight colour; cells already gold light up cream. */
+/* Hover sweeps a card up in the plate's highlight colour from the side the pointer entered;
+   cells already gold light up cream. */
 .counters a:hover > *,
 .sessions a:hover,
 .rosterCells a:hover {
-  background: var(--hi);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
 }
 .sessions a:is([data-state=UPCOMING], [data-state=LIVE]):hover,
 .rosterCells a:is([data-upcoming], [data-featured]):hover {
-  background: var(--cream);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
   color: var(--navy);
 }
 .sessions a:hover .sessionState {
@@ -445,13 +446,13 @@
   color: #3d5566;
 }
 .signal {
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .signal:hover {
   --ink: var(--navy);
   --line: var(--navy);
   --well: rgb(0 48 73 / .1);
-  background-color: var(--cream);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
   color: var(--navy);
 }
 .signal:focus-visible {

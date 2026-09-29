@@ -32,7 +32,7 @@ function RosterSummary({ profiles }: { profiles: ReturnType<typeof buildArtistAr
         />
       </Panel>
       <Panel title="출신" label="Origin" surface="navy" className={styles.origins}>
-        <ul className={styles.originCells}>
+        <ul className={styles.originCells} data-cells="">
           {origins.map((origin) => (
             <li key={origin}>
               <b>{origin}</b>
@@ -74,7 +74,7 @@ export function Artists() {
               >
                 <p className={styles.count}>{profiles.length}개 기록</p>
                 {profiles.length ? (
-                  <div className={styles.grid}>
+                  <div className={styles.grid} data-cells="">
                     {profiles.slice((page - 1) * 12, page * 12).map((profile) => (
                       <ArtistCard key={profile.key} profile={profile} />
                     ))}

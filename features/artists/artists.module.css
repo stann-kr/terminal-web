@@ -103,7 +103,7 @@
   font: 400 var(--t-lg)/1 var(--mono);
 }
 .cell {
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .emptyCell {
   display: flex;
@@ -182,7 +182,7 @@
   grid-template-columns: subgrid;
 }
 .timeline li > * {
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .timeline time {
   display: flex;
@@ -252,7 +252,7 @@
   padding: 8px 10px;
   background: var(--fill);
   color: var(--on-fill);
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .sharedCells a,
 .sharedCells span {
@@ -319,30 +319,31 @@
   flex-wrap: wrap;
 }
 
-/* Hover lights a card up: cream cells turn gold, coloured cells turn cream; record rows light gold. */
+/* Hover sweeps a card up from the side the pointer entered: cream cells turn gold, coloured cells
+   turn cream; record rows light gold. */
 .cell:hover,
 .sharedCells li:has(a:hover) {
-  background: var(--gold);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--gold);
   color: var(--navy);
 }
 .cell[data-surface]:hover {
   --ink: var(--navy);
   --muted: #3d5566;
-  background: var(--cream);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
   color: var(--navy);
 }
 .sharedCells li:has(a:hover) small {
   color: #3d5566;
 }
 .timeline li:hover > :not(time) {
-  background: var(--hi);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
 }
 .timeline li:hover > :not(time) * {
   color: inherit !important;
 }
 .timeline li:hover time {
-  background: var(--cream);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
   color: var(--navy);
 }
 .cell:focus-visible {

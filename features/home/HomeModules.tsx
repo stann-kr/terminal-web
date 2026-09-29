@@ -3,6 +3,7 @@ import type { TerminalEvent } from '@/lib/events/types';
 import { artistHref, buildArtistArchive } from '@/features/artists/model';
 import { Action, ActionDeck, Chip, Panel } from '@/features/ui/Ui';
 import { Meter } from '@/features/display/Meter';
+import { Morph } from '@/features/display/Morph';
 import styles from './home.module.css';
 
 /** Status plate: one row per lifecycle state with a real share meter, like a fault board. */
@@ -11,7 +12,7 @@ export function HomeStatus({ events }: { events: TerminalEvent[] }) {
   return (
     <div className={`${styles.stack} ${styles.status}`}>
     <Panel title="행사 상태" label="Status" surface="gold">
-      <ul className={styles.statusRows}>
+      <ul className={styles.statusRows} data-cells="">
         {(['LIVE', 'UPCOMING', 'ARCHIVED'] as const).map((status, index) => {
           const count = events.filter((event) => event.status === status).length;
           return (
@@ -49,9 +50,10 @@ export function HomeRoster({ events }: { events: TerminalEvent[] }) {
       surface="navy"
     >
       {profiles.length ? (
-        <ul className={styles.rosterCells}>
+        <ul className={styles.rosterCells} data-cells="">
           {profiles.slice(0, 12).map((profile) => (
             <li key={profile.key}>
+              <Morph name={`artist-${profile.key}`}>
               <Link
                 href={artistHref(profile.key)}
                 data-featured={profile.key === 'stann-lumo' || undefined}
@@ -62,6 +64,7 @@ export function HomeRoster({ events }: { events: TerminalEvent[] }) {
                   {profile.origin} · {String(profile.appearances.length).padStart(2, '0')} REC
                 </span>
               </Link>
+              </Morph>
             </li>
           ))}
         </ul>

@@ -70,7 +70,7 @@
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .tabIndex {
   color: var(--muted);
@@ -88,12 +88,18 @@
   font: 500 var(--t-xs)/1 var(--sans);
   letter-spacing: 0;
 }
-/* Bar controls rest as tinted cells, light up cream under the pointer, and hold gold when current. */
-.tab:hover,
-.language button:hover,
-.secondary a:hover {
-  background: var(--cream);
+/* Bar controls rest as tinted cells, light up cream under the pointer (swept in from the side the
+   pointer entered), flash inverse while pressed, and hold gold when current. */
+.tab:not([aria-current=page]):hover,
+.language button:not([aria-pressed=true]):hover,
+.secondary a:not([aria-current=page]):hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
   color: var(--navy);
+}
+:is(.tab, .language button, .secondary a):active {
+  box-shadow: inset 0 0 0 100vmax var(--navy);
+  color: var(--gold);
+  transition: none;
 }
 .tab[aria-current=page],
 .language button[aria-pressed=true],
@@ -107,6 +113,9 @@
 }
 .secondary a:is(:hover, [aria-current=page]) b {
   color: var(--navy);
+}
+:is(.tab, .secondary a):active :is(.tabIndex, small, b) {
+  color: inherit;
 }
 .tab:focus-visible {
   outline-offset: -5px;
@@ -145,7 +154,7 @@
   color: var(--muted);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .12em;
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 /* A ring block closes each bar: the site's motif at its loudest, in orange on deep navy. */
 .brandNode {
@@ -169,7 +178,40 @@
 }
 
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .node { animation: ringOut 1.875s linear infinite; }
+  .node { animation: ringOut var(--bar) linear infinite; }
+  /* A command kicks the ring blocks: gold rings rushing out for two beats. */
+  .frame[data-kick] .node {
+    color: var(--gold);
+    animation-duration: var(--q8);
+  }
+}
+
+/* ── Command ping: three rings burst from the operated point. ── */
+.ping {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--orange);
+}
+.ping b {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  translate: -50% -50%;
+  animation: ringBurst calc(var(--beat) * 2) var(--settle) var(--q16) both;
+}
+.ping b:nth-of-type(2) { animation-delay: var(--q8); }
+.ping b:nth-of-type(3) { animation-delay: calc(var(--q8) + var(--q16)); color: var(--gold); }
+@keyframes ringBurst {
+  from { width: 0; height: 0; opacity: 1; }
+  to { width: 240vmax; height: 240vmax; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce), (forced-colors: active) {
+  .ping { display: none; }
 }
 
 /* ── Ticker: real schedule facts running along the foot bar. ─────────────── */
@@ -244,7 +286,7 @@
   font: 500 var(--t-xs)/1 var(--sans);
   letter-spacing: 0;
   text-decoration: none;
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .secondary b {
   color: var(--ink);
@@ -286,17 +328,53 @@
   .node { background: none; }
 }
 
-/* Page open: the plates of a page step up into place one after another. */
-@keyframes plateIn {
-  from { opacity: 0; transform: translateY(14px); }
+/* ── Console pointer: an exact point and a trailing ring, blended so it reads on every plate. ── */
+.cursor {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 60;
+  pointer-events: none;
+  color: var(--cream);
+  mix-blend-mode: difference;
+  transition: opacity var(--q8) var(--settle);
 }
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .main > :not(h1) > * {
-    animation: plateIn .5s cubic-bezier(.2, .8, .2, 1) both;
-  }
-  .main > :not(h1) > :nth-child(2) { animation-delay: 60ms; }
-  .main > :not(h1) > :nth-child(3) { animation-delay: 120ms; }
-  .main > :not(h1) > :nth-child(4) { animation-delay: 180ms; }
-  .main > :not(h1) > :nth-child(5) { animation-delay: 240ms; }
-  .main > :not(h1) > :nth-child(6) { animation-delay: 300ms; }
+.cursor[data-visible=false],
+.cursor[data-mode=text] {
+  opacity: 0;
+}
+.cursorDot,
+.cursorRing {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  will-change: translate;
+}
+.cursorDot {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background: currentColor;
+}
+.cursorRing {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border: 1.5px solid currentColor;
+  transition: scale var(--q8) var(--settle), border-color var(--q8) var(--settle), border-width var(--q8) var(--settle);
+}
+.cursor[data-mode=control] .cursorRing {
+  scale: 1.6;
+  border-color: var(--gold);
+  border-width: 1px;
+}
+.cursor[data-pressed] .cursorRing {
+  scale: .7;
+  transition-duration: var(--q32);
+}
+.cursor[data-mode=control][data-pressed] .cursorRing {
+  scale: 1.2;
+}
+@media (forced-colors: active) {
+  .cursor { display: none; }
 }

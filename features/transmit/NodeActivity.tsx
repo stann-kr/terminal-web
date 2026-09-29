@@ -25,7 +25,7 @@ export function NodeActivity({ limit = 6 }: { limit?: number }) {
   const logs = query.data.logs.slice(0, limit);
   if (!logs.length) return <p className={styles.nodeEmpty}>아직 기록된 노드가 없습니다.</p>;
   return (
-    <ol className={styles.nodes}>
+    <ol className={styles.nodes} data-cells="">
       {logs.map((log) => (
         <li key={log.id}>
           <b>{nodeTag(log.id)}</b>

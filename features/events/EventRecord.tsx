@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { useLanguage } from '@/features/shell/Providers';
 import { Action, ActionDeck, Bay, BrandText, Facts, FullText, Panel, StateNotice, ui } from '@/features/ui/Ui';
+import { Morph } from '@/features/display/Morph';
 import {
   buildArtistArchive,
   profileForAppearance,
@@ -144,7 +145,7 @@ export function Lineup({
                   <span>STAGE {dock}</span>
                   <span>공개 공연표</span>
                 </h3>
-                <ul className={styles.stageSlots}>
+                <ul className={styles.stageSlots} data-cells="">
                   {visible
                     .filter((artist) => (artist.dock || 'TBA') === dock)
                     .map((artist) => (
@@ -234,6 +235,7 @@ export function EventRecord({
 
 function EventOverview({ event }: { event: TerminalEvent }) {
   return (
+    <Morph name={`session-${event.id}`}>
     <Panel
       title="행사 개요"
       label="Session"
@@ -261,6 +263,7 @@ function EventOverview({ event }: { event: TerminalEvent }) {
         </a>
       )}
     </Panel>
+    </Morph>
   );
 }
 

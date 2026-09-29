@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { SignalText } from '@/features/display/Display';
+import { Morph } from '@/features/display/Morph';
 import { artistHref, type ArtistProfile } from './model';
 import styles from './artists.module.css';
 
@@ -14,6 +15,7 @@ export function ArtistCard({ profile }: { profile: ArtistProfile }) {
   const upcoming = profile.appearances.some((row) => row.event.status !== 'ARCHIVED');
   const featured = profile.key === 'stann-lumo';
   return (
+    <Morph name={`artist-${profile.key}`}>
     <Link
       data-upcoming={upcoming}
       data-featured={featured || undefined}
@@ -37,6 +39,7 @@ export function ArtistCard({ profile }: { profile: ArtistProfile }) {
         <span className={styles.serialNumber}>{serial(profile.key)}</span>
       </span>
     </Link>
+    </Morph>
   );
 }
 

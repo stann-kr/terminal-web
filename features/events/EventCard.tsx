@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { BrandText } from '@/features/ui/Ui';
+import { Morph } from '@/features/display/Morph';
 import { eventHref, publicArtists, statusLabel } from './model';
 import styles from './events.module.css';
 
@@ -22,6 +23,7 @@ export function EventCard({
     ref.current?.focus({ preventScroll: true });
   }, [focused]);
   return (
+    <Morph name={`session-${event.id}`}>
     <Link
       ref={ref}
       data-event-state={event.status}
@@ -53,5 +55,6 @@ export function EventCard({
         <span className={styles.stateChip}>{statusLabel(event.status)}</span>
       </span>
     </Link>
+    </Morph>
   );
 }

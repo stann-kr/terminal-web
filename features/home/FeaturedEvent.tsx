@@ -6,6 +6,7 @@ import {
   statusLabel,
 } from '@/features/events/model';
 import { Action, ActionDeck, Bay, Chip, BrandText, Facts, FullText, StateNotice, Sub } from '@/features/ui/Ui';
+import { Morph } from '@/features/display/Morph';
 import { EventCountdown } from './EventCountdown';
 import styles from './home.module.css';
 
@@ -20,6 +21,7 @@ export function FeaturedEvent({
   const artists = event ? publicArtists(event) : [];
   return (
     <div className={`${styles.stack} ${styles.next}`}>
+    <Morph name={`session-${event?.id ?? 'none'}`}>
     <section
       className={styles.featured}
       aria-label="대표 행사"
@@ -58,7 +60,7 @@ export function FeaturedEvent({
             </div>
             <div>
           <Sub>Lineup</Sub>
-          <ul className={styles.lineupCells}>
+          <ul className={styles.lineupCells} data-cells="">
             {artists.length
               ? artists.map((artist) => (
                   <li key={artist.id}>
@@ -92,6 +94,7 @@ export function FeaturedEvent({
         </StateNotice>
       )}
     </section>
+    </Morph>
     {event && (
       <ActionDeck label="SESSION">
         <Action primary href={eventHref(event.id)}>

@@ -58,7 +58,7 @@ function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
 function OfficialChannels() {
   return (
     <Panel title="공식 채널" label="Channels" surface="navy">
-      <ul className={styles.channels}>
+      <ul className={styles.channels} data-cells="">
         {channels.map(([label, href], index) => (
           <li key={href}>
             <a href={href} target="_blank" rel="noopener noreferrer">

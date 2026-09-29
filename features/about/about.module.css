@@ -55,7 +55,7 @@
   font: 400 var(--t-xs)/1.3 var(--mono);
 }
 .channels a > * {
-  transition: background-color .14s var(--ease), color .14s var(--ease);
+  transition: var(--light-motion);
 }
 .channels a:focus-visible {
   outline-offset: 2px;
@@ -75,10 +75,10 @@
 }
 
 .channels a:hover > span:first-child {
-  background: var(--cream);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
   color: var(--navy);
 }
 .channels a:hover :is(strong, .host) {
-  background: var(--hi);
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
 }

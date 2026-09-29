@@ -46,7 +46,7 @@ export function Feed({ page = 1, limit }: { page?: number; limit?: number }) {
             : '아직 남겨진 글이 없습니다.'}
         </p>
       ) : (
-        <ol className={styles.logs}>
+        <ol className={styles.logs} data-cells="">
           {query.data.logs.slice(0, limit).map((log) => (
             <li key={log.id}>
               <header>
