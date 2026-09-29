@@ -82,72 +82,77 @@ export function Shell({ children }: { children: ReactNode }) {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [pathname, router]);
 
-  const controls = (
-    <div className={styles.controls}>
-      <button type="button" className={styles.fx} aria-label="화면 효과" aria-pressed={effects} onClick={() => setEffects(value => !value)}>
-        <i aria-hidden="true" className={styles.led} />
-        <span aria-hidden="true">FX</span>
-      </button>
-      <div className={styles.rocker} role="group" aria-label="콘텐츠 언어">
-        {(['ko', 'en'] as const).map(lang => (
-          <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>{lang.toUpperCase()}</button>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
-    <div ref={frame} className={styles.housing} data-effects-off={effects ? undefined : ''}>
+    <div ref={frame} className={styles.frame} data-effects-off={effects ? undefined : ''}>
       <a href="#main" className={styles.skip}>본문으로 이동</a>
-      <header className={styles.plate}>
-        <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">TERMINAL</Link>
-        <p className={styles.model}>MODEL T-03 · SEOUL TECHNO PLATFORM</p>
-        <span className={styles.vents} aria-hidden="true" />
-        <Clock />
-      </header>
-      <div className={styles.bezel}>
-        <div className={styles.glass}>
-          <div className={styles.screen}>
-            <div className={styles.status}>
-              <p className={styles.path}><span className={styles.srOnly}>현재 위치 </span>guest@terminal:{shellPath(pathname)}</p>
-              <DataActivity />
-            </div>
-            <main ref={main} id="main" aria-label="본문" tabIndex={0} className={styles.main} data-wipe={route.wipe || undefined}>
-              <div className={styles.content}>{children}</div>
-              <nav className={styles.screenLinks} aria-label="보조 메뉴">
-                {secondary.map(item => <Link key={item.href} href={item.href}>{item.label} <small>{item.ko}</small></Link>)}
-                <span>ALL EVENT TIMES / KST</span>
-              </nav>
-            </main>
-            <ConsoleDock />
-          </div>
-          <div className={styles.glassFx} aria-hidden="true"><i className={styles.band} /></div>
-          <div ref={boot} className={styles.boot} aria-hidden="true" suppressHydrationWarning />
-          <script type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: bootScript }} />
-        </div>
-      </div>
-      <footer className={styles.deck}>
-        <nav className={styles.keys} aria-label="주 메뉴">
+      <header className={styles.top}>
+        <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">
+          TERMINAL
+          <small aria-hidden="true">SEOUL TECHNO PLATFORM</small>
+        </Link>
+        <nav className={styles.tabs} aria-label="주 메뉴">
           {navigation.map((item, index) => (
-            <Link key={item.href} href={item.href} className={styles.key} aria-current={index === activeIndex ? 'page' : undefined} aria-keyshortcuts={item.key}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={styles.tab}
+              aria-current={index === activeIndex ? 'page' : undefined}
+              aria-keyshortcuts={item.key}
+            >
               <span aria-hidden="true" className={styles.fkey}>{item.key}</span>
-              <span className={styles.legend}>{item.label} <small>{item.ko}</small></span>
+              <span className={styles.tabLabel}>{item.label} <small>{item.ko}</small></span>
             </Link>
           ))}
         </nav>
-        <nav className={`${styles.keys} ${styles.auxKeys}`} aria-label="보조 메뉴">
-          {secondary.map(item => (
-            <Link key={item.href} href={item.href} className={styles.key} aria-current={pathname.startsWith(item.href) ? 'page' : undefined}>
-              <span className={styles.legend}>{item.label} <small>{item.ko}</small></span>
-            </Link>
-          ))}
-        </nav>
-        <div className={styles.serial}>
-          <span className={styles.barcode} aria-hidden="true" />
-          <span>TERMINAL / STANN LUMO<br />ALL EVENT TIMES / KST</span>
+        <div className={styles.system}>
+          <Clock />
+          <button
+            type="button"
+            className={styles.fx}
+            aria-label="화면 효과"
+            aria-pressed={effects}
+            onClick={() => setEffects(value => !value)}
+          >
+            <i aria-hidden="true" />
+            <span aria-hidden="true">FX</span>
+          </button>
+          <div className={styles.language} role="group" aria-label="콘텐츠 언어">
+            {(['ko', 'en'] as const).map(lang => (
+              <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>
+                {lang.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
+      </header>
+      <div className={styles.status}>
+        <p className={styles.path}>
+          <span className={styles.srOnly}>현재 위치 </span>
+          guest@terminal:{shellPath(pathname)}
+        </p>
+        <DataActivity />
+      </div>
+      <main ref={main} id="main" aria-label="본문" tabIndex={0} className={styles.main} data-wipe={route.wipe || undefined}>
+        {children}
+      </main>
+      <ConsoleDock />
+      <footer className={styles.hints}>
+        <p className={styles.keyHints} aria-hidden="true">
+          <span><kbd>F1–F4</kbd> 화면</span>
+          <span><kbd>/</kbd> 명령줄</span>
+          <span><kbd>ESC</kbd> 출력 접기</span>
+        </p>
+        <nav className={styles.secondary} aria-label="보조 메뉴">
+          {secondary.map(item => (
+            <Link key={item.href} href={item.href} aria-current={pathname.startsWith(item.href) ? 'page' : undefined}>
+              <b>{item.label}</b> {item.ko}
+            </Link>
+          ))}
+        </nav>
+        <p className={styles.zone}>ALL EVENT TIMES / KST</p>
       </footer>
-      {controls}
+      <div ref={boot} className={styles.boot} aria-hidden="true" suppressHydrationWarning />
+      <script type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: bootScript }} />
     </div>
   );
 }

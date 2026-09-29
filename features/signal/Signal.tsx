@@ -32,25 +32,23 @@ function SignalInformation({
   const { pending, done, error } = request;
   return (
     <Panel title="수신 안내" code="SIGNAL">
-      <p>TERMINAL의 새로운 행사와 소식을 안내합니다.</p>
-      <div
+      <p className={styles.lead}>TERMINAL의 새로운 행사와 소식을 안내합니다.</p>
+      <p
         className={styles.signalMatrix}
         aria-hidden="true"
         data-state={
           pending ? 'sending' : done ? 'saved' : error ? 'error' : 'idle'
         }
       >
-        {Array.from({ length: 32 }, (_, index) => (
-          <i
-            key={index}
-            data-dim={index === 12 || index === 27}
-            data-accent={index === 8 || index === 23}
-            style={{ animationDelay: `${(index % 4) * -0.7}s` }}
-          >
-            {String(index + 1).padStart(2, '0')}
-          </i>
-        ))}
-      </div>
+        <i />
+        {pending
+          ? 'TRANSMITTING'
+          : done
+            ? 'CHANNEL REGISTERED'
+            : error
+              ? 'TRANSMISSION FAILED'
+              : 'CHANNEL STANDBY'}
+      </p>
       <Action href="/about">소개 / 공식 채널</Action>
     </Panel>
   );

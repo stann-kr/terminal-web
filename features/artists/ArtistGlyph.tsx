@@ -38,7 +38,6 @@ export function ArtistGlyph({ name }: { name: string }) {
   return (
     <div
       className={styles.artistGlyph}
-      data-readout-instrument=""
       aria-hidden="true"
     >
       <svg viewBox="0 0 160 96" focusable="false">
@@ -64,11 +63,6 @@ export function ArtistGlyph({ name }: { name: string }) {
           </g>
         ))}
       </svg>
-      <span className={styles.glyphRail}>
-        <i />
-        <i />
-        <i />
-      </span>
     </div>
   );
 }

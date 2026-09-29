@@ -1,13 +1,6 @@
 .dock {
   position: relative;
-  z-index: 1;
   min-width: 0;
-  padding: 0 clamp(12px, 1.8vw, 24px);
   border-top: 1px solid var(--line);
-  background: linear-gradient(rgb(0 0 0 / .35), rgb(0 0 0 / .15));
-}
-@media (max-width: 700px) {
-  .dock {
-    padding-inline: 10px;
-  }
+  border-bottom: 1px solid var(--line);
 }

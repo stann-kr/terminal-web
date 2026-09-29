@@ -47,7 +47,7 @@ export function EventFacts({
       <div className={styles.factModules}>
         {groups.map((group) => (
           <div key={group.label} className={styles.factModule}>
-            <p data-readout-row="" lang="en">
+            <p lang="en">
               {group.label}
             </p>
             <Facts rows={group.rows.map(([label, value]) => [label, value])} />
@@ -135,7 +135,7 @@ export function Lineup({
                 key={dock}
                 aria-label={`무대 ${dock}`}
               >
-                <h3 data-readout-row="">
+                <h3>
                   <span>STAGE {dock}</span>
                   <span>공개 공연표</span>
                 </h3>
@@ -144,7 +144,7 @@ export function Lineup({
                     .filter((artist) => (artist.dock || 'TBA') === dock)
                     .map((artist) => (
                       <li key={artist.id}>
-                        <div data-readout-row="" className={styles.slotCode}>
+                        <div className={styles.slotCode}>
                           {artist.id}
                           <span>
                             {artist.status === 'ARCHIVED'
@@ -155,7 +155,7 @@ export function Lineup({
                         <div className={styles.slotArtist}>
                           {identity(artist)}
                         </div>
-                        <p data-readout-row="" className={styles.slotTime}>
+                        <p className={styles.slotTime}>
                           <span>TIME</span>
                           {artist.time}
                         </p>
@@ -201,26 +201,11 @@ export function EventRecord({
         className={styles.runningOrder}
       >
         <Lineup event={event} events={events} stages />
-        <div
-          data-readout-instrument=""
-          className={styles.stagePreview}
-          aria-hidden="true"
-          data-active={event.status !== 'ARCHIVED'}
-        >
-          {Array.from({ length: 16 }, (_, index) => (
-            <i
-              key={index}
-              data-lit={[0, 3, 4, 7, 8, 9, 12, 15].includes(index)}
-              data-blink={index === 8 || index === 9}
-            />
-          ))}
-        </div>
       </Panel>
       <div className={ui.stack}>
         <EventIntroduction event={event} language={language} />
         <Panel title="참여 안내">
           <EventActions event={event} events={events} now={now} />
-          <div className={styles.recordRule} aria-hidden="true" />
         </Panel>
       </div>
     </div>

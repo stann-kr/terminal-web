@@ -1,239 +1,136 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.5fr);
-  gap: 24px;
+  grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 64px);
   align-items: start;
 }
-.layout > section {
-  border: 1px solid var(--line);
-  padding: 20px;
-  background: rgb(var(--color-accent-primary) / 0.025);
-}
-.console {
-  border: 1px solid var(--ice);
-  padding: 14px;
-  background: repeating-linear-gradient(
-    0deg,
-    var(--bg) 0 2px,
-    rgb(var(--color-accent-primary) / 0.035) 2px 4px
-  );
-}
-.consoleMark {
-  display: block;
-  margin-top: 18px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--line);
-}
-.consoleMark::after {
-  content: '';
-  display: block;
-  width: 24px;
-  height: 6px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--ice) 0 2px,
-    transparent 2px 4px
-  );
-}
+
+/* Length readout: a framed LCD-style counter, not a display headline. */
 .counter {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 10px 0 20px;
-  border-bottom: 1px solid var(--line);
+  align-items: stretch;
+  justify-content: space-between;
+  border: 1px solid var(--line);
 }
 .counter > span {
-  font-size: 10px;
+  display: flex;
+  align-items: center;
+  padding-inline: 12px;
   color: var(--muted);
+  font-size: var(--text-meta);
+  letter-spacing: .12em;
 }
 .counter strong {
-  font: 700 clamp(56px, 6.4vw, 108px) / 1 var(--display);
-  letter-spacing: -0.075em;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 14px;
+  border-left: 1px solid var(--line);
   color: var(--ice);
+  font: 400 28px/1 var(--mono);
   font-variant-numeric: tabular-nums;
+  text-shadow: var(--glow);
 }
 .counter small {
-  margin-left: 10px;
-  letter-spacing: 0;
-  font-family: var(--mono);
-  font-size: 16px;
   color: var(--muted);
+  font-size: var(--text-ui);
+  text-shadow: none;
 }
-.logs {
-  display: grid;
-  gap: 0;
+form[aria-busy=true] .counter {
+  border-color: var(--amber);
+}
+.receipt {
+  padding: 10px 12px;
+  border: 1px solid var(--ice);
+  color: var(--ice);
+  font-size: var(--text-ui);
+}
+
+/* Public log: timestamped rows in one framed console. */
+.console {
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  border: 1px solid var(--frame);
+}
+.console > [role] {
+  margin: 12px;
+}
+.console > p {
+  padding: 16px;
 }
 .logs li {
-  border-bottom: 1px solid var(--faint);
-  padding: 16px 0;
+  padding: 14px 16px;
 }
-.logs li:first-child {
-  padding-top: 0;
+.logs li + li {
+  border-top: 1px solid var(--faint);
 }
 .logs header {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 5px 12px;
-  margin-bottom: 10px;
-}
-.logs strong {
-  font-size: 12px;
-  color: var(--ice);
-  border-left: 3px solid var(--ice);
-  padding-left: 7px;
+  gap: 4px 14px;
+  margin-bottom: 6px;
 }
 .logs time {
-  font-size: 10px;
   color: var(--muted);
+  font-size: var(--text-meta);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+}
+.logs strong {
+  color: var(--ice);
+  font-size: var(--text-ui);
+  font-weight: 400;
+  letter-spacing: .08em;
 }
 .logs p {
-  font-size: 13px;
+  color: var(--ink);
+  font-size: var(--text-body);
+  line-height: 1.75;
   white-space: pre-wrap;
-  line-height: 1.8;
   overflow-wrap: anywhere;
 }
-.receipt {
-  border: 1px solid var(--line);
-  padding: 12px;
-  color: var(--ice);
-  font-size: 12px;
-}
-@media (max-width: 800px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 30px;
-  }
-  .layout > section {
-    padding: 16px;
-  }
-  .counter strong {
-    font-size: clamp(48px, 15vw, 76px);
-  }
-}
-@keyframes readPulse {
-  0%,
-  8% {
-    opacity: 1;
-  }
-  32%,
-  100% {
-    opacity: 0.35;
-  }
-}
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .console[data-busy='true'] .consoleMark::after {
-    animation: readPulse 0.72s linear infinite;
-  }
-}
 
+/* Query state line: steady when current, amber while reading, alert on failure. */
 .feedRule {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-  height: 68px;
-  border: 1px solid var(--line);
-  box-shadow:
-    inset 0 0 0 3px var(--bg),
-    inset 0 0 0 4px var(--faint);
-  padding: 18px 12px;
-  margin-top: 24px;
-  pointer-events: none;
-  color: var(--ice);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: var(--text-meta);
+  letter-spacing: .12em;
 }
 .feedRule i {
-  background: repeating-linear-gradient(
-    90deg,
-    currentColor 0 2px,
-    transparent 2px 6px
-  );
-  opacity: 0.3;
-}
-.feedRule i:nth-child(2) {
-  background: repeating-linear-gradient(
-    0deg,
-    currentColor 0 1px,
-    transparent 1px 5px
-  );
-}
-.feedRule i:last-child {
+  width: 6px;
+  height: 6px;
   border: 1px solid currentColor;
-  box-shadow: inset 0 0 0 4px var(--bg);
-  background: currentColor;
-  opacity: 0.5;
 }
-.feedRule[data-state='loading'] {
+.feedRule[data-state=ready] i {
+  background: currentColor;
+}
+.feedRule[data-state=loading] {
   color: var(--amber);
 }
-.feedRule[data-state='loading'] i {
-  opacity: 0.8;
+.feedRule[data-state=loading] i {
+  background: currentColor;
 }
-.feedRule[data-state='error'] {
+.feedRule[data-state=error] {
   color: var(--danger);
 }
-.console {
-  min-height: 220px;
-  display: flex;
-  flex-direction: column;
-}
-.consoleMark {
-  margin-top: auto;
-  padding-top: 18px;
-}
-.counter::after {
-  content: '';
-  width: 100%;
-  height: 4px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--line) 0 12px,
-    transparent 12px 16px
-  );
-}
-@keyframes transmitRead {
-  0%,
-  8% {
-    opacity: 1;
-  }
-  32%,
-  100% {
-    opacity: 0.3;
-  }
-}
-@keyframes transmitReceived {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0.5;
-  }
+@keyframes readPulse {
+  0%, 10% { opacity: 1; }
+  35%, 100% { opacity: .3; }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .feedRule[data-state='loading'] i {
-    animation: transmitRead 0.72s linear infinite;
-  }
-  .feedRule[data-state='loading'] i:nth-child(2) {
-    animation-delay: -0.08s;
-  }
-  .feedRule[data-state='loading'] i:nth-child(3) {
-    animation-delay: -0.16s;
-  }
-  .feedRule[data-state='ready'] i:last-child {
-    animation: transmitReceived 0.16s ease-out;
-  }
-  form[aria-busy='true'] .counter::after {
-    background: repeating-linear-gradient(
-      90deg,
-      var(--amber) 0 12px,
-      transparent 12px 16px
-    );
-    animation: transmitRead 0.72s linear infinite;
+  .feedRule[data-state=loading] i {
+    animation: readPulse .72s linear infinite;
   }
 }
-@media (forced-colors: active) {
-  .feedRule {
-    display: none;
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
   }
 }

@@ -46,19 +46,6 @@ function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
         excerpt={false}
         paragraphs={copy[language]}
       />
-      <div
-        data-readout-instrument=""
-        className={styles.aboutModules}
-        aria-hidden="true"
-      >
-        {['SEOUL', 'TECHNO', 'EVENTS', 'ARTISTS'].map((label, index) => (
-          <div key={label}>
-            <span>0{index + 1}</span>
-            <strong>{label}</strong>
-            <i />
-          </div>
-        ))}
-      </div>
       <p className={styles.credit}>Terminal Architect: STANN LUMO</p>
     </Panel>
   );
@@ -73,19 +60,12 @@ function OfficialChannels() {
             <a href={href} target="_blank" rel="noopener noreferrer">
               <span>0{index + 1}</span>
               <strong>{label}</strong>
+              <span className={styles.host} aria-hidden="true">{new URL(href).host}</span>
               <span className={styles.srOnly}>새 탭에서 열기</span>
             </a>
           </li>
         ))}
       </ul>
-      <div
-        data-readout-instrument=""
-        className={styles.channelSeal}
-        aria-hidden="true"
-      >
-        <span>TERMINAL</span>
-        <small>MUSIC / PEOPLE / RECORDS</small>
-      </div>
     </Panel>
   );
 }

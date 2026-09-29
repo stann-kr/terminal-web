@@ -7,7 +7,6 @@ import styles from './artists.module.css';
 export function ArtistCard({ profile }: { profile: ArtistProfile }) {
   return (
     <Link
-      data-readout-panel=""
       data-upcoming={profile.appearances.some(
         (row) => row.event.status !== 'ARCHIVED',
       )}

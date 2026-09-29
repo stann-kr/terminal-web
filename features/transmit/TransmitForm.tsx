@@ -22,8 +22,8 @@ export function TransmitForm({
       <div className={styles.counter}>
         <span>MESSAGE LENGTH</span>
         <strong>
-          <LiveValue value={draft.message.length} />
-          <small>/280</small>
+          <LiveValue value={String(draft.message.length).padStart(3, '0')} />
+          <small>/ 280</small>
         </strong>
       </div>
       <FormError message={error ? errorMessage(error) : ''} />

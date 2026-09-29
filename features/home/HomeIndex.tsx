@@ -51,7 +51,6 @@ export function HomeIndex({ events }: { events: TerminalEvent[] }) {
               </SignalText>
               <span className={styles.statusTrack} aria-hidden="true">
                 <i
-                  data-readout-meter=""
                   style={{
                     width: `${events.length ? (count / events.length) * 100 : 0}%`,
                   }}
@@ -65,20 +64,11 @@ export function HomeIndex({ events }: { events: TerminalEvent[] }) {
         })}
       </div>
       <div className={styles.intro}>
-        <p data-readout-row="">
+        <p>
           음악이 시작되고
           <br />
           사람이 모이는 곳.
         </p>
-      </div>
-      <div
-        data-readout-instrument=""
-        className={styles.homeRegister}
-        aria-hidden="true"
-      >
-        {Array.from({ length: 12 }, (_, index) => (
-          <i key={index} />
-        ))}
       </div>
       <div className={styles.columnActions}>
         <Action href="/about">TERMINAL 소개</Action>

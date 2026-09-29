@@ -54,12 +54,9 @@ function TransmitLog({
           href={(page) => `/transmit?page=${page}`}
         />
       )}
-      <div
+      <FeedState
         key={query.dataUpdatedAt}
-        data-readout-live=""
-        className={styles.feedRule}
-        aria-hidden="true"
-        data-state={
+        state={
           query.isFetching
             ? 'loading'
             : query.isError
@@ -68,11 +65,24 @@ function TransmitLog({
                 ? 'ready'
                 : 'idle'
         }
-      >
-        <i />
-        <i />
-        <i />
-      </div>
+      />
     </Panel>
+  );
+}
+
+const feedStateLabel = {
+  loading: 'READING LOG',
+  error: 'READ FAILED',
+  ready: 'LOG CURRENT',
+  idle: 'STANDBY',
+} as const;
+
+/** Real query state of the public log; blinks only while a request is pending. */
+function FeedState({ state }: { state: keyof typeof feedStateLabel }) {
+  return (
+    <p className={styles.feedRule} aria-hidden="true" data-state={state}>
+      <i />
+      {feedStateLabel[state]}
+    </p>
   );
 }

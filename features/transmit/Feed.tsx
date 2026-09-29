@@ -27,7 +27,6 @@ export function Feed({ page = 1, limit }: { page?: number; limit?: number }) {
     );
   return (
     <div
-      data-readout-panel=""
       data-busy={query.isFetching}
       className={styles.console}
     >
@@ -49,17 +48,16 @@ export function Feed({ page = 1, limit }: { page?: number; limit?: number }) {
       ) : (
         <ol className={styles.logs}>
           {query.data.logs.slice(0, limit).map((log) => (
-            <li data-readout-row="" key={log.id}>
+            <li key={log.id}>
               <header>
-                <strong>{log.handle}</strong>
                 <time dateTime={log.createdAt}>{log.ts} KST</time>
+                <strong>{log.handle}</strong>
               </header>
               <p>{log.message}</p>
             </li>
           ))}
         </ol>
       )}
-      <span className={styles.consoleMark} aria-hidden="true" />
     </div>
   );
 }

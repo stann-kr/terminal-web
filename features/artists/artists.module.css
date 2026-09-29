@@ -1,469 +1,227 @@
 .count {
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
   color: var(--muted);
-  font-size: 10px;
-  margin-bottom: 12px;
+  font-size: var(--text-meta);
+  letter-spacing: .1em;
 }
+
+/* ── Roster: framed cells with a header row, the stencil and a name row. ─── */
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  padding-block: 4px 12px;
+  gap: 12px;
 }
 .cell {
   --card-accent: var(--ice);
-  --glyph-phase: 0s;
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background: rgb(var(--color-accent-primary) / 0.025);
-  padding: 12px;
-  text-decoration: none;
-  border: 1px solid var(--line);
   min-width: 0;
-  min-height: 242px;
+  border: 1px solid var(--line);
+  color: var(--card-accent);
+  text-decoration: none;
+  transition: border-color var(--afterglow) ease-out;
 }
-.cell:nth-child(3n + 2) {
-  --glyph-phase: -1.1s;
-}
-.cell:nth-child(3n) {
-  --glyph-phase: -2.2s;
-}
-.cell:focus-visible {
-  border-color: var(--card-accent);
-  background: rgb(var(--color-accent-primary) / 0.06);
+.cell[data-upcoming=true],
+.cell[data-featured=true] {
+  --card-accent: var(--amber);
+  border-color: rgb(var(--amber-rgb) / .6);
 }
 .cellHeader {
   display: flex;
   justify-content: space-between;
-  align-items: start;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--line);
-  padding-bottom: 5px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--text-meta);
+  letter-spacing: .08em;
+}
+.cell[data-upcoming=true] .cellHeader,
+.cell[data-featured=true] .cellHeader {
+  border-color: rgb(var(--amber-rgb) / .6);
 }
 .cellHeader > span:first-child {
-  background: var(--ice);
-  color: var(--bg);
-  padding: 1px 4px;
-  text-shadow: none;
-}
-.cellHeader > span:last-child {
-  text-align: right;
+  color: var(--card-accent);
 }
 .cell h2 {
-  font-size: 15px;
-  line-height: 1.4;
-  color: var(--ice);
-  min-height: 38px;
   display: flex;
   align-items: center;
+  min-height: 44px;
   margin-top: auto;
-  padding: 7px 8px;
+  padding: 8px 10px;
   border-top: 1px solid var(--line);
+  color: var(--card-accent);
+  font-size: var(--text-body);
+  font-weight: 400;
+  letter-spacing: .06em;
   overflow-wrap: anywhere;
+  transition: background-color var(--afterglow) ease-out, color var(--afterglow) ease-out;
 }
-.cell:focus-visible h2 {
-  color: var(--bg);
+.cell[data-upcoming=true] h2,
+.cell[data-featured=true] h2 {
+  border-color: rgb(var(--amber-rgb) / .6);
+}
+.cell:hover,
+.cell:focus-visible {
+  border-color: var(--card-accent);
+  transition-duration: 0s;
+}
+.cell:is(:hover, :focus-visible) h2 {
   background: var(--card-accent);
   border-color: var(--card-accent);
-  text-shadow: none;
-}
-.detail {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.85fr) minmax(0, 1.45fr) minmax(
-      230px,
-      1fr
-    );
-  gap: 20px;
-  align-items: start;
-}
-.detail > :last-child {
-  padding: 12px;
-  border: 1px dashed var(--line);
-  background: rgb(var(--color-accent-primary) / 0.025);
-}
-.chronology {
-  border: 1px solid var(--line);
-  padding: 14px;
-  background: rgb(0 0 0 / 0.25);
-}
-.timeline {
-  --date-column: 76px;
-  position: relative;
-  padding: 12px;
-  border: 1px dashed var(--line);
-  background:
-    linear-gradient(
-      rgb(var(--color-accent-primary) / 0.025) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgb(var(--color-accent-primary) / 0.025) 1px,
-      transparent 1px
-    );
-  background-size: 18px 18px;
-}
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: calc(12px + var(--date-column) + 11px);
-  top: 26px;
-  bottom: 24px;
-  border-left: 1px dashed var(--line);
-}
-.timeline li {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--date-column) minmax(0, 1fr);
-  gap: 22px;
-  padding-block: 12px;
-  border-bottom: 1px solid var(--faint);
-}
-.timeline li:last-child {
-  border: 0;
-}
-.timeline li::before {
-  content: '';
-  position: absolute;
-  left: calc(var(--date-column) + 8px);
-  top: 20px;
-  width: 6px;
-  height: 6px;
-  border: 1px solid var(--ice);
-  background: var(--bg);
-}
-.timeline time {
-  font-size: 10px;
-  color: var(--muted);
-  padding-top: 4px;
-}
-.timeline a {
-  display: block;
-  min-height: 44px;
-  color: var(--ice);
-  font-size: 14px;
-  padding-block: 7px;
-  text-decoration: none;
-}
-.timeline a:hover {
-  text-decoration: underline;
-}
-.timeline p,
-.timeline summary {
-  font-size: 11px;
-  color: var(--muted);
-}
-.state {
-  font-size: 9px;
-  color: var(--ice);
-  border: 1px solid var(--line);
-  padding: 2px 5px;
-}
-.note {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 18px;
-}
-@media (max-width: 1100px) {
-  .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .detail {
-    grid-template-columns: 220px minmax(0, 1fr);
-  }
-  .detail > :last-child {
-    grid-column: 1/-1;
-  }
-}
-@media (max-width: 700px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .cellHeader {
-    flex-wrap: wrap;
-  }
-  .detail {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .timeline {
-    --date-column: 64px;
-  }
-  .chronology {
-    padding: 12px;
-  }
-}
-@media (max-width: 360px) {
-  .grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
+  color: var(--bg);
+  transition-duration: 0s;
 }
 
-/* Upcoming status and the requested canonical artist accent remain independent. */
-.cell[data-upcoming='true'] {
-  border-color: var(--amber);
-  background: rgb(var(--amber-rgb) / 0.035);
-}
-.cell[data-featured='true'] {
-  --card-accent: var(--amber);
-  border-color: var(--amber);
-  box-shadow:
-    inset 0 0 0 3px var(--bg),
-    inset 0 0 0 4px rgb(var(--amber-rgb) / 0.38);
-}
-.cell[data-featured='true'] .cellHeader > span:first-child {
-  background: var(--amber);
-}
-.cell[data-featured='true']:focus-visible {
-  background: rgb(var(--amber-rgb) / 0.07);
-}
-.registryEnd {
-  height: 10px;
-  margin-top: 24px;
-  border-block: 1px solid var(--line);
-  background: repeating-linear-gradient(
-    90deg,
-    var(--line) 0 1px,
-    transparent 1px 18px
-  );
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-/* The name supplies the stencil; cut bands blink without obscuring readable text. */
+/* The name supplies the stencil; bands stay static, the cell lights them on hover. */
 .artistGlyph {
-  position: relative;
   display: grid;
   place-items: center;
-  min-height: 138px;
-  padding: 4px 12px 14px;
+  padding: 22px 18px;
   color: var(--card-accent);
   pointer-events: none;
-}
-.artistGlyph::before,
-.artistGlyph::after {
-  content: '';
-  position: absolute;
-  top: 10px;
-  bottom: 24px;
-  width: 6px;
-  border-block: 1px solid currentColor;
-  opacity: 0.35;
-}
-.artistGlyph::before {
-  left: 0;
-  border-left: 1px solid currentColor;
-}
-.artistGlyph::after {
-  right: 0;
-  border-right: 1px solid currentColor;
-}
-.artistGlyph::before,
-.artistGlyph::after {
-  transition:
-    transform 180ms var(--display-ease),
-    opacity 180ms linear;
 }
 .artistGlyph svg {
   display: block;
   width: 100%;
-  max-width: 208px;
-  height: 120px;
+  max-width: 180px;
+  height: 104px;
   overflow: hidden;
   fill: currentColor;
 }
 .glyphSegment {
-  opacity: 0.78;
+  opacity: .72;
+  transition: opacity var(--afterglow) ease-out;
 }
 .glyphSegment:nth-child(2) {
-  opacity: 0.48;
+  opacity: .4;
 }
 .glyphFallback {
   font: 700 64px/1 var(--mono);
 }
-.glyphRail {
-  position: absolute;
-  bottom: 0;
+.cell:is(:hover, :focus-visible) .glyphSegment {
+  opacity: 1;
+  transition-duration: 0s;
+}
+
+/* ── Profile: identity card / chronology / biography. ─────────────────────── */
+.detail {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1.3fr) minmax(260px, 1fr);
+  gap: clamp(28px, 3.4vw, 56px);
+  align-items: start;
+}
+.profileSignal {
+  border: 1px solid var(--frame);
+  color: var(--ice);
+}
+.profileHead {
   display: flex;
-  gap: 4px;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--ice);
+  color: var(--bg);
+  font-size: var(--text-meta);
+  letter-spacing: .14em;
 }
-.glyphRail i {
-  width: 18px;
-  height: 3px;
-  background: currentColor;
-  opacity: 0.25;
+.profileName {
+  display: block;
+  padding: 28px 16px 32px;
+  font: 700 clamp(28px, 2.6vw, 40px)/1.08 var(--display);
+  letter-spacing: -.05em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  text-shadow: var(--glow);
 }
-.glyphRail i:nth-child(2) {
-  width: 36px;
-  opacity: 0.65;
+.timeline {
+  position: relative;
 }
-.glyphRail i {
-  transform-origin: center;
-  transition:
-    transform 180ms var(--display-ease),
-    opacity 180ms linear;
+.timeline li {
+  display: grid;
+  grid-template-columns: 11ch minmax(0, 1fr);
+  gap: 20px;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--faint);
 }
-.cell:focus-visible .glyphSegment {
-  opacity: 1;
+.timeline li:first-child {
+  padding-top: 0;
 }
-@keyframes glyphBlink {
-  0%,
-  8%,
-  100% {
-    opacity: 0.48;
-  }
-  1%,
-  5% {
-    opacity: 1;
-  }
+.timeline time {
+  padding-top: 3px;
+  color: var(--muted);
+  font-size: var(--text-ui);
+  font-variant-numeric: tabular-nums;
 }
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .glyphSegment:nth-child(2) {
-    animation: glyphBlink 3.2s linear infinite;
-    animation-delay: var(--glyph-phase);
-  }
-  .artistGlyph g:nth-child(2) .glyphSegment:nth-child(2) {
-    animation-delay: calc(var(--glyph-phase) - 1.6s);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .cell:hover .glyphSegment:nth-child(2) {
-      animation-duration: 1.8s;
-    }
-  }
+.timeline a {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--ice);
+  font: 400 var(--text-lead)/1.3 var(--display);
+  letter-spacing: -.02em;
+  text-decoration: none;
 }
-@media (hover: hover) and (pointer: fine) {
-  .cell:hover {
-    border-color: var(--card-accent);
-    background: rgb(var(--color-accent-primary) / 0.06);
-  }
-  .cell[data-featured='true']:hover {
-    background: rgb(var(--amber-rgb) / 0.07);
-  }
-  .cell:hover h2 {
-    color: var(--bg);
-    background: var(--card-accent);
-    border-color: var(--card-accent);
-    text-shadow: none;
-  }
-  .cell:hover .glyphSegment {
-    opacity: 1;
-  }
-  .cell:hover .artistGlyph::before {
-    transform: translateX(4px);
-    opacity: 0.85;
-  }
-  .cell:hover .artistGlyph::after {
-    transform: translateX(-4px);
-    opacity: 0.85;
-  }
-  .cell:hover .glyphRail i:nth-child(2) {
-    transform: scaleX(1.25);
-    opacity: 1;
-  }
+.timeline a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
 }
-.cell:focus-visible .artistGlyph::before,
-.cell:focus-visible .artistGlyph::after {
-  opacity: 1;
+.timeline p,
+.timeline summary {
+  color: var(--muted);
+  font-size: var(--text-ui);
 }
+.timeline details[open] > div {
+  margin-top: 8px;
+}
+.state {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  color: var(--ice);
+  font-size: var(--text-meta);
+  letter-spacing: .08em;
+}
+.note {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--faint);
+  color: var(--muted);
+  font-size: var(--text-ui);
+}
+.note a {
+  color: var(--ice);
+}
+
 @keyframes recordExpand {
-  from {
-    opacity: 0.55;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes profileRegister {
-  0%,
-  85%,
-  100% {
-    transform: scaleX(0.35);
-    opacity: 0.35;
-  }
-  12%,
-  65% {
-    transform: scaleX(1);
-    opacity: 0.9;
-  }
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .timeline details[open] > div {
-    animation: recordExpand 180ms var(--display-ease) both;
-  }
-  .profileSignal i:nth-last-child(2) {
-    transform-origin: left;
-    animation: profileRegister 3.6s var(--display-ease) infinite;
+    animation: recordExpand 200ms steps(8, end) both;
   }
 }
-:global([data-display-paused]) .glyphSegment {
-  animation: none;
+@media (max-width: 1180px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .detail { grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); }
+  .detail > :last-child { grid-column: 1 / -1; }
 }
-.profileSignal {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-block: 18px 22px;
-  padding: 22px 18px 18px;
-  border: 1px solid var(--ice);
-  outline: 1px solid var(--line);
-  outline-offset: -6px;
-  color: var(--ice);
-  pointer-events: none;
+@media (max-width: 700px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .cellHeader { flex-wrap: wrap; }
+  .artistGlyph { padding: 14px 10px; }
+  .artistGlyph svg { height: 80px; }
+  .detail { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .timeline li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
 }
-.profileSignal span {
-  grid-column: 1/-1;
-  font: 700 10px/1.4 var(--mono);
-  letter-spacing: 0.12em;
-  color: var(--bg);
-  background: var(--ice);
-  padding: 4px 6px;
-  text-shadow: none;
-}
-.profileSignal strong {
-  grid-column: 1/-1;
-  font: 400 clamp(22px, 2vw, 30px) / 1.3 var(--display);
-  overflow-wrap: anywhere;
-  letter-spacing: -0.04em;
-  padding-block: 0 16px;
-}
-.profileSignal .profileName {
-  font: 700 clamp(28px, 3vw, 42px) / 1.15 var(--display);
-  padding-block: 10px 0;
-  text-wrap: balance;
-}
-.profileSignal i {
-  height: 18px;
-  border: 1px solid var(--line);
-  background: repeating-linear-gradient(
-    90deg,
-    var(--line) 0 2px,
-    transparent 2px 5px
-  );
-}
-.profileSignal i:last-child {
-  border-color: var(--amber);
-  background: rgb(var(--amber-rgb) / 0.12);
+@media (max-width: 360px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (forced-colors: active) {
-  .registryEnd,
-  .profileSignal,
-  .artistGlyph {
-    display: none;
-  }
-  .cell {
-    min-height: 0;
-  }
-  .cell[data-featured='true'] {
-    border: 3px double CanvasText;
-    box-shadow: none;
-  }
-  .cell:is(:hover, :focus-visible) h2 {
-    color: HighlightText;
-    background: Highlight;
-  }
+  .artistGlyph { display: none; }
+  .cell[data-featured=true] { border: 3px double CanvasText; }
+  .cell:is(:hover, :focus-visible) h2 { color: HighlightText; background: Highlight; }
 }

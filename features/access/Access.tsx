@@ -80,14 +80,6 @@ function AccessEventSummary({
           </StateNotice>
         )
       )}
-      <div className={styles.accessScan} aria-hidden="true">
-        <i />
-        <span>
-          <b />
-          <b />
-          <b />
-        </span>
-      </div>
     </Panel>
   );
 }

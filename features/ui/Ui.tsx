@@ -17,8 +17,8 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <section data-readout-panel="" className={`${styles.panel} ${className}`}>
-      <h2 data-readout-row="" className={styles.sectionTitle}>
+    <section className={`${styles.panel} ${className}`}>
+      <h2 className={styles.sectionTitle}>
         {title}
         {code && <span>{code}</span>}
       </h2>
@@ -52,7 +52,7 @@ export function Facts({
   return (
     <dl className={styles.facts}>
       {rows.map(([label, value]) => (
-        <div key={label} data-readout-row="">
+        <div key={label}>
           <dt>{label}</dt>
           <dd>{value === '' || value == null ? '미정' : value}</dd>
         </div>
@@ -133,14 +133,14 @@ export function FullText({
     <div className={styles.prose} lang={language}>
       {excerpt && text.length > 260 ? (
         <>
-          <p data-readout-row="">{text.slice(0, 240)}…</p>
+          <p>{text.slice(0, 240)}…</p>
           <details>
             <summary lang="ko">
               <span className={styles.readMore}>전체 읽기</span>
               <span className={styles.readLess}>접기</span>
             </summary>
             {paragraphs.map((p, i) => (
-              <p data-readout-row="" key={i}>
+              <p key={i}>
                 {p}
               </p>
             ))}
@@ -148,7 +148,7 @@ export function FullText({
         </>
       ) : (
         paragraphs.map((p, i) => (
-          <p data-readout-row="" key={i}>
+          <p key={i}>
             {p}
           </p>
         ))

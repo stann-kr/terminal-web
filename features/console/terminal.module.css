@@ -5,7 +5,6 @@
   flex-direction: column;
   min-width: 0;
   color: var(--ice);
-  text-shadow: 0 0 3px rgb(var(--color-accent-primary) / .4);
 }
 .outputFrame {
   display: flex;
@@ -13,7 +12,7 @@
   min-height: 0;
   max-height: 38vh;
   max-height: 38cqh;
-  border-bottom: 1px dashed var(--line);
+  border-bottom: 1px solid var(--faint);
 }
 .outputFrame[hidden] {
   display: none;
@@ -26,8 +25,8 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 10px 0 8px;
-  font: var(--text-meta)/1.65 var(--mono);
+  padding: 12px 0 10px;
+  font: var(--text-ui)/1.6 var(--mono);
   scrollbar-width: thin;
 }
 .directory,
@@ -37,12 +36,11 @@
 .directoryLabel {
   width: fit-content;
   margin-bottom: 8px;
-  padding: 1px 6px;
+  padding: 2px 8px;
   font-size: var(--text-meta);
-  letter-spacing: .12em;
+  letter-spacing: .14em;
   color: var(--bg);
   background: var(--ice);
-  text-shadow: none;
 }
 .directory dl {
   display: grid;
@@ -109,7 +107,7 @@
   grid-template-columns: minmax(0, max-content) minmax(8ch, 1fr) auto auto;
   column-gap: 10px;
   align-items: center;
-  min-height: 32px;
+  min-height: 40px;
   color: var(--ice);
 }
 .promptLabel {
@@ -134,7 +132,7 @@
 }
 .prompt input {
   width: 100%;
-  height: 28px;
+  height: 40px;
   min-height: 0;
   padding: 0;
   border: 0;
@@ -142,7 +140,7 @@
   background: transparent;
   color: var(--ice);
   caret-color: var(--ice);
-  font: var(--text-ui)/28px var(--mono);
+  font: var(--text-ui)/40px var(--mono);
 }
 .inputArea[data-empty=true] input {
   caret-color: transparent;
@@ -163,13 +161,13 @@
   display: none;
 }
 .prompt button {
-  height: 28px;
-  min-height: 28px;
+  height: 40px;
+  min-height: 40px;
   padding: 0 4px;
   border: 0;
   background: transparent;
   color: var(--muted);
-  font: var(--text-meta)/28px var(--mono);
+  font: var(--text-meta)/40px var(--mono);
   letter-spacing: .08em;
   white-space: nowrap;
 }
@@ -185,7 +183,7 @@
   color: var(--amber);
 }
 .inputArea:has(input:focus-visible) {
-  box-shadow: inset 0 -2px 0 var(--amber);
+  box-shadow: inset 0 -1px 0 var(--amber);
 }
 .output:focus-visible {
   box-shadow: inset 0 2px 0 var(--ice);
@@ -209,13 +207,16 @@
   .prompt button { height: 44px; min-height: 44px; line-height: 44px; padding-inline: 6px; }
 }
 @media (max-width: 700px) {
+  /* Narrow screens keep the event first: the directory folds to its label and the ready hint. */
+  .directory dl { display: none; }
+  .directoryLabel { margin-bottom: 4px; }
+  .ready { margin-top: 0; }
   .promptPath { display: none; }
   .prompt { column-gap: 6px; }
   .directory dl > div { grid-template-columns: 12ch minmax(0, 1fr); }
 }
 @media (forced-colors: active) {
   .cursor { background: CanvasText; }
-  .terminal { text-shadow: none; }
   .inputArea:has(input:focus-visible) { border-bottom: 2px solid Highlight; }
   .output:focus-visible { border-top: 2px solid Highlight; }
 }

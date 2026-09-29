@@ -16,14 +16,13 @@ export function FormPanel({
   children: ReactNode;
 }) {
   return (
-    <section data-readout-panel="" className={styles.terminalForm}>
+    <section className={styles.terminalForm}>
       <div className={styles.formInterior}>
         <header className={styles.formHeading}>
-          <div className={styles.seal} aria-hidden="true" />
           <p className={styles.formCode} aria-hidden="true">
             {code}
           </p>
-          <h2 data-readout-row="">{title}</h2>
+          <h2>{title}</h2>
         </header>
         {children}
       </div>

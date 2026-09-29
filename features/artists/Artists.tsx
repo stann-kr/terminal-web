@@ -25,7 +25,7 @@ export function Artists() {
             );
           return (
             <>
-              <p data-readout-row="" className={styles.count}>
+              <p className={styles.count}>
                 {profiles.length}개 기록
               </p>
               {profiles.length ? (
@@ -42,7 +42,6 @@ export function Artists() {
                 totalPages={totalPages}
                 href={(page) => `/artists?page=${page}`}
               />
-              <div className={styles.registryEnd} aria-hidden="true" />
             </>
           );
         }}

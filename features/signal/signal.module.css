@@ -1,75 +1,57 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 650px);
-  gap: 30px;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 680px);
   justify-content: center;
+  gap: clamp(28px, 4vw, 64px);
   align-items: start;
 }
-.layout > :first-child {
-  padding: 16px;
-  border: 1px dashed var(--line);
-  background: rgb(var(--color-accent-primary) / 0.025);
-  font-size: 13px;
+.lead {
+  color: var(--ink);
+  font-size: var(--text-body);
+  line-height: 1.8;
 }
-@media (max-width: 700px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 24px;
-  }
-}
-
+/* Channel state: the real request lifecycle as one status line. */
 .signalMatrix {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 2px;
-  margin-block: 22px;
-  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block: 20px 24px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--text-meta);
+  letter-spacing: .12em;
 }
 .signalMatrix i {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  background: var(--ice);
-  color: var(--bg);
-  font: 7px/1 var(--mono);
-  text-shadow: none;
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
 }
-.signalMatrix i[data-dim='true'] {
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--line);
+.signalMatrix[data-state=sending] {
+  border-color: var(--amber);
+  color: var(--amber);
 }
-.signalMatrix i[data-accent='true'] {
-  background: var(--amber);
+.signalMatrix[data-state=sending] i,
+.signalMatrix[data-state=saved] i {
+  background: currentColor;
+}
+.signalMatrix[data-state=saved] {
+  border-color: var(--ice);
+  color: var(--ice);
+}
+.signalMatrix[data-state=error] {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 @keyframes signalBlocks {
-  0%,
-  8% {
-    opacity: 1;
-  }
-  32%,
-  100% {
-    opacity: 0.35;
-  }
-}
-.signalMatrix[data-state='sending'] i[data-accent='true'] {
-  background: var(--amber);
-}
-.signalMatrix[data-state='saved'] i[data-accent='true'] {
-  background: var(--ice);
-  outline: 1px solid var(--ice);
-  outline-offset: 2px;
-}
-.signalMatrix[data-state='error'] i[data-accent='true'] {
-  background: var(--danger);
+  0%, 10% { opacity: 1; }
+  35%, 100% { opacity: .3; }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .signalMatrix[data-state='sending'] i[data-accent='true'] {
-    animation: signalBlocks 0.72s linear infinite;
+  .signalMatrix[data-state=sending] i {
+    animation: signalBlocks .72s linear infinite;
   }
 }
-@media (forced-colors: active) {
-  .signalMatrix {
-    display: none;
-  }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
 }

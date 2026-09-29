@@ -49,14 +49,13 @@ export function ArtistDetail({ artistKey }: { artistKey: string }) {
 
 function ArtistProfileSummary({ profile }: { profile: ArtistProfile }) {
   return (
-    <Panel title={profile.name} code={profile.origin}>
+    <Panel title="프로필" code="PROFILE">
       <div className={styles.profileSignal} aria-hidden="true">
-        <span>ARTIST</span>
+        <p className={styles.profileHead}>
+          <span>ARTIST FILE</span>
+          <span>{profile.origin}</span>
+        </p>
         <strong className={styles.profileName}>{profile.name}</strong>
-        <strong>{profile.origin}</strong>
-        <i />
-        <i />
-        <i />
       </div>
       <div className={ui.actions}>
         <Action href="/artists">전체 아티스트</Action>

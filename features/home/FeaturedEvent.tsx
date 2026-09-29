@@ -19,40 +19,28 @@ export function FeaturedEvent({
 }) {
   return (
     <section
-      data-readout-panel=""
       className={styles.featured}
       aria-label="대표 행사"
     >
       {event ? (
         <>
-          <div data-readout-row="" className={styles.recordHeader}>
+          <div className={styles.recordHeader}>
             <SignalText active={event.status !== 'ARCHIVED'}>
               {statusLabel(event.status)}
             </SignalText>
-            <span>{event.id}</span>
+            <span className={styles.recordRole}>
+              {event.status === 'ARCHIVED' ? 'LAST SESSION' : 'NEXT SESSION'}
+            </span>
+            <span className={styles.recordId}>{event.id}</span>
           </div>
           {event.status === 'ARCHIVED' && (
             <p className={styles.noUpcoming}>다음 행사 미정</p>
           )}
-          <h2 data-readout-row="">{event.session}</h2>
-          <p data-readout-row="" className={styles.subtitle}>
+          <h2>{event.session}</h2>
+          <p className={styles.subtitle}>
             {event.subtitle}
           </p>
           <EventCountdown event={event} />
-          <div
-            data-readout-instrument=""
-            className={styles.homeRelay}
-            aria-hidden="true"
-            data-active={event.status !== 'ARCHIVED'}
-          >
-            {[0, 1].map((bank) => (
-              <span key={bank}>
-                {Array.from({ length: 5 }, (_, index) => (
-                  <i key={index} />
-                ))}
-              </span>
-            ))}
-          </div>
           <Facts
             rows={[
               [
@@ -62,11 +50,16 @@ export function FeaturedEvent({
               ['장소', event.venue],
             ]}
           />
-          <ul className={styles.names}>
-            {publicArtists(event).map((artist) => (
-              <li key={artist.id}>{artist.name}</li>
-            ))}
-          </ul>
+          {publicArtists(event).length > 0 && (
+            <div className={styles.lineup}>
+              <p className={styles.lineupLabel}>LINEUP</p>
+              <ul className={styles.names}>
+                {publicArtists(event).map((artist) => (
+                  <li key={artist.id}>{artist.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <FullText
             language={language}
             paragraphs={paragraphs(event.description, language)}

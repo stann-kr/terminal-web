@@ -10,151 +10,195 @@
   border: 0;
 }
 .eyebrow {
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-size: var(--text-meta);
+  letter-spacing: .14em;
   color: var(--muted);
-  margin-bottom: 7px;
+  margin-bottom: 6px;
 }
 .panel {
   min-width: 0;
 }
+/* Section header: a label on a 1px rule, code on the right. No filled bars. */
 .sectionTitle {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 4px 10px;
-  min-height: 28px;
-  font: 400 10px/1.5 var(--display);
-  color: var(--bg);
-  background: var(--ice);
-  border: 1px solid var(--ice);
-  padding: 4px 7px;
-  margin-bottom: 14px;
-  letter-spacing: 2px;
-  text-shadow: none;
+  gap: 4px 12px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ice);
+  font: 400 var(--text-meta)/1.5 var(--display);
+  letter-spacing: .14em;
 }
 .sectionTitle span {
-  color: var(--ice);
-  background: var(--bg);
-  padding: 1px 5px;
-  font: 9px/1.5 var(--mono);
-  letter-spacing: 0.04em;
+  color: var(--muted);
+  font: var(--text-meta)/1.5 var(--mono);
+  letter-spacing: .1em;
 }
+
+/* ── Actions: framed label keys; the primary one is a solid block. ───────── */
 .action,
 .button {
-  min-height: 44px;
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  text-align: left;
+  min-height: 44px;
   padding: 10px 14px;
-  background: transparent;
   border: 1px solid var(--line);
-  text-decoration: none;
-  font-size: 12px;
+  background: transparent;
   color: var(--ice);
+  font-size: var(--text-ui);
+  letter-spacing: .04em;
+  text-align: left;
+  text-decoration: none;
+  transition: color var(--afterglow) ease-out, background-color var(--afterglow) ease-out, border-color var(--afterglow) ease-out;
+}
+.action::after {
+  content: '→' / '';
+  color: var(--muted);
 }
 .action:hover,
-.button:hover,
+.button:hover:not(:disabled),
 .action:focus-visible,
 .button:focus-visible {
-  background: var(--panel);
   border-color: var(--ice);
+  color: var(--ink);
+  transition-duration: 0s;
 }
 .primary {
   background: var(--ice);
-  color: var(--bg);
   border-color: var(--ice);
+  color: var(--bg);
 }
-.primary:hover,
+.primary::after {
+  color: inherit;
+}
+.primary:hover:not(:disabled),
 .primary:focus-visible {
   background: var(--ink);
+  border-color: var(--ink);
   color: var(--bg);
 }
+.action:active,
+.button:active:not(:disabled) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+.button[aria-busy='true']::after {
+  content: '';
+  width: 7px;
+  height: 13px;
+  background: currentColor;
+}
+
+/* ── Facts: label, dotted leader, value. ─────────────────────────────────── */
 .facts {
   display: grid;
 }
 .facts > div {
-  display: grid;
-  grid-template-columns: minmax(65px, 0.7fr) minmax(0, 1.3fr);
-  gap: 14px;
-  border-bottom: 1px solid var(--faint);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   padding-block: 6px;
-  font-size: 12px;
+  font-size: var(--text-ui);
 }
 .facts dt {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
   color: var(--muted);
+  white-space: nowrap;
+}
+.facts dt::after {
+  content: '';
+  flex: 1;
+  min-width: 16px;
+  border-bottom: 1px dotted var(--line);
+  transform: translateY(-3px);
 }
 .facts dd {
+  max-width: 70%;
   text-align: right;
   color: var(--ice);
 }
+
+/* ── Notices ─────────────────────────────────────────────────────────────── */
 .notice {
   position: relative;
-  padding: 24px;
-  background: rgb(var(--color-accent-primary) / 0.025);
-  border: 1px dashed var(--line);
   display: grid;
   gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--line);
   color: var(--muted);
 }
 .notice h2 {
-  font-size: 18px;
   color: var(--ice);
+  font-size: var(--text-lead);
   font-weight: 400;
 }
+.notice .eyebrow {
+  width: fit-content;
+}
 .error {
-  border: 1px solid var(--danger);
-  padding-top: 30px;
-  background: rgb(var(--color-accent-alert) / 0.035);
+  border-color: var(--danger);
 }
-.error::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  inset-inline: 0;
-  height: 5px;
-  background: repeating-linear-gradient(
-    135deg,
-    var(--danger) 0 4px,
-    transparent 4px 8px
-  );
-}
-.error h2,
+/* The failure label is a solid block, like a LOCKED header. */
 .error .eyebrow {
+  padding: 2px 8px;
+  background: var(--danger);
+  color: var(--bg);
+}
+.error h2 {
   color: var(--danger);
 }
 .loading {
-  color: var(--muted);
   padding: 32px 0;
-  font-size: 12px;
+  color: var(--muted);
+  font-size: var(--text-ui);
 }
+
+/* ── Pagination ──────────────────────────────────────────────────────────── */
 .pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-top: 24px;
   border-top: 1px solid var(--line);
-  margin-top: 20px;
-  font-size: 12px;
+  font-size: var(--text-ui);
 }
 .pagination > * {
-  min-height: 44px;
   display: flex;
   align-items: center;
+  min-height: 44px;
 }
 .pagination > span {
   color: var(--muted);
 }
+.pagination a {
+  color: var(--ice);
+  text-decoration: none;
+}
+.pagination a:hover {
+  color: var(--ink);
+}
+
+/* ── Prose ───────────────────────────────────────────────────────────────── */
 .prose {
-  line-height: 1.9;
-  font-size: 13px;
+  font-size: var(--text-body);
+  line-height: 1.85;
+  color: var(--ink);
 }
 .prose p {
-  white-space: pre-wrap;
   margin-bottom: 14px;
+  white-space: pre-wrap;
 }
 .prose:lang(ko) {
   word-break: keep-all;
@@ -168,98 +212,43 @@
 .prose details[open] .readLess {
   display: inline;
 }
+.prose summary {
+  width: fit-content;
+  font-size: var(--text-ui);
+}
 .muted {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-ui);
 }
 .stack {
   display: grid;
-  gap: 18px;
+  gap: 32px;
   align-content: start;
 }
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   margin-top: 20px;
 }
-.action,
-.button {
-  position: relative;
-  transition:
-    color var(--display-response) var(--display-ease),
-    background-color var(--display-response) var(--display-ease),
-    border-color var(--display-response) var(--display-ease);
-}
-.action::before,
-.button::before {
-  content: '';
-  position: absolute;
-  inset: 4px auto 4px 0;
-  width: 2px;
-  background: currentColor;
-  transform: scaleY(0);
-  transform-origin: center;
-  transition: transform 160ms var(--display-ease);
-  pointer-events: none;
-}
-.action:focus-visible::before,
-.button:focus-visible::before {
-  transform: scaleY(1);
-}
-@media (hover: hover) and (pointer: fine) {
-  .action:hover::before,
-  .button:hover:not(:disabled)::before {
-    transform: scaleY(1);
-  }
-}
+
 @keyframes textExpand {
-  from {
-    opacity: 0.6;
-    transform: translateY(3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes pendingCursor {
+  0%, 55% { opacity: 1; }
+  56%, 100% { opacity: .2; }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .prose details[open] > p {
-    animation: textExpand 160ms var(--display-ease) both;
+    animation: textExpand 200ms steps(8, end) both;
   }
-}
-.action:active,
-.button:active:not(:disabled) {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
-  text-shadow: none;
-}
-.primary {
-  text-shadow: none;
-}
-.button[aria-busy='true']::after {
-  content: '';
-  position: absolute;
-  right: 5px;
-  top: calc(50% - 4px);
-  width: 3px;
-  height: 8px;
-  background: currentColor;
-}
-@keyframes pendingCursor {
-  0%,
-  55% {
-    opacity: 1;
-  }
-  56%,
-  100% {
-    opacity: 0.25;
-  }
-}
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .button[aria-busy='true']::after,
   .loading > span {
-    animation: pendingCursor 0.7s steps(1, end) infinite;
+    animation: pendingCursor .7s steps(1, end) infinite;
   }
+}
+@media (forced-colors: active) {
+  .error .eyebrow { border: 1px solid CanvasText; }
 }

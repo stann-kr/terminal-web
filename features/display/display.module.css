@@ -16,10 +16,9 @@
 }
 .activity[data-busy=true] i {
   background: currentColor;
-  box-shadow: 0 0 5px rgb(var(--amber-rgb) / .5);
 }
 .value {
-  text-shadow: 0 0 5px rgb(var(--color-accent-primary) / .48);
+  color: inherit;
 }
 .signalText {
   display: inline-flex;
@@ -37,15 +36,14 @@
 }
 .signalText[data-active=true] i {
   background: currentColor;
-  box-shadow: 0 0 5px rgb(var(--amber-rgb) / .45);
 }
 @keyframes queryPulse {
   0%, 10% { opacity: 1; }
   35%, 100% { opacity: .3; }
 }
+/* A real value change flashes once to full white-green and settles. */
 @keyframes valueSettle {
-  from { text-shadow: 0 0 8px rgb(var(--color-accent-primary) / .7); }
-  to { text-shadow: 0 0 5px rgb(var(--color-accent-primary) / .48); }
+  from { color: var(--ink); }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .activity[data-busy=true] i { animation: queryPulse .72s linear infinite; }
@@ -53,5 +51,4 @@
 }
 @media (forced-colors: active) {
   .activity i { background: CanvasText; }
-  .value { text-shadow: none; }
 }
