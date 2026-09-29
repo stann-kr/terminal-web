@@ -80,12 +80,31 @@ describe('home text terminal',() => {
     expect(response()).toHaveTextContent('035 ls');
     expect(response()).toHaveTextContent('036 history');
   });
-  it.each(['open javascript:alert(1)','events https://example.com','events; artists','unknown','open'])('prints an error for %s without navigating',command => {
+  it.each(['open javascript:alert(1)','events https://example.com','events; artists','unknown','open','cd javascript:alert(1)','cd https://example.com','cd //example.com','cd ../admin','cd NOPE','cd events artists'])('prints an error for %s without navigating',command => {
     render(<HomeTerminal events={[old,next]}/>);
     submit(command);
     expect(push).not.toHaveBeenCalled();
     expect(response()).toHaveAttribute('data-error','true');
     expect(screen.getByRole('textbox')).toHaveFocus();
+  });
+  it.each([['cd events','/events'],['cd ~/artists','/artists'],['cd LOG','/transmit'],['cd /about','/about'],['cd','/'],['cd old','/events/OLD'],['cd ~/events/TRM-03','/events/TRM-03'],['cd ENDED:01','/events/ENDED%3A01'],['cd TRM 05','/events/TRM%2005']])('%s moves to a known route or public event and confirms it in the log',(command,href) => {
+    render(<HomeTerminal events={[old,next,{...next,id:'ENDED:01'},{...next,id:'TRM 05'}]} pathname="/signal"/>);
+    submit(command);
+    expect(push).toHaveBeenCalledExactlyOnceWith(href);
+    expect(response()).not.toHaveAttribute('data-error');
+    expect(response()).toHaveTextContent(href === '/' ? '→ ~' : `→ ~${decodeURIComponent(href)}`);
+    expect(screen.getByRole('textbox')).toHaveFocus();
+  });
+  it('keeps open print-only with a cd hint, and does not navigate to the current route or with unloaded data',() => {
+    expect(runCommand('open old',[old],now).text.endsWith('상세 화면: cd OLD')).toBe(true);
+    expect(runCommand('cd events',[old],now,{pathname:'/events'})).toEqual({text:'~/events — 현재 위치입니다.'});
+    expect(runCommand('cd OLD',null,now)).toMatchObject({error:true});
+    expect(runCommand('events',null,now)).toMatchObject({error:true});
+    expect(runCommand('cd events',null,now)).toMatchObject({navigate:'/events'});
+    // Route names never combine with extra words, and URL-shaped input only ever matches a real public ID.
+    expect(runCommand('cd events extra',[old],now)).toMatchObject({error:true});
+    expect(runCommand('cd https://example.com',[{...old,id:'https://example.com'}],now).navigate).toBe('/events/https%3A%2F%2Fexample.com');
+    expect(runCommand('open TRM 05',[{...old,id:'TRM 05'}],now).text.endsWith('상세 화면: cd TRM 05')).toBe(true);
   });
   it('does not execute or replace composition text while IME is active',() => {
     render(<HomeTerminal events={[old,next]}/>);

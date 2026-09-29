@@ -1,10 +1,7 @@
 .dashboard {
   min-height: 100%;
   display: grid;
-  grid-template-columns: minmax(210px, 0.85fr) minmax(0, 1.55fr) minmax(
-      280px,
-      1.1fr
-    );
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 2fr);
   gap: 20px;
 }
 .dashboard > section {
@@ -24,7 +21,7 @@
 .featured {
   min-width: 0;
   padding-inline: 22px;
-  border-inline: 1px dashed var(--line);
+  border-left: 1px dashed var(--line);
 }
 .recordHeader {
   display: flex;
@@ -151,13 +148,7 @@
   .columnActions {
     margin-top: 0;
   }
-  .dashboard > :last-child {
-    grid-column: 1/-1;
-    border-top: 1px dashed var(--line);
-    padding-top: 20px;
-  }
   .featured {
-    border-right: 0;
     padding-right: 0;
   }
 }

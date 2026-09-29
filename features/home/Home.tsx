@@ -5,8 +5,7 @@ import {
 } from '@/lib/events/lifecycle';
 import { EventsData } from '@/features/events/data';
 import { useLanguage } from '@/features/shell/Providers';
-import { Console } from '@/features/console/Console';
-import { PageHeading, Panel } from '@/features/ui/Ui';
+import { PageHeading } from '@/features/ui/Ui';
 import { HomeIndex } from './HomeIndex';
 import { FeaturedEvent } from './FeaturedEvent';
 import styles from './home.module.css';
@@ -24,9 +23,6 @@ export function Home() {
             <div className={styles.dashboard}>
               <HomeIndex events={events} />
               <FeaturedEvent event={event} language={language} />
-              <Panel title="COMMAND LOG_" code="TERMINAL">
-                <Console events={events} language={language} />
-              </Panel>
             </div>
           );
         }}

@@ -9,12 +9,15 @@ import { Transmit } from '../features/transmit/Transmit';
 import { Home } from '../features/home/Home';
 import { EventCountdown } from '../features/home/EventCountdown';
 import { EventsData } from '../features/events/data';
+import { renderToString } from 'react-dom/server';
+import { hydrateRoot } from 'react-dom/client';
 const navigation=vi.hoisted(()=>({search:new URLSearchParams(),pathname:'/'}));
-vi.mock('next/navigation',()=>({useSearchParams:()=>navigation.search,usePathname:()=>navigation.pathname,useRouter:()=>({push:vi.fn(),replace:vi.fn()})}));
+const router=vi.hoisted(()=>({push:vi.fn(),replace:vi.fn()}));
+vi.mock('next/navigation',()=>({useSearchParams:()=>navigation.search,usePathname:()=>navigation.pathname,useRouter:()=>router}));
 const event:TerminalEvent={id:'OLD',session:'Past event',subtitle:'A past night',date:'2025-03-07',time:'23:00',venue:'FAUST',district:'SEOUL',coords:'',capacity:'',sound:'',status:'ARCHIVED',artists:[{id:'PUBLIC',name:'VISIBLE ARTIST',origin:'KR',dock:'1',time:'TBA',status:'ARCHIVED'},{id:'PRIVATE',name:'PRIVATE NAME',origin:'KR',dock:'1',time:'TBA',status:'CLASSIFIED'}]};
 const clients:QueryClient[]=[];
 function view(node:React.ReactNode,events:TerminalEvent[]=[event]) { const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});clients.push(client);client.setQueryData(['events'],events);client.setQueryData(['transmit',1],{logs:[],total:0,page:1,totalPages:0});return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>); }
-afterEach(()=>{cleanup();clients.splice(0).forEach(client=>client.clear());navigation.search=new URLSearchParams();navigation.pathname='/';vi.unstubAllGlobals();vi.useRealTimers();vi.restoreAllMocks();});
+afterEach(()=>{cleanup();clients.splice(0).forEach(client=>client.clear());navigation.search=new URLSearchParams();navigation.pathname='/';router.push.mockReset();sessionStorage.clear();vi.unstubAllGlobals();vi.useRealTimers();vi.restoreAllMocks();});
 describe('rebuild public views',()=>{
   it('continues keyboard navigation in main after a route change without stealing focus on ordinary renders',()=>{
     const {rerender}=view(<Shell><input aria-label="초안"/></Shell>);
@@ -200,5 +203,126 @@ describe('public log activity',() => {
     await waitFor(() => expect(indicator()).toHaveAttribute('data-state','loading'));
     await act(async () => {resolve(new Response(JSON.stringify(result)));});
     await waitFor(() => expect(indicator()).toHaveAttribute('data-state','ready'));
+  });
+});
+
+describe('CRT shell controls and console dock',()=>{
+  function shell(node:React.ReactNode=<input aria-label="초안"/>) {
+    const result=view(<Shell>{node}</Shell>);
+    const again=(child:React.ReactNode=node)=>result.rerender(<QueryClientProvider client={clients[0]}><Shell>{child}</Shell></QueryClientProvider>);
+    return {...result,again};
+  }
+  const command=()=>screen.getByRole('textbox',{name:'터미널 명령어'});
+  it('moves between the four main keys with plain F1–F4 only and leaves browser keys alone',()=>{
+    navigation.pathname='/events';
+    shell();
+    expect(screen.getByRole('link',{name:/EVENTS/})).toHaveAttribute('aria-keyshortcuts','F2');
+    expect(fireEvent.keyDown(document,{key:'F3'})).toBe(false);
+    expect(router.push).toHaveBeenLastCalledWith('/artists');
+    const draft=screen.getByRole('textbox',{name:'초안'});draft.focus();
+    fireEvent.keyDown(draft,{key:'F2'});
+    expect(draft).toHaveFocus();
+    fireEvent.keyDown(document,{key:'F1',ctrlKey:true});
+    fireEvent.keyDown(document,{key:'F4',isComposing:true});
+    expect(fireEvent.keyDown(document,{key:'F5'})).toBe(true);
+    expect(router.push).toHaveBeenCalledOnce();
+  });
+  it('sends / to the command line only when the user is not typing',()=>{
+    shell();
+    const draft=screen.getByRole('textbox',{name:'초안'});
+    draft.focus();
+    expect(fireEvent.keyDown(draft,{key:'/'})).toBe(true);
+    expect(draft).toHaveFocus();
+    screen.getByRole('link',{name:/ARTISTS/}).focus();
+    expect(fireEvent.keyDown(document.activeElement!,{key:'/'})).toBe(false);
+    expect(command()).toHaveFocus();
+  });
+  it('opens the log at home, folds elsewhere and keeps the session, draft and focus across route changes',()=>{
+    const {again}=shell();
+    expect(screen.getByRole('log')).toBeVisible();
+    expect(within(screen.getByRole('log')).getByText('COMMAND DIRECTORY')).toBeInTheDocument();
+    fireEvent.change(command(),{target:{value:'ls'}});
+    fireEvent.submit(screen.getByRole('form',{name:'사이트 명령어'}));
+    fireEvent.change(command(),{target:{value:'cd art'}});
+    navigation.pathname='/events';again();
+    const toggle=screen.getByRole('button',{name:'출력'});
+    expect(toggle).toHaveAttribute('aria-expanded','false');
+    expect(screen.queryByRole('log')).not.toBeInTheDocument();
+    expect(command()).toHaveValue('cd art');
+    fireEvent.click(toggle);
+    expect(screen.getByRole('log')).toHaveTextContent('OLD Past event');
+    command().focus();
+    // The first Esc only completes the running print; the second folds the log.
+    fireEvent.keyDown(command(),{key:'Escape'});
+    expect(toggle).toHaveAttribute('aria-expanded','true');
+    fireEvent.keyDown(command(),{key:'Escape',isComposing:true});
+    expect(toggle).toHaveAttribute('aria-expanded','true');
+    fireEvent.keyDown(command(),{key:'Escape'});
+    expect(toggle).toHaveAttribute('aria-expanded','false');
+    expect(command()).toHaveFocus();
+    fireEvent.change(command(),{target:{value:'cd artists'}});
+    fireEvent.submit(screen.getByRole('form',{name:'사이트 명령어'}));
+    expect(router.push).toHaveBeenCalledWith('/artists');
+    navigation.pathname='/artists';again();
+    expect(screen.getByRole('main')).toHaveFocus();
+    expect(screen.getByRole('button',{name:'출력'})).toHaveAttribute('aria-expanded','true');
+    expect(screen.getByRole('log')).toHaveTextContent('→ ~/artists');
+    expect(screen.getByRole('log')).toHaveTextContent('OLD Past event');
+    fireEvent.click(screen.getByRole('button',{name:'출력'}));
+    navigation.pathname='/';again();
+    expect(screen.getByRole('button',{name:'출력'})).toHaveAttribute('aria-expanded','true');
+  });
+  it('keeps layout children mounted across a route change',()=>{
+    const {again}=shell(<input aria-label="초안" defaultValue="keep this"/>);
+    const draft=screen.getByRole('textbox',{name:'초안'});
+    fireEvent.change(draft,{target:{value:'typed'}});
+    navigation.pathname='/events';again();
+    expect(screen.getByRole('textbox',{name:'초안'})).toBe(draft);
+    expect(draft).toHaveValue('typed');
+    expect(screen.getByRole('main')).toHaveAttribute('data-wipe');
+  });
+  // JSDOM evidence only: server markup is rendered with `window` hidden so the real server branch runs,
+  // then the emitted pre-paint script text is executed against the parsed markup before hydration.
+  async function serverMarkup(session:{saveData?:boolean}={}) {
+    const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});clients.push(client);
+    client.setQueryData(['events'],[event]);client.setQueryData(['transmit',1],{logs:[],total:0,page:1,totalPages:0});
+    const tree=<QueryClientProvider client={client}><Shell><Home/></Shell></QueryClientProvider>;
+    vi.stubGlobal('window',undefined);
+    const html=renderToString(tree);
+    vi.unstubAllGlobals();
+    const container=document.createElement('div');
+    container.innerHTML=html;
+    const script=container.querySelector<HTMLScriptElement>('script[type="text/javascript"]')!;
+    new Function('document','navigator','sessionStorage',script.textContent!)({currentScript:script},{connection:{saveData:!!session.saveData}},sessionStorage);
+    return {tree,container,boot:script.previousElementSibling!};
+  }
+  it.each([
+    ['first visit',false,{},true],
+    ['returning session',true,{},false],
+    ['save-data',false,{saveData:true},false],
+  ] as const)('marks the power-on only on a %s and never ships effect markers in server HTML',async(_,seen,session,plays)=>{
+    if(seen) sessionStorage.setItem('terminal.boot.v1','1');
+    const {container,boot}=await serverMarkup(session);
+    expect(boot.hasAttribute('data-play')).toBe(plays);
+    expect(sessionStorage.getItem('terminal.boot.v1')).toBe('1');
+    expect(container.querySelector('[data-display-paused],[data-wipe]')).toBeNull();
+    expect(container.innerHTML).not.toContain('clip-path');
+  });
+  it('hydrates server HTML after the pre-paint script ran, then clears the boot marker',async()=>{
+    sessionStorage.setItem('terminal.home.session.v1',JSON.stringify({version:1,entries:[{command:'ls',text:'OLD  Past event'}],history:['ls']}));
+    const {tree,container,boot}=await serverMarkup();
+    expect(boot).toHaveAttribute('data-play');
+    document.body.appendChild(container);
+    const errors=vi.spyOn(console,'error').mockImplementation(()=>{});
+    const warnings=vi.spyOn(console,'warn').mockImplementation(()=>{});
+    const recoverable=vi.fn();
+    let root!:ReturnType<typeof hydrateRoot>;
+    await act(async()=>{root=hydrateRoot(container,tree,{onRecoverableError:recoverable});});
+    expect(recoverable).not.toHaveBeenCalled();
+    expect(errors).not.toHaveBeenCalled();
+    expect(warnings).not.toHaveBeenCalled();
+    expect(within(container).getByRole('log')).toHaveTextContent('OLD Past event');
+    await waitFor(()=>expect(boot).not.toHaveAttribute('data-play'),{timeout:1500});
+    act(()=>root.unmount());container.remove();
   });
 });
