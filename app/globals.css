@@ -6,44 +6,48 @@
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: swap; }
 @font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
 /*
- * Ship-console wall: a slate field tiled with dusty, light plates (sage, mint, sand, cream, peach)
- * printed in dark ink, with dark code cells on the plates. Cyan appears only as small titles on the
- * steel bars. `data-surface` sets a plate; components read the same role tokens on every plate.
- *   --ink / --muted: text   --line: rules and frames   --fill / --on-fill: dark cells and their text
+ * Hypnotic console: a deep navy field, navy panels, and a few loud solid plates in cream, gold,
+ * orange and red. Concentric rings are the signature motif. `data-surface` sets a plate and its
+ * role tokens, so every component reads the same names on every plate:
+ *   --ink / --muted: text   --line / --faint: rules   --fill / --on-fill: solid cells   --accent: numbers
  */
+@property --ring-phase {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
 :root {
   color-scheme: dark;
-  /* Legacy role channels, still used for alpha mixes and the contrast test. */
-  --color-bg-base: 57 79 86;
-  --color-bg-panel: 68 102 111;
-  --color-text-primary: 233 239 230;
-  --color-text-subdued: 207 224 220;
-  --color-text-muted: 207 224 220;
-  --color-accent-primary: 159 242 245;
-  --color-accent-tertiary: 159 242 245;
-  --color-accent-alert: 255 220 216;
+  /* Role channels also read by the contrast test. */
+  --color-bg-base: 0 26 41;
+  --color-bg-panel: 0 48 73;
+  --color-text-primary: 252 229 205;
+  --color-text-subdued: 201 184 166;
+  --color-text-muted: 201 184 166;
+  --color-accent-primary: 252 191 73;
+  --color-accent-tertiary: 247 127 0;
+  --color-accent-alert: 255 154 138;
 
-  --bg: rgb(var(--color-bg-base));
-  --gutter-bg: #2d3f45;
-  --steel: rgb(var(--color-bg-panel));
-  --cyan: rgb(var(--color-accent-primary));
+  --cream: #fce5cd;
+  --gold: #fcbf49;
+  --orange: #f77f00;
+  --red: #d62828;
+  --navy: #003049;
+  --field: rgb(var(--color-bg-base));
+  --deep: #00121d;
+
+  --bg: var(--field);
   --ink: rgb(var(--color-text-primary));
   --muted: rgb(var(--color-text-muted));
-  --line: rgb(233 239 230 / .45);
-  --faint: rgb(233 239 230 / .2);
-  --fill: #e9efe6;
-  --on-fill: #243033;
-  --on-fill-muted: #2f4245;
-  --well: rgb(0 0 0 / .18);
+  --accent: var(--gold);
+  --line: rgb(252 229 205 / .38);
+  --faint: rgb(252 229 205 / .14);
+  --fill: var(--cream);
+  --on-fill: var(--navy);
+  --on-fill-muted: #3d5566;
+  --well: rgb(0 0 0 / .28);
   --danger: rgb(var(--color-accent-alert));
-  --focus: #ffb070;
-
-  --sage: #9fbab4;
-  --mint: #b3d3cd;
-  --sand: #d9c29c;
-  --cream: #e6e8d9;
-  --peach: #f2c78f;
-  --signal: #e0844e;
+  --focus: var(--gold);
 
   --display: 'Barlow Condensed', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   --sans: 'Barlow', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
@@ -52,51 +56,75 @@
   --text-label: 12px;
   --text-ui: 14px;
   --text-body: 15px;
-
   --rule: 3px;
   --stroke: 1.5px;
-  --clip-tr: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
-  --clip-br: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-  --clip-house: polygon(0 14px, 14px 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
-  --hatch: repeating-linear-gradient(-45deg, currentColor 0 1.5px, transparent 1.5px 8px);
   --gap: 8px;
   --ease: cubic-bezier(.2, .8, .2, 1);
+  /* Concentric rings from the bottom-right corner: the site's one graphic motif. */
+  --rings: repeating-radial-gradient(circle at 100% 100%, currentColor 0 1.5px, transparent 1.5px 12px);
 }
 
 [data-surface] {
-  --ink: #243033;
-  --muted: #2f4245;
-  --line: #243033;
-  --faint: rgb(36 48 51 / .28);
-  --fill: #3a4547;
-  --on-fill: #e9efe6;
-  --on-fill-muted: #b9c9c4;
-  --well: rgb(255 255 255 / .42);
-  --danger: #7a1520;
-  --focus: #243033;
-  --cyan: #243033;
   background-color: var(--plate);
   color: var(--ink);
 }
-[data-surface=sage] { --plate: var(--sage); }
-[data-surface=mint] { --plate: var(--mint); }
-[data-surface=sand] { --plate: var(--sand); }
-[data-surface=cream] { --plate: var(--cream); }
-[data-surface=peach] { --plate: var(--peach); }
-[data-surface=signal] { --plate: var(--signal); --ink: #1f1410; --muted: #2a1a12; --line: #1f1410; --fill: #1f1410; --on-fill: #f7d9c3; }
-[data-surface=steel] {
-  --plate: var(--steel);
-  --ink: #eef3ea;
-  --muted: #cfe0dc;
-  --line: rgb(238 243 234 / .6);
-  --faint: rgb(238 243 234 / .25);
-  --fill: #e9efe6;
-  --on-fill: #243033;
-  --on-fill-muted: #2f4245;
+[data-surface=navy] { --plate: var(--navy); }
+[data-surface=deep] { --plate: var(--deep); }
+[data-surface=cream] {
+  --plate: var(--cream);
+  --ink: var(--navy);
+  --muted: #3d5566;
+  --accent: var(--red);
+  --line: var(--navy);
+  --faint: rgb(0 48 73 / .22);
+  --fill: var(--navy);
+  --on-fill: var(--cream);
+  --on-fill-muted: #c9b8a6;
+  --well: rgb(255 255 255 / .5);
+  --danger: #9b1111;
+  --focus: var(--navy);
+}
+[data-surface=gold] {
+  --plate: var(--gold);
+  --ink: var(--navy);
+  --muted: #3d5566;
+  --accent: var(--navy);
+  --line: var(--navy);
+  --faint: rgb(0 48 73 / .25);
+  --fill: var(--navy);
+  --on-fill: var(--cream);
+  --on-fill-muted: var(--gold);
+  --well: rgb(255 255 255 / .35);
+  --danger: #7a0c0c;
+  --focus: var(--navy);
+}
+[data-surface=orange] {
+  --plate: var(--orange);
+  --ink: #001a29;
+  --muted: #001a29;
+  --accent: #001a29;
+  --line: #001a29;
+  --faint: rgb(0 26 41 / .3);
+  --fill: #001a29;
+  --on-fill: var(--cream);
+  --on-fill-muted: var(--gold);
+  --well: rgb(255 255 255 / .25);
+  --danger: #3a0505;
+  --focus: #001a29;
+}
+[data-surface=red] {
+  --plate: var(--red);
+  --ink: #fff8f0;
+  --muted: #fff8f0;
+  --accent: var(--gold);
+  --line: #fff8f0;
+  --faint: rgb(255 248 240 / .35);
+  --fill: #001a29;
+  --on-fill: var(--cream);
+  --on-fill-muted: var(--gold);
   --well: rgb(0 0 0 / .2);
-  --cyan: #9ff2f5;
-  --focus: #ffb070;
-  --danger: #ffd0cb;
+  --danger: #fff8f0;
+  --focus: #fff8f0;
 }
 
 * { box-sizing: border-box; }
@@ -109,7 +137,7 @@ button, summary { cursor: pointer; }
 button:disabled { cursor: wait; opacity: .6; }
 :focus { outline: none; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-::selection { background: var(--ink); color: var(--plate, var(--bg)); }
+::selection { background: var(--gold); color: var(--navy); }
 h1,h2,h3,p,dl,dd,ul,ol { margin: 0; }
 ul,ol { padding: 0; list-style: none; }
 img { max-width: 100%; height: auto; }
@@ -122,5 +150,8 @@ input[type=checkbox]:checked::before { transform: scale(1); }
 button { color: inherit; }
 summary { min-height: 40px; padding-block: 8px; color: var(--ink); font: 700 var(--text-ui)/1.4 var(--display); letter-spacing: .1em; text-transform: uppercase; }
 details[open] > summary { margin-bottom: 6px; }
+@keyframes ringDrift {
+  to { --ring-phase: 14px; }
+}
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }

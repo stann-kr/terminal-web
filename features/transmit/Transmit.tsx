@@ -17,7 +17,7 @@ export function Transmit() {
       <PageHeading title="방문자 로그" />
       <div className={styles.layout}>
         <div className={styles.column}>
-          <Panel title="기록 남기기" label="Write log" surface="sand" className={styles.write}>
+          <Panel title="기록 남기기" label="Write log" surface="gold" className={styles.write}>
             <TransmitForm
               onSaved={() => {
                 void client.invalidateQueries({ queryKey: ['transmit'] });
@@ -59,7 +59,7 @@ function TransmitLog({
       title="공개 로그"
       label="Public log"
       code={query.data ? `${query.data.total} RECORDS` : 'READ'}
-      surface="sage"
+      surface="navy"
     >
       <Feed page={page} />
       {query.data && (

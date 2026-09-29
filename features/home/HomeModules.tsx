@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { TerminalEvent } from '@/lib/events/types';
 import { artistHref, buildArtistArchive } from '@/features/artists/model';
-import { Action, Chip, Panel, Sub } from '@/features/ui/Ui';
+import { Action, Chip, Panel } from '@/features/ui/Ui';
 import { Meter } from '@/features/display/Meter';
 import styles from './home.module.css';
 
@@ -9,7 +9,7 @@ import styles from './home.module.css';
 export function HomeStatus({ events }: { events: TerminalEvent[] }) {
   const pending = events.some((event) => event.status !== 'ARCHIVED');
   return (
-    <Panel title="행사 상태" label="Status" surface="cream" className={styles.status}>
+    <Panel title="행사 상태" label="Status" surface="gold" className={styles.status}>
       <ul className={styles.statusRows}>
         {(['LIVE', 'UPCOMING', 'ARCHIVED'] as const).map((status, index) => {
           const count = events.filter((event) => event.status === status).length;
@@ -25,12 +25,6 @@ export function HomeStatus({ events }: { events: TerminalEvent[] }) {
       </ul>
       <p className={styles.statusLine}>
         <Chip solid>{pending ? 'SESSION PENDING' : 'ALL SESSIONS LOGGED'}</Chip>
-      </p>
-      <Sub>Node</Sub>
-      <p className={styles.intro}>
-        음악이 시작되고
-        <br />
-        사람이 모이는 곳.
       </p>
       <div className={styles.plateActions}>
         <Action href="/about">TERMINAL 소개</Action>
@@ -49,7 +43,7 @@ export function HomeRoster({ events }: { events: TerminalEvent[] }) {
       title="공개 아티스트"
       label="Artist roster"
       code={`${String(profiles.length).padStart(3, '0')} FILES`}
-      surface="mint"
+      surface="navy"
       className={styles.roster}
     >
       {profiles.length ? (

@@ -142,7 +142,7 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
         />
       </Panel>
       {next && (
-        <div className={styles.nextEvent} data-surface="peach">
+        <div className={styles.nextEvent} data-surface="orange">
           <p className={styles.nextLabel} aria-hidden="true">NEXT SESSION</p>
           <Link href={eventHref(next.id)}>{next.session}</Link>
           <p>
@@ -150,7 +150,7 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
           </p>
         </div>
       )}
-      <Panel title="연도·장소" label="Register" surface="mint" className={styles.register}>
+      <Panel title="연도·장소" label="Register" surface="navy" className={styles.register}>
         <ul className={styles.yearCells}>
           {years.map((year) => (
             <li key={year}>

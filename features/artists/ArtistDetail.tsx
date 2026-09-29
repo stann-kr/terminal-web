@@ -49,11 +49,11 @@ export function ArtistDetail({ artistKey }: { artistKey: string }) {
 
 function ArtistProfileSummary({ profile }: { profile: ArtistProfile }) {
   return (
-    <Panel title="프로필" label="Artist file" surface="cream" className={styles.profile}>
+    <Panel title="프로필" label="Artist file" surface="navy" className={styles.profile}>
       <div
         className={styles.profileSignal}
         aria-hidden="true"
-        data-surface={profile.key === 'stann-lumo' ? 'signal' : profile.appearances.some((row) => row.event.status !== 'ARCHIVED') ? 'sand' : undefined}
+        data-surface={profile.key === 'stann-lumo' ? 'orange' : profile.appearances.some((row) => row.event.status !== 'ARCHIVED') ? 'gold' : 'cream'}
       >
         <p className={styles.profileHead}>
           <span>ORIGIN / {profile.origin}</span>
@@ -77,7 +77,7 @@ function ArtistChronology({
   language: 'ko' | 'en';
 }) {
   return (
-    <Panel title="출연 기록" label="Records" surface="sage" className={styles.chronology}>
+    <Panel title="출연 기록" label="Records" surface="navy" className={styles.chronology}>
       <ol className={styles.timeline}>
         {profile.appearances.map(({ event, artist }) => (
           <li key={`${event.id}:${artist.id}`}>
@@ -116,7 +116,7 @@ function ArtistBiography({
     (row) => paragraphs(row.artist.description, language).length,
   );
   return (
-    <Panel title="소개" label="Biography" code={language.toUpperCase()} surface="mint">
+    <Panel title="소개" label="Biography" code={language.toUpperCase()} surface="navy">
       <FullText
         language={language}
         excerpt={false}

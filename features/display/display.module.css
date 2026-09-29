@@ -13,7 +13,7 @@
   border: 1px solid currentColor;
 }
 .activity[data-busy=true] {
-  color: var(--cyan);
+  color: var(--accent);
 }
 .activity[data-busy=true] i {
   background: currentColor;

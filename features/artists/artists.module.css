@@ -60,7 +60,6 @@
 }
 .cell[data-surface] {
   color: var(--ink);
-  clip-path: var(--clip-br);
 }
 .cellHeader {
   display: flex;
@@ -140,7 +139,6 @@
 .profileSignal {
   background: var(--fill);
   color: var(--on-fill);
-  clip-path: var(--clip-br);
 }
 .profileSignal[data-surface] {
   color: var(--ink);

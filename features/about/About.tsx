@@ -5,11 +5,11 @@ import styles from './about.module.css';
 const copy = {
   ko: [
     'TERMINAL은 서울 기반의 테크노 플랫폼입니다.',
-    '음악과 사람들이 만나는 공간을 만들고, 이벤트와 참여 아티스트의 기록을 이어갑니다.',
+    '행사를 기획해 열고, 행사와 참여 아티스트의 기록을 공개합니다.',
   ],
   en: [
     'TERMINAL is a Seoul-based techno platform.',
-    'We create spaces for music and people, and keep a record of our events and artists.',
+    'We produce events and publish the records of each event and its artists.',
   ],
 };
 const channels = [
@@ -22,11 +22,11 @@ export function About() {
   const { language } = useLanguage();
   return (
     <>
-      <PageHeading title="음악이 시작되고, 사람이 모이는 곳" />
+      <PageHeading title="TERMINAL 소개" />
       <div className={styles.layout}>
         <AboutIntroduction language={language} />
         <OfficialChannels />
-        <Panel title="노드 정보" label="Node" surface="cream" className={styles.node}>
+        <Panel title="노드 정보" label="Node" surface="gold" className={styles.node}>
           <Facts
             rows={[
               ['도시', 'SEOUL'],
@@ -44,25 +44,20 @@ export function About() {
 
 function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
   return (
-    <Panel title="TERMINAL 소개" label="Terminal" code="SEOUL" surface="sage">
-      <p className={styles.statement} aria-label="MUSIC. PEOPLE. CONTINUITY.">
-        <span aria-hidden="true">MUSIC.</span>
-        <span aria-hidden="true">PEOPLE.</span>
-        <span aria-hidden="true">CONTINUITY.</span>
-      </p>
+    <Panel title="TERMINAL 소개" label="Terminal" code="SEOUL" surface="navy">
+      <p className={styles.statement} aria-hidden="true">TERMINAL</p>
       <FullText
         language={language}
         excerpt={false}
         paragraphs={copy[language]}
       />
-      <p className={styles.credit}>Terminal Architect: STANN LUMO</p>
     </Panel>
   );
 }
 
 function OfficialChannels() {
   return (
-    <Panel title="공식 채널" label="Channels" surface="mint">
+    <Panel title="공식 채널" label="Channels" surface="navy">
       <ul className={styles.channels}>
         {channels.map(([label, href], index) => (
           <li key={href}>

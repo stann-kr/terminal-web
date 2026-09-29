@@ -5,7 +5,6 @@
   width: 100%;
   min-width: 0;
   padding: 12px 18px 18px;
-  clip-path: var(--clip-tr);
 }
 .formHeading {
   display: flex;
@@ -126,7 +125,6 @@
   display: grid;
   gap: 12px;
   padding: 18px;
-  clip-path: var(--clip-br);
 }
 .success h2 {
   font: 700 26px/1.1 var(--display);

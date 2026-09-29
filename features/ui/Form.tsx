@@ -120,7 +120,7 @@ export function FormSuccess({ children }: { children: ReactNode }) {
     ref.current?.focus();
   }, []);
   return (
-    <section ref={ref} role="status" tabIndex={-1} className={styles.success} data-surface="sage">
+    <section ref={ref} role="status" tabIndex={-1} className={styles.success} data-surface="gold">
       {children}
     </section>
   );

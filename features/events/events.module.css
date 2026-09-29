@@ -61,9 +61,9 @@
   letter-spacing: .03em;
 }
 .card:is([data-event-state=UPCOMING], [data-event-state=LIVE]) .cardId {
-  border-color: var(--peach) !important;
-  background: var(--peach);
-  color: #243033;
+  border-color: var(--gold) !important;
+  background: var(--gold);
+  color: var(--navy);
 }
 .cardMain {
   flex-direction: column;
@@ -137,7 +137,6 @@
   display: grid;
   gap: 6px;
   padding: 12px 18px 16px;
-  clip-path: var(--clip-tr);
 }
 .nextLabel {
   padding-bottom: 4px;
@@ -234,7 +233,6 @@
   background: var(--fill);
   color: var(--on-fill);
   font: 700 13px/1.1 var(--sans);
-  clip-path: var(--clip-br);
 }
 .factModules {
   display: grid;
@@ -299,7 +297,6 @@
   color: var(--on-fill);
   font: 800 18px/1 var(--display);
   letter-spacing: .06em;
-  clip-path: var(--clip-br);
 }
 .stage h3 > span:last-child {
   color: var(--muted);

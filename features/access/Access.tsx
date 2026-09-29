@@ -56,7 +56,7 @@ function AccessEventSummary({
 }) {
   const event = query.events?.find((event) => event.id === eventId);
   return (
-    <Panel title={event?.session ?? '행사 정보'} label="Session" code={eventId} surface="sand">
+    <Panel title={event?.session ?? '행사 정보'} label="Session" code={eventId} surface="navy">
       {query.isError && (
         <StateNotice
           error

@@ -23,7 +23,6 @@
   flex-direction: column;
   min-width: 0;
   padding: 12px 18px 16px;
-  clip-path: var(--clip-tr);
 }
 .panelHead {
   display: flex;
@@ -32,7 +31,7 @@
   gap: 12px;
   margin-bottom: 12px;
   padding-bottom: 6px;
-  border-bottom: var(--rule) solid var(--line);
+  border-bottom: var(--rule) solid var(--accent);
 }
 .panelTitle {
   display: flex;
@@ -43,7 +42,7 @@
   font-weight: 400;
 }
 .panelLabel {
-  color: var(--ink);
+  color: var(--accent);
   font: 700 28px/1 var(--display);
   letter-spacing: .02em;
   text-transform: uppercase;
@@ -105,8 +104,9 @@
   align-items: flex-end;
   min-height: 40px;
   margin-top: 12px;
+  border: 1px solid var(--faint);
   color: var(--faint);
-  background: var(--hatch);
+  background: var(--rings);
 }
 .bay span {
   padding: 3px 8px;
@@ -149,7 +149,6 @@
   border-color: var(--fill);
   background: var(--fill);
   color: var(--on-fill);
-  clip-path: var(--clip-br);
 }
 .primary:hover:not(:disabled) {
   background: var(--fill);
@@ -252,7 +251,7 @@
   width: 48px;
   height: 8px;
   color: var(--line);
-  background: var(--hatch);
+  background: var(--rings);
 }
 
 /* ── Pagination ──────────────────────────────────────────────────────────── */

@@ -5,7 +5,7 @@ import styles from './ui.module.css';
 export function PageHeading({ title }: { title: string }) {
   return <h1 className={styles.srOnly}>{title}</h1>;
 }
-export type Surface = 'sage' | 'mint' | 'sand' | 'cream' | 'peach' | 'signal' | 'steel';
+export type Surface = 'navy' | 'deep' | 'cream' | 'gold' | 'orange' | 'red';
 
 /**
  * A console plate: a big printed English station name over a heavy rule, the Korean title beside it,
@@ -16,7 +16,7 @@ export function Panel({
   label,
   code,
   children,
-  surface = 'sage',
+  surface = 'navy',
   heading = true,
   className = '',
 }: {

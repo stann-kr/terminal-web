@@ -172,6 +172,16 @@ describe('rebuild public views',()=>{
     rerender(<EventCountdown event={{date:'2026-11-28',time:'TBA'}}/>);
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
   });
+  it('shows home node activity without visitor handles or messages',()=>{
+    const {container}=view(<Home/>);
+    clients[0].setQueryData(['transmit',1],{logs:[{id:'log-1',ts:'2026.05.09 / 00:10',handle:'SECRET_HANDLE',message:'free text',createdAt:'2026-05-08T15:10:00.000Z'}],total:1,page:1,totalPages:1});
+    return waitFor(()=>{
+      expect(container).toHaveTextContent(/NODE-[0-9A-F]{4}/);
+      expect(container).toHaveTextContent('2026.05.09 / 00:10 KST');
+      expect(container).not.toHaveTextContent('SECRET_HANDLE');
+      expect(container).not.toHaveTextContent('free text');
+    });
+  });
   it('keeps home useful when the API has no events',()=>{view(<Home/>,[]);expect(screen.getByText('공개된 행사가 아직 없습니다')).toBeInTheDocument();expect(screen.getByRole('link',{name:/소식 신청/})).toHaveAttribute('href','/signal');});
   it('does not present a failed event query as zero records',async()=>{vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('{}',{status:500})));const client=new QueryClient({defaultOptions:{queries:{retry:false}}});clients.push(client);render(<QueryClientProvider client={client}><EventsData>{()=> <p>DATA ZERO</p>}</EventsData></QueryClientProvider>);expect(await screen.findByRole('alert')).toHaveTextContent('행사 기록을 불러오지 못했습니다');expect(screen.queryByText('DATA ZERO')).not.toBeInTheDocument();});
 });

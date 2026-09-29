@@ -15,11 +15,11 @@ export function Signal() {
   const request = useSignalSubscription();
   return (
     <>
-      <PageHeading title="다음 만남의 소식" />
+      <PageHeading title="소식 신청" />
       <div className={styles.layout}>
         <SignalInformation request={request} />
         <SignalForm request={request} />
-        <Panel title="채널 정보" label="Channel" surface="sage" className={styles.channel}>
+        <Panel title="채널 정보" label="Channel" surface="navy" className={styles.channel}>
           <Facts
             rows={[
               ['채널', 'CH 01'],
@@ -42,7 +42,7 @@ function SignalInformation({
 }) {
   const { pending, done, error } = request;
   return (
-    <Panel title="수신 안내" label="Signal" code="CH 01" surface="peach">
+    <Panel title="수신 안내" label="Signal" code="CH 01" surface="red">
       <p className={styles.lead}>TERMINAL의 새로운 행사와 소식을 안내합니다.</p>
       <p
         className={styles.signalMatrix}

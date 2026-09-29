@@ -31,7 +31,7 @@ function RosterSummary({ profiles }: { profiles: ReturnType<typeof buildArtistAr
           ]}
         />
       </Panel>
-      <Panel title="출신" label="Origin" surface="sage" className={styles.origins}>
+      <Panel title="출신" label="Origin" surface="navy" className={styles.origins}>
         <ul className={styles.originCells}>
           {origins.map((origin) => (
             <li key={origin}>
@@ -68,7 +68,7 @@ export function Artists() {
                 heading={false}
                 title="함께한 아티스트"
                 label="Artist roster"
-                surface="mint"
+                surface="navy"
                 code={`${String(profiles.length).padStart(3, '0')} FILES`}
                 className={styles.roster}
               >

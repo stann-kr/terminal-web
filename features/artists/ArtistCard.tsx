@@ -17,7 +17,7 @@ export function ArtistCard({ profile }: { profile: ArtistProfile }) {
     <Link
       data-upcoming={upcoming}
       data-featured={featured || undefined}
-      data-surface={featured ? 'signal' : upcoming ? 'sand' : undefined}
+      data-surface={featured ? 'orange' : upcoming ? 'gold' : undefined}
       className={styles.cell}
       href={artistHref(profile.key)}
     >

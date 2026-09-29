@@ -9,13 +9,13 @@ import styles from './display.module.css';
 export function Meter({
   segments,
   value,
-  tone = 'mint',
+  tone = 'ink',
   busy = false,
   className = '',
 }: {
   segments: number;
   value: number;
-  tone?: 'mint' | 'cyan' | 'sand' | 'danger';
+  tone?: 'ink' | 'accent' | 'danger';
   busy?: boolean;
   className?: string;
 }) {

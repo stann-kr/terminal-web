@@ -6,7 +6,6 @@ import {
   statusLabel,
 } from '@/features/events/model';
 import { Action, Bay, Chip, Facts, FullText, StateNotice, Sub } from '@/features/ui/Ui';
-import { Mark } from '@/features/display/Mark';
 import { EventCountdown } from './EventCountdown';
 import styles from './home.module.css';
 
@@ -23,8 +22,9 @@ export function FeaturedEvent({
     <section
       className={styles.featured}
       aria-label="대표 행사"
-      data-surface={!event ? 'sage' : event.status === 'ARCHIVED' ? 'sage' : event.status === 'LIVE' ? 'peach' : 'sand'}
+      data-surface={!event || event.status === 'ARCHIVED' ? 'cream' : event.status === 'LIVE' ? 'red' : 'orange'}
     >
+      <i className={styles.pulse} aria-hidden="true" />
       <header className={styles.featuredHead}>
         <p className={styles.featuredLabel} aria-hidden="true">
           {event?.status === 'ARCHIVED' ? 'Last session' : 'Next session'}
@@ -35,7 +35,6 @@ export function FeaturedEvent({
             <Chip>{event.id}</Chip>
           </span>
         )}
-        <Mark className={styles.featuredMark} />
       </header>
       {event ? (
         <>

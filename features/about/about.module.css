@@ -16,21 +16,8 @@
 }
 .statement {
   margin-block: 8px 24px;
+  color: var(--accent);
   font: 800 clamp(58px, 6.6vw, 118px)/.84 var(--display);
-}
-.statement > span {
-  display: block;
-}
-.statement > span:nth-child(2) {
-  -webkit-text-stroke: 2px var(--ink);
-  color: transparent;
-}
-.credit {
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: var(--rule) solid var(--line);
-  font: 700 13px/1 var(--display);
-  letter-spacing: .16em;
 }
 /* Channel directory: a dark index cell beside an outlined name cell. */
 .channels {
