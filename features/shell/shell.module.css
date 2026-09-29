@@ -47,8 +47,9 @@
 }
 .brandMark {
   display: block;
-  width: auto;
-  height: 46px;
+  font: 400 clamp(30px, 2.4vw, 42px)/1 var(--brand);
+  letter-spacing: .02em;
+  white-space: nowrap;
 }
 .brand:hover {
   color: var(--gold);
@@ -270,7 +271,7 @@
 }
 @media (max-width: 700px) {
   .frame { padding: 6px; gap: 6px; }
-  .brandMark { height: 38px; }
+  .brandMark { font-size: 28px; }
   .clock, .zone, .ticker { display: none; }
   .tab { flex-direction: column; justify-content: center; gap: 3px; height: 48px; padding: 0 4px; }
   .tabIndex { display: none; }
