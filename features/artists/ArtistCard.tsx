@@ -1,8 +1,6 @@
 import Link from 'next/link';
 import { SignalText } from '@/features/display/Display';
 import { artistHref, type ArtistProfile } from './model';
-import { ArtistGlyph } from './ArtistGlyph';
-import { Blocks } from '@/features/display/Blocks';
 import styles from './artists.module.css';
 
 /** A printed four-digit serial derived from the profile key; ornament, not an identifier. */
@@ -11,6 +9,7 @@ function serial(key: string) {
   return String(sum % 10000).padStart(4, '0');
 }
 
+/** A register tile: header row, the name, and a code cell — like a module tag on a rack. */
 export function ArtistCard({ profile }: { profile: ArtistProfile }) {
   const upcoming = profile.appearances.some((row) => row.event.status !== 'ARCHIVED');
   const featured = profile.key === 'stann-lumo';
@@ -32,30 +31,25 @@ export function ArtistCard({ profile }: { profile: ArtistProfile }) {
               : '출연 기록'}
         </SignalText>
       </span>
-      <ArtistGlyph name={profile.name} />
-      <Blocks
-        cols={10}
-        motion="scan"
-        step={120}
-        offset={Array.from(profile.key).reduce((sum, char) => sum + char.charCodeAt(0), 0) % 10 * 120}
-        className={styles.cellScan}
-      />
       <h2>{profile.name}</h2>
-      <span className={styles.serial} aria-hidden="true">
-        <b>{profile.origin}-{serial(profile.key)}</b>
-        <span>{String(profile.appearances.length).padStart(2, '0')} REC</span>
+      <span className={styles.cellFoot} aria-hidden="true">
+        <span className={styles.tag}>{profile.origin}-{String(profile.appearances.length).padStart(2, '0')} REC</span>
+        <span className={styles.serialNumber}>{serial(profile.key)}</span>
       </span>
     </Link>
   );
 }
 
-/** An unassigned roster slot, printed like an empty register tile. */
-export function EmptyCell() {
+/**
+ * An unassigned slot that completes the last row. `fills` lists the column counts (3, 4, 6) at
+ * which this slot is needed, so a narrower grid never grows an extra empty row.
+ */
+export function EmptyCell({ fills }: { fills: string }) {
   return (
-    <span className={styles.emptyCell} aria-hidden="true">
+    <span className={styles.emptyCell} aria-hidden="true" data-fills={fills}>
       <b>----</b>
       <span>0000</span>
-      <small>OPEN SLOT</small>
+      <small>----</small>
     </span>
   );
 }

@@ -3,7 +3,7 @@ import { ui } from '@/features/ui/Ui';
 import { Field, FormError, formStyles } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
 import { LiveValue } from '@/features/display/Display';
-import { Blocks } from '@/features/display/Blocks';
+import { Meter } from '@/features/display/Meter';
 import { useTransmitPost } from './useTransmitPost';
 import styles from './transmit.module.css';
 
@@ -27,12 +27,11 @@ export function TransmitForm({
           <small>/ 280</small>
         </strong>
       </div>
-      <Blocks
-        cols={28}
-        motion={pending ? 'scan' : 'still'}
-        step={50}
-        tone={pending ? 'sand' : draft.message.length > 260 ? 'danger' : 'mint'}
-        lit={Array.from({ length: Math.ceil((draft.message.length / 280) * 28) }, (_, index) => index)}
+      <Meter
+        segments={28}
+        value={Math.ceil((draft.message.length / 280) * 28)}
+        busy={pending}
+        tone={pending ? 'cyan' : draft.message.length > 260 ? 'danger' : 'mint'}
         className={styles.gauge}
       />
       <FormError message={error ? errorMessage(error) : ''} />

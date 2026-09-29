@@ -3,9 +3,7 @@
 import Link from 'next/link';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { useLanguage } from '@/features/shell/Providers';
-import { Action, Facts, FullText, Panel, ui } from '@/features/ui/Ui';
-import { Blocks } from '@/features/display/Blocks';
-import { Plate } from '@/features/display/Plate';
+import { Action, Bay, Facts, FullText, Panel, StateNotice, ui } from '@/features/ui/Ui';
 import {
   buildArtistArchive,
   profileForAppearance,
@@ -199,28 +197,25 @@ export function EventRecord({
       <EventOverview event={event} />
       <Panel
         title="공연표"
-        code="RUNNING ORDER"
+        label="RUNNING ORDER"
         className={styles.runningOrder}
       >
         <Lineup event={event} events={events} stages />
-        <div className={styles.nodes}>
-          <Blocks
-            cols={16}
-            rows={2}
-            labels
-            step={130}
-            lit={[0, 3, 4, 7, 8, 9, 12, 15, 17, 22, 26, 29]}
-            accent={event.status !== 'ARCHIVED' ? [8, 9] : []}
-          />
-        </div>
-        <Plate hatch code="STAGE BAY / END OF ORDER" className={styles.orderFill} />
+        {publicArtists(event).length > 0 && <Bay label="END OF ORDER" />}
+        {publicArtists(event).length === 0 && (
+          <div className={styles.orderPending}>
+            <StateNotice title="공연표 공개 전입니다">
+              출연진과 시간표는 공개되는 대로 이곳에 표시됩니다.
+            </StateNotice>
+            <Bay label="STAGE BAY" />
+          </div>
+        )}
       </Panel>
       <div className={styles.notes}>
         <EventIntroduction event={event} language={language} />
-        <Panel title="참여 안내" code="ACCESS">
+        <Panel title="참여 안내" label="ACCESS" className={styles.accessPanel}>
           <EventActions event={event} events={events} now={now} />
         </Panel>
-        <Plate surface="slate" title="Guest desk" code={'ACCESS PROTOCOL\nKST'} cross className={styles.fill} />
       </div>
     </div>
   );
@@ -228,16 +223,12 @@ export function EventRecord({
 
 function EventOverview({ event }: { event: TerminalEvent }) {
   return (
-    <Panel
-      title={event.session}
-      code={event.id}
-      surface={event.status === 'ARCHIVED' ? 'mint' : event.status === 'LIVE' ? 'teal' : 'sand'}
-      className={styles.overview}
-    >
-      <p className={styles.overviewSubtitle}>{event.subtitle}</p>
+    <Panel title="행사 개요" label="SESSION" code={event.id} className={styles.overview}>
       <div data-event-state={event.status} className={styles.status}>
         {statusLabel(event.status)}
       </div>
+      <p className={styles.overviewTitle}>{event.session}</p>
+      <p className={styles.overviewSubtitle}>{event.subtitle}</p>
       <EventFacts event={event} modular />
       {event.posterUrl && (
         <a
@@ -267,12 +258,16 @@ function EventIntroduction({
   language: 'ko' | 'en';
 }) {
   return (
-    <Panel title="행사 소개" code={language.toUpperCase()}>
+    <Panel title="행사 소개" label="BRIEFING" code={language.toUpperCase()}>
       <div className={styles.annotation}>
-        <FullText
-          language={language}
-          paragraphs={paragraphs(event.description, language)}
-        />
+        {paragraphs(event.description, language).length ? (
+          <FullText
+            language={language}
+            paragraphs={paragraphs(event.description, language)}
+          />
+        ) : (
+          <p className={ui.muted}>행사 소개는 공개되는 대로 이곳에 표시됩니다.</p>
+        )}
         {paragraphs(event.invitationLines, language).length > 0 && (
           <details>
             <summary>초대 안내 전체 읽기</summary>

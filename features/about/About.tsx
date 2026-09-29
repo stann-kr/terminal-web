@@ -1,9 +1,6 @@
 'use client';
 import { useLanguage } from '@/features/shell/Providers';
-import { FullText, PageHeading, Panel } from '@/features/ui/Ui';
-import { Blocks } from '@/features/display/Blocks';
-import { Ticks } from '@/features/display/Instruments';
-import { Plate } from '@/features/display/Plate';
+import { Bay, FullText, PageHeading, Panel } from '@/features/ui/Ui';
 import styles from './about.module.css';
 const copy = {
   ko: [
@@ -28,14 +25,7 @@ export function About() {
       <PageHeading title="음악이 시작되고, 사람이 모이는 곳" />
       <div className={styles.layout}>
         <AboutIntroduction language={language} />
-        <div className={styles.column}>
-          <OfficialChannels />
-          <div className={styles.plates}>
-            <Plate surface="sand" title="Seoul" code={'TECHNO PLATFORM\nSINCE TERMINAL [01]'} />
-            <Plate surface="teal" title="Node T-03" code="PUBLIC INTERFACE" cross />
-          </div>
-          <Plate hatch code="ARCHITECT / STANN LUMO" className={styles.fill} />
-        </div>
+        <OfficialChannels />
       </div>
     </>
   );
@@ -43,16 +33,12 @@ export function About() {
 
 function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
   return (
-    <Panel title="TERMINAL" code="SEOUL">
+    <Panel title="TERMINAL 소개" label="TERMINAL" code="SEOUL">
       <p className={styles.statement} aria-label="MUSIC. PEOPLE. CONTINUITY.">
         <span aria-hidden="true">MUSIC.</span>
         <span aria-hidden="true">PEOPLE.</span>
         <span aria-hidden="true">CONTINUITY.</span>
       </p>
-      <div className={styles.console}>
-        <Blocks cols={24} rows={2} step={80} lit={[1, 2, 6, 11, 12, 17, 20, 26, 27, 31, 38, 44, 45]} accent={[33]} />
-        <Ticks count={48} major={8} labels />
-      </div>
       <FullText
         language={language}
         excerpt={false}
@@ -65,7 +51,7 @@ function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
 
 function OfficialChannels() {
   return (
-    <Panel title="공식 채널" code="LINKS">
+    <Panel title="공식 채널" label="CHANNELS">
       <ul className={styles.channels}>
         {channels.map(([label, href], index) => (
           <li key={href}>
@@ -78,6 +64,7 @@ function OfficialChannels() {
           </li>
         ))}
       </ul>
+      <Bay label="SEOUL / KST" />
     </Panel>
   );
 }

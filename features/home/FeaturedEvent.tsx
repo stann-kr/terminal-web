@@ -7,7 +7,6 @@ import {
 } from '@/features/events/model';
 import { Action, Facts, FullText, StateNotice } from '@/features/ui/Ui';
 import { SignalText } from '@/features/display/Display';
-import { Blocks } from '@/features/display/Blocks';
 import { EventCountdown } from './EventCountdown';
 import styles from './home.module.css';
 
@@ -22,7 +21,7 @@ export function FeaturedEvent({
     <section
       className={styles.featured}
       aria-label="대표 행사"
-      data-surface={!event ? undefined : event.status === 'ARCHIVED' ? 'mint' : event.status === 'LIVE' ? 'teal' : 'sand'}
+      data-state={event?.status}
     >
       {event ? (
         <>
@@ -43,10 +42,6 @@ export function FeaturedEvent({
               <h2>{event.session}</h2>
               <p className={styles.subtitle}>{event.subtitle}</p>
               <EventCountdown event={event} />
-              <div className={styles.sweep} aria-hidden="true">
-                <Blocks cols={20} motion="scan" step={1000} />
-                <span className={styles.featuredCode}>{event.id}</span>
-              </div>
             </div>
             <div className={styles.dossier}>
               <Facts
@@ -79,7 +74,6 @@ export function FeaturedEvent({
               행사 상세 보기
             </Action>
             <Action href="/signal">소식 신청</Action>
-            <span className={styles.actionHatch} aria-hidden="true" />
           </div>
         </>
       ) : (

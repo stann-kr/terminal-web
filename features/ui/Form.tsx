@@ -17,15 +17,13 @@ export function FormPanel({
 }) {
   return (
     <section className={styles.terminalForm}>
-      <div className={styles.formInterior}>
-        <header className={styles.formHeading}>
-          <p className={styles.formCode} aria-hidden="true">
-            {code}
-          </p>
-          <h2>{title}</h2>
-        </header>
-        {children}
-      </div>
+      <header className={styles.formHeading}>
+        <p className={styles.formCode} aria-hidden="true">
+          {code}
+        </p>
+        <h2>{title}</h2>
+      </header>
+      <div className={styles.formInterior}>{children}</div>
     </section>
   );
 }

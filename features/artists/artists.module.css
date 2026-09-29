@@ -1,68 +1,27 @@
-.fill {
-  flex: 1 1 120px;
-}
-.column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter);
+/* ── Roster: register tiles on one panel; open slots complete the last row. ── */
+.roster {
   min-width: 0;
 }
-
-/* ── Roster: a register of code tiles on one tinted face; open slots print empty. ── */
-.roster {
-  display: flex;
-  flex-direction: column;
-  padding: 14px 18px 18px;
-  background: var(--panel);
-  clip-path: var(--clip-tr);
-}
-.countRow {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.rosterTitle {
-  display: flex;
-  align-items: center;
-  padding: 8px 28px 8px 12px;
-  background: var(--accent);
-  color: var(--bg);
-  font: 600 20px/1 var(--display);
-  letter-spacing: .1em;
-  clip-path: var(--clip-br-sm);
-  white-space: nowrap;
-}
 .count {
-  display: flex;
-  align-items: center;
-  padding-inline: 10px;
-  border: 1px solid var(--line);
+  margin-bottom: 12px;
   color: var(--muted);
-  font: 400 var(--text-meta)/1 var(--mono);
-  letter-spacing: .1em;
-  white-space: nowrap;
-}
-.countScale {
-  flex: 1;
-  align-self: center;
-  margin-left: 8px;
+  font: 500 13px/1 var(--sans);
 }
 .grid {
   display: grid;
-  flex: 1;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
+  grid-auto-rows: minmax(176px, auto);
   gap: 6px;
 }
 .cell {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border: 1px solid var(--frame);
-  color: var(--accent);
+  padding: 0 14px 12px;
+  border: 1px solid var(--line);
+  color: var(--ink);
   text-decoration: none;
-  transition: background-color var(--afterglow) ease-out, color var(--afterglow) ease-out;
+  transition: border-color .12s var(--ease), background-color .12s var(--ease);
 }
 .cell[data-surface] {
   border-color: transparent;
@@ -73,65 +32,70 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  padding: 7px 10px;
+  margin-inline: -14px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
-  font: 400 11px/1.3 var(--mono);
-  letter-spacing: .08em;
+  font: 600 11px/1.2 var(--display);
+  letter-spacing: .16em;
 }
 .cellHeader > span:first-child {
   color: var(--accent);
 }
+.cellHeader > span:last-child {
+  font: 500 11px/1.2 var(--sans);
+  letter-spacing: 0;
+}
 .cell h2 {
-  margin-top: auto;
-  padding: 8px 10px 2px;
-  font: 600 24px/1 var(--display);
-  letter-spacing: .04em;
+  margin-top: 16px;
+  font: 600 28px/.95 var(--display);
+  letter-spacing: .05em;
   text-transform: uppercase;
   overflow-wrap: anywhere;
 }
-.serial {
+.cellFoot {
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
-  margin: 6px 10px 10px;
-  padding-top: 5px;
-  border-top: 1px solid var(--line);
+  margin-top: auto;
+  padding-top: 14px;
+}
+.tag {
+  padding: 3px 7px;
+  border: 1px solid var(--line);
   color: var(--muted);
-  font: 400 12px/1 var(--mono);
-  letter-spacing: .08em;
+  font: 400 11px/1 var(--mono);
+  letter-spacing: .1em;
 }
-.serial b {
-  font-weight: 400;
+.serialNumber {
+  color: var(--accent);
+  font: 400 22px/1 var(--mono);
+  letter-spacing: .04em;
 }
-.cell:hover,
+.cell:not([data-surface]):hover,
+.cell:not([data-surface]):focus-visible {
+  border-color: var(--accent);
+  background: rgb(var(--accent-rgb) / .08);
+}
+.cell[data-surface]:hover {
+  filter: brightness(1.07);
+}
 .cell:focus-visible {
-  background: var(--accent);
-  color: var(--bg);
   outline-offset: -5px;
-  outline-color: var(--bg);
-  transition-duration: 0s;
-}
-.cell[data-surface]:is(:hover, :focus-visible) {
-  background: var(--ink);
-}
-.cell:is(:hover, :focus-visible) :is(.cellHeader, .cellHeader > span:first-child, .serial) {
-  border-color: currentColor;
-  color: inherit;
-}
-.cell:is(:hover, :focus-visible) .cellScan {
-  --tone-rgb: var(--color-bg-base);
 }
 .emptyCell {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: 2px;
-  min-height: 150px;
-  padding: 10px;
-  border: 1px dashed var(--line);
+  justify-content: center;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--faint);
   color: var(--line);
-  font: 400 26px/1 var(--mono);
+  font: 400 30px/1 var(--mono);
+}
+.emptyCell:not([data-fills~='6']) {
+  display: none;
 }
 .emptyCell small {
   margin-top: 6px;
@@ -139,48 +103,16 @@
   letter-spacing: .14em;
 }
 
-/* The name supplies the stencil; bands stay static, the tile lights them on hover. */
-.artistGlyph {
-  display: grid;
-  place-items: center;
-  padding: 16px 14px 12px;
-  pointer-events: none;
-}
-.artistGlyph svg {
-  display: block;
-  width: 100%;
-  max-width: 150px;
-  height: 84px;
-  overflow: hidden;
-  fill: currentColor;
-}
-.glyphSegment {
-  opacity: .85;
-}
-.glyphSegment:nth-child(2) {
-  opacity: .45;
-}
-.glyphFallback {
-  font: 400 64px/1 var(--mono);
-}
-.cell:is(:hover, :focus-visible) .glyphSegment {
-  opacity: 1;
-  animation: none;
-}
-.cellScan {
-  gap: 2px;
-  padding: 0 12px 6px;
-}
-.cellScan i:nth-child(n) {
-  aspect-ratio: 3;
-}
-
 /* ── Profile: identity plate / chronology / biography. ─────────────────────── */
 .detail {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) minmax(0, 1.3fr) minmax(260px, 1fr);
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1.3fr) minmax(280px, 1fr);
   gap: var(--gutter);
   align-items: stretch;
+}
+.profile,
+.chronology {
+  min-width: 0;
 }
 .profileSignal {
   clip-path: var(--clip-br);
@@ -188,49 +120,54 @@
 .profileHead {
   display: flex;
   justify-content: space-between;
-  padding: 8px 14px;
-  border-bottom: 2px solid var(--frame);
-  font: 400 var(--text-meta)/1.4 var(--mono);
-  letter-spacing: .14em;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font: 600 12px/1 var(--display);
+  letter-spacing: .2em;
 }
 .profileName {
   display: block;
-  padding: 28px 16px 30px;
-  font: 700 clamp(38px, 3.4vw, 60px)/.92 var(--display);
-  letter-spacing: .01em;
+  padding: 36px 16px 40px;
+  font: 700 clamp(40px, 3.6vw, 60px)/.9 var(--display);
+  letter-spacing: .02em;
   text-transform: uppercase;
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
-.profileFoot {
-  padding: 0 16px 18px;
+.profileActions {
+  display: grid;
+  margin-top: auto;
+  padding-top: 18px;
+}
+.timeline {
+  display: grid;
+  gap: 6px;
 }
 .timeline li {
   display: grid;
-  grid-template-columns: 11ch minmax(0, 1fr);
-  gap: 18px;
-  padding-block: 14px;
-  border-bottom: 1px solid var(--faint);
-}
-.timeline li:first-child {
-  padding-top: 0;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 4px;
 }
 .timeline time {
-  width: fit-content;
-  height: fit-content;
-  padding: 3px 6px;
-  border: 1px solid var(--line);
-  color: var(--accent);
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  background: var(--accent);
+  color: var(--bg);
   font: 400 14px/1.2 var(--mono);
   font-variant-numeric: tabular-nums;
+}
+.timeline li > div {
+  padding: 10px 14px 6px;
+  border: 1px solid var(--line);
 }
 .timeline a {
   display: flex;
   align-items: center;
   min-height: 40px;
-  color: var(--accent);
-  font: 600 var(--text-lead)/1.15 var(--display);
-  letter-spacing: .04em;
+  color: var(--ink);
+  font: 600 var(--text-lead)/1.1 var(--display);
+  letter-spacing: .05em;
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -240,87 +177,47 @@
 }
 .timeline p {
   color: var(--muted);
-  font-size: var(--text-ui);
-}
-.timeline details[open] > div {
-  margin-top: 8px;
+  font-size: 13px;
 }
 .state {
   display: inline-block;
-  padding: 2px 7px;
-  background: var(--line);
-  color: var(--ink);
-  font: 600 13px/1.2 var(--display);
-  letter-spacing: .1em;
+  color: var(--accent);
+  font: 600 12px/1.2 var(--display);
+  letter-spacing: .2em;
 }
 .note {
-  margin-top: 18px;
-  padding-top: 12px;
+  margin-top: auto;
+  padding-top: 14px;
   border-top: 1px solid var(--faint);
   color: var(--muted);
-  font-size: var(--text-ui);
+  font-size: 13px;
 }
 .note a {
   color: var(--accent);
 }
-.chronology {
-  min-height: 100%;
-}
 
-@keyframes glyphBlink {
-  0%, 8%, 100% { opacity: .45; }
-  1%, 5% { opacity: 1; }
-}
-@keyframes cellIn {
-  from { clip-path: inset(0 0 100% 0); }
-  to { clip-path: inset(0 0 0 0); }
-}
-@keyframes recordExpand {
-  from { clip-path: inset(0 0 100% 0); }
-  to { clip-path: inset(0 0 0 0); }
-}
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .glyphSegment:nth-child(2) {
-    animation: glyphBlink 3.2s steps(1, end) infinite;
-  }
-  .cell:nth-child(3n + 2) .glyphSegment:nth-child(2) { animation-delay: -1.1s; }
-  .cell:nth-child(3n) .glyphSegment:nth-child(2) { animation-delay: -2.2s; }
-  .cell:not([data-surface]) {
-    animation: cellIn 240ms steps(6, end) both;
-  }
-  .cell:nth-child(2) { animation-delay: 40ms; }
-  .cell:nth-child(3) { animation-delay: 80ms; }
-  .cell:nth-child(4) { animation-delay: 120ms; }
-  .cell:nth-child(5) { animation-delay: 160ms; }
-  .cell:nth-child(6) { animation-delay: 200ms; }
-  .timeline details[open] > div {
-    animation: recordExpand 200ms steps(6, end) both;
-  }
-}
 @media (max-width: 1500px) {
   .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .emptyCell[data-fills] { display: flex; }
+  .emptyCell:not([data-fills~='4']) { display: none; }
 }
 @media (max-width: 1180px) {
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .detail { grid-template-columns: minmax(240px, 290px) minmax(0, 1fr); }
+  .emptyCell[data-fills~='4'] { display: none; }
+  .emptyCell[data-fills~='3'] { display: flex; }
+  .detail { grid-template-columns: minmax(260px, 300px) minmax(0, 1fr); }
   .detail > :last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 700px) {
-  .roster { padding: 12px; }
-  .rosterTitle, .countScale { display: none; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
   .emptyCell { display: none; }
   .cellHeader { flex-wrap: wrap; }
-  .artistGlyph svg { height: 68px; }
   .detail { grid-template-columns: minmax(0, 1fr); }
-  .detail .fill { display: none; }
-  .timeline li { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .timeline li { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 360px) {
   .grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (forced-colors: active) {
-  .artistGlyph { display: none; }
   .cell[data-featured=true] { border: 3px double CanvasText; }
-  .cell:is(:hover, :focus-visible) { color: HighlightText; background: Highlight; }
 }

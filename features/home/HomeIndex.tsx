@@ -4,8 +4,7 @@ import { publicArtists } from '@/features/events/model';
 import { buildArtistArchive } from '@/features/artists/model';
 import { Action, Panel } from '@/features/ui/Ui';
 import { LiveValue } from '@/features/display/Display';
-import { Blocks } from '@/features/display/Blocks';
-import { Ticks } from '@/features/display/Instruments';
+import { Meter } from '@/features/display/Meter';
 import styles from './home.module.css';
 
 export function HomeIndex({ events }: { events: TerminalEvent[] }) {
@@ -28,22 +27,22 @@ export function HomeIndex({ events }: { events: TerminalEvent[] }) {
     ],
   ] as const;
   return (
-    <Panel title="축적된 기록" code="INDEX" className={styles.index}>
+    <Panel title="축적된 기록" label="INDEX" className={styles.index}>
       <ul className={styles.stats}>
         {stats.map(([href, code, label, count]) => (
           <li key={label}>
             <Link href={href}>
               <span className={styles.statCode} aria-hidden="true">{code}</span>
               <strong>
-                <LiveValue value={String(count).padStart(2, '0')} />
+                <LiveValue value={String(count).padStart(4, '0')} />
               </strong>
-              <span>{label}</span>
+              <span className={styles.statLabel}>{label}</span>
             </Link>
           </li>
         ))}
       </ul>
       <div className={styles.statusMix}>
-        <p className={styles.smallHeading}>EVENT STATUS / 전체 행사</p>
+        <p className={styles.smallHeading}>EVENT STATUS</p>
         {(['LIVE', 'UPCOMING', 'ARCHIVED'] as const).map((status) => {
           const count = events.filter(
             (event) => event.status === status,
@@ -51,32 +50,17 @@ export function HomeIndex({ events }: { events: TerminalEvent[] }) {
           return (
             <div key={status} data-status={status}>
               <span className={styles.statusName}>{status}</span>
-              <Blocks
-                cols={12}
-                motion="still"
-                tone={status === 'ARCHIVED' ? 'mint' : 'sand'}
-                lit={Array.from(
-                  { length: events.length ? Math.round((count / events.length) * 12) : 0 },
-                  (_, index) => index,
-                )}
-                className={styles.statusTrack}
+              <Meter
+                segments={10}
+                value={events.length ? (count / events.length) * 10 : 0}
+                tone={status === 'LIVE' ? 'cyan' : status === 'UPCOMING' ? 'sand' : 'mint'}
               />
-              <span>
+              <span className={styles.statusCount}>
                 {count}/{events.length}
               </span>
             </div>
           );
         })}
-      </div>
-      <div className={styles.register}>
-        <Blocks
-          cols={12}
-          rows={2}
-          labels
-          lit={[1, 4, 5, 9, 13, 14, 18, 22]}
-          accent={events.some((event) => event.status !== 'ARCHIVED') ? [6] : []}
-        />
-        <Ticks count={24} major={6} labels />
       </div>
       <p className={styles.intro}>
         음악이 시작되고

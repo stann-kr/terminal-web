@@ -1,29 +1,17 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr) minmax(200px, 280px);
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
   gap: var(--gutter);
   align-items: stretch;
 }
-.plates {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter);
-  min-width: 0;
-}
-.fill {
-  flex: 1 1 120px;
-}
-.hatch {
-  flex: 0 0 72px;
-}
 .legend {
   width: 100%;
-  margin-bottom: 4px;
-  padding: 5px 10px;
-  background: var(--line);
-  color: var(--ink);
-  font: 600 15px/1.2 var(--display);
-  letter-spacing: .1em;
+  margin-bottom: 6px;
+  padding: 7px 12px;
+  background: var(--accent);
+  color: var(--bg);
+  font: 600 14px/1.2 var(--display);
+  letter-spacing: .12em;
 }
 .code {
   display: grid;
@@ -44,7 +32,7 @@
   border: 1px solid var(--accent);
   border-left-width: 6px;
   color: var(--muted);
-  font-size: var(--text-meta);
+  font-size: var(--text-label);
   letter-spacing: .1em;
 }
 .inviter strong {
@@ -58,49 +46,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
-@media (max-width: 1280px) {
-  .layout { grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); }
-  .plates { display: none; }
-}
 @media (max-width: 860px) {
   .layout { grid-template-columns: minmax(0, 1fr); }
   .contacts { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 400px) {
   .code { grid-template-columns: minmax(0, 1fr); }
-}
-/* Access scan: a line sweeps the seal while an event lookup, code check or request is running. */
-.accessScan {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: 96px;
-  margin-bottom: 22px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  pointer-events: none;
-}
-.accessScan > div {
-  width: 132px;
-}
-.accessScan > i {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 2px;
-  background: var(--accent);
-  opacity: .35;
-}
-.layout:has([aria-busy=true]) .accessScan > i,
-.layout[data-fetching=true] .accessScan > i {
-  background: var(--sand);
-  opacity: 1;
-}
-@keyframes accessSweep {
-  from { transform: translateY(0); }
-  to { transform: translateY(94px); }
-}
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .accessScan > i { animation: accessSweep 2.4s linear infinite; }
-  .layout:has([aria-busy=true]) .accessScan > i,
-  .layout[data-fetching=true] .accessScan > i { animation-duration: .72s; }
 }

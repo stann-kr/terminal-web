@@ -1,33 +1,54 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import type { Surface } from '@/features/display/Plate';
 import styles from './ui.module.css';
 
 export function PageHeading({ title }: { title: string }) {
   return <h1 className={styles.srOnly}>{title}</h1>;
 }
+export type Surface = 'mint' | 'cyan' | 'sand' | 'signal';
+
+/**
+ * A console panel: a filled English label tab, the Korean title, an optional code cell.
+ * `heading={false}` keeps the same face without adding a heading to the outline.
+ */
 export function Panel({
   title,
+  label,
   code,
   children,
   surface,
+  heading = true,
   className = '',
 }: {
   title: string;
+  /** Short English station label printed in the tab; decorative. */
+  label?: string;
   code?: string;
   children: ReactNode;
-  /** A colour plate instead of the default tinted panel; tokens invert inside it. */
   surface?: Surface;
+  heading?: boolean;
   className?: string;
 }) {
+  const Title = heading ? 'h2' : 'p';
   return (
     <section className={`${styles.panel} ${className}`} data-surface={surface}>
-      <h2 className={styles.sectionTitle}>
-        <span className={styles.titleText}>{title}</span>
+      <header className={styles.panelHead}>
+        <Title className={styles.panelTitle}>
+          {label && <span className={styles.panelLabel} aria-hidden="true">{label}</span>}
+          <span className={styles.panelKo}>{title}</span>
+        </Title>
         {code && <span className={styles.code} aria-hidden="true">{code}</span>}
-      </h2>
-      {children}
+      </header>
+      <div className={styles.panelBody}>{children}</div>
     </section>
+  );
+}
+/** A hatched reserve that takes the remaining height of a panel; decorative, labelled like a bay. */
+export function Bay({ label }: { label: string }) {
+  return (
+    <p className={styles.bay} aria-hidden="true">
+      <span>{label}</span>
+    </p>
   );
 }
 export function Action({

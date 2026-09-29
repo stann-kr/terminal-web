@@ -1,9 +1,8 @@
 'use client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { PageHeading, Pagination, Panel } from '@/features/ui/Ui';
+import { Bay, PageHeading, Pagination, Panel } from '@/features/ui/Ui';
 import { pageNumber } from '@/features/events/model';
-import { Plate } from '@/features/display/Plate';
 import { TransmitForm } from './TransmitForm';
 import { Feed, useTransmit } from './Feed';
 import styles from './transmit.module.css';
@@ -18,7 +17,7 @@ export function Transmit() {
       <PageHeading title="방문자 로그" />
       <div className={styles.layout}>
         <div className={styles.column}>
-          <Panel title="기록 남기기" code="WRITE">
+          <Panel title="기록 남기기" label="WRITE" className={styles.write}>
             <TransmitForm
               onSaved={() => {
                 void client.invalidateQueries({ queryKey: ['transmit'] });
@@ -27,8 +26,8 @@ export function Transmit() {
                 if (page !== 1) router.replace('/transmit', { scroll: false });
               }}
             />
+            <Bay label="VISITOR LOG / PUBLIC" />
           </Panel>
-          <Plate surface="slate" title="Visitor log" code={'PUBLIC RECORD\nSEOUL NODE / KST'} cross className={styles.fill} />
         </div>
         <TransmitLog page={page} query={query} />
       </div>
@@ -48,6 +47,7 @@ function TransmitLog({
   return (
     <Panel
       title="공개 로그"
+      label="PUBLIC LOG"
       code={query.data ? `${query.data.total} RECORDS` : 'READ'}
     >
       <Feed page={page} />

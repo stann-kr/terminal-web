@@ -4,88 +4,65 @@
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: swap; }
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600 700; font-display: swap; }
 @font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
-/* D2Coding 1.3.2 (npm d2coding, NAVER, OFL — public/fonts/d2coding/OFL.txt): KS X 1001 subset, Hangul code points only. */
-@font-face {
-  font-family: 'D2Coding';
-  src: url('/fonts/d2coding/D2Coding-Regular-KSX1001.woff2') format('woff2');
-  font-weight: 400;
-  font-display: swap;
-  unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7A3, U+D7B0-D7FF;
-}
-@font-face {
-  font-family: 'D2Coding';
-  src: url('/fonts/d2coding/D2Coding-Bold-KSX1001.woff2') format('woff2');
-  font-weight: 700;
-  font-display: swap;
-  unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7A3, U+D7B0-D7FF;
-}
 /*
- * Instrument panel: a slate-navy field, pale mint line work and flat colour plates.
- * Colour classifies (sand = upcoming / featured record, teal = live, signal orange = one highlight);
- * nothing glows. A plate (`data-surface`) re-points the same tokens, so any component inverts inside it.
+ * Ship-console screens: a deep navy field lit by pale mint line work and flat, bright panels.
+ * One hue family per screen; colour marks state only (cyan = live, sand = upcoming, signal = one highlight).
+ * A panel with `data-surface` re-points the same tokens, so anything inside it inverts cleanly.
  */
 :root {
   color-scheme: dark;
-  --color-bg-base: 13 27 36;
-  --color-bg-panel: 20 38 49;
-  --color-text-primary: 222 236 231;
-  --color-text-subdued: 170 199 192;
-  --color-text-muted: 132 165 160;
-  --color-accent-primary: 191 230 218;
-  --color-accent-tertiary: 111 208 204;
-  --color-accent-alert: 240 122 122;
+  --color-bg-base: 16 40 58;
+  --color-bg-panel: 23 52 71;
+  --color-text-primary: 230 252 246;
+  --color-text-subdued: 179 220 212;
+  --color-text-muted: 134 185 177;
+  --color-accent-primary: 196 246 234;
+  --color-accent-tertiary: 79 227 220;
+  --color-accent-alert: 255 123 123;
   --bg: rgb(var(--color-bg-base));
   --panel: rgb(var(--color-bg-panel));
-  --well: #09141b;
+  --well: #0b1f2e;
   --ink: rgb(var(--color-text-primary));
   --sub: rgb(var(--color-text-subdued));
   --muted: rgb(var(--color-text-muted));
   --accent: rgb(var(--color-accent-primary));
   --accent-rgb: var(--color-accent-primary);
-  --teal: rgb(var(--color-accent-tertiary));
+  --cyan: rgb(var(--color-accent-tertiary));
   --danger: rgb(var(--color-accent-alert));
-  --sand: #dcc49a;
-  --sand-rgb: 220 196 154;
-  --signal: #e8874f;
-  --slate: #4f6b73;
-  --line: #3b5963;
-  --faint: #223a45;
-  --frame: #5d8790;
+  --sand: #f2d9a0;
+  --signal: #ff8c4a;
+  --line: #46798a;
+  --faint: #21465b;
   --focus: var(--signal);
 
-  --display: 'Barlow Condensed', 'D2Coding', sans-serif;
-  --sans: 'Barlow', 'D2Coding', sans-serif;
-  --mono: 'Share Tech Mono', 'D2Coding', monospace;
+  --display: 'Barlow Condensed', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --sans: 'Barlow', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --mono: 'Share Tech Mono', 'Apple SD Gothic Neo', 'Noto Sans KR', monospace;
 
-  /* Six type steps: meta, UI, body, lead, title, display. */
-  --text-meta: 12px;
+  /* Type steps: label, UI, body, lead, title, display. */
+  --text-label: 12px;
   --text-ui: 14px;
   --text-body: 16px;
-  --text-lead: 22px;
-  --text-title: 30px;
-  --text-display: clamp(40px, 5.2vw, 84px);
+  --text-lead: 20px;
+  --text-title: 28px;
+  --text-display: clamp(44px, 5vw, 80px);
 
-  /* Plate geometry: one cut corner, one hatch, one gutter between plates. */
-  --clip-br: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
-  --clip-tr: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
-  --clip-br-sm: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
-  --hatch: repeating-linear-gradient(-45deg, currentColor 0 1.5px, transparent 1.5px 8px);
-  --gutter: 10px;
-  --afterglow: 140ms;
+  --clip-br: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  --clip-tr: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  --hatch: repeating-linear-gradient(-45deg, currentColor 0 1px, transparent 1px 6px);
+  --gutter: 12px;
+  --ease: cubic-bezier(.2, .8, .2, 1);
 }
 
-/* Colour plates. `--bg` is always "the colour of this plate", so inverted chips read on any of them. */
 [data-surface] {
-  --line: rgb(var(--plate-ink) / .5);
-  --faint: rgb(var(--plate-ink) / .22);
-  --frame: rgb(var(--plate-ink));
   --ink: rgb(var(--plate-ink));
   --sub: rgb(var(--plate-ink));
   --accent: rgb(var(--plate-ink));
   --accent-rgb: var(--plate-ink);
-  --teal: rgb(var(--plate-ink));
+  --cyan: rgb(var(--plate-ink));
   --sand: rgb(var(--plate-ink));
-  --sand-rgb: var(--plate-ink);
+  --line: rgb(var(--plate-ink) / .45);
+  --faint: rgb(var(--plate-ink) / .2);
   --focus: rgb(var(--plate-ink));
   --color-bg-base: var(--plate);
   --bg: rgb(var(--plate));
@@ -93,13 +70,11 @@
   --well: rgb(var(--plate));
   background-color: rgb(var(--plate));
   color: var(--ink);
-  scrollbar-color: var(--line) transparent;
 }
-[data-surface=sand] { --plate: 220 196 154; --plate-ink: 15 29 38; --muted: #4f4632; --danger: #8c1f28; }
-[data-surface=mint] { --plate: 191 230 218; --plate-ink: 13 27 36; --muted: #3c5a55; --danger: #8c1f28; }
-[data-surface=teal] { --plate: 111 208 204; --plate-ink: 9 26 33; --muted: #1f3f44; --danger: #7a1520; }
-[data-surface=signal] { --plate: 232 135 79; --plate-ink: 26 15 10; --muted: #3f2414; --danger: #3a0a0f; }
-[data-surface=slate] { --plate: 79 107 115; --plate-ink: 240 247 244; --muted: #e6f0ed; --danger: #ffd4d4; }
+[data-surface=mint] { --plate: 196 246 234; --plate-ink: 10 27 41; --muted: #2f5d58; --danger: #8c1f28; }
+[data-surface=cyan] { --plate: 79 227 220; --plate-ink: 8 30 36; --muted: #1d4a4a; --danger: #7a1520; }
+[data-surface=sand] { --plate: 242 217 160; --plate-ink: 10 27 41; --muted: #5a4a28; --danger: #8c1f28; }
+[data-surface=signal] { --plate: 255 140 74; --plate-ink: 26 12 4; --muted: #4a2410; --danger: #3a0a0f; }
 
 * { box-sizing: border-box; }
 html { background: var(--bg); color: var(--ink); scrollbar-color: var(--line) var(--bg); }
@@ -117,14 +92,12 @@ ul,ol { padding: 0; list-style: none; }
 img { max-width: 100%; height: auto; }
 input,select,textarea { min-width: 0; max-width: 100%; color: var(--ink); background: var(--well); border: 1px solid var(--line); border-radius: 0; padding: 10px 12px; min-height: 44px; font-size: 16px; }
 textarea { resize: vertical; }
-input[type=checkbox] { appearance: none; display: inline-grid; place-items: center; width: 22px; height: 22px; min-height: 22px; padding: 0; border: 1px solid var(--frame); background: var(--well); cursor: pointer; }
-input[type=checkbox]::before { content: ''; width: 12px; height: 12px; background: var(--accent); transform: scale(0); }
-input[type=checkbox]:checked { border-color: var(--accent); }
+input[type=checkbox] { appearance: none; display: inline-grid; place-items: center; width: 20px; height: 20px; min-height: 20px; padding: 0; border: 1px solid var(--accent); background: transparent; cursor: pointer; }
+input[type=checkbox]::before { content: ''; width: 10px; height: 10px; background: var(--accent); transform: scale(0); }
 input[type=checkbox]:checked::before { transform: scale(1); }
 @media (forced-colors: active) { input[type=checkbox] { appearance: auto; } }
 button { color: inherit; }
-summary { min-height: 44px; padding-block: 10px; color: var(--accent); font: 600 var(--text-ui)/1.4 var(--display); letter-spacing: .08em; text-transform: uppercase; }
-details[open] > summary { margin-bottom: 10px; }
+summary { min-height: 44px; padding-block: 10px; color: var(--accent); font: 600 var(--text-ui)/1.4 var(--display); letter-spacing: .12em; text-transform: uppercase; }
+details[open] > summary { margin-bottom: 8px; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
-/* Paused displays (reduced motion, forced colors, save-data, hidden tab) drop motion instead of freezing it mid-frame. */
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }

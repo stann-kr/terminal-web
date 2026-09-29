@@ -1,5 +1,5 @@
 'use client';
-import { Action, PageHeading, Panel, ui } from '@/features/ui/Ui';
+import { Action, Bay, PageHeading, Panel, ui } from '@/features/ui/Ui';
 import {
   Consent,
   Field,
@@ -10,8 +10,6 @@ import {
 } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
 import { useSignalSubscription } from './useSignalSubscription';
-import { Blocks } from '@/features/display/Blocks';
-import { Plate } from '@/features/display/Plate';
 import styles from './signal.module.css';
 export function Signal() {
   const request = useSignalSubscription();
@@ -21,11 +19,6 @@ export function Signal() {
       <div className={styles.layout}>
         <SignalInformation request={request} />
         <SignalForm request={request} />
-        <div className={styles.plates}>
-          <Plate surface="teal" title="Channel 01" code={'NEXT SESSION NOTICE\nMAIL / INSTAGRAM'} className={styles.fill} />
-          <Plate surface="sand" title="Outbound" code="QUEUE / KST" />
-          <Plate hatch code="RESERVED" className={styles.hatch} />
-        </div>
       </div>
     </>
   );
@@ -38,7 +31,7 @@ function SignalInformation({
 }) {
   const { pending, done, error } = request;
   return (
-    <Panel title="수신 안내" code="SIGNAL">
+    <Panel title="수신 안내" label="SIGNAL" code="CH 01">
       <p className={styles.lead}>TERMINAL의 새로운 행사와 소식을 안내합니다.</p>
       <p
         className={styles.signalMatrix}
@@ -56,18 +49,8 @@ function SignalInformation({
               ? 'TRANSMISSION FAILED'
               : 'CHANNEL STANDBY'}
       </p>
-      <Blocks
-        cols={8}
-        rows={4}
-        labels
-        motion={pending ? 'scan' : done ? 'still' : 'scan twinkle'}
-        step={pending ? 40 : 160}
-        tone={error ? 'danger' : pending ? 'sand' : 'mint'}
-        lit={done ? Array.from({ length: 32 }, (_, index) => index) : [0, 1, 2, 5, 9, 10, 14, 17, 18, 21, 25, 29, 30]}
-        accent={error ? [8, 23] : done ? [] : [8, 23]}
-        className={styles.matrix}
-      />
       <Action href="/about">소개 / 공식 채널</Action>
+      <Bay label="CHANNEL 01 / STANDBY" />
     </Panel>
   );
 }
@@ -152,6 +135,7 @@ function SignalForm({
           </fieldset>
         </form>
       )}
+      <Bay label="SIGNAL / OUTBOUND" />
     </FormPanel>
   );
 }

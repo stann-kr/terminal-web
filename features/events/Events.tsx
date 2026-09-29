@@ -8,11 +8,9 @@ import {
   getLiveEvents,
 } from '@/lib/events/lifecycle';
 import { LiveValue } from '@/features/display/Display';
-import { Blocks } from '@/features/display/Blocks';
-import { Ticks } from '@/features/display/Instruments';
-import { Plate } from '@/features/display/Plate';
 import {
   Action,
+  Bay,
   Facts,
   PageHeading,
   Panel,
@@ -46,12 +44,13 @@ export function Events() {
 
           return (
             <div className={styles.directory}>
-              <div className={styles.listing}>
-                <p className={styles.listingHead} aria-hidden="true">
-                  <b>EVENT DIRECTORY</b>
-                  <span>{String(ordered.length).padStart(3, '0')} RECORDS</span>
-                  <span>PAGE {String(page).padStart(2, '0')}</span>
-                </p>
+              <Panel
+                heading={false}
+                title="이벤트 목록"
+                label="DIRECTORY"
+                code={`${String(ordered.length).padStart(3, '0')} RECORDS · PAGE ${String(page).padStart(2, '0')}`}
+                className={styles.listing}
+              >
                 {ordered.length ? (
                   <div className={styles.cards}>
                     <p className={styles.cardsHead} aria-hidden="true">
@@ -79,19 +78,14 @@ export function Events() {
                     <Action href="/signal">다음 행사 소식 신청</Action>
                   </StateNotice>
                 )}
-                <div className={styles.listingFill} aria-hidden="true">
-                  <span>END OF DIRECTORY</span>
-                </div>
+                <Bay label="END OF DIRECTORY" />
                 <Pagination
                   page={page}
                   totalPages={totalPages}
                   href={(page) => `/events?page=${page}`}
                 />
-              </div>
-              <div className={styles.side}>
-                <EventSummary events={events} now={now} />
-                <Plate surface="slate" title="Archive bay" code={'ALL EVENT TIMES / KST\nSEOUL'} cross className={styles.fill} />
-              </div>
+              </Panel>
+              <EventSummary events={events} now={now} />
             </div>
           );
         }}
@@ -132,6 +126,7 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
   return (
     <Panel
       title="이벤트 현황"
+      label="STATUS"
       code={`${events.length} EVENTS`}
       className={styles.directorySummary}
     >
@@ -142,16 +137,6 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
           ['지난 행사', <LiveValue key="archived" value={archived.length} />],
         ]}
       />
-      <div className={styles.bays}>
-        <Blocks
-          cols={6}
-          rows={4}
-          step={110}
-          lit={[0, 1, 3, 5, 6, 9, 11, 12, 14, 15, 16, 18, 20, 21, 23]}
-          accent={next || live.length > 0 ? [7, 8] : []}
-        />
-        <Ticks count={30} major={5} marker />
-      </div>
       {next && (
         <div className={styles.nextEvent} data-surface="sand">
           <p>NEXT / 다음 행사</p>
@@ -161,7 +146,8 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
           </p>
         </div>
       )}
-      <div className={ui.actions}>
+      <Bay label="ARCHIVE BAY" />
+      <div className={styles.summaryActions}>
         <Action href="/signal">다음 행사 소식 신청</Action>
       </div>
     </Panel>

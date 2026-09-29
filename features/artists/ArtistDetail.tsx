@@ -5,15 +5,13 @@ import { eventHref, paragraphs, statusLabel } from '@/features/events/model';
 import { useLanguage } from '@/features/shell/Providers';
 import {
   Action,
+  Bay,
   FullText,
   PageHeading,
   Panel,
   StateNotice,
-  ui,
 } from '@/features/ui/Ui';
 import { buildArtistArchive, type ArtistProfile } from './model';
-import { Blocks } from '@/features/display/Blocks';
-import { Plate } from '@/features/display/Plate';
 import styles from './artists.module.css';
 
 export function ArtistDetail({ artistKey }: { artistKey: string }) {
@@ -38,10 +36,7 @@ export function ArtistDetail({ artistKey }: { artistKey: string }) {
           <>
             <PageHeading title={profile.name} />
             <div className={styles.detail}>
-              <div className={styles.column}>
-                <ArtistProfileSummary profile={profile} />
-                <Plate title="Artist file" code={`${profile.origin} / ${String(profile.appearances.length).padStart(2, '0')} RECORDS`} cross className={styles.fill} />
-              </div>
+              <ArtistProfileSummary profile={profile} />
               <ArtistChronology profile={profile} language={language} />
               <ArtistBiography profile={profile} language={language} />
             </div>
@@ -54,22 +49,20 @@ export function ArtistDetail({ artistKey }: { artistKey: string }) {
 
 function ArtistProfileSummary({ profile }: { profile: ArtistProfile }) {
   return (
-    <Panel title="프로필" code="PROFILE">
+    <Panel title="프로필" label="ARTIST FILE" className={styles.profile}>
       <div
         className={styles.profileSignal}
         aria-hidden="true"
         data-surface={profile.key === 'stann-lumo' ? 'signal' : profile.appearances.some((row) => row.event.status !== 'ARCHIVED') ? 'sand' : 'mint'}
       >
         <p className={styles.profileHead}>
-          <span>ARTIST FILE</span>
-          <span>{profile.origin}</span>
+          <span>ORIGIN / {profile.origin}</span>
+          <span>{String(profile.appearances.length).padStart(2, '0')} REC</span>
         </p>
         <strong className={styles.profileName}>{profile.name}</strong>
-        <div className={styles.profileFoot}>
-          <Blocks cols={14} step={110} lit={[2, 3, 7, 11]} accent={[12]} />
-        </div>
       </div>
-      <div className={ui.actions}>
+      <Bay label="ARTIST FILE" />
+      <div className={styles.profileActions}>
         <Action href="/artists">전체 아티스트</Action>
       </div>
     </Panel>
@@ -84,7 +77,7 @@ function ArtistChronology({
   language: 'ko' | 'en';
 }) {
   return (
-    <Panel title="출연 기록" code="RECORDS" className={styles.chronology}>
+    <Panel title="출연 기록" label="RECORDS" className={styles.chronology}>
       <ol className={styles.timeline}>
         {profile.appearances.map(({ event, artist }) => (
           <li key={`${event.id}:${artist.id}`}>
@@ -107,6 +100,7 @@ function ArtistChronology({
           </li>
         ))}
       </ol>
+      <Bay label="END OF RECORDS" />
     </Panel>
   );
 }
@@ -122,7 +116,7 @@ function ArtistBiography({
     (row) => paragraphs(row.artist.description, language).length,
   );
   return (
-    <Panel title="소개" code={language.toUpperCase()}>
+    <Panel title="소개" label="BIOGRAPHY" code={language.toUpperCase()}>
       <FullText
         language={language}
         excerpt={false}
