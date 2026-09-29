@@ -9,22 +9,22 @@
     "next signal log";
   gap: var(--gap);
 }
-.featured { grid-area: next; }
+.next { grid-area: next; }
+/* A plate with its control deck stacked under it. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+}
+.stack > :first-child {
+  flex: 1;
+}
 .archive { grid-area: archive; }
 .status { grid-area: status; }
 .roster { grid-area: roster; }
 .log { grid-area: log; }
 .signal { grid-area: signal; }
-.plateActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: 12px;
-}
-.plateActions > a {
-  flex: 1;
-}
 .empty {
   color: var(--muted);
   font-size: var(--text-ui);
@@ -60,12 +60,8 @@
 .featured[data-surface=red] .pulse {
   color: rgb(255 248 240 / .2);
 }
-@keyframes ringOut {
-  from { --ring-phase: 0px; }
-  to { --ring-phase: 18px; }
-}
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .pulse { animation: ringOut 2.4s linear infinite; }
+  .pulse { animation: ringOut 1.875s linear infinite; }
 }
 .featuredHead {
   display: flex;
@@ -228,8 +224,15 @@
   font: 400 22px/1 var(--mono);
   font-variant-numeric: tabular-nums;
 }
+.counters a > * {
+  transition: background-color .14s var(--ease), border-color .14s var(--ease);
+}
+.counters a:hover > span {
+  background: var(--gold);
+}
 .counters a:hover strong {
-  background: rgb(0 0 0 / .08);
+  border-color: var(--gold);
+  background: rgb(252 191 73 / .12);
 }
 .counters a:focus-visible {
   outline-offset: 2px;
@@ -273,8 +276,14 @@
   background: var(--navy);
   color: var(--gold);
 }
-.sessions a:hover {
-  filter: brightness(1.08);
+.sessions a,
+.rosterCells a {
+  transition: transform .14s var(--ease), box-shadow .14s var(--ease);
+}
+.sessions a:hover,
+.rosterCells a:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 3px 0 var(--gold);
 }
 .sessions a:focus-visible {
   outline-offset: 2px;
@@ -348,9 +357,7 @@
 .rosterCells a:is([data-upcoming], [data-featured]) .rosterMeta {
   color: rgb(0 0 0 / .72);
 }
-.rosterCells a:hover {
-  filter: brightness(1.15);
-}
+
 .rosterCells a:focus-visible {
   outline-offset: 2px;
 }

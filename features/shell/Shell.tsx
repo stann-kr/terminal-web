@@ -4,7 +4,9 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { DataActivity } from '@/features/display/Display';
 import { useDisplayPolicy } from '@/features/display/useDisplayPolicy';
+import { Wordmark } from '@/features/display/Logo';
 import { Clock } from './Clock';
+import { Ticker } from './Ticker';
 import { useLanguage } from './Providers';
 import styles from './shell.module.css';
 
@@ -40,7 +42,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <a href="#main" className={styles.skip}>본문으로 이동</a>
       <header className={styles.top} data-surface="deep">
         <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">
-          <span className={styles.brandName}>TERMINAL</span>
+          <Wordmark className={styles.brandMark} />
         </Link>
         <nav className={styles.tabs} aria-label="주 메뉴">
           {navigation.map((item, index) => (
@@ -79,8 +81,8 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
-        <p className={styles.zone}>ALL EVENT TIMES / KST</p>
-        <p className={styles.node} aria-hidden="true">TERMINAL</p>
+        <Ticker />
+        <p className={`${styles.node} ${styles.brandNode}`} aria-hidden="true">TERMINAL</p>
       </footer>
     </div>
   );

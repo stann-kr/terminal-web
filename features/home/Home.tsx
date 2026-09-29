@@ -7,7 +7,7 @@ import {
 import { EventsData } from '@/features/events/data';
 import { useLanguage } from '@/features/shell/Providers';
 import { NodeActivity } from '@/features/transmit/NodeActivity';
-import { Action, Chip, PageHeading, Panel } from '@/features/ui/Ui';
+import { Action, ActionDeck, Chip, PageHeading, Panel } from '@/features/ui/Ui';
 import { HomeIndex } from './HomeIndex';
 import { HomeRoster, HomeStatus } from './HomeModules';
 import { FeaturedEvent } from './FeaturedEvent';
@@ -28,12 +28,14 @@ export function Home() {
               <HomeIndex events={events} />
               <HomeStatus events={events} />
               <HomeRoster events={events} />
-              <Panel title="최근 접속 기록" label="Node activity" className={styles.log}>
-                <NodeActivity limit={6} />
-                <div className={styles.plateActions}>
+              <div className={`${styles.stack} ${styles.log}`}>
+                <Panel title="최근 접속 기록" label="Node activity">
+                  <NodeActivity limit={6} />
+                </Panel>
+                <ActionDeck label="LOG">
                   <Action href="/transmit">방문자 로그</Action>
-                </div>
-              </Panel>
+                </ActionDeck>
+              </div>
               <Link href="/signal" className={styles.signal} data-surface="red">
                 <span className={styles.signalHead} aria-hidden="true">
                   <b>SIGNAL</b>

@@ -1,17 +1,21 @@
 'use client';
 import Link from 'next/link';
 import { EventsData } from '@/features/events/data';
-import { eventHref, paragraphs, statusLabel } from '@/features/events/model';
+import type { TerminalEvent } from '@/lib/events/types';
+import { eventHref, paragraphs, publicArtists, statusLabel } from '@/features/events/model';
+import { FrameMark } from '@/features/display/Logo';
 import { useLanguage } from '@/features/shell/Providers';
 import {
   Action,
+  ActionDeck,
   Bay,
+  BrandText,
   FullText,
   PageHeading,
   Panel,
   StateNotice,
 } from '@/features/ui/Ui';
-import { buildArtistArchive, type ArtistProfile } from './model';
+import { artistHref, buildArtistArchive, profileForAppearance, type ArtistProfile } from './model';
 import styles from './artists.module.css';
 
 export function ArtistDetail({ artistKey }: { artistKey: string }) {
@@ -37,7 +41,7 @@ export function ArtistDetail({ artistKey }: { artistKey: string }) {
             <PageHeading title={profile.name} />
             <div className={styles.detail}>
               <ArtistProfileSummary profile={profile} />
-              <ArtistChronology profile={profile} language={language} />
+              <ArtistChronology profile={profile} events={events} />
               <ArtistBiography profile={profile} language={language} />
             </div>
           </>
@@ -48,60 +52,83 @@ export function ArtistDetail({ artistKey }: { artistKey: string }) {
 }
 
 function ArtistProfileSummary({ profile }: { profile: ArtistProfile }) {
+  const upcoming = profile.appearances.some((row) => row.event.status !== 'ARCHIVED');
   return (
-    <Panel title="프로필" label="Artist file" surface="navy" className={styles.profile}>
-      <div
-        className={styles.profileSignal}
-        aria-hidden="true"
-        data-surface={profile.key === 'stann-lumo' ? 'orange' : profile.appearances.some((row) => row.event.status !== 'ARCHIVED') ? 'gold' : 'cream'}
-      >
-        <p className={styles.profileHead}>
-          <span>ORIGIN / {profile.origin}</span>
-          <span>{String(profile.appearances.length).padStart(2, '0')} REC</span>
-        </p>
-        <strong className={styles.profileName}>{profile.name}</strong>
-      </div>
-      <Bay label="ARTIST FILE" />
-      <div className={styles.profileActions}>
+    <div className={styles.column}>
+      <Panel title="프로필" label="Artist file" surface={profile.key === 'stann-lumo' ? 'orange' : upcoming ? 'gold' : 'cream'} className={styles.profile}>
+        <div className={styles.identity} aria-hidden="true">
+          <FrameMark className={styles.identityFrame} />
+          <p className={styles.identityOrigin}>ORIGIN / {profile.origin || '—'}</p>
+          <strong className={styles.profileName}>{profile.name}</strong>
+          <p className={styles.identityCode}>{profile.origin || 'XX'}-{serialOf(profile.key)}</p>
+        </div>
+      </Panel>
+      <ActionDeck>
         <Action href="/artists">전체 아티스트</Action>
-      </div>
-    </Panel>
+      </ActionDeck>
+    </div>
   );
+}
+
+/** A printed four-digit serial derived from the profile key; ornament, not an identifier. */
+function serialOf(key: string) {
+  const sum = Array.from(key).reduce((total, char, index) => (total * 31 + char.charCodeAt(0) * (index + 1)) % 9973, 7);
+  return String(sum % 10000).padStart(4, '0');
 }
 
 function ArtistChronology({
   profile,
-  language,
+  events,
 }: {
   profile: ArtistProfile;
-  language: 'ko' | 'en';
+  events: TerminalEvent[];
 }) {
+  const profiles = buildArtistArchive(events);
+  // Everyone who shared a public lineup with this artist, linked to their own file.
+  const shared = new Map<string, { name: string; href?: string; session: string }>();
+  for (const { event, artist } of profile.appearances) {
+    for (const other of publicArtists(event)) {
+      if (other.id === artist.id) continue;
+      const file = profileForAppearance(profiles, event.id, other.id);
+      if (file?.key === profile.key) continue;
+      const key = file?.key ?? `${event.id}:${other.id}`;
+      if (!shared.has(key)) shared.set(key, { name: other.name, href: file ? artistHref(file.key) : undefined, session: event.session });
+    }
+  }
   return (
-    <Panel title="출연 기록" label="Records" surface="navy" className={styles.chronology}>
-      <ol className={styles.timeline}>
-        {profile.appearances.map(({ event, artist }) => (
-          <li key={`${event.id}:${artist.id}`}>
-            <time dateTime={event.date}>{event.date}</time>
-            <div>
-              <span className={styles.state}>{statusLabel(event.status)}</span>
-              <Link href={eventHref(event.id)}>{event.session}</Link>
-              <p>
-                {event.venue} · {artist.dock} · {artist.time}
+    <div className={styles.column}>
+      <Panel title="출연 기록" label="Records" surface="navy" className={styles.chronology}>
+        <ol className={styles.timeline}>
+          {profile.appearances.map(({ event, artist }) => (
+            <li key={`${event.id}:${artist.id}`}>
+              <time dateTime={event.date}>{event.date}</time>
+              <div className={styles.recordBody}>
+                <span className={styles.state}>{statusLabel(event.status)}</span>
+                <Link href={eventHref(event.id)}><BrandText text={event.session} /></Link>
+                <p>{event.venue}</p>
+              </div>
+              <p className={styles.slot}>
+                <span>STAGE {artist.dock || 'TBA'}</span>
+                <b>{artist.time || 'TBA'}</b>
               </p>
-              <details>
-                <summary>당시 아티스트 소개</summary>
-                <FullText
-                  language={language}
-                  excerpt={false}
-                  paragraphs={paragraphs(artist.description, language)}
-                />
-              </details>
-            </div>
-          </li>
-        ))}
-      </ol>
-      <Bay label="END OF RECORDS" />
-    </Panel>
+            </li>
+          ))}
+        </ol>
+      </Panel>
+      {shared.size > 0 && (
+        <Panel title="같은 세션 출연진" label="Shared lineup" surface="navy" className={styles.shared}>
+          <ul className={styles.sharedCells}>
+            {[...shared.entries()].map(([key, other]) => (
+              <li key={key}>
+                {other.href ? <Link href={other.href}>{other.name}</Link> : <span>{other.name}</span>}
+                <small aria-hidden="true">{other.session}</small>
+              </li>
+            ))}
+          </ul>
+          <Bay label="SHARED LINEUP" />
+        </Panel>
+      )}
+    </div>
   );
 }
 
@@ -126,7 +153,7 @@ function ArtistBiography({
         <p className={styles.note}>
           출처:{' '}
           <Link href={eventHref(biography.event.id)}>
-            {biography.event.session} / {biography.event.date}
+            <BrandText text={biography.event.session} /> / {biography.event.date}
           </Link>
         </p>
       )}

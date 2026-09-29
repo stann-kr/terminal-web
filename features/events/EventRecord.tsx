@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { useLanguage } from '@/features/shell/Providers';
-import { Action, Bay, Facts, FullText, Panel, StateNotice, ui } from '@/features/ui/Ui';
+import { Action, ActionDeck, Bay, BrandText, Facts, FullText, Panel, StateNotice, ui } from '@/features/ui/Ui';
 import {
   buildArtistArchive,
   profileForAppearance,
@@ -77,6 +77,7 @@ export function EventActions({
 }) {
   const access = accessAvailability(event, events, now);
   return (
+    <>
     <div className={styles.accessProtocol} data-open={access.canRequest}>
       <p
         data-open={access.canRequest}
@@ -90,13 +91,16 @@ export function EventActions({
             : 'ACCESS INFO'}
       </p>
       <p className={ui.muted}>{access.message}</p>
+    </div>
+    <ActionDeck label="ACCESS" className={styles.accessDeck}>
       {access.canRequest && (
         <Action primary href={`${eventHref(event.id)}/request`}>
           게스트 신청
         </Action>
       )}
       <Action href="/signal">다음 행사 소식 신청</Action>
-    </div>
+    </ActionDeck>
+    </>
   );
 }
 export function Lineup({
@@ -123,6 +127,7 @@ export function Lineup({
       </>
     );
   }
+  const identityLinked = (artist: Artist) => !!profileForAppearance(profiles, event.id, artist.id);
   if (!visible.length) return null;
   return (
     <>
@@ -152,7 +157,7 @@ export function Lineup({
                               : 'CONFIRMED'}
                           </span>
                         </div>
-                        <div className={styles.slotArtist}>
+                        <div className={styles.slotArtist} data-linked={identityLinked(artist) || undefined}>
                           {identity(artist)}
                         </div>
                         <p className={styles.slotTime}>
@@ -194,7 +199,12 @@ export function EventRecord({
   const { language } = useLanguage();
   return (
     <div className={compact ? styles.recordCompact : styles.record}>
-      <EventOverview event={event} />
+      <div className={styles.column}>
+        <EventOverview event={event} />
+        <ActionDeck label="SESSION">
+          <Action href="/events">이벤트 목록</Action>
+        </ActionDeck>
+      </div>
       <Panel
         title="공연표"
         label="Running order"
@@ -234,7 +244,7 @@ function EventOverview({ event }: { event: TerminalEvent }) {
       <div data-event-state={event.status} className={styles.status}>
         {statusLabel(event.status)}
       </div>
-      <p className={styles.overviewTitle}>{event.session}</p>
+      <p className={styles.overviewTitle}><BrandText text={event.session} /></p>
       <p className={styles.overviewSubtitle}>{event.subtitle}</p>
       <EventFacts event={event} modular />
       {event.posterUrl && (
@@ -250,9 +260,6 @@ function EventOverview({ event }: { event: TerminalEvent }) {
           />
         </a>
       )}
-      <div className={ui.actions}>
-        <Action href="/events">이벤트 목록</Action>
-      </div>
     </Panel>
   );
 }

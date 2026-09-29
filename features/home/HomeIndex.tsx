@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref, publicArtists, statusLabel } from '@/features/events/model';
 import { buildArtistArchive } from '@/features/artists/model';
-import { Panel, Sub } from '@/features/ui/Ui';
+import { BrandText, Panel, Sub } from '@/features/ui/Ui';
 import { LiveValue } from '@/features/display/Display';
 import styles from './home.module.css';
 
@@ -50,7 +50,7 @@ export function HomeIndex({ events }: { events: TerminalEvent[] }) {
                   <span className={styles.sessionCode} aria-hidden="true">
                     {event.id.replace(/\D+/g, '').padStart(2, '0') || event.id}
                   </span>
-                  <span className={styles.sessionName}>{event.session}</span>
+                  <span className={styles.sessionName}><BrandText text={event.session} /></span>
                   <span className={styles.sessionState}>{statusLabel(event.status)}</span>
                 </Link>
               </li>

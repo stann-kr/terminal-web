@@ -1,6 +1,22 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { FrameMark } from '@/features/display/Logo';
 import styles from './ui.module.css';
+
+/** Sets every occurrence of the word TERMINAL in the brand face; other text is untouched. */
+export function BrandText({ text }: { text: string }) {
+  if (!text.includes('TERMINAL')) return <>{text}</>;
+  return (
+    <>
+      {text.split(/(TERMINAL)/).map((part, index) =>
+        part === 'TERMINAL' ? <span key={index} className={styles.brandWord}>{part}</span> : part,
+      )}
+    </>
+  );
+}
+function brand(children: ReactNode) {
+  return typeof children === 'string' ? <BrandText text={children} /> : children;
+}
 
 export function PageHeading({ title }: { title: string }) {
   return <h1 className={styles.srOnly}>{title}</h1>;
@@ -35,7 +51,7 @@ export function Panel({
       <header className={styles.panelHead}>
         <Title className={styles.panelTitle} data-labelled={label ? true : undefined}>
           {label && <span className={styles.panelLabel} aria-hidden="true">{label}</span>}
-          <span className={styles.panelKo}>{title}</span>
+          <span className={styles.panelKo}><BrandText text={title} /></span>
         </Title>
         {code && <span className={styles.chip} aria-hidden="true">{code}</span>}
       </header>
@@ -59,6 +75,7 @@ export function Chip({ children, solid = false }: { children: ReactNode; solid?:
 export function Bay({ label }: { label: string }) {
   return (
     <p className={styles.bay} aria-hidden="true">
+      <FrameMark className={styles.bayFrame} />
       <span>{label}</span>
     </p>
   );
@@ -77,8 +94,20 @@ export function Action({
       className={`${styles.action} ${primary ? styles.primary : ''}`}
       href={href}
     >
-      {children}
+      {brand(children)}
     </Link>
+  );
+}
+/**
+ * The control deck of a panel: its actions on their own card, stacked under or beside the content
+ * card so the page reads in layers. `label` is a printed station name; decorative.
+ */
+export function ActionDeck({ children, label = 'CONTROL', className = '' }: { children: ReactNode; label?: string; className?: string }) {
+  return (
+    <div className={`${styles.deck} ${className}`}>
+      <p className={styles.deckLabel} aria-hidden="true">{label}</p>
+      <div className={styles.deckKeys}>{children}</div>
+    </div>
   );
 }
 export function Facts({

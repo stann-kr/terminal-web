@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { TerminalEvent } from '@/lib/events/types';
 import { artistHref, buildArtistArchive } from '@/features/artists/model';
-import { Action, Chip, Panel } from '@/features/ui/Ui';
+import { Action, ActionDeck, Chip, Panel } from '@/features/ui/Ui';
 import { Meter } from '@/features/display/Meter';
 import styles from './home.module.css';
 
@@ -9,7 +9,8 @@ import styles from './home.module.css';
 export function HomeStatus({ events }: { events: TerminalEvent[] }) {
   const pending = events.some((event) => event.status !== 'ARCHIVED');
   return (
-    <Panel title="행사 상태" label="Status" surface="gold" className={styles.status}>
+    <div className={`${styles.stack} ${styles.status}`}>
+    <Panel title="행사 상태" label="Status" surface="gold">
       <ul className={styles.statusRows}>
         {(['LIVE', 'UPCOMING', 'ARCHIVED'] as const).map((status, index) => {
           const count = events.filter((event) => event.status === status).length;
@@ -26,10 +27,11 @@ export function HomeStatus({ events }: { events: TerminalEvent[] }) {
       <p className={styles.statusLine}>
         <Chip solid>{pending ? 'SESSION PENDING' : 'ALL SESSIONS LOGGED'}</Chip>
       </p>
-      <div className={styles.plateActions}>
-        <Action href="/about">TERMINAL 소개</Action>
-      </div>
     </Panel>
+    <ActionDeck label="NODE">
+      <Action href="/about">TERMINAL 소개</Action>
+    </ActionDeck>
+    </div>
   );
 }
 
@@ -39,12 +41,12 @@ export function HomeRoster({ events }: { events: TerminalEvent[] }) {
     (a, b) => a.name.localeCompare(b.name, 'ko') || a.key.localeCompare(b.key),
   );
   return (
+    <div className={`${styles.stack} ${styles.roster}`}>
     <Panel
       title="공개 아티스트"
       label="Artist roster"
       code={`${String(profiles.length).padStart(3, '0')} FILES`}
       surface="navy"
-      className={styles.roster}
     >
       {profiles.length ? (
         <ul className={styles.rosterCells}>
@@ -66,9 +68,10 @@ export function HomeRoster({ events }: { events: TerminalEvent[] }) {
       ) : (
         <p className={styles.empty}>공개된 아티스트 기록이 아직 없습니다.</p>
       )}
-      <div className={styles.plateActions}>
-        <Action href="/artists">전체 아티스트</Action>
-      </div>
     </Panel>
+    <ActionDeck label="ROSTER">
+      <Action href="/artists">전체 아티스트</Action>
+    </ActionDeck>
+    </div>
   );
 }

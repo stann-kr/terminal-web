@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
+import { BrandText } from '@/features/ui/Ui';
 import { eventHref, publicArtists, statusLabel } from './model';
 import styles from './events.module.css';
 
@@ -29,7 +30,7 @@ export function EventCard({
     >
       <span className={styles.cardId}>{event.id}</span>
       <div className={styles.cardMain}>
-        <h2>{event.session}</h2>
+        <h2><BrandText text={event.session} /></h2>
         {event.subtitle && <span className={styles.cardSubtitle}>{event.subtitle}</span>}
         {artists.length > 0 && (
           <span className={styles.cardArtists}>

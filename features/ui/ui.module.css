@@ -97,23 +97,26 @@
   color: var(--on-fill);
 }
 
-/* Bay: spare height kept as an ink-hatched reserve with a printed name. */
+/* Bay: spare height held by the logo's open frame, with a printed name inside. */
 .bay {
+  position: relative;
   display: flex;
-  flex: 1 1 40px;
+  flex: 1 1 56px;
   align-items: flex-end;
-  min-height: 40px;
-  margin-top: 12px;
-  border: 1px solid var(--faint);
-  color: var(--faint);
-  background: var(--rings);
+  min-height: 56px;
+  margin-top: 14px;
+  padding: 14px 22px;
+  color: var(--line);
+}
+.bayFrame {
+  position: absolute;
+  inset: 0;
 }
 .bay span {
-  padding: 3px 8px;
-  background: var(--plate, var(--bg));
+  position: relative;
   color: var(--muted);
   font: 700 11px/1 var(--display);
-  letter-spacing: .2em;
+  letter-spacing: .22em;
 }
 
 /* ── Keys: an outlined key, or a solid ink key for the one primary action. ── */
@@ -135,10 +138,48 @@
   text-transform: uppercase;
   transition: background-color .12s var(--ease), color .12s var(--ease);
 }
-.action::after {
-  content: '→' / '';
-  font-family: var(--sans);
-  letter-spacing: 0;
+/* Every occurrence of TERMINAL is set in the brand face. */
+.brandWord {
+  font-family: var(--brand);
+  font-weight: 400;
+  letter-spacing: .02em;
+  text-transform: none;
+}
+
+/* Deck: a panel's actions on their own dark card, stacked under the content card. */
+.deck {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+  padding: 10px 12px 10px 14px;
+  border-left: 4px solid var(--orange);
+  background: var(--deep);
+  color: var(--cream);
+  --ink: var(--cream);
+  --line: rgb(252 229 205 / .45);
+  --fill: var(--gold);
+  --on-fill: var(--navy);
+  --focus: var(--gold);
+}
+.deckLabel {
+  display: flex;
+  align-items: center;
+  padding-right: 12px;
+  border-right: 1px solid rgb(252 229 205 / .2);
+  color: var(--gold);
+  font: 700 12px/1 var(--display);
+  letter-spacing: .22em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.deckKeys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.deckKeys > * {
+  flex: 1 1 auto;
 }
 .action:hover,
 .button:hover:not(:disabled) {

@@ -41,12 +41,17 @@
   border-bottom: 3px solid var(--orange);
 }
 .brand {
-  color: var(--gold);
+  display: block;
+  color: var(--orange);
   text-decoration: none;
 }
-.brandName {
-  font: 800 38px/.85 var(--display);
-  letter-spacing: .04em;
+.brandMark {
+  display: block;
+  width: auto;
+  height: 46px;
+}
+.brand:hover {
+  color: var(--gold);
 }
 .tabs {
   display: flex;
@@ -138,6 +143,11 @@
   color: var(--navy);
 }
 /* A ring block closes each bar: the site's motif at its loudest, in orange on deep navy. */
+.brandNode {
+  font-family: var(--brand);
+  font-weight: 400;
+  font-size: 22px;
+}
 .node {
   display: flex;
   align-items: flex-end;
@@ -145,9 +155,49 @@
   padding: 8px 12px;
   border-left: var(--gap) solid var(--bg);
   color: var(--orange);
-  background: var(--rings);
+  background: repeating-radial-gradient(circle at 100% 100%,
+    transparent calc(var(--ring-phase) - 18px),
+    currentColor calc(var(--ring-phase) - 18px) calc(var(--ring-phase) - 16px),
+    transparent calc(var(--ring-phase) - 16px) var(--ring-phase));
   font: 800 18px/1 var(--display);
   letter-spacing: .06em;
+}
+
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .node { animation: ringOut 1.875s linear infinite; }
+}
+
+/* ── Ticker: real schedule facts running along the foot bar. ─────────────── */
+.ticker {
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+}
+.tickerTrack {
+  display: flex;
+  width: max-content;
+}
+.tickerTrack p {
+  display: flex;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.tickerTrack p > span {
+  padding-right: 48px;
+  color: var(--ink);
+  font: 700 13px/1 var(--display);
+  letter-spacing: .16em;
+}
+.tickerTrack p > span:nth-child(odd) {
+  color: var(--gold);
+}
+@keyframes tickerRun {
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .tickerTrack { animation: tickerRun 40s linear infinite; }
+  .ticker:hover .tickerTrack { animation-play-state: paused; }
 }
 
 /* ── Work field ────────────────────────────────────────────────────────── */
@@ -232,8 +282,8 @@
 }
 @media (max-width: 700px) {
   .frame { padding: 6px; gap: 6px; }
-  .brandName { font-size: 30px; }
-  .clock, .zone { display: none; }
+  .brandMark { height: 38px; }
+  .clock, .zone, .ticker { display: none; }
   .tab { flex-direction: column; justify-content: center; gap: 3px; height: 48px; padding: 0 4px; }
   .tabIndex { display: none; }
   .tabLabel { flex-direction: column; align-items: center; gap: 3px; font-size: 15px; }
@@ -244,4 +294,19 @@
 @media (forced-colors: active) {
   .tab[aria-current=page] { border: 2px solid Highlight; }
   .node { background: none; }
+}
+
+/* Page open: the plates of a page step up into place one after another. */
+@keyframes plateIn {
+  from { opacity: 0; transform: translateY(14px); }
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .main > :not(h1) > * {
+    animation: plateIn .5s cubic-bezier(.2, .8, .2, 1) both;
+  }
+  .main > :not(h1) > :nth-child(2) { animation-delay: 60ms; }
+  .main > :not(h1) > :nth-child(3) { animation-delay: 120ms; }
+  .main > :not(h1) > :nth-child(4) { animation-delay: 180ms; }
+  .main > :not(h1) > :nth-child(5) { animation-delay: 240ms; }
+  .main > :not(h1) > :nth-child(6) { animation-delay: 300ms; }
 }

@@ -53,3 +53,7 @@
 @media (max-width: 400px) {
   .code { grid-template-columns: minmax(0, 1fr); }
 }
+
+.deck {
+  margin-top: 12px;
+}

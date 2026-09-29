@@ -4,6 +4,7 @@
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: swap; }
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: swap; }
+@font-face { font-family: 'ProcrastinatingPixie'; src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype'); font-weight: 400 800; font-display: swap; }
 @font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
 /*
  * Hypnotic console: a deep navy field, navy panels, and a few loud solid plates in cream, gold,
@@ -52,6 +53,8 @@
   --display: 'Barlow Condensed', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   --sans: 'Barlow', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   --mono: 'Share Tech Mono', 'Apple SD Gothic Neo', 'Noto Sans KR', monospace;
+  /* The word TERMINAL is always set in the brand face. */
+  --brand: 'ProcrastinatingPixie', 'Barlow Condensed', sans-serif;
 
   --text-label: 12px;
   --text-ui: 14px;
@@ -150,8 +153,10 @@ input[type=checkbox]:checked::before { transform: scale(1); }
 button { color: inherit; }
 summary { min-height: 40px; padding-block: 8px; color: var(--ink); font: 700 var(--text-ui)/1.4 var(--display); letter-spacing: .1em; text-transform: uppercase; }
 details[open] > summary { margin-bottom: 6px; }
-@keyframes ringDrift {
-  to { --ring-phase: 14px; }
+/* All rings drift outward on one clock: one ring per bar at 128 BPM (4 beats = 1.875s). */
+@keyframes ringOut {
+  from { --ring-phase: 0px; }
+  to { --ring-phase: 18px; }
 }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }

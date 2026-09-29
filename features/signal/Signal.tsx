@@ -1,5 +1,5 @@
 'use client';
-import { Action, Bay, Facts, PageHeading, Panel, ui } from '@/features/ui/Ui';
+import { Action, ActionDeck, Bay, Facts, PageHeading, Panel, ui } from '@/features/ui/Ui';
 import {
   Consent,
   Field,
@@ -60,8 +60,10 @@ function SignalInformation({
               ? 'TRANSMISSION FAILED'
               : 'CHANNEL STANDBY'}
       </p>
-      <Action href="/about">소개 / 공식 채널</Action>
       <Bay label="CHANNEL 01 / STANDBY" />
+      <ActionDeck label="INFO" className={styles.deck}>
+        <Action href="/about">소개 / 공식 채널</Action>
+      </ActionDeck>
     </Panel>
   );
 }

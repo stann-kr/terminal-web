@@ -1,6 +1,6 @@
 'use client';
 import { eventHref } from '@/features/events/model';
-import { Action, StateNotice, ui } from '@/features/ui/Ui';
+import { Action, ActionDeck, StateNotice, ui } from '@/features/ui/Ui';
 import {
   Consent,
   Field,
@@ -39,10 +39,10 @@ export function AccessForm({
   const closed = (
     <StateNotice title="현재 신청할 수 없습니다">
       <p>{availability.message}</p>
-      <div className={ui.actions}>
+      <ActionDeck label="ACCESS">
         <Action href="/events">접수 대상 확인</Action>
         <Action href="/signal">소식 신청</Action>
-      </div>
+      </ActionDeck>
     </StateNotice>
   );
   if (done)

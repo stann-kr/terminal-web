@@ -5,7 +5,7 @@ import {
   publicArtists,
   statusLabel,
 } from '@/features/events/model';
-import { Action, Bay, Chip, Facts, FullText, StateNotice, Sub } from '@/features/ui/Ui';
+import { Action, ActionDeck, Bay, Chip, BrandText, Facts, FullText, StateNotice, Sub } from '@/features/ui/Ui';
 import { EventCountdown } from './EventCountdown';
 import styles from './home.module.css';
 
@@ -19,6 +19,7 @@ export function FeaturedEvent({
 }) {
   const artists = event ? publicArtists(event) : [];
   return (
+    <div className={`${styles.stack} ${styles.next}`}>
     <section
       className={styles.featured}
       aria-label="대표 행사"
@@ -41,7 +42,7 @@ export function FeaturedEvent({
           {event.status === 'ARCHIVED' && (
             <p className={styles.noUpcoming}>다음 행사 미정</p>
           )}
-          <h2 className={styles.session}>{event.session}</h2>
+          <h2 className={styles.session}><BrandText text={event.session} /></h2>
           <p className={styles.subtitle}>{event.subtitle}</p>
           <div className={styles.featuredGrid}>
             <EventCountdown event={event} />
@@ -79,12 +80,6 @@ export function FeaturedEvent({
             </>
           )}
           <Bay label={`${event.id} / SESSION FILE`} />
-          <div className={styles.featuredActions}>
-            <Action primary href={eventHref(event.id)}>
-              행사 상세 보기
-            </Action>
-            <Action href="/signal">소식 신청</Action>
-          </div>
         </>
       ) : (
         <StateNotice title="공개된 행사가 아직 없습니다">
@@ -95,5 +90,14 @@ export function FeaturedEvent({
         </StateNotice>
       )}
     </section>
+    {event && (
+      <ActionDeck label="SESSION">
+        <Action primary href={eventHref(event.id)}>
+          행사 상세 보기
+        </Action>
+        <Action href="/signal">소식 신청</Action>
+      </ActionDeck>
+    )}
+    </div>
   );
 }

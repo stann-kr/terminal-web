@@ -10,7 +10,9 @@ import {
 import { LiveValue } from '@/features/display/Display';
 import {
   Action,
+  ActionDeck,
   Bay,
+  BrandText,
   Facts,
   PageHeading,
   Panel,
@@ -144,7 +146,7 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
       {next && (
         <div className={styles.nextEvent} data-surface="orange">
           <p className={styles.nextLabel} aria-hidden="true">NEXT SESSION</p>
-          <Link href={eventHref(next.id)}>{next.session}</Link>
+          <Link href={eventHref(next.id)}><BrandText text={next.session} /></Link>
           <p>
             {next.date} · {next.venue}
           </p>
@@ -166,10 +168,11 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
             ))}
           </ul>
         )}
-        <div className={styles.summaryActions}>
-          <Action href="/signal">다음 행사 소식 신청</Action>
-        </div>
+        <Bay label="REGISTER" />
       </Panel>
+      <ActionDeck label="SIGNAL">
+        <Action href="/signal">다음 행사 소식 신청</Action>
+      </ActionDeck>
     </div>
   );
 }

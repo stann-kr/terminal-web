@@ -4,6 +4,8 @@ import { accessAvailability, eventHref } from '@/features/events/model';
 import { EventFacts } from '@/features/events/EventRecord';
 import {
   Action,
+  ActionDeck,
+  Bay,
   Loading,
   PageHeading,
   Panel,
@@ -67,9 +69,10 @@ function AccessEventSummary({
       {event ? (
         <>
           <EventFacts event={event} />
-          <div className={ui.actions}>
+          <Bay label={`${eventId} / ACCESS`} />
+          <ActionDeck label="SESSION" className={styles.deck}>
             <Action href={eventHref(event.id)}>행사 상세</Action>
-          </div>
+          </ActionDeck>
         </>
       ) : query.isPending ? (
         <Loading />
