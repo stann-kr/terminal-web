@@ -17,7 +17,7 @@
 .statement {
   margin-block: 8px 24px;
   color: var(--accent);
-  font: 400 var(--t-3xl)/.9 var(--brand);
+  font: 400 clamp(48px, 17cqi, 160px)/.9 var(--brand);
 }
 /* Channel directory: a dark index cell beside an outlined name cell. */
 .channels {
@@ -59,14 +59,6 @@
 .channels a > * {
   transition: background-color .14s var(--ease), border-color .14s var(--ease), color .14s var(--ease);
 }
-.channels a:hover > span:first-child {
-  background: var(--gold);
-  color: var(--navy);
-}
-.channels a:hover :is(strong, .host) {
-  border-color: var(--gold);
-  background: rgb(252 191 73 / .1);
-}
 .channels a:focus-visible {
   outline-offset: 2px;
 }
@@ -76,4 +68,21 @@
 }
 @media (max-width: 860px) {
   .layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.channels a > span:first-child,
+.host {
+  white-space: nowrap;
+}
+
+.channels a:hover > span:first-child {
+  background: transparent;
+  color: var(--fill);
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+.channels a:hover :is(strong, .host) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--plate, var(--navy));
 }

@@ -22,6 +22,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  container-type: inline-size;
   padding: calc(var(--pad) * .7) var(--pad) var(--pad);
 }
 .panelHead {
@@ -43,7 +44,7 @@
 }
 .panelLabel {
   color: var(--accent);
-  font: 700 var(--t-xl)/1 var(--display);
+  font: 700 clamp(18px, 7.5cqi, 38px)/1 var(--display);
   letter-spacing: .02em;
   text-transform: uppercase;
 }
@@ -142,9 +143,9 @@
 
 /* Deck: a panel's actions on their own dark card, stacked under the content card. */
 .deck {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
   padding: 10px 12px 10px 14px;
   border-left: 4px solid var(--orange);
@@ -157,18 +158,15 @@
   --focus: var(--gold);
 }
 .deckLabel {
-  display: flex;
-  align-items: center;
-  padding-right: 12px;
+  padding-right: 14px;
   border-right: 1px solid rgb(252 229 205 / .2);
   color: var(--gold);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .22em;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
 }
 .deckKeys {
   display: flex;
+  flex: 1 1 240px;
   flex-wrap: wrap;
   gap: 6px;
 }
@@ -205,12 +203,13 @@
 /* ── Facts: a dark label cell beside an outlined value cell (STR ALPHA · 122). ── */
 .facts {
   display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: 4px;
 }
 .facts > div {
   display: grid;
-  grid-template-columns: minmax(92px, 38%) minmax(0, 1fr);
-  gap: 4px;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
 }
 .facts dt {
   display: flex;
@@ -366,4 +365,39 @@
 @media (forced-colors: active) {
   .notice::before { display: none; }
   .facts dt { border: 1px solid CanvasText; }
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.panelLabel,
+.panelKo,
+.facts dt,
+.action,
+.button,
+.eyebrow,
+.bay span,
+.deckLabel {
+  padding-right: 14px;
+  border-right: 1px solid rgb(252 229 205 / .2);
+  color: var(--gold);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .22em;
+}
+.panelHead {
+  flex-wrap: wrap;
+}
+
+/* Plates answer their own width: label/value rows stack once a plate gets narrow. */
+@container (max-width: 440px) {
+  .facts,
+  .facts > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .facts > div {
+    gap: 0;
+  }
+  .facts dd {
+    justify-content: flex-start;
+    border-top: 0;
+    text-align: left;
+  }
 }

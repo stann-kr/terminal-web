@@ -44,8 +44,8 @@ export function FeaturedEvent({
           )}
           <h2 className={styles.session}><BrandText text={event.session} /></h2>
           <p className={styles.subtitle}>{event.subtitle}</p>
+          <EventCountdown event={event} />
           <div className={styles.featuredGrid}>
-            <EventCountdown event={event} />
             <div>
               <Sub>Schedule</Sub>
               <Facts
@@ -56,7 +56,7 @@ export function FeaturedEvent({
                 ]}
               />
             </div>
-          </div>
+            <div>
           <Sub>Lineup</Sub>
           <ul className={styles.lineupCells}>
             {artists.length
@@ -73,6 +73,8 @@ export function FeaturedEvent({
                   </li>
                 ))}
           </ul>
+            </div>
+          </div>
           {paragraphs(event.description, language).length > 0 && (
             <>
               <Sub>Briefing</Sub>

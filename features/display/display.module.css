@@ -69,3 +69,8 @@
   .meter { display: none; }
 }
 
+/* Short labels, codes and times never break mid-phrase. */
+.activity,
+.signalText {
+  white-space: nowrap;
+}

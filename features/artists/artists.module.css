@@ -53,6 +53,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  container-type: inline-size;
   padding: 0 10px 10px;
   background: var(--fill);
   color: var(--on-fill);
@@ -78,10 +79,10 @@
 }
 .cell h2 {
   margin-top: 12px;
-  font: 800 var(--t-xl)/.92 var(--display);
+  font: 800 clamp(20px, 15cqi, 38px)/.92 var(--display);
   letter-spacing: .02em;
   text-transform: uppercase;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .cellFoot {
   display: flex;
@@ -102,12 +103,6 @@
 }
 .cell {
   transition: box-shadow .14s var(--ease);
-}
-.cell:hover {
-  box-shadow: 0 4px 0 var(--gold);
-}
-.cell:focus-visible {
-  outline-offset: 2px;
 }
 .emptyCell {
   display: flex;
@@ -168,21 +163,22 @@
 .profileName {
   position: relative;
   display: block;
-  font: 800 clamp(48px, 4.6vw, 88px)/.88 var(--display);
+  font: 800 clamp(36px, 13cqi, 88px)/.88 var(--display);
   text-transform: uppercase;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   text-wrap: balance;
 }
 .timeline {
   display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
   gap: 4px;
 }
 /* A record row is one card: date cell, session cell, slot cell; the session link covers it all. */
 .timeline li {
   position: relative;
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr) 150px;
-  gap: 4px;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
 }
 .timeline li > * {
   transition: border-color .14s var(--ease), background-color .14s var(--ease);
@@ -236,14 +232,6 @@
 }
 .timeline li:hover {
 }
-.timeline li:hover > :not(time) {
-  border-color: var(--gold);
-  background: rgb(252 191 73 / .1);
-}
-.timeline li:has(a:focus-visible) {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
 .state {
   display: inline-block;
   color: var(--accent);
@@ -283,17 +271,6 @@
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .12em;
 }
-.sharedCells li:has(a:hover) {
-  box-shadow: 0 3px 0 var(--gold);
-}
-.note {
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid var(--faint);
-  color: var(--muted);
-  font-size: var(--t-sm);
-  font-weight: 600;
-}
 
 @media (max-width: 1500px) {
   .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -312,12 +289,83 @@
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
   .emptyCell { display: none !important; }
   .detail { grid-template-columns: minmax(0, 1fr); }
-  .timeline li { grid-template-columns: minmax(0, 1fr); }
   .identity { min-height: 220px; }
+}
+@container (max-width: 560px) {
+  .timeline { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 360px) {
   .grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (forced-colors: active) {
   .cell[data-featured=true] { border: 3px double CanvasText; }
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.cellHeader > span,
+.tag,
+.serialNumber,
+.count,
+.timeline time,
+.slot span,
+.slot b,
+.state,
+.identityOrigin,
+.identityCode,
+.originCells span,
+.sharedCells small {
+  white-space: nowrap;
+}
+.cellHeader {
+  flex-wrap: wrap;
+}
+
+/* Hover inverts the whole card: filled cells open to an outline in their own colour. */
+.cell:hover {
+  --ink: currentColor;
+  --muted: currentColor;
+  --line: currentColor;
+  background: var(--navy);
+  color: var(--fill);
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+.cell[data-surface]:hover {
+  background: var(--navy);
+  color: var(--plate);
+}
+.timeline li:hover > :not(time) {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--plate, var(--navy));
+}
+.timeline li:hover > :not(time) * {
+  color: inherit !important;
+}
+.timeline li:hover time {
+  background: transparent;
+  color: var(--fill);
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+.sharedCells li:has(a:hover) {
+  background: transparent;
+  color: var(--fill);
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+.sharedCells li:has(a:hover) small {
+  color: inherit;
+}
+.cell:focus-visible {
+  outline-offset: 2px;
+}
+.timeline li:has(a:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.note {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--faint);
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-weight: 600;
 }

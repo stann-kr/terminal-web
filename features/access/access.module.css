@@ -57,3 +57,8 @@
 .deck {
   margin-top: 12px;
 }
+
+/* Short labels, codes and times never break mid-phrase. */
+.legend {
+  white-space: nowrap;
+}

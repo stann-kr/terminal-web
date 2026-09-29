@@ -177,7 +177,7 @@ describe('rebuild public views',()=>{
     clients[0].setQueryData(['transmit',1],{logs:[{id:'log-1',ts:'2026.05.09 / 00:10',handle:'SECRET_HANDLE',message:'free text',createdAt:'2026-05-08T15:10:00.000Z'}],total:1,page:1,totalPages:1});
     return waitFor(()=>{
       expect(container).toHaveTextContent(/NODE-[0-9A-F]{4}/);
-      expect(container).toHaveTextContent('2026.05.09 / 00:10 KST');
+      expect(container).toHaveTextContent('05.09 00:10');
       expect(container).not.toHaveTextContent('SECRET_HANDLE');
       expect(container).not.toHaveTextContent('free text');
     });

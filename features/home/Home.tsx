@@ -29,7 +29,7 @@ export function Home() {
               <HomeStatus events={events} />
               <HomeRoster events={events} />
               <div className={`${styles.stack} ${styles.log}`}>
-                <Panel title="최근 접속 기록" label="Node activity">
+                <Panel title="최근 접속 기록" label="Node activity" code="KST">
                   <NodeActivity limit={6} />
                 </Panel>
                 <ActionDeck label="LOG">

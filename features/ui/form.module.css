@@ -4,6 +4,7 @@
   flex-direction: column;
   width: 100%;
   min-width: 0;
+  container-type: inline-size;
   padding: calc(var(--pad) * .7) var(--pad) var(--pad);
 }
 .formHeading {
@@ -153,4 +154,11 @@
 .formInterior > [role=status]:not(.success)::before,
 .formInterior > form > [role=status]::before {
   display: none;
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.formCode,
+.field label,
+.field label > span {
+  white-space: nowrap;
 }
