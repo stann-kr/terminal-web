@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { EventsData } from '@/features/events/data';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref, paragraphs, publicArtists, statusLabel } from '@/features/events/model';
-import { FrameMark } from '@/features/display/Logo';
 import { useLanguage } from '@/features/shell/Providers';
 import {
   Action,
@@ -57,7 +56,6 @@ function ArtistProfileSummary({ profile }: { profile: ArtistProfile }) {
     <div className={styles.column}>
       <Panel title="프로필" label="Artist file" surface={profile.key === 'stann-lumo' ? 'orange' : upcoming ? 'gold' : 'cream'} className={styles.profile}>
         <div className={styles.identity} aria-hidden="true">
-          <FrameMark className={styles.identityFrame} />
           <p className={styles.identityOrigin}>ORIGIN / {profile.origin || '—'}</p>
           <strong className={styles.profileName}>{profile.name}</strong>
           <p className={styles.identityCode}>{profile.origin || 'XX'}-{serialOf(profile.key)}</p>

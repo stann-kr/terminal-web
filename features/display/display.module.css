@@ -69,25 +69,3 @@
   .meter { display: none; }
 }
 
-/* Frame mark: logo frame lines at a constant stroke, drawn on when a page opens. */
-.frameMark {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 3px;
-  stroke-linecap: square;
-}
-.frameMark path {
-  vector-effect: non-scaling-stroke;
-}
-/* On page open the frame wipes in from both sides toward the middle, like the logo's reveal. */
-@keyframes frameDraw {
-  from { clip-path: inset(-4px 50% -4px 50%); }
-  to { clip-path: inset(-4px -4px -4px -4px); }
-}
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .frameMark { animation: frameDraw .8s cubic-bezier(.6, 0, .2, 1) .15s both; }
-}

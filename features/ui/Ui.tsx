@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { FrameMark } from '@/features/display/Logo';
 import styles from './ui.module.css';
 
 /** Sets every occurrence of the word TERMINAL in the brand face; other text is untouched. */
@@ -75,7 +74,6 @@ export function Chip({ children, solid = false }: { children: ReactNode; solid?:
 export function Bay({ label }: { label: string }) {
   return (
     <p className={styles.bay} aria-hidden="true">
-      <FrameMark className={styles.bayFrame} />
       <span>{label}</span>
     </p>
   );

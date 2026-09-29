@@ -145,7 +145,7 @@
 .column > :first-child {
   flex: 1;
 }
-/* The artist's name held inside the logo's open frame. */
+/* The artist's name, large, on the file plate. */
 .identity {
   position: relative;
   display: flex;
@@ -153,12 +153,8 @@
   flex-direction: column;
   justify-content: center;
   gap: 14px;
-  min-height: 300px;
-  padding: 34px 30px;
-}
-.identityFrame {
-  position: absolute;
-  inset: 0;
+  min-height: 260px;
+  padding: 12px 0;
 }
 .identityOrigin,
 .identityCode {
