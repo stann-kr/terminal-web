@@ -10,61 +10,53 @@
   border: 0;
 }
 .eyebrow {
-  font-size: var(--text-meta);
-  letter-spacing: .14em;
-  color: var(--muted);
+  width: fit-content;
   margin-bottom: 6px;
+  color: var(--muted);
+  font: 400 var(--text-meta)/1.4 var(--mono);
+  letter-spacing: .14em;
 }
+
+/* Panel: a tinted face with one cut corner; a colour plate when `surface` is set. */
 .panel {
-  min-width: 0;
-}
-/* Section header: a decoded label on a 1px rule, a framed code tag on the right. */
-.sectionTitle {
-  position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  min-width: 0;
+  padding: 14px 18px 20px;
+  background: var(--panel);
+  clip-path: var(--clip-tr);
+}
+.panel > :last-child:not(.sectionTitle) {
+  margin-bottom: 0;
+}
+/* Section header: a large condensed label on a heavy rule, a code cell on the right. */
+.sectionTitle {
+  display: flex;
+  align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 4px 12px;
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--line);
-  color: var(--ice);
-  font: 400 var(--text-meta)/1.5 var(--display);
-  letter-spacing: .14em;
-}
-/* A short bright segment at the rule's start, like a printed register mark. */
-.sectionTitle::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  width: 28px;
-  height: 1px;
-  background: var(--ice);
-  box-shadow: 0 0 6px rgb(var(--color-accent-primary) / .7);
+  border-bottom: 2px solid var(--line);
+  color: var(--accent);
+  font: 600 var(--text-lead)/1.1 var(--display);
+  letter-spacing: .05em;
+  text-transform: uppercase;
 }
 .titleText {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-.titleText::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: var(--ice);
-  box-shadow: 0 0 6px rgb(var(--color-accent-primary) / .6);
+  min-width: 0;
 }
 .code {
-  padding: 0 6px;
+  padding: 2px 8px;
   border: 1px solid var(--line);
   color: var(--muted);
-  font: var(--text-meta)/1.6 var(--mono);
-  letter-spacing: .1em;
+  font: 400 var(--text-meta)/1.5 var(--mono);
+  letter-spacing: .12em;
+  text-transform: none;
 }
 
-/* ── Actions: framed label keys; the primary one is a solid block. ───────── */
+/* ── Actions: outlined keys; the primary one is a solid key with a cut corner. ── */
 .action,
 .button {
   position: relative;
@@ -73,40 +65,43 @@
   justify-content: space-between;
   gap: 18px;
   min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
+  padding: 10px 16px;
+  border: 1px solid var(--frame);
   background: transparent;
-  color: var(--ice);
-  font-size: var(--text-ui);
-  letter-spacing: .04em;
+  color: var(--accent);
+  font: 600 16px/1.2 var(--display);
+  letter-spacing: .08em;
   text-align: left;
   text-decoration: none;
+  text-transform: uppercase;
   transition: color var(--afterglow) ease-out, background-color var(--afterglow) ease-out, border-color var(--afterglow) ease-out;
 }
 .action::after {
   content: '→' / '';
-  color: var(--muted);
+  font-family: var(--mono);
 }
 .action:hover,
-.button:hover:not(:disabled),
-.action:focus-visible,
-.button:focus-visible {
-  border-color: var(--ice);
-  color: var(--ink);
+.button:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgb(var(--accent-rgb) / .1);
   transition-duration: 0s;
 }
 .primary {
-  background: var(--ice);
-  border-color: var(--ice);
+  padding-right: 22px;
+  border-color: var(--accent);
+  background: var(--accent);
   color: var(--bg);
+  clip-path: var(--clip-br-sm);
 }
-.primary::after {
-  color: inherit;
+.primary:focus-visible,
+.action:focus-visible,
+.button:focus-visible {
+  outline-offset: -5px;
+  outline-color: currentColor;
 }
-.primary:hover:not(:disabled),
-.primary:focus-visible {
-  background: var(--ink);
+.primary:hover:not(:disabled) {
   border-color: var(--ink);
+  background: var(--ink);
   color: var(--bg);
 }
 .action:active,
@@ -117,67 +112,78 @@
 }
 .button[aria-busy='true']::after {
   content: '';
-  width: 7px;
-  height: 13px;
+  width: 8px;
+  height: 14px;
   background: currentColor;
 }
 
-/* ── Facts: label, dotted leader, value. ─────────────────────────────────── */
+/* ── Facts: ruled rows, a short label and a right-hand value. ─────────────── */
 .facts {
   display: grid;
+  border-top: 1px solid var(--line);
 }
 .facts > div {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(84px, auto) minmax(0, 1fr);
   align-items: baseline;
-  gap: 10px;
-  padding-block: 6px;
-  font-size: var(--text-ui);
+  gap: 16px;
+  padding-block: 9px;
+  border-bottom: 1px solid var(--faint);
 }
 .facts dt {
-  display: flex;
-  flex: 1;
-  align-items: baseline;
-  gap: 10px;
-  min-width: 0;
   color: var(--muted);
+  font: 400 var(--text-meta)/1.4 var(--mono);
+  letter-spacing: .1em;
   white-space: nowrap;
 }
-.facts dt::after {
-  content: '';
-  flex: 1;
-  min-width: 16px;
-  border-bottom: 1px dotted var(--line);
-  transform: translateY(-3px);
-}
 .facts dd {
-  max-width: 70%;
+  color: var(--ink);
+  font-size: var(--text-ui);
+  font-weight: 500;
   text-align: right;
-  color: var(--ice);
 }
 
-/* ── Notices ─────────────────────────────────────────────────────────────── */
+/* ── Notices: a framed cell with a solid label and the null mark. ─────────── */
 .notice {
   position: relative;
   display: grid;
   gap: 12px;
-  padding: 20px;
+  padding: 18px 76px 20px 18px;
   border: 1px solid var(--line);
   color: var(--muted);
 }
+.notice::before {
+  content: '';
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--line);
+  background:
+    linear-gradient(45deg, transparent calc(50% - 1px), var(--line) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(-45deg, transparent calc(50% - 1px), var(--line) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
+}
 .notice h2 {
-  color: var(--ice);
-  font-size: var(--text-lead);
-  font-weight: 400;
+  color: var(--accent);
+  font: 600 var(--text-lead)/1.2 var(--display);
+  letter-spacing: .03em;
 }
 .notice .eyebrow {
-  width: fit-content;
+  padding: 2px 8px;
+  background: var(--line);
+  color: var(--ink);
 }
 .error {
   border-color: var(--danger);
 }
-/* The failure label is a solid block, like a LOCKED header. */
+.error::before {
+  border-color: var(--danger);
+  background:
+    linear-gradient(45deg, transparent calc(50% - 1px), var(--danger) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(-45deg, transparent calc(50% - 1px), var(--danger) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
+}
 .error .eyebrow {
-  padding: 2px 8px;
   background: var(--danger);
   color: var(--bg);
 }
@@ -185,9 +191,19 @@
   color: var(--danger);
 }
 .loading {
-  padding: 32px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 0;
   color: var(--muted);
-  font-size: var(--text-ui);
+  font: 400 var(--text-ui)/1.4 var(--mono);
+}
+.loading > span {
+  display: inline-block;
+  width: 64px;
+  height: 12px;
+  color: var(--line);
+  background: var(--hatch);
 }
 
 /* ── Pagination ──────────────────────────────────────────────────────────── */
@@ -195,32 +211,39 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 24px;
-  border-top: 1px solid var(--line);
-  font-size: var(--text-ui);
+  gap: 8px;
+  margin-top: 16px;
+  font: 400 var(--text-ui)/1 var(--mono);
 }
 .pagination > * {
   display: flex;
   align-items: center;
   min-height: 44px;
-}
-.pagination > span {
+  padding-inline: 14px;
+  border: 1px solid var(--faint);
   color: var(--muted);
 }
+.pagination > span[aria-live] {
+  flex: 1;
+  justify-content: center;
+  border-color: transparent;
+  letter-spacing: .12em;
+}
 .pagination a {
-  color: var(--ice);
+  border-color: var(--frame);
+  color: var(--accent);
   text-decoration: none;
 }
 .pagination a:hover {
-  color: var(--ink);
+  background: var(--accent);
+  color: var(--bg);
 }
 
 /* ── Prose ───────────────────────────────────────────────────────────────── */
 .prose {
-  font-size: var(--text-body);
-  line-height: 1.85;
   color: var(--ink);
+  font-size: var(--text-body);
+  line-height: 1.8;
 }
 .prose p {
   margin-bottom: 14px;
@@ -240,7 +263,6 @@
 }
 .prose summary {
   width: fit-content;
-  font-size: var(--text-ui);
 }
 .muted {
   color: var(--muted);
@@ -248,7 +270,7 @@
 }
 .stack {
   display: grid;
-  gap: 32px;
+  gap: var(--gutter);
   align-content: start;
 }
 .actions {
@@ -268,7 +290,7 @@
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .prose details[open] > p {
-    animation: textExpand 200ms steps(8, end) both;
+    animation: textExpand 200ms steps(6, end) both;
   }
   .button[aria-busy='true']::after,
   .loading > span {
@@ -277,4 +299,5 @@
 }
 @media (forced-colors: active) {
   .error .eyebrow { border: 1px solid CanvasText; }
+  .notice::before { display: none; }
 }

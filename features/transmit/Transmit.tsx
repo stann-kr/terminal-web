@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeading, Pagination, Panel } from '@/features/ui/Ui';
 import { pageNumber } from '@/features/events/model';
+import { Plate } from '@/features/display/Plate';
 import { TransmitForm } from './TransmitForm';
 import { Feed, useTransmit } from './Feed';
 import styles from './transmit.module.css';
@@ -16,16 +17,19 @@ export function Transmit() {
     <>
       <PageHeading title="방문자 로그" />
       <div className={styles.layout}>
-        <Panel title="기록 남기기" code="WRITE">
-          <TransmitForm
-            onSaved={() => {
-              void client.invalidateQueries({ queryKey: ['transmit'] });
-            }}
-            onPosted={() => {
-              if (page !== 1) router.replace('/transmit', { scroll: false });
-            }}
-          />
-        </Panel>
+        <div className={styles.column}>
+          <Panel title="기록 남기기" code="WRITE">
+            <TransmitForm
+              onSaved={() => {
+                void client.invalidateQueries({ queryKey: ['transmit'] });
+              }}
+              onPosted={() => {
+                if (page !== 1) router.replace('/transmit', { scroll: false });
+              }}
+            />
+          </Panel>
+          <Plate surface="slate" title="Visitor log" code={'PUBLIC RECORD\nSEOUL NODE / KST'} cross className={styles.fill} />
+        </div>
         <TransmitLog page={page} query={query} />
       </div>
     </>

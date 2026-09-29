@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useIsFetching } from '@tanstack/react-query';
 import { DataActivity } from '@/features/display/Display';
 import { Blocks } from '@/features/display/Blocks';
-import { Barcode, Ticks } from '@/features/display/Instruments';
+import { Ticks } from '@/features/display/Instruments';
 import { useDisplayPolicy } from '@/features/display/useDisplayPolicy';
 import { ConsoleDock } from '@/features/console/ConsoleDock';
 import { CONSOLE_INPUT_ID } from '@/features/console/Console';
@@ -24,6 +24,18 @@ const secondary = [
   { href: '/signal', label: 'SIGNAL', ko: '소식 신청' },
   { href: '/about', label: 'ABOUT', ko: '소개' },
 ] as const;
+// Printed section codes, like the station numbers beside each panel; decoration only.
+const sections = [
+  ['/events', '02', 'EVENTS'],
+  ['/artists', '03', 'ARTISTS'],
+  ['/transmit', '04', 'LOG'],
+  ['/signal', '05', 'SIGNAL'],
+  ['/about', '06', 'ABOUT'],
+] as const;
+function sectionOf(pathname: string) {
+  const match = sections.find(([href]) => pathname.startsWith(href));
+  return match ? { code: match[1], label: match[2] } : { code: '01', label: 'HOME' };
+}
 const BOOT_KEY = 'terminal.boot.v1';
 // Runs while the HTML is parsed, before first paint: power-on once per tab session, never on save-data.
 const bootScript = `(function(){var b=document.currentScript&&document.currentScript.previousElementSibling;try{var c=navigator.connection;if(b&&!sessionStorage.getItem('${BOOT_KEY}')&&!(c&&c.saveData))b.setAttribute('data-play','');sessionStorage.setItem('${BOOT_KEY}','1')}catch(e){}})()`;
@@ -44,6 +56,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const [route, setRoute] = useState({ path: pathname, wipe: false });
   if (route.path !== pathname) setRoute({ path: pathname, wipe: true });
   const activeIndex = navigation.findIndex(({ href }) => href === '/' ? pathname === '/' : pathname.startsWith(href));
+  const section = sectionOf(pathname);
   useDisplayPolicy(frame);
 
   useEffect(() => {
@@ -90,8 +103,8 @@ export function Shell({ children }: { children: ReactNode }) {
     <div ref={frame} className={styles.frame}>
       <a href="#main" className={styles.skip}>본문으로 이동</a>
       <header className={styles.top}>
-        <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">
-          TERMINAL
+        <Link href="/" className={styles.brand} aria-label="TERMINAL 홈" data-surface="mint">
+          <span className={styles.brandName}>TERMINAL</span>
           <small aria-hidden="true">SEOUL TECHNO PLATFORM</small>
         </Link>
         <nav className={styles.tabs} aria-label="주 메뉴">
@@ -109,6 +122,7 @@ export function Shell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className={styles.system}>
+          <p className={styles.unit} aria-hidden="true"><span>UNIT</span>T-03</p>
           <Clock />
           <div className={styles.language} role="group" aria-label="콘텐츠 언어">
             {(['ko', 'en'] as const).map(lang => (
@@ -120,22 +134,17 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <div className={styles.status}>
+        <p className={styles.section} aria-hidden="true" data-surface="sand">
+          <b>{section.code}</b>
+          <span>{section.label}</span>
+        </p>
         <p className={styles.path}>
           <span className={styles.srOnly}>현재 위치 </span>
           guest@terminal:{shellPath(pathname)}
         </p>
-        <Ticks count={48} major={8} marker className={styles.statusScale} />
-        <Blocks cols={8} motion="scan" step={fetching ? 60 : 240} tone={fetching ? 'amber' : 'ice'} className={styles.statusBlocks} />
+        <Ticks count={60} major={10} className={styles.statusScale} />
+        <Blocks cols={8} motion="scan" step={fetching ? 60 : 240} tone={fetching ? 'sand' : 'mint'} className={styles.statusBlocks} />
         <DataActivity />
-      </div>
-      <p className={styles.rail} aria-hidden="true">
-        <span>TERMINAL SYSTEMS</span>
-        <b>SEOUL NODE</b>
-        <span>T-03 INTERFACE</span>
-      </p>
-      <div className={styles.ruler} aria-hidden="true">
-        <Ticks count={40} major={10} vertical />
-        <i className={styles.rulerMarker} />
       </div>
       <main ref={main} id="main" aria-label="본문" tabIndex={0} className={styles.main} data-wipe={route.wipe || undefined}>
         {children}
@@ -155,18 +164,14 @@ export function Shell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <p className={styles.zone}>ALL EVENT TIMES / KST</p>
-        <Barcode value={pathname} className={styles.hintCode} />
+        <p className={styles.hatchTag} aria-hidden="true">SEOUL NODE</p>
       </footer>
-      <div className={styles.screenFx} aria-hidden="true">
-        <i className={styles.band} />
-        <i className={styles.grain} />
-        <i className={styles.wipeLine} />
-      </div>
+      <i className={styles.wipeLine} aria-hidden="true" />
       <div ref={boot} className={styles.boot} aria-hidden="true" suppressHydrationWarning>
-        <p>TERMINAL SYSTEMS / SEOUL NODE</p>
-        <p>T-03 INTERFACE <span>··········</span> ONLINE</p>
-        <p>READING EVENT RECORDS <span>····</span></p>
-        <p>&gt;&gt; <i /></p>
+        <p data-surface="mint"><b>TERMINAL</b><span>SEOUL NODE</span></p>
+        <p><span>T-03 INTERFACE</span><b>ONLINE</b></p>
+        <p><span>EVENT RECORDS</span><b>READ</b></p>
+        <p data-surface="sand"><span>SESSION</span><b>OPEN</b></p>
       </div>
       <script type={typeof window === 'undefined' ? 'text/javascript' : 'text/plain'} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: bootScript }} />
     </div>

@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import type { TransmitLogPage } from '@/lib/transmit/contract';
 import { requestJson } from '@/features/ui/http';
 import { Loading, StateNotice, ui } from '@/features/ui/Ui';
-import { Corners } from '@/features/display/Instruments';
 import styles from './transmit.module.css';
 export function useTransmit(page: number) {
   return useQuery({
@@ -31,7 +30,6 @@ export function Feed({ page = 1, limit }: { page?: number; limit?: number }) {
       data-busy={query.isFetching}
       className={styles.console}
     >
-      <Corners />
       {query.isError && (
         <StateNotice
           error

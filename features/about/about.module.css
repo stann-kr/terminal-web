@@ -7,69 +7,46 @@
 }
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 1fr);
-  gap: clamp(28px, 4vw, 64px);
-  align-items: start;
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 1fr);
+  gap: var(--gutter);
+  align-items: stretch;
+}
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+  min-width: 0;
+}
+.plates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gutter);
+}
+.plates > * {
+  min-height: 140px;
+}
+.fill {
+  flex: 1 1 72px;
 }
 .statement {
   margin-block: 8px 28px;
-  color: var(--ice);
-  font: 400 clamp(28px, 3.4vw, 52px)/1.12 var(--display);
-  letter-spacing: -.05em;
-  text-shadow: var(--glow);
-}
-.credit {
-  margin-top: 24px;
-  padding-top: 12px;
-  border-top: 1px solid var(--faint);
-  color: var(--muted);
-  font-size: var(--text-meta);
-  letter-spacing: .1em;
-}
-/* Channel directory: numbered rows with the destination host, inverse on hover. */
-.channels {
-  border-top: 1px solid var(--faint);
-}
-.channels li {
-  border-bottom: 1px solid var(--faint);
-}
-.channels a {
-  display: grid;
-  grid-template-columns: 4ch minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 16px;
-  padding: 16px 12px;
-  color: var(--ice);
-  font-size: var(--text-ui);
-  letter-spacing: .08em;
-  text-decoration: none;
-  transition: background-color var(--afterglow) ease-out, color var(--afterglow) ease-out;
-}
-.channels a > span:first-child,
-.host {
-  color: var(--muted);
-  font-size: var(--text-meta);
-  letter-spacing: .06em;
-}
-.channels strong {
-  font-weight: 400;
-}
-.channels a:hover,
-.channels a:focus-visible {
-  background: var(--ice);
-  color: var(--bg);
-  transition-duration: 0s;
-}
-.channels a:is(:hover, :focus-visible) :is(span, .host) {
-  color: var(--bg);
-}
-@media (max-width: 760px) {
-  .layout { grid-template-columns: minmax(0, 1fr); gap: 36px; }
-  .channels a { grid-template-columns: 4ch minmax(0, 1fr); }
-  .host { grid-column: 2; }
+  color: var(--accent);
+  font: 700 clamp(48px, 6vw, 104px)/.9 var(--display);
+  letter-spacing: .01em;
 }
 .statement > span {
   display: block;
+}
+.statement > span:nth-child(2) {
+  color: var(--sand);
+}
+.credit {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--faint);
+  color: var(--muted);
+  font: 400 var(--text-meta)/1.4 var(--mono);
+  letter-spacing: .1em;
 }
 .console {
   display: grid;
@@ -77,4 +54,50 @@
   margin-bottom: 28px;
   padding: 12px;
   border: 1px solid var(--line);
+}
+/* Channel directory: numbered rows with the destination host, inverse on hover. */
+.channels {
+  display: grid;
+  gap: 4px;
+}
+.channels a {
+  display: grid;
+  grid-template-columns: 5ch minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  color: var(--accent);
+  font: 600 18px/1.2 var(--display);
+  letter-spacing: .08em;
+  text-decoration: none;
+  transition: background-color var(--afterglow) ease-out, color var(--afterglow) ease-out;
+}
+.channels a > span:first-child {
+  color: var(--muted);
+  font: 400 15px/1 var(--mono);
+}
+.host {
+  color: var(--muted);
+  font: 400 var(--text-meta)/1 var(--mono);
+  letter-spacing: .06em;
+}
+.channels a:hover,
+.channels a:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  outline-offset: -5px;
+  outline-color: var(--bg);
+  transition-duration: 0s;
+}
+.channels a:is(:hover, :focus-visible) :is(span, .host) {
+  color: var(--bg);
+}
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .channels a { grid-template-columns: 5ch minmax(0, 1fr); }
+  .host { grid-column: 2; }
+  .fill { display: none; }
 }

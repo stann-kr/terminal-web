@@ -1,6 +1,7 @@
 .dock {
   position: relative;
   min-width: 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  background: var(--well);
 }

@@ -6,93 +6,149 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+.fill {
+  flex: 1 1 120px;
+}
 
-/* ── Directory: an ls -l style listing with a quiet summary column. ──────── */
+/* ── Directory: a ruled register on a tinted face, a summary column beside it. ── */
 .directory {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
-  gap: clamp(28px, 4vw, 64px);
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: var(--gutter);
+  align-items: stretch;
+}
+.listing {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 14px 18px 18px;
+  background: var(--panel);
+  clip-path: var(--clip-tr);
+}
+.listingHead {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: var(--muted);
+  font: 400 var(--text-meta)/1 var(--mono);
+  letter-spacing: .12em;
+}
+.listingHead b {
+  display: flex;
+  align-items: center;
+  padding: 8px 28px 8px 12px;
+  background: var(--accent);
+  color: var(--bg);
+  font: 600 20px/1 var(--display);
+  letter-spacing: .1em;
+  clip-path: var(--clip-br-sm);
+}
+.listingHead span {
+  display: flex;
+  align-items: center;
+  padding-inline: 10px;
+  border: 1px solid var(--line);
+}
+.listingHead span:last-child {
+  margin-left: auto;
+}
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+  min-width: 0;
+}
+.listingFill {
+  display: flex;
+  align-items: flex-end;
+  flex: 1 1 48px;
+  min-height: 48px;
+  margin-top: 10px;
+  color: var(--faint);
+  background: var(--hatch);
+}
+.listingFill span {
+  margin: 0 0 8px 8px;
+  padding: 2px 8px;
+  background: var(--panel);
+  color: var(--muted);
+  font: 400 11px/1.4 var(--mono);
+  letter-spacing: .14em;
 }
 .cards,
 .cardsHead,
 .card {
-  --columns: 84px minmax(0, 1fr) 132px minmax(120px, 176px) 148px;
+  --columns: 96px minmax(0, 1fr) 132px minmax(120px, 190px) 150px;
 }
 .cards {
   display: grid;
-  border-top: 1px solid var(--line);
+  gap: 4px;
 }
 .cardsHead,
 .card {
   display: grid;
   grid-template-columns: var(--columns);
-  column-gap: 20px;
-  padding-inline: 12px;
+  column-gap: 18px;
+  padding-inline: 14px;
 }
 .cardsHead {
-  padding-block: 8px;
-  border-bottom: 1px solid var(--line);
-  color: var(--muted);
-  font-size: var(--text-meta);
+  padding-block: 7px;
+  background: var(--line);
+  color: var(--ink);
+  font: 600 13px/1 var(--display);
   letter-spacing: .14em;
 }
 .card {
-  --card-accent: var(--ice);
+  --card-accent: var(--accent);
   position: relative;
-  align-items: baseline;
-  padding-block: 16px;
-  border-bottom: 1px solid var(--faint);
+  align-items: center;
+  min-height: 84px;
+  padding-block: 12px;
+  border: 1px solid var(--line);
+  border-left-width: 6px;
   color: var(--muted);
   font-size: var(--text-ui);
   text-decoration: none;
-  /* Selection bar switches on instantly and decays like phosphor. */
   transition: background-color var(--afterglow) ease-out, color var(--afterglow) ease-out;
 }
-.card[data-event-state=UPCOMING],
+.card[data-event-state=UPCOMING] {
+  --card-accent: var(--sand);
+  border-color: rgb(var(--sand-rgb) / .55);
+  border-left-color: var(--sand);
+}
 .card[data-event-state=LIVE] {
-  --card-accent: var(--amber);
-}
-.card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 16px;
-  bottom: 16px;
-  width: 2px;
-  background: var(--card-accent);
-  opacity: 0;
-}
-.card[data-event-state=UPCOMING]::before,
-.card[data-event-state=LIVE]::before {
-  opacity: 1;
+  --card-accent: var(--teal);
+  border-color: var(--teal);
 }
 .cardId {
   color: var(--card-accent);
+  font: 400 15px/1.2 var(--mono);
   letter-spacing: .06em;
-  font-variant-numeric: tabular-nums;
 }
 .cardMain {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 .card h2 {
   color: var(--card-accent);
-  font: 400 var(--text-lead)/1.2 var(--display);
-  letter-spacing: -.02em;
+  font: 600 var(--text-lead)/1.1 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 .cardSubtitle {
   color: var(--ink);
 }
 .cardArtists {
   color: var(--muted);
-  font-size: var(--text-meta);
-  letter-spacing: .08em;
+  font: 400 var(--text-meta)/1.4 var(--mono);
+  letter-spacing: .06em;
 }
 .cardWhen {
   display: grid;
   color: var(--ink);
+  font: 400 15px/1.3 var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .cardWhen small {
@@ -101,6 +157,7 @@
 }
 .cardVenue {
   color: var(--ink);
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 .recordStamp {
@@ -108,187 +165,197 @@
   align-items: center;
   gap: 8px;
   white-space: nowrap;
-  color: var(--card-accent);
-  font-size: var(--text-meta);
+}
+.stateChip {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  color: var(--accent);
+  font: 600 13px/1 var(--display);
   letter-spacing: .08em;
 }
-.recordStamp > i {
-  width: 6px;
-  height: 6px;
-  border: 1px solid currentColor;
-}
-.cardLamp {
-  width: 40px;
-  flex-shrink: 0;
-  margin-left: 4px;
-  gap: 2px;
-}
-/* Inside the inverse selection bar the lamp prints in the background colour. */
-.card:is(:hover, :focus-visible) .cardLamp {
-  --tone: var(--bg);
-  --tone-rgb: var(--color-bg-base);
-}
-.card[data-event-state=UPCOMING] .recordStamp > i,
-.card[data-event-state=LIVE] .recordStamp > i {
-  background: currentColor;
-}
-.card:hover,
-.card:focus-visible {
+.card[data-event-state=UPCOMING] .stateChip,
+.card[data-event-state=LIVE] .stateChip {
+  border-color: var(--card-accent);
   background: var(--card-accent);
   color: var(--bg);
+}
+.cardLamp {
+  width: 44px;
+  flex-shrink: 0;
+  gap: 2px;
+}
+/* Hover and focus invert the whole row into its status colour. */
+.card:hover,
+.card:focus-visible {
+  border-color: var(--card-accent);
+  background: var(--card-accent);
+  color: var(--bg);
+  outline-offset: -5px;
+  outline-color: var(--bg);
   transition-duration: 0s;
 }
-.card:is(:hover, :focus-visible) :is(.cardId, h2, .cardSubtitle, .cardArtists, .cardWhen, .cardWhen small, .cardVenue, .recordStamp) {
+.card:is(:hover, :focus-visible) :is(.cardId, h2, .cardSubtitle, .cardArtists, .cardWhen, .cardWhen small, .cardVenue, .stateChip) {
   color: var(--bg);
 }
-.card:is(:hover, :focus-visible)::before {
-  opacity: 0;
+.card:is(:hover, :focus-visible) .stateChip {
+  border-color: var(--bg);
+  background: transparent;
+}
+.card:is(:hover, :focus-visible) .cardLamp {
+  --tone-rgb: var(--color-bg-base);
 }
 .card:active {
   background: var(--ink);
 }
 
+/* Summary column. */
 .directorySummary {
-  position: sticky;
-  top: 0;
+  flex: 0 0 auto;
 }
 .bays {
   display: grid;
   gap: 10px;
-  margin-top: 24px;
+  margin-top: 20px;
   padding: 12px;
   border: 1px solid var(--line);
 }
 .nextEvent {
   display: grid;
   gap: 4px;
-  margin-top: 24px;
-  padding: 14px 16px;
-  border: 1px solid var(--amber);
+  margin-top: 20px;
+  padding: 14px 16px 16px;
+  clip-path: var(--clip-br);
 }
 .nextEvent p {
-  color: var(--muted);
-  font-size: var(--text-meta);
+  font: 400 var(--text-meta)/1.4 var(--mono);
   letter-spacing: .1em;
 }
 .nextEvent p:first-child {
-  color: var(--amber);
+  width: fit-content;
+  padding: 1px 6px;
+  background: var(--ink);
+  color: var(--bg);
 }
 .nextEvent a {
   display: flex;
   align-items: center;
   min-height: 44px;
-  color: var(--amber);
-  font: 700 18px/1.3 var(--display);
-  letter-spacing: -.04em;
+  font: 700 26px/1 var(--display);
+  letter-spacing: .02em;
   text-decoration: none;
-  text-shadow: var(--glow-amber);
+  text-transform: uppercase;
 }
 .nextEvent a:hover {
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: 2px;
 }
 
-/* ── Event record: overview / running order / notes. ─────────────────────── */
+/* ── Event record: overview plate / running order / notes. ─────────────────── */
 .record {
   display: grid;
-  grid-template-columns: minmax(240px, 300px) minmax(0, 1.5fr) minmax(240px, 1fr);
-  gap: clamp(28px, 3.4vw, 56px);
-  align-items: start;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1.5fr) minmax(260px, 1fr);
+  gap: var(--gutter);
+  align-items: stretch;
 }
 .recordCompact {
   display: grid;
-  gap: 28px;
+  gap: var(--gutter);
+}
+
+.overview h2 {
+  font-size: var(--text-title);
+}
+.overviewSubtitle {
+  font: 500 18px/1.3 var(--display);
+  letter-spacing: .03em;
 }
 .status {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-block: 12px 4px;
-  padding: 2px 8px;
-  border: 1px solid var(--line);
-  color: var(--ice);
-  font-size: var(--text-meta);
-  letter-spacing: .1em;
-}
-.status[data-event-state=UPCOMING],
-.status[data-event-state=LIVE] {
-  border-color: var(--amber);
-  background: var(--amber);
+  width: fit-content;
+  margin-block: 14px 4px;
+  padding: 4px 10px;
+  background: var(--ink);
   color: var(--bg);
+  font: 600 14px/1 var(--display);
+  letter-spacing: .12em;
 }
 .factModules {
   display: grid;
-  gap: 20px;
-  margin-top: 20px;
+  gap: 18px;
+  margin-top: 18px;
 }
 .factModule > p {
-  margin-bottom: 2px;
-  color: var(--muted);
-  font-size: var(--text-meta);
+  margin-bottom: 6px;
+  font: 400 var(--text-meta)/1.4 var(--mono);
   letter-spacing: .14em;
 }
 .poster {
   display: block;
-  margin-top: 24px;
-  border: 1px solid var(--line);
+  margin-top: 20px;
+  border: 2px solid var(--frame);
 }
 .poster img {
   display: block;
-  max-height: 320px;
+  max-height: 340px;
   margin-inline: auto;
   object-fit: contain;
 }
+.runningOrder {
+  min-height: 100%;
+}
+.orderFill {
+  flex: 1 1 64px;
+  margin-top: 14px;
+}
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+  min-width: 0;
+}
 
-/* Running order: one framed window per stage, slots as table rows. */
+/* Running order: one outlined window per stage, slots as ruled rows. */
 .stageBoard {
   display: grid;
-  gap: 20px;
+  gap: 12px;
 }
 .stage {
-  position: relative;
   min-width: 0;
   border: 1px solid var(--frame);
 }
 .nodes {
-  max-width: 340px;
-  margin-top: 20px;
+  margin-top: 16px;
   padding: 10px;
-  border: 1px dashed var(--line);
-}
-.recordCode {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 20px;
-  color: var(--muted);
-  font-size: var(--text-meta);
-  letter-spacing: .14em;
+  border: 1px solid var(--line);
 }
 .stage h3 {
   display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
   justify-content: space-between;
   gap: 4px 12px;
-  padding: 7px 12px;
   border-bottom: 1px solid var(--frame);
-  color: var(--ice);
-  font-size: var(--text-meta);
-  font-weight: 400;
+  color: var(--muted);
+  font: 400 var(--text-meta)/1 var(--mono);
   letter-spacing: .14em;
 }
-.stage h3 > span:first-child {
-  margin: -7px 0 -7px -12px;
-  padding: 7px 12px;
-  background: var(--ice);
-  color: var(--bg);
+.stage h3 > span {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
 }
-.stage h3 > span:last-child {
-  color: var(--muted);
+.stage h3 > span:first-child {
+  padding-right: 28px;
+  background: var(--accent);
+  color: var(--bg);
+  font: 600 18px/1 var(--display);
+  letter-spacing: .1em;
+  clip-path: var(--clip-br-sm);
 }
 .stageSlots li {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr) auto;
+  grid-template-columns: 104px minmax(0, 1fr) auto;
   align-items: center;
   column-gap: 16px;
   padding: 6px 12px;
@@ -298,15 +365,18 @@
 }
 .slotCode {
   display: grid;
-  color: var(--muted);
-  font-size: var(--text-meta);
-  letter-spacing: .06em;
+  gap: 2px;
+  color: var(--accent);
+  font: 400 14px/1.2 var(--mono);
 }
 .slotCode span {
-  white-space: nowrap;
+  width: fit-content;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  color: var(--muted);
   font-size: 10px;
-  letter-spacing: .1em;
-  opacity: .8;
+  letter-spacing: .12em;
+  white-space: nowrap;
 }
 .slotArtist {
   display: flex;
@@ -314,8 +384,10 @@
   align-items: baseline;
   gap: 4px 10px;
   min-width: 0;
-  color: var(--ice);
-  font-size: var(--text-body);
+  color: var(--accent);
+  font: 600 20px/1.2 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 .slotArtist a {
   display: inline-flex;
@@ -323,27 +395,27 @@
   min-height: 44px;
   color: inherit;
   text-decoration: none;
-  letter-spacing: .02em;
 }
 .slotArtist a:hover {
   text-decoration: underline;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: 2px;
 }
 .slotArtist small {
   color: var(--muted);
-  font-size: var(--text-meta);
+  font: 400 var(--text-meta)/1 var(--mono);
   letter-spacing: .1em;
 }
 .slotTime {
   color: var(--ink);
+  font: 400 16px/1.2 var(--mono);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 .slotTime > span {
   margin-right: 10px;
   color: var(--muted);
-  font-size: var(--text-meta);
-  letter-spacing: .1em;
+  font-size: 11px;
+  letter-spacing: .12em;
 }
 
 /* Compact lineup list (non-stage use). */
@@ -360,7 +432,7 @@
   align-items: center;
   min-height: 44px;
   margin-block: -8px;
-  color: var(--ice);
+  color: var(--accent);
   text-decoration: none;
 }
 .lineup a:hover {
@@ -385,7 +457,7 @@
   border-top: 1px solid var(--faint);
 }
 
-/* Participation: a small window whose header is a solid block when access is open. */
+/* Participation: a solid sand header while access is open, a hatched one when closed. */
 .accessProtocol {
   display: grid;
   gap: 14px;
@@ -393,26 +465,39 @@
   border: 1px solid var(--line);
 }
 .protocolLabel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-inline: -16px;
-  padding: 7px 16px;
+  padding: 9px 16px;
   border-bottom: 1px solid var(--line);
-  color: var(--ice);
-  font-size: var(--text-meta);
-  letter-spacing: .16em;
+  color: var(--accent);
+  font: 600 16px/1 var(--display);
+  letter-spacing: .14em;
+}
+.protocolLabel::after {
+  content: '';
+  flex: 1;
+  height: 12px;
+  color: var(--line);
+  background: var(--hatch);
 }
 .accessProtocol[data-open=true] {
-  border-color: var(--amber);
+  border-color: var(--sand);
 }
 .protocolLabel[data-open=true] {
-  border-color: var(--amber);
-  background: var(--amber);
+  border-color: var(--sand);
+  background: var(--sand);
   color: var(--bg);
+}
+.protocolLabel[data-open=true]::after {
+  color: rgb(var(--color-bg-base) / .35);
 }
 .accessProtocol > a {
   width: 100%;
 }
 
-/* Rows print in one after another, in raster steps. */
+/* Rows step in one after another. */
 @keyframes rowIn {
   from { clip-path: inset(0 100% 0 0); }
   to { clip-path: inset(0 0 0 0); }
@@ -420,28 +505,36 @@
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .card,
   .stageSlots li {
-    animation: rowIn 300ms steps(10, end) both;
+    animation: rowIn 240ms steps(6, end) both;
   }
-  .card:nth-of-type(2), .stageSlots li:nth-child(2) { animation-delay: 70ms; }
-  .card:nth-of-type(3), .stageSlots li:nth-child(3) { animation-delay: 140ms; }
-  .card:nth-of-type(4), .stageSlots li:nth-child(4) { animation-delay: 210ms; }
-  .card:nth-of-type(5), .stageSlots li:nth-child(5) { animation-delay: 280ms; }
+  .card:nth-of-type(2), .stageSlots li:nth-child(2) { animation-delay: 60ms; }
+  .card:nth-of-type(3), .stageSlots li:nth-child(3) { animation-delay: 120ms; }
+  .card:nth-of-type(4), .stageSlots li:nth-child(4) { animation-delay: 180ms; }
+  .card:nth-of-type(5), .stageSlots li:nth-child(5) { animation-delay: 240ms; }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
   .record {
-    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+    grid-template-columns: minmax(240px, 290px) minmax(0, 1fr);
   }
-  .record > :last-child {
+  .notes {
     grid-column: 1 / -1;
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .notes > :last-child { display: none; }
+  .cards,
+  .cardsHead,
+  .card {
+    --columns: 84px minmax(0, 1fr) 124px minmax(100px, 160px) 120px;
+  }
+  .cardLamp { display: none; }
+}
+@media (max-width: 1080px) {
   .directory {
     grid-template-columns: minmax(0, 1fr);
   }
-  .directorySummary {
-    position: static;
-  }
+  .side .fill { display: none; }
 }
 @media (max-width: 900px) {
   .cardsHead {
@@ -461,13 +554,14 @@
   .cardWhen { grid-area: when; display: flex; gap: 10px; }
   .cardVenue { grid-area: venue; }
   .recordStamp { grid-area: state; }
+  .listingHead span:not(:last-child) { display: none; }
 }
 @media (max-width: 700px) {
   .record,
-  .record > :last-child {
+  .notes {
     grid-template-columns: minmax(0, 1fr);
-    gap: 32px;
   }
+  .listing { padding: 12px; }
   .card {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "id" "main" "when" "venue" "state";
@@ -482,6 +576,7 @@
     gap: 10px;
     padding-top: 4px;
   }
+  .orderFill { display: none; }
 }
 @media (forced-colors: active) {
   .card:is(:hover, :focus-visible) { outline: 2px solid Highlight; }

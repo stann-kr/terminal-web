@@ -45,13 +45,12 @@ export function EventCard({
       </span>
       <span className={styles.cardVenue}>{event.venue}</span>
       <span className={styles.recordStamp}>
-        <i aria-hidden="true" />
-        {statusLabel(event.status)}
+        <span className={styles.stateChip}>{statusLabel(event.status)}</span>
         <Blocks
           cols={4}
           motion={event.status === 'ARCHIVED' ? 'still' : 'scan'}
           step={140}
-          tone={event.status === 'ARCHIVED' ? 'ice' : 'amber'}
+          tone={event.status === 'ARCHIVED' ? 'mint' : 'sand'}
           lit={event.status === 'ARCHIVED' ? [0, 1] : []}
           className={styles.cardLamp}
         />

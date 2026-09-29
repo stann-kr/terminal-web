@@ -11,7 +11,7 @@ import {
 import { errorMessage } from '@/features/ui/http';
 import { useSignalSubscription } from './useSignalSubscription';
 import { Blocks } from '@/features/display/Blocks';
-import { Scope } from '@/features/display/Instruments';
+import { Plate } from '@/features/display/Plate';
 import styles from './signal.module.css';
 export function Signal() {
   const request = useSignalSubscription();
@@ -21,6 +21,11 @@ export function Signal() {
       <div className={styles.layout}>
         <SignalInformation request={request} />
         <SignalForm request={request} />
+        <div className={styles.plates}>
+          <Plate surface="teal" title="Channel 01" code={'NEXT SESSION NOTICE\nMAIL / INSTAGRAM'} className={styles.fill} />
+          <Plate surface="sand" title="Outbound" code="QUEUE / KST" />
+          <Plate hatch code="RESERVED" className={styles.hatch} />
+        </div>
       </div>
     </>
   );
@@ -51,14 +56,13 @@ function SignalInformation({
               ? 'TRANSMISSION FAILED'
               : 'CHANNEL STANDBY'}
       </p>
-      <Scope state={pending ? 'sending' : done ? 'saved' : error ? 'error' : 'idle'} />
       <Blocks
         cols={8}
         rows={4}
         labels
         motion={pending ? 'scan' : done ? 'still' : 'scan twinkle'}
         step={pending ? 40 : 160}
-        tone={error ? 'danger' : pending ? 'amber' : 'ice'}
+        tone={error ? 'danger' : pending ? 'sand' : 'mint'}
         lit={done ? Array.from({ length: 32 }, (_, index) => index) : [0, 1, 2, 5, 9, 10, 14, 17, 18, 21, 25, 29, 30]}
         accent={error ? [8, 23] : done ? [] : [8, 23]}
         className={styles.matrix}

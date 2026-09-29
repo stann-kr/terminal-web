@@ -13,8 +13,7 @@ import {
 } from '@/features/ui/Ui';
 import { buildArtistArchive, type ArtistProfile } from './model';
 import { Blocks } from '@/features/display/Blocks';
-import { Barcode, Corners } from '@/features/display/Instruments';
-import { Decode } from '@/features/display/Decode';
+import { Plate } from '@/features/display/Plate';
 import styles from './artists.module.css';
 
 export function ArtistDetail({ artistKey }: { artistKey: string }) {
@@ -39,7 +38,10 @@ export function ArtistDetail({ artistKey }: { artistKey: string }) {
           <>
             <PageHeading title={profile.name} />
             <div className={styles.detail}>
-              <ArtistProfileSummary profile={profile} />
+              <div className={styles.column}>
+                <ArtistProfileSummary profile={profile} />
+                <Plate title="Artist file" code={`${profile.origin} / ${String(profile.appearances.length).padStart(2, '0')} RECORDS`} cross className={styles.fill} />
+              </div>
               <ArtistChronology profile={profile} language={language} />
               <ArtistBiography profile={profile} language={language} />
             </div>
@@ -53,17 +55,19 @@ export function ArtistDetail({ artistKey }: { artistKey: string }) {
 function ArtistProfileSummary({ profile }: { profile: ArtistProfile }) {
   return (
     <Panel title="프로필" code="PROFILE">
-      <div className={styles.profileSignal} aria-hidden="true">
+      <div
+        className={styles.profileSignal}
+        aria-hidden="true"
+        data-surface={profile.key === 'stann-lumo' ? 'signal' : profile.appearances.some((row) => row.event.status !== 'ARCHIVED') ? 'sand' : 'mint'}
+      >
         <p className={styles.profileHead}>
           <span>ARTIST FILE</span>
           <span>{profile.origin}</span>
         </p>
-        <strong className={styles.profileName}><Decode text={profile.name} duration={640} /></strong>
+        <strong className={styles.profileName}>{profile.name}</strong>
         <div className={styles.profileFoot}>
           <Blocks cols={14} step={110} lit={[2, 3, 7, 11]} accent={[12]} />
-          <Barcode value={profile.key} />
         </div>
-        <Corners crosses />
       </div>
       <div className={ui.actions}>
         <Action href="/artists">전체 아티스트</Action>

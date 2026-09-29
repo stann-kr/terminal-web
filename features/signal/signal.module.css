@@ -1,61 +1,77 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(240px, 320px) minmax(0, 680px);
-  justify-content: center;
-  gap: clamp(28px, 4vw, 64px);
-  align-items: start;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr) minmax(220px, 300px);
+  gap: var(--gutter);
+  align-items: stretch;
+}
+.plates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+  min-width: 0;
+}
+.fill {
+  flex: 1 1 120px;
+}
+.hatch {
+  flex: 0 0 72px;
 }
 .lead {
   color: var(--ink);
-  font-size: var(--text-body);
-  line-height: 1.8;
+  font: 500 20px/1.4 var(--display);
+  letter-spacing: .02em;
 }
 /* Channel state: the real request lifecycle as one status line. */
 .signalMatrix {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-block: 20px 24px;
-  padding: 8px 12px;
+  gap: 10px;
+  margin-block: 20px 16px;
+  padding: 9px 12px;
   border: 1px solid var(--line);
   color: var(--muted);
-  font-size: var(--text-meta);
+  font: 400 var(--text-meta)/1 var(--mono);
   letter-spacing: .12em;
 }
 .signalMatrix i {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border: 1px solid currentColor;
 }
 .signalMatrix[data-state=sending] {
-  border-color: var(--amber);
-  color: var(--amber);
+  border-color: var(--sand);
+  background: var(--sand);
+  color: var(--bg);
 }
 .signalMatrix[data-state=sending] i,
 .signalMatrix[data-state=saved] i {
   background: currentColor;
 }
 .signalMatrix[data-state=saved] {
-  border-color: var(--ice);
-  color: var(--ice);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
 }
 .signalMatrix[data-state=error] {
   border-color: var(--danger);
   color: var(--danger);
 }
 @keyframes signalBlocks {
-  0%, 10% { opacity: 1; }
-  35%, 100% { opacity: .3; }
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: .25; }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .signalMatrix[data-state=sending] i {
-    animation: signalBlocks .72s linear infinite;
+    animation: signalBlocks .6s steps(1, end) infinite;
   }
 }
-@media (max-width: 860px) {
-  .layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
-}
 .matrix {
-  max-width: 280px;
-  margin-block: 16px 24px;
+  margin-block: 0 24px;
+}
+@media (max-width: 1280px) {
+  .layout { grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); }
+  .plates { display: none; }
+}
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
 }

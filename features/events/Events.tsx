@@ -10,6 +10,7 @@ import {
 import { LiveValue } from '@/features/display/Display';
 import { Blocks } from '@/features/display/Blocks';
 import { Ticks } from '@/features/display/Instruments';
+import { Plate } from '@/features/display/Plate';
 import {
   Action,
   Facts,
@@ -45,7 +46,12 @@ export function Events() {
 
           return (
             <div className={styles.directory}>
-              <div>
+              <div className={styles.listing}>
+                <p className={styles.listingHead} aria-hidden="true">
+                  <b>EVENT DIRECTORY</b>
+                  <span>{String(ordered.length).padStart(3, '0')} RECORDS</span>
+                  <span>PAGE {String(page).padStart(2, '0')}</span>
+                </p>
                 {ordered.length ? (
                   <div className={styles.cards}>
                     <p className={styles.cardsHead} aria-hidden="true">
@@ -73,13 +79,19 @@ export function Events() {
                     <Action href="/signal">다음 행사 소식 신청</Action>
                   </StateNotice>
                 )}
+                <div className={styles.listingFill} aria-hidden="true">
+                  <span>END OF DIRECTORY</span>
+                </div>
                 <Pagination
                   page={page}
                   totalPages={totalPages}
                   href={(page) => `/events?page=${page}`}
                 />
               </div>
-              <EventSummary events={events} now={now} />
+              <div className={styles.side}>
+                <EventSummary events={events} now={now} />
+                <Plate surface="slate" title="Archive bay" code={'ALL EVENT TIMES / KST\nSEOUL'} cross className={styles.fill} />
+              </div>
             </div>
           );
         }}
@@ -141,7 +153,7 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
         <Ticks count={30} major={5} marker />
       </div>
       {next && (
-        <div className={styles.nextEvent}>
+        <div className={styles.nextEvent} data-surface="sand">
           <p>NEXT / 다음 행사</p>
           <Link href={eventHref(next.id)}>{next.session}</Link>
           <p>

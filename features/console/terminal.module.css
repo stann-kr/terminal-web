@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  color: var(--ice);
+  color: var(--accent);
 }
 .outputFrame {
   display: flex;
@@ -25,7 +25,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 12px 0 10px;
+  padding: 12px 12px 10px;
   font: var(--text-ui)/1.6 var(--mono);
   scrollbar-width: thin;
 }
@@ -36,11 +36,12 @@
 .directoryLabel {
   width: fit-content;
   margin-bottom: 8px;
-  padding: 2px 8px;
-  font-size: var(--text-meta);
+  padding: 3px 18px 3px 8px;
+  font: 600 14px/1.2 var(--display);
   letter-spacing: .14em;
   color: var(--bg);
-  background: var(--ice);
+  background: var(--accent);
+  clip-path: var(--clip-br-sm);
 }
 .directory dl {
   display: grid;
@@ -54,14 +55,14 @@
   padding-block: 2px;
 }
 .directory dt {
-  color: var(--ice);
+  color: var(--accent);
 }
 .directory dd {
   color: var(--muted);
 }
 .ready {
   margin-top: 8px;
-  color: var(--amber);
+  color: var(--sand);
 }
 .entry {
   flex-shrink: 0;
@@ -70,14 +71,14 @@
   margin-top: 12px;
 }
 .command {
-  color: var(--amber);
+  color: var(--sand);
   margin-bottom: 4px;
   overflow-wrap: anywhere;
 }
 .entry pre {
   margin: 0;
   font: inherit;
-  color: var(--ice);
+  color: var(--accent);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -97,7 +98,7 @@
   background: currentColor;
 }
 .storageNotice {
-  color: var(--amber);
+  color: var(--sand);
   font-size: var(--text-meta);
   padding-block: 6px;
 }
@@ -108,11 +109,17 @@
   column-gap: 10px;
   align-items: center;
   min-height: 40px;
-  color: var(--ice);
+  padding-right: 4px;
+  color: var(--accent);
 }
 .promptLabel {
   display: flex;
+  align-self: stretch;
+  align-items: center;
   min-width: 0;
+  padding-inline: 12px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
   max-width: min(32ch, 40cqi);
   font-size: var(--text-ui);
   color: var(--muted);
@@ -138,8 +145,8 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--ice);
-  caret-color: var(--ice);
+  color: var(--accent);
+  caret-color: var(--accent);
   font: var(--text-ui)/40px var(--mono);
 }
 .inputArea[data-empty=true] input {
@@ -151,7 +158,7 @@
   left: 0;
   width: 8px;
   height: 14px;
-  background: var(--ice);
+  background: var(--accent);
   pointer-events: none;
 }
 .inputArea[data-empty=true] .cursor {
@@ -161,32 +168,38 @@
   display: none;
 }
 .prompt button {
-  height: 40px;
-  min-height: 40px;
-  padding: 0 4px;
-  border: 0;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
   background: transparent;
   color: var(--muted);
-  font: var(--text-meta)/40px var(--mono);
-  letter-spacing: .08em;
+  font: 600 13px/30px var(--display);
+  letter-spacing: .12em;
   white-space: nowrap;
 }
-.prompt button:hover,
+.prompt button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .prompt button:focus-visible {
-  color: var(--ice);
+  outline-offset: -4px;
 }
 .fold[aria-expanded=true] {
-  color: var(--ice);
+  color: var(--accent);
 }
 .prompt:has(input:focus-visible) .promptLabel,
 .terminal[data-printing=true] .promptLabel {
-  color: var(--amber);
+  color: var(--sand);
+}
+.prompt input:focus-visible {
+  outline: none;
 }
 .inputArea:has(input:focus-visible) {
-  box-shadow: inset 0 -1px 0 var(--amber);
+  box-shadow: inset 0 -2px 0 var(--focus);
 }
 .output:focus-visible {
-  box-shadow: inset 0 2px 0 var(--ice);
+  box-shadow: inset 0 2px 0 var(--accent);
 }
 .label {
   position: absolute;
@@ -204,7 +217,7 @@
 }
 @media (max-width: 700px), (pointer: coarse) {
   .prompt input { font-size: 16px; height: 44px; line-height: 44px; }
-  .prompt button { height: 44px; min-height: 44px; line-height: 44px; padding-inline: 6px; }
+  .prompt button { height: 44px; min-height: 44px; line-height: 42px; padding-inline: 8px; }
 }
 @media (max-width: 700px) {
   /* Narrow screens keep the event first: the directory folds to its label and the ready hint. */

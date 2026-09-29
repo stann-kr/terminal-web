@@ -1,23 +1,32 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
-  gap: clamp(28px, 4vw, 64px);
-  align-items: start;
+  grid-template-columns: minmax(300px, 440px) minmax(0, 1fr);
+  gap: var(--gutter);
+  align-items: stretch;
+}
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gutter);
+  min-width: 0;
+}
+.fill {
+  flex: 1 1 120px;
 }
 
-/* Length readout: a framed LCD-style counter, not a display headline. */
+/* Length readout: a framed digit well beside its label, and a 28-segment gauge below. */
 .counter {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  border: 1px solid var(--line);
+  border: 2px solid var(--frame);
 }
 .counter > span {
   display: flex;
   align-items: center;
   padding-inline: 12px;
   color: var(--muted);
-  font-size: var(--text-meta);
+  font: 400 var(--text-meta)/1.3 var(--mono);
   letter-spacing: .12em;
 }
 .counter strong {
@@ -26,32 +35,39 @@
   gap: 8px;
   padding: 8px 14px;
   border-left: 1px solid var(--line);
-  color: var(--ice);
-  font: 400 28px/1 var(--mono);
+  color: var(--accent);
+  font: 400 36px/1 var(--mono);
   font-variant-numeric: tabular-nums;
-  text-shadow: var(--glow);
 }
 .counter small {
   color: var(--muted);
   font-size: var(--text-ui);
-  text-shadow: none;
 }
 form[aria-busy=true] .counter {
-  border-color: var(--amber);
+  border-color: var(--sand);
+}
+.gauge {
+  gap: 2px;
+}
+.gauge i:nth-child(n) {
+  aspect-ratio: .45;
 }
 .receipt {
   padding: 10px 12px;
-  border: 1px solid var(--ice);
-  color: var(--ice);
+  border: 1px solid var(--accent);
+  color: var(--accent);
   font-size: var(--text-ui);
 }
 
-/* Public log: timestamped rows in one framed console. */
+/* Public log: timestamped rows in one outlined console that fills its panel. */
 .console {
+  position: relative;
   display: flex;
+  flex: 1;
   flex-direction: column;
-  min-height: 220px;
+  min-height: 160px;
   border: 1px solid var(--frame);
+  background: var(--well);
 }
 .console > [role] {
   margin: 12px;
@@ -60,7 +76,7 @@ form[aria-busy=true] .counter {
   padding: 16px;
 }
 .logs li {
-  padding: 14px 16px;
+  padding: 12px 14px;
 }
 .logs li + li {
   border-top: 1px solid var(--faint);
@@ -68,50 +84,57 @@ form[aria-busy=true] .counter {
 .logs header {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 14px;
+  align-items: center;
+  gap: 4px 12px;
   margin-bottom: 6px;
 }
 .logs time {
+  padding: 1px 6px;
+  border: 1px solid var(--line);
   color: var(--muted);
-  font-size: var(--text-meta);
+  font: 400 var(--text-meta)/1.4 var(--mono);
   font-variant-numeric: tabular-nums;
-  letter-spacing: .04em;
 }
 .logs strong {
-  color: var(--ice);
-  font-size: var(--text-ui);
-  font-weight: 400;
+  color: var(--accent);
+  font: 600 16px/1.2 var(--display);
   letter-spacing: .08em;
 }
 .logs p {
   color: var(--ink);
   font-size: var(--text-body);
-  line-height: 1.75;
+  line-height: 1.7;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-/* Query state line: steady when current, amber while reading, alert on failure. */
+/* Query state line: steady when current, sand while reading, alert on failure. */
 .feedRule {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-top: 12px;
   color: var(--muted);
-  font-size: var(--text-meta);
+  font: 400 var(--text-meta)/1 var(--mono);
   letter-spacing: .12em;
 }
 .feedRule i {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border: 1px solid currentColor;
+}
+.feedRule::after {
+  content: '';
+  flex: 1;
+  height: 12px;
+  color: var(--faint);
+  background: var(--hatch);
 }
 .feedRule[data-state=ready] i {
   background: currentColor;
 }
 .feedRule[data-state=loading] {
-  color: var(--amber);
+  color: var(--sand);
 }
 .feedRule[data-state=loading] i {
   background: currentColor;
@@ -120,38 +143,26 @@ form[aria-busy=true] .counter {
   color: var(--danger);
 }
 @keyframes readPulse {
-  0%, 10% { opacity: 1; }
-  35%, 100% { opacity: .3; }
-}
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .feedRule[data-state=loading] i {
-    animation: readPulse .72s linear infinite;
-  }
-}
-@media (max-width: 860px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 36px;
-  }
-}
-/* Real message length as a 28-segment gauge: amber while sending, alert near the limit. */
-.gauge {
-  gap: 2px;
-}
-.gauge i:nth-child(n) {
-  aspect-ratio: .5;
-}
-.console {
-  position: relative;
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: .25; }
 }
 @keyframes logIn {
   from { clip-path: inset(0 100% 0 0); }
   to { clip-path: inset(0 0 0 0); }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .logs li { animation: logIn 280ms steps(10, end) both; }
-  .logs li:nth-child(2) { animation-delay: 60ms; }
-  .logs li:nth-child(3) { animation-delay: 120ms; }
-  .logs li:nth-child(4) { animation-delay: 180ms; }
-  .logs li:nth-child(5) { animation-delay: 240ms; }
+  .feedRule[data-state=loading] i {
+    animation: readPulse .6s steps(1, end) infinite;
+  }
+  .logs li { animation: logIn 240ms steps(6, end) both; }
+  .logs li:nth-child(2) { animation-delay: 50ms; }
+  .logs li:nth-child(3) { animation-delay: 100ms; }
+  .logs li:nth-child(4) { animation-delay: 150ms; }
+  .logs li:nth-child(5) { animation-delay: 200ms; }
+}
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fill { display: none; }
 }

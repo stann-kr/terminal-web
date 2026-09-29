@@ -2,36 +2,37 @@
 .ticks {
   position: relative;
   display: grid;
-  gap: 3px;
+  gap: 4px;
   color: var(--line);
   pointer-events: none;
 }
 .scale {
   height: 10px;
   background:
-    repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px calc(100% / var(--count))) 0 100% / 100% 5px no-repeat,
-    repeating-linear-gradient(90deg, var(--frame) 0 1px, transparent 1px calc(100% * var(--major) / var(--count))) 0 0 / 100% 10px no-repeat;
+    repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px calc(100% / var(--count))) 0 100% / 100% 4px no-repeat,
+    repeating-linear-gradient(90deg, var(--frame) 0 2px, transparent 2px calc(100% * var(--major) / var(--count))) 0 0 / 100% 10px no-repeat;
   border-bottom: 1px solid currentColor;
 }
 .tickLabels {
   display: flex;
   justify-content: space-between;
   color: var(--muted);
-  font: 400 9px/1 var(--mono);
-  letter-spacing: .04em;
+  font: 400 10px/1 var(--mono);
 }
 .tickLabels b {
   font-weight: 400;
 }
 .caret {
   position: absolute;
-  top: -7px;
+  top: -8px;
   left: 0;
   width: 0;
   height: 0;
-  border-inline: 4px solid transparent;
-  border-top: 5px solid var(--amber);
-  filter: drop-shadow(0 0 3px rgb(var(--amber-rgb) / .6));
+  border-inline: 5px solid transparent;
+  border-top: 6px solid var(--signal);
+}
+[data-surface] .caret {
+  border-top-color: var(--ink);
 }
 .ticks[data-vertical] {
   grid-auto-flow: column;
@@ -41,116 +42,22 @@
   width: 10px;
   height: auto;
   background:
-    repeating-linear-gradient(180deg, currentColor 0 1px, transparent 1px calc(100% / var(--count))) 100% 0 / 5px 100% no-repeat,
-    repeating-linear-gradient(180deg, var(--frame) 0 1px, transparent 1px calc(100% * var(--major) / var(--count))) 0 0 / 10px 100% no-repeat;
+    repeating-linear-gradient(180deg, currentColor 0 1px, transparent 1px calc(100% / var(--count))) 100% 0 / 4px 100% no-repeat,
+    repeating-linear-gradient(180deg, var(--frame) 0 2px, transparent 2px calc(100% * var(--major) / var(--count))) 0 0 / 10px 100% no-repeat;
   border-bottom: 0;
   border-right: 1px solid currentColor;
 }
 .ticks[data-vertical] .tickLabels {
   flex-direction: column;
 }
-.ticks[data-vertical] .caret {
-  top: 0;
-  left: -8px;
-  border-block: 4px solid transparent;
-  border-inline: 0;
-  border-left: 5px solid var(--amber);
-}
 @keyframes caretSweep {
   0%, 8% { left: 0; }
-  46%, 54% { left: calc(100% - 8px); }
+  46%, 54% { left: calc(100% - 10px); }
   92%, 100% { left: 0; }
-}
-
-/* ── Corners: L-brackets on a focal window, with optional outer registration crosses. ── */
-.corners {
-  position: absolute;
-  inset: -1px;
-  pointer-events: none;
-}
-.corners i {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border: 0 solid var(--ice);
-}
-.corners i:nth-child(1) { top: -4px; left: -4px; border-width: 2px 0 0 2px; }
-.corners i:nth-child(2) { top: -4px; right: -4px; border-width: 2px 2px 0 0; }
-.corners i:nth-child(3) { bottom: -4px; left: -4px; border-width: 0 0 2px 2px; }
-.corners i:nth-child(4) { bottom: -4px; right: -4px; border-width: 0 2px 2px 0; }
-.corners[data-crosses] i::after {
-  content: '+';
-  position: absolute;
-  color: var(--muted);
-  font: 400 12px/1 var(--mono);
-}
-.corners[data-crosses] i:nth-child(1)::after { top: -18px; left: -18px; }
-.corners[data-crosses] i:nth-child(2)::after { top: -18px; right: -18px; }
-.corners[data-crosses] i:nth-child(3)::after { bottom: -18px; left: -18px; }
-.corners[data-crosses] i:nth-child(4)::after { bottom: -18px; right: -18px; }
-
-/* ── Barcode ── */
-.barcode {
-  display: block;
-  width: 120px;
-  height: 24px;
-  fill: currentColor;
-  color: var(--ice);
-  opacity: .8;
-}
-
-/* ── Scope: a graticule and a scrolling trace. ── */
-.scope {
-  position: relative;
-  height: 72px;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  background:
-    linear-gradient(var(--faint) 1px, transparent 1px) 0 50% / 100% 18px,
-    linear-gradient(90deg, var(--faint) 1px, transparent 1px) 0 0 / 24px 100%;
-  pointer-events: none;
-}
-.scope::after {
-  content: '';
-  position: absolute;
-  inset: 50% 0 auto;
-  border-top: 1px dashed var(--line);
-}
-.scope svg {
-  position: absolute;
-  inset: 0;
-  width: 200%;
-  height: 100%;
-  overflow: visible;
-}
-.trace polyline {
-  fill: none;
-  stroke: var(--ice);
-  stroke-width: 1.2;
-  vector-effect: non-scaling-stroke;
-  filter: drop-shadow(0 0 2px rgb(var(--color-accent-primary) / .8));
-}
-.trace {
-  transform-box: fill-box;
-  transform-origin: center;
-  transform: scaleY(.35);
-}
-.scope[data-state=sending] .trace { transform: scaleY(1); }
-.scope[data-state=sending] polyline { stroke: var(--amber); filter: drop-shadow(0 0 3px rgb(var(--amber-rgb) / .8)); }
-.scope[data-state=saved] .trace { transform: scaleY(.6); }
-.scope[data-state=error] .trace { transform: scaleY(.04); }
-.scope[data-state=error] polyline { stroke: var(--danger); }
-@keyframes traceScroll {
-  from { translate: 0 0; }
-  to { translate: -50% 0; }
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .caret { animation: caretSweep 7s cubic-bezier(.6, 0, .4, 1) infinite; }
-  .ticks[data-vertical] .caret { animation: none; }
-  .scope svg { animation: traceScroll 3.2s linear infinite; }
-  .scope[data-state=sending] svg { animation-duration: 1.1s; }
-  .trace { transition: transform 240ms steps(4, end); }
 }
 @media (forced-colors: active) {
-  .ticks, .corners, .barcode, .scope { display: none; }
+  .ticks { display: none; }
 }

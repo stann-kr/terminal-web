@@ -31,7 +31,7 @@ export function TransmitForm({
         cols={28}
         motion={pending ? 'scan' : 'still'}
         step={50}
-        tone={pending ? 'amber' : draft.message.length > 260 ? 'danger' : 'ice'}
+        tone={pending ? 'sand' : draft.message.length > 260 ? 'danger' : 'mint'}
         lit={Array.from({ length: Math.ceil((draft.message.length / 280) * 28) }, (_, index) => index)}
         className={styles.gauge}
       />

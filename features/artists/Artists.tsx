@@ -4,7 +4,7 @@ import { EventsData } from '@/features/events/data';
 import { pageNumber } from '@/features/events/model';
 import { PageHeading, Pagination, StateNotice } from '@/features/ui/Ui';
 import { buildArtistArchive } from './model';
-import { ArtistCard } from './ArtistCard';
+import { ArtistCard, EmptyCell } from './ArtistCard';
 import { Ticks } from '@/features/display/Instruments';
 import styles from './artists.module.css';
 
@@ -25,8 +25,9 @@ export function Artists() {
               Math.max(totalPages, 1),
             );
           return (
-            <>
+            <div className={styles.roster}>
               <div className={styles.countRow}>
+                <p className={styles.rosterTitle} aria-hidden="true">ARTIST ROSTER</p>
                 <p className={styles.count}>{profiles.length}개 기록</p>
                 <Ticks count={48} major={6} marker className={styles.countScale} />
               </div>
@@ -35,6 +36,10 @@ export function Artists() {
                   {profiles.slice((page - 1) * 12, page * 12).map((profile) => (
                     <ArtistCard key={profile.key} profile={profile} />
                   ))}
+                  {Array.from(
+                    { length: Math.max(0, 12 - profiles.slice((page - 1) * 12, page * 12).length) },
+                    (_, index) => <EmptyCell key={index} />,
+                  )}
                 </div>
               ) : (
                 <StateNotice title="아직 공개된 아티스트 기록이 없습니다" />
@@ -44,7 +49,7 @@ export function Artists() {
                 totalPages={totalPages}
                 href={(page) => `/artists?page=${page}`}
               />
-            </>
+            </div>
           );
         }}
       </EventsData>

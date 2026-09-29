@@ -3,7 +3,7 @@ import { useLanguage } from '@/features/shell/Providers';
 import { FullText, PageHeading, Panel } from '@/features/ui/Ui';
 import { Blocks } from '@/features/display/Blocks';
 import { Ticks } from '@/features/display/Instruments';
-import { Decode } from '@/features/display/Decode';
+import { Plate } from '@/features/display/Plate';
 import styles from './about.module.css';
 const copy = {
   ko: [
@@ -28,7 +28,14 @@ export function About() {
       <PageHeading title="음악이 시작되고, 사람이 모이는 곳" />
       <div className={styles.layout}>
         <AboutIntroduction language={language} />
-        <OfficialChannels />
+        <div className={styles.column}>
+          <OfficialChannels />
+          <div className={styles.plates}>
+            <Plate surface="sand" title="Seoul" code={'TECHNO PLATFORM\nSINCE TERMINAL [01]'} />
+            <Plate surface="teal" title="Node T-03" code="PUBLIC INTERFACE" cross />
+          </div>
+          <Plate hatch code="ARCHITECT / STANN LUMO" className={styles.fill} />
+        </div>
       </div>
     </>
   );
@@ -38,9 +45,9 @@ function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
   return (
     <Panel title="TERMINAL" code="SEOUL">
       <p className={styles.statement} aria-label="MUSIC. PEOPLE. CONTINUITY.">
-        <span aria-hidden="true"><Decode text="MUSIC." duration={380} /></span>
-        <span aria-hidden="true"><Decode text="PEOPLE." duration={520} /></span>
-        <span aria-hidden="true"><Decode text="CONTINUITY." duration={700} /></span>
+        <span aria-hidden="true">MUSIC.</span>
+        <span aria-hidden="true">PEOPLE.</span>
+        <span aria-hidden="true">CONTINUITY.</span>
       </p>
       <div className={styles.console}>
         <Blocks cols={24} rows={2} step={80} lit={[1, 2, 6, 11, 12, 17, 20, 26, 27, 31, 38, 44, 45]} accent={[33]} />

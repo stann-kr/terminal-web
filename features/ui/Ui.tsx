@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { Decode } from '@/features/display/Decode';
+import type { Surface } from '@/features/display/Plate';
 import styles from './ui.module.css';
 
 export function PageHeading({ title }: { title: string }) {
@@ -10,17 +10,20 @@ export function Panel({
   title,
   code,
   children,
+  surface,
   className = '',
 }: {
   title: string;
   code?: string;
   children: ReactNode;
+  /** A colour plate instead of the default tinted panel; tokens invert inside it. */
+  surface?: Surface;
   className?: string;
 }) {
   return (
-    <section className={`${styles.panel} ${className}`}>
-      <h2 className={styles.sectionTitle} aria-label={title}>
-        <span className={styles.titleText} aria-hidden="true"><Decode text={title} /></span>
+    <section className={`${styles.panel} ${className}`} data-surface={surface}>
+      <h2 className={styles.sectionTitle}>
+        <span className={styles.titleText}>{title}</span>
         {code && <span className={styles.code} aria-hidden="true">{code}</span>}
       </h2>
       {children}
@@ -91,7 +94,7 @@ export function StateNotice({
 export function Loading() {
   return (
     <p role="status" className={styles.loading}>
-      기록을 불러오는 중<span aria-hidden="true"> ▪</span>
+      기록을 불러오는 중<span aria-hidden="true" />
     </p>
   );
 }

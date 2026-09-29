@@ -15,7 +15,7 @@ export function Blocks({
   lit = [],
   accent = [],
   labels = false,
-  tone = 'ice',
+  tone = 'mint',
   state,
   step = 90,
   offset = 0,
@@ -30,7 +30,7 @@ export function Blocks({
   accent?: readonly number[];
   /** Print a two-digit sequence number in every cell. */
   labels?: boolean;
-  tone?: 'ice' | 'amber' | 'danger';
+  tone?: 'mint' | 'sand' | 'danger';
   state?: string;
   /** Milliseconds the scanning cell rests on each cell. */
   step?: number;

@@ -5,7 +5,7 @@ import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { useLanguage } from '@/features/shell/Providers';
 import { Action, Facts, FullText, Panel, ui } from '@/features/ui/Ui';
 import { Blocks } from '@/features/display/Blocks';
-import { Barcode, Corners } from '@/features/display/Instruments';
+import { Plate } from '@/features/display/Plate';
 import {
   buildArtistArchive,
   profileForAppearance,
@@ -137,7 +137,6 @@ export function Lineup({
                 key={dock}
                 aria-label={`무대 ${dock}`}
               >
-                <Corners />
                 <h3>
                   <span>STAGE {dock}</span>
                   <span>공개 공연표</span>
@@ -206,19 +205,22 @@ export function EventRecord({
         <Lineup event={event} events={events} stages />
         <div className={styles.nodes}>
           <Blocks
-            cols={8}
+            cols={16}
             rows={2}
+            labels
             step={130}
-            lit={[0, 3, 4, 7, 8, 9, 12, 15]}
+            lit={[0, 3, 4, 7, 8, 9, 12, 15, 17, 22, 26, 29]}
             accent={event.status !== 'ARCHIVED' ? [8, 9] : []}
           />
         </div>
+        <Plate hatch code="STAGE BAY / END OF ORDER" className={styles.orderFill} />
       </Panel>
-      <div className={ui.stack}>
+      <div className={styles.notes}>
         <EventIntroduction event={event} language={language} />
-        <Panel title="참여 안내">
+        <Panel title="참여 안내" code="ACCESS">
           <EventActions event={event} events={events} now={now} />
         </Panel>
+        <Plate surface="slate" title="Guest desk" code={'ACCESS PROTOCOL\nKST'} cross className={styles.fill} />
       </div>
     </div>
   );
@@ -226,16 +228,17 @@ export function EventRecord({
 
 function EventOverview({ event }: { event: TerminalEvent }) {
   return (
-    <Panel title={event.session} code={event.id}>
-      <p className={ui.muted}>{event.subtitle}</p>
+    <Panel
+      title={event.session}
+      code={event.id}
+      surface={event.status === 'ARCHIVED' ? 'mint' : event.status === 'LIVE' ? 'teal' : 'sand'}
+      className={styles.overview}
+    >
+      <p className={styles.overviewSubtitle}>{event.subtitle}</p>
       <div data-event-state={event.status} className={styles.status}>
         {statusLabel(event.status)}
       </div>
       <EventFacts event={event} modular />
-      <div className={styles.recordCode}>
-        <Barcode value={event.id} />
-        <span aria-hidden="true">{event.id}</span>
-      </div>
       {event.posterUrl && (
         <a
           className={styles.poster}

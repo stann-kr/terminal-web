@@ -13,6 +13,7 @@ import {
 import { FormPanel } from '@/features/ui/Form';
 import { AccessForm } from './AccessForm';
 import { Blocks } from '@/features/display/Blocks';
+import { Plate } from '@/features/display/Plate';
 import styles from './access.module.css';
 
 export function Access({ eventId }: { eventId: string }) {
@@ -41,6 +42,10 @@ export function Access({ eventId }: { eventId: string }) {
             availability={availability}
           />
         </FormPanel>
+        <div className={styles.plates}>
+          <Plate surface="sand" title="Guest desk" code={`${eventId}\nACCESS PROTOCOL`} className={styles.fill} />
+          <Plate hatch code="SEALED" className={styles.hatch} />
+        </div>
       </div>
     </>
   );
