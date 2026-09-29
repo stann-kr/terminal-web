@@ -1,14 +1,13 @@
-/* A lit console screen: top bar, a dotted work field that scrolls, one quiet foot line. */
+/* The wall: a steel title bar, tiled plates on the slate field, a steel foot bar. */
 .frame {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--gap);
   width: 100%;
   height: 100dvh;
-  padding: 14px clamp(14px, 2vw, 32px) 8px;
+  padding: 10px clamp(10px, 1.4vw, 24px);
   overflow: hidden;
-  background:
-    radial-gradient(90% 70% at 50% -10%, rgb(79 227 220 / .12), transparent 70%),
-    var(--bg);
+  background: var(--bg);
 }
 .srOnly {
   position: absolute;
@@ -24,54 +23,55 @@
   top: -100px;
   z-index: 30;
   padding: 12px;
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--fill);
+  color: var(--on-fill);
 }
 .skip:focus {
   top: 10px;
 }
 
-/* ── Top bar ───────────────────────────────────────────────────────────── */
+/* ── Title bar ─────────────────────────────────────────────────────────── */
 .top {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto 190px;
   align-items: center;
-  gap: 28px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line);
+  gap: 24px;
+  min-height: 64px;
+  padding-left: 20px;
 }
 .brand {
   display: grid;
   gap: 2px;
-  color: var(--ink);
+  color: var(--cyan);
   text-decoration: none;
 }
 .brandName {
-  font: 700 30px/.9 var(--display);
-  letter-spacing: .1em;
+  font: 700 34px/.85 var(--display);
+  letter-spacing: .03em;
+  text-shadow: 0 0 14px rgb(159 242 245 / .35);
 }
 .brand small {
   color: var(--muted);
-  font: 500 11px/1 var(--display);
-  letter-spacing: .32em;
+  font: 600 10px/1 var(--display);
+  letter-spacing: .3em;
 }
 .tabs {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 .tab {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
-  height: 44px;
-  padding: 0 22px 0 14px;
-  border: 1px solid var(--line);
-  color: var(--sub);
+  height: 38px;
+  padding: 0 16px 0 10px;
+  border: var(--stroke) solid var(--line);
+  color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
-  transition: color .12s var(--ease), border-color .12s var(--ease), background-color .12s var(--ease);
+  transition: background-color .12s var(--ease), color .12s var(--ease);
 }
 .tabIndex {
   color: var(--muted);
@@ -80,27 +80,25 @@
 .tabLabel {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  font: 600 17px/1 var(--display);
-  letter-spacing: .14em;
+  gap: 7px;
+  font: 700 17px/1 var(--display);
+  letter-spacing: .08em;
 }
 .tabLabel small {
   color: var(--muted);
-  font: 400 12px/1 var(--sans);
+  font: 500 12px/1 var(--sans);
   letter-spacing: 0;
 }
 .tab:hover {
-  border-color: var(--accent);
-  color: var(--ink);
+  background: rgb(238 243 234 / .12);
 }
 .tab[aria-current=page] {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--bg);
-  clip-path: var(--clip-br);
+  border-color: var(--fill);
+  background: var(--fill);
+  color: var(--on-fill);
 }
 .tab[aria-current=page] :is(.tabIndex, small) {
-  color: rgb(var(--color-bg-base) / .62);
+  color: var(--on-fill-muted);
 }
 .tab:focus-visible {
   outline-offset: -5px;
@@ -110,18 +108,23 @@
   align-items: center;
   gap: 16px;
 }
+.mark {
+  width: 30px;
+  height: 30px;
+  color: var(--cyan);
+}
 .clock {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 7px;
   color: var(--ink);
-  font: 400 22px/1 var(--mono);
+  font: 400 21px/1 var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .clockZone {
   color: var(--muted);
-  font: 500 11px/1 var(--display);
-  letter-spacing: .24em;
+  font: 700 11px/1 var(--display);
+  letter-spacing: .2em;
 }
 .language {
   display: flex;
@@ -130,22 +133,32 @@
   min-width: 40px;
   height: 32px;
   padding: 0 8px;
-  border: 1px solid var(--line);
+  border: var(--stroke) solid var(--line);
   background: transparent;
   color: var(--muted);
-  font: 600 13px/1 var(--display);
-  letter-spacing: .14em;
+  font: 700 13px/1 var(--display);
+  letter-spacing: .12em;
 }
 .language button + button {
   border-left: 0;
 }
 .language button[aria-pressed=true] {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--bg);
+  border-color: var(--fill);
+  background: var(--fill);
+  color: var(--on-fill);
 }
-.language button:hover:not([aria-pressed=true]) {
-  color: var(--ink);
+/* A hatched station block closes each bar, cut off from it by a slice of the wall. */
+.node {
+  display: flex;
+  align-items: flex-end;
+  align-self: stretch;
+  padding: 10px 14px;
+  border-left: var(--gap) solid var(--bg);
+  color: var(--cyan);
+  background: repeating-linear-gradient(-45deg, rgb(159 242 245 / .55) 0 1.5px, transparent 1.5px 10px);
+  font: 700 16px/1 var(--display);
+  letter-spacing: .06em;
+  text-shadow: 0 0 10px rgb(159 242 245 / .3);
 }
 
 /* ── Work field ────────────────────────────────────────────────────────── */
@@ -154,90 +167,96 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding-block: 16px;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-width: thin;
-  background: radial-gradient(circle, rgb(var(--accent-rgb) / .09) 1px, transparent 1.3px) 0 0 / 24px 24px;
   outline: none;
 }
 .main > :not(h1, [role=alert], [role=status]) {
   flex: 1 0 auto;
 }
 .main:focus-visible {
-  box-shadow: inset 0 2px 0 var(--focus);
+  box-shadow: inset 0 0 0 2px var(--focus);
 }
 
-/* ── Foot line ─────────────────────────────────────────────────────────── */
+/* ── Foot bar ──────────────────────────────────────────────────────────── */
 .foot {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto 190px;
   align-items: center;
-  gap: 6px 24px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font: 500 12px/1 var(--display);
+  gap: 20px;
+  min-height: 46px;
+  padding-left: 14px;
+  font: 700 12px/1 var(--display);
   letter-spacing: .2em;
 }
 .secondary {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 .secondary a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 34px;
+  min-height: 32px;
   padding-inline: 12px;
-  border: 1px solid var(--line);
+  border: var(--stroke) solid var(--line);
   color: var(--muted);
-  font: 400 12px/1 var(--sans);
+  font: 500 12px/1 var(--sans);
   letter-spacing: 0;
   text-decoration: none;
 }
 .secondary b {
-  color: var(--sub);
-  font: 600 13px/1 var(--display);
-  letter-spacing: .16em;
+  color: var(--ink);
+  font: 700 14px/1 var(--display);
+  letter-spacing: .1em;
 }
 .secondary a:hover {
-  border-color: var(--accent);
+  background: rgb(238 243 234 / .12);
 }
 .secondary a[aria-current=page] {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--bg);
+  border-color: var(--fill);
+  background: var(--fill);
+  color: var(--on-fill-muted);
 }
 .secondary a[aria-current=page] b {
-  color: inherit;
+  color: var(--on-fill);
 }
-.mark {
-  margin-left: auto;
+.zone {
+  color: var(--muted);
+}
+.footMark {
+  width: 26px;
+  height: 26px;
+  color: var(--cyan);
 }
 
-@media (max-width: 1280px) {
-  .tabLabel small { display: none; }
-  .top { gap: 18px; }
+@media (max-width: 1400px) {
+  .node { display: none; }
+  .top, .foot { grid-template-columns: auto minmax(0, 1fr) auto; padding-right: 14px; }
 }
-@media (max-width: 1080px) {
-  .top { grid-template-columns: minmax(0, 1fr) auto; row-gap: 12px; }
+@media (max-width: 1200px) {
+  .tabLabel small { display: none; }
+}
+@media (max-width: 1000px) {
+  .top { grid-template-columns: minmax(0, 1fr) auto; row-gap: 10px; padding: 10px 14px; }
   .tabs { grid-column: 1 / -1; grid-row: 2; }
   .tab { flex: 1; justify-content: center; }
   .tabLabel small { display: inline; }
+  .mark { display: none; }
 }
 @media (max-width: 700px) {
-  .frame { padding: 10px 10px 6px; }
-  .brandName { font-size: 26px; }
-  .brand small, .clock, .mark, .zone { display: none; }
-  .tab { flex-direction: column; justify-content: center; gap: 3px; height: 50px; padding: 0 4px; }
+  .frame { padding: 6px; gap: 6px; }
+  .brandName { font-size: 28px; }
+  .brand small, .clock, .zone, .footMark { display: none; }
+  .tab { flex-direction: column; justify-content: center; gap: 3px; height: 48px; padding: 0 4px; }
   .tabIndex { display: none; }
   .tabLabel { flex-direction: column; align-items: center; gap: 3px; font-size: 15px; }
-  .secondary { flex: 1; }
+  .foot { grid-template-columns: minmax(0, 1fr); padding: 6px; }
   .secondary a { flex: 1; justify-content: center; min-height: 40px; }
-  .main { padding-block: 10px; }
+  .secondary { width: 100%; }
 }
 @media (forced-colors: active) {
-  .main { background: none; }
   .tab[aria-current=page] { border: 2px solid Highlight; }
+  .node { background: none; }
 }

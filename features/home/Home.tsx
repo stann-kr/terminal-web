@@ -7,8 +7,10 @@ import {
 import { EventsData } from '@/features/events/data';
 import { useLanguage } from '@/features/shell/Providers';
 import { Feed } from '@/features/transmit/Feed';
-import { Action, PageHeading, Panel } from '@/features/ui/Ui';
+import { Action, Chip, PageHeading, Panel } from '@/features/ui/Ui';
+import { Mark } from '@/features/display/Mark';
 import { HomeIndex } from './HomeIndex';
+import { HomeRoster, HomeStatus } from './HomeModules';
 import { FeaturedEvent } from './FeaturedEvent';
 import styles from './home.module.css';
 export function Home() {
@@ -22,22 +24,29 @@ export function Home() {
             getFutureUpcomingEvent(events, now) ?? getDefaultEvent(events, now);
 
           return (
-            <div className={styles.dashboard}>
-              <HomeIndex events={events} />
+            <div className={styles.wall}>
               <FeaturedEvent event={event} language={language} />
-              <div className={styles.column}>
-                <Panel title="최근 방문자 로그" label="LOG" className={styles.recent}>
-                  <Feed limit={3} />
-                  <div className={styles.columnActions}>
-                    <Action href="/transmit">방문자 로그 전체</Action>
-                  </div>
-                </Panel>
-                <Link href="/signal" className={styles.signalTile} data-surface="cyan">
-                  <span className={styles.tileLabel} aria-hidden="true">SIGNAL</span>
-                  <span className={styles.tileText}>다음 행사 소식 받기</span>
-                  <span className={styles.tileCode} aria-hidden="true">MAIL / INSTAGRAM →</span>
-                </Link>
-              </div>
+              <HomeIndex events={events} />
+              <HomeStatus events={events} />
+              <HomeRoster events={events} />
+              <Panel title="최근 방문자 로그" label="Transmissions" surface="cream" className={styles.log}>
+                <Feed limit={3} />
+                <div className={styles.plateActions}>
+                  <Action href="/transmit">방문자 로그 전체</Action>
+                </div>
+              </Panel>
+              <Link href="/signal" className={styles.signal} data-surface="peach">
+                <span className={styles.signalHead} aria-hidden="true">
+                  <b>SIGNAL</b>
+                  <Mark className={styles.signalMark} />
+                </span>
+                <span className={styles.signalText}>다음 행사 소식 받기</span>
+                <span className={styles.signalChips} aria-hidden="true">
+                  <Chip>CH 01</Chip>
+                  <Chip>MAIL</Chip>
+                  <Chip>INSTAGRAM</Chip>
+                </span>
+              </Link>
             </div>
           );
         }}

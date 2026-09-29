@@ -1,7 +1,7 @@
 'use client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Bay, PageHeading, Pagination, Panel } from '@/features/ui/Ui';
+import { Bay, Facts, PageHeading, Pagination, Panel } from '@/features/ui/Ui';
 import { pageNumber } from '@/features/events/model';
 import { TransmitForm } from './TransmitForm';
 import { Feed, useTransmit } from './Feed';
@@ -17,7 +17,7 @@ export function Transmit() {
       <PageHeading title="방문자 로그" />
       <div className={styles.layout}>
         <div className={styles.column}>
-          <Panel title="기록 남기기" label="WRITE" className={styles.write}>
+          <Panel title="기록 남기기" label="Write log" surface="sand" className={styles.write}>
             <TransmitForm
               onSaved={() => {
                 void client.invalidateQueries({ queryKey: ['transmit'] });
@@ -30,6 +30,16 @@ export function Transmit() {
           </Panel>
         </div>
         <TransmitLog page={page} query={query} />
+        <Panel title="로그 현황" label="Log status" surface="cream" className={styles.statusPlate}>
+          <Facts
+            rows={[
+              ['전체 기록', query.data ? String(query.data.total).padStart(3, '0') : '—'],
+              ['페이지', query.data ? `${page} / ${Math.max(query.data.totalPages, 1)}` : '—'],
+              ['최근 기록', query.data?.logs[0] ? `${query.data.logs[0].ts} KST` : '—'],
+            ]}
+          />
+          <Bay label="PUBLIC RECORD / KST" />
+        </Panel>
       </div>
     </>
   );
@@ -47,8 +57,9 @@ function TransmitLog({
   return (
     <Panel
       title="공개 로그"
-      label="PUBLIC LOG"
+      label="Public log"
       code={query.data ? `${query.data.total} RECORDS` : 'READ'}
+      surface="sage"
     >
       <Feed page={page} />
       {query.data && (

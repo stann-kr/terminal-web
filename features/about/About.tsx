@@ -1,6 +1,6 @@
 'use client';
 import { useLanguage } from '@/features/shell/Providers';
-import { Bay, FullText, PageHeading, Panel } from '@/features/ui/Ui';
+import { Bay, Facts, FullText, PageHeading, Panel } from '@/features/ui/Ui';
 import styles from './about.module.css';
 const copy = {
   ko: [
@@ -26,6 +26,17 @@ export function About() {
       <div className={styles.layout}>
         <AboutIntroduction language={language} />
         <OfficialChannels />
+        <Panel title="노드 정보" label="Node" surface="cream" className={styles.node}>
+          <Facts
+            rows={[
+              ['도시', 'SEOUL'],
+              ['시간대', 'KST / UTC+9'],
+              ['장르', 'TECHNO'],
+              ['설계', 'STANN LUMO'],
+            ]}
+          />
+          <Bay label="TERMINAL / NODE" />
+        </Panel>
       </div>
     </>
   );
@@ -33,7 +44,7 @@ export function About() {
 
 function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
   return (
-    <Panel title="TERMINAL 소개" label="TERMINAL" code="SEOUL">
+    <Panel title="TERMINAL 소개" label="Terminal" code="SEOUL" surface="sage">
       <p className={styles.statement} aria-label="MUSIC. PEOPLE. CONTINUITY.">
         <span aria-hidden="true">MUSIC.</span>
         <span aria-hidden="true">PEOPLE.</span>
@@ -51,7 +62,7 @@ function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
 
 function OfficialChannels() {
   return (
-    <Panel title="공식 채널" label="CHANNELS">
+    <Panel title="공식 채널" label="Channels" surface="mint">
       <ul className={styles.channels}>
         {channels.map(([label, href], index) => (
           <li key={href}>
@@ -64,7 +75,7 @@ function OfficialChannels() {
           </li>
         ))}
       </ul>
-      <Bay label="SEOUL / KST" />
+      <Bay label="CHANNELS / SEOUL" />
     </Panel>
   );
 }

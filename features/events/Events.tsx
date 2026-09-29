@@ -47,7 +47,7 @@ export function Events() {
               <Panel
                 heading={false}
                 title="이벤트 목록"
-                label="DIRECTORY"
+                label="Session directory"
                 code={`${String(ordered.length).padStart(3, '0')} RECORDS · PAGE ${String(page).padStart(2, '0')}`}
                 className={styles.listing}
               >
@@ -123,33 +123,53 @@ function EventSummary({ events, now }: { events: TerminalEvent[]; now: Date }) {
   const upcoming = events.filter((event) => event.status === 'UPCOMING');
   const archived = getArchivedOrElapsedEvents(events, now);
   const next = getFutureUpcomingEvent(events, now);
+  const years = [...new Set(events.map((event) => event.date.slice(0, 4)))].sort().reverse();
+  const venues = [...new Set(events.map((event) => event.venue).filter(Boolean))];
   return (
-    <Panel
-      title="이벤트 현황"
-      label="STATUS"
-      code={`${events.length} EVENTS`}
-      className={styles.directorySummary}
-    >
-      <Facts
-        rows={[
-          ['진행 중', <LiveValue key="live" value={live.length} />],
-          ['예정', <LiveValue key="upcoming" value={upcoming.length} />],
-          ['지난 행사', <LiveValue key="archived" value={archived.length} />],
-        ]}
-      />
+    <div className={styles.side}>
+      <Panel
+        title="이벤트 현황"
+        label="Status"
+        code={`${events.length} EVENTS`}
+        surface="cream"
+      >
+        <Facts
+          rows={[
+            ['진행 중', <LiveValue key="live" value={live.length} />],
+            ['예정', <LiveValue key="upcoming" value={upcoming.length} />],
+            ['지난 행사', <LiveValue key="archived" value={archived.length} />],
+          ]}
+        />
+      </Panel>
       {next && (
-        <div className={styles.nextEvent} data-surface="sand">
-          <p>NEXT / 다음 행사</p>
+        <div className={styles.nextEvent} data-surface="peach">
+          <p className={styles.nextLabel} aria-hidden="true">NEXT SESSION</p>
           <Link href={eventHref(next.id)}>{next.session}</Link>
           <p>
             {next.date} · {next.venue}
           </p>
         </div>
       )}
-      <Bay label="ARCHIVE BAY" />
-      <div className={styles.summaryActions}>
-        <Action href="/signal">다음 행사 소식 신청</Action>
-      </div>
-    </Panel>
+      <Panel title="연도·장소" label="Register" surface="mint" className={styles.register}>
+        <ul className={styles.yearCells}>
+          {years.map((year) => (
+            <li key={year}>
+              <b>{year}</b>
+              <span>{events.filter((event) => event.date.startsWith(year)).length} SESSIONS</span>
+            </li>
+          ))}
+        </ul>
+        {venues.length > 0 && (
+          <ul className={styles.venueChips}>
+            {venues.map((venue) => (
+              <li key={venue}>{venue}</li>
+            ))}
+          </ul>
+        )}
+        <div className={styles.summaryActions}>
+          <Action href="/signal">다음 행사 소식 신청</Action>
+        </div>
+      </Panel>
+    </div>
   );
 }

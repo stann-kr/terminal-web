@@ -31,7 +31,7 @@ export function TransmitForm({
         segments={28}
         value={Math.ceil((draft.message.length / 280) * 28)}
         busy={pending}
-        tone={pending ? 'cyan' : draft.message.length > 260 ? 'danger' : 'mint'}
+        tone={draft.message.length > 260 ? 'danger' : 'mint'}
         className={styles.gauge}
       />
       <FormError message={error ? errorMessage(error) : ''} />

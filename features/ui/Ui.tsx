@@ -5,23 +5,23 @@ import styles from './ui.module.css';
 export function PageHeading({ title }: { title: string }) {
   return <h1 className={styles.srOnly}>{title}</h1>;
 }
-export type Surface = 'mint' | 'cyan' | 'sand' | 'signal';
+export type Surface = 'sage' | 'mint' | 'sand' | 'cream' | 'peach' | 'signal' | 'steel';
 
 /**
- * A console panel: a filled English label tab, the Korean title, an optional code cell.
- * `heading={false}` keeps the same face without adding a heading to the outline.
+ * A console plate: a big printed English station name over a heavy rule, the Korean title beside it,
+ * optional tag chips on the right. `heading={false}` keeps the face without adding to the outline.
  */
 export function Panel({
   title,
   label,
   code,
   children,
-  surface,
+  surface = 'sage',
   heading = true,
   className = '',
 }: {
   title: string;
-  /** Short English station label printed in the tab; decorative. */
+  /** Short English station label printed large; decorative. */
   label?: string;
   code?: string;
   children: ReactNode;
@@ -33,16 +33,28 @@ export function Panel({
   return (
     <section className={`${styles.panel} ${className}`} data-surface={surface}>
       <header className={styles.panelHead}>
-        <Title className={styles.panelTitle}>
+        <Title className={styles.panelTitle} data-labelled={label ? true : undefined}>
           {label && <span className={styles.panelLabel} aria-hidden="true">{label}</span>}
           <span className={styles.panelKo}>{title}</span>
         </Title>
-        {code && <span className={styles.code} aria-hidden="true">{code}</span>}
+        {code && <span className={styles.chip} aria-hidden="true">{code}</span>}
       </header>
       <div className={styles.panelBody}>{children}</div>
     </section>
   );
 }
+
+/** A sub-section label inside a plate, like ALPHA CORES; decorative unless given as a heading. */
+export function Sub({ children, as = 'p' }: { children: ReactNode; as?: 'p' | 'h3' }) {
+  const Tag = as;
+  return <Tag className={styles.sub}>{children}</Tag>;
+}
+
+/** A small printed tag; `solid` fills it with ink. */
+export function Chip({ children, solid = false }: { children: ReactNode; solid?: boolean }) {
+  return <span className={styles.chip} data-solid={solid || undefined}>{children}</span>;
+}
+
 /** A hatched reserve that takes the remaining height of a panel; decorative, labelled like a bay. */
 export function Bay({ label }: { label: string }) {
   return (

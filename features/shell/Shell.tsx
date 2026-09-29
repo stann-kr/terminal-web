@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { DataActivity } from '@/features/display/Display';
+import { Mark } from '@/features/display/Mark';
 import { useDisplayPolicy } from '@/features/display/useDisplayPolicy';
 import { Clock } from './Clock';
 import { useLanguage } from './Providers';
@@ -38,7 +39,7 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div ref={frame} className={styles.frame}>
       <a href="#main" className={styles.skip}>본문으로 이동</a>
-      <header className={styles.top}>
+      <header className={styles.top} data-surface="steel">
         <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">
           <span className={styles.brandName}>TERMINAL</span>
           <small aria-hidden="true">SEOUL TECHNO PLATFORM</small>
@@ -57,6 +58,7 @@ export function Shell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className={styles.system}>
+          <Mark className={styles.mark} />
           <DataActivity />
           <Clock />
           <div className={styles.language} role="group" aria-label="콘텐츠 언어">
@@ -67,11 +69,12 @@ export function Shell({ children }: { children: ReactNode }) {
             ))}
           </div>
         </div>
+        <p className={styles.node} aria-hidden="true">SEOUL NODE</p>
       </header>
       <main ref={main} id="main" aria-label="본문" tabIndex={0} className={styles.main}>
         {children}
       </main>
-      <footer className={styles.foot}>
+      <footer className={styles.foot} data-surface="steel">
         <nav className={styles.secondary} aria-label="보조 메뉴">
           {secondary.map(item => (
             <Link key={item.href} href={item.href} aria-current={pathname.startsWith(item.href) ? 'page' : undefined}>
@@ -80,7 +83,8 @@ export function Shell({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <p className={styles.zone}>ALL EVENT TIMES / KST</p>
-        <p className={styles.mark} aria-hidden="true">TERMINAL · SEOUL</p>
+        <Mark className={styles.footMark} />
+        <p className={styles.node} aria-hidden="true">TERMINAL</p>
       </footer>
     </div>
   );

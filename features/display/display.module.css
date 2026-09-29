@@ -38,17 +38,15 @@
 
 /* Meter: thin equal segments on one baseline. */
 .meter {
-  --tone: var(--accent);
+  --tone: var(--ink);
   display: grid;
   grid-template-columns: repeat(var(--segments), minmax(0, 1fr));
   gap: 2px;
-  height: 14px;
+  height: 16px;
 }
-.meter[data-tone=cyan] { --tone: var(--cyan); }
-.meter[data-tone=sand] { --tone: var(--sand); }
 .meter[data-tone=danger] { --tone: var(--danger); }
 .meter i {
-  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+  border: 1.5px solid var(--tone);
 }
 .meter i[data-on] {
   border-color: var(--tone);

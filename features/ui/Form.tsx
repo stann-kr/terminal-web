@@ -5,6 +5,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
 } from 'react';
+import { Bay } from './Ui';
 import styles from './form.module.css';
 export function FormPanel({
   title,
@@ -16,14 +17,17 @@ export function FormPanel({
   children: ReactNode;
 }) {
   return (
-    <section className={styles.terminalForm}>
+    <section className={styles.terminalForm} data-surface="cream">
       <header className={styles.formHeading}>
         <p className={styles.formCode} aria-hidden="true">
           {code}
         </p>
         <h2>{title}</h2>
       </header>
-      <div className={styles.formInterior}>{children}</div>
+      <div className={styles.formInterior}>
+        {children}
+        <Bay label={`${code} / FORM`} />
+      </div>
     </section>
   );
 }
@@ -116,7 +120,7 @@ export function FormSuccess({ children }: { children: ReactNode }) {
     ref.current?.focus();
   }, []);
   return (
-    <section ref={ref} role="status" tabIndex={-1} className={styles.success} data-surface="mint">
+    <section ref={ref} role="status" tabIndex={-1} className={styles.success} data-surface="sage">
       {children}
     </section>
   );

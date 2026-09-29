@@ -4,7 +4,6 @@ import { accessAvailability, eventHref } from '@/features/events/model';
 import { EventFacts } from '@/features/events/EventRecord';
 import {
   Action,
-  Bay,
   Loading,
   PageHeading,
   Panel,
@@ -40,7 +39,6 @@ export function Access({ eventId }: { eventId: string }) {
             eventId={eventId}
             availability={availability}
           />
-          <Bay label="GUEST DESK" />
         </FormPanel>
       </div>
     </>
@@ -58,7 +56,7 @@ function AccessEventSummary({
 }) {
   const event = query.events?.find((event) => event.id === eventId);
   return (
-    <Panel title={event?.session ?? '행사 정보'} label="SESSION" code={eventId}>
+    <Panel title={event?.session ?? '행사 정보'} label="Session" code={eventId} surface="sand">
       {query.isError && (
         <StateNotice
           error

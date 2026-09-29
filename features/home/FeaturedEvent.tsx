@@ -5,11 +5,12 @@ import {
   publicArtists,
   statusLabel,
 } from '@/features/events/model';
-import { Action, Facts, FullText, StateNotice } from '@/features/ui/Ui';
-import { SignalText } from '@/features/display/Display';
+import { Action, Bay, Chip, Facts, FullText, StateNotice, Sub } from '@/features/ui/Ui';
+import { Mark } from '@/features/display/Mark';
 import { EventCountdown } from './EventCountdown';
 import styles from './home.module.css';
 
+/** The featured session plate: sand while upcoming, peach while live, sage once archived. */
 export function FeaturedEvent({
   event,
   language,
@@ -17,58 +18,68 @@ export function FeaturedEvent({
   event: TerminalEvent | null;
   language: 'ko' | 'en';
 }) {
+  const artists = event ? publicArtists(event) : [];
   return (
     <section
       className={styles.featured}
       aria-label="대표 행사"
-      data-state={event?.status}
+      data-surface={!event ? 'sage' : event.status === 'ARCHIVED' ? 'sage' : event.status === 'LIVE' ? 'peach' : 'sand'}
     >
+      <header className={styles.featuredHead}>
+        <p className={styles.featuredLabel} aria-hidden="true">
+          {event?.status === 'ARCHIVED' ? 'Last session' : 'Next session'}
+        </p>
+        {event && (
+          <span className={styles.featuredChips}>
+            <Chip solid>{statusLabel(event.status)}</Chip>
+            <Chip>{event.id}</Chip>
+          </span>
+        )}
+        <Mark className={styles.featuredMark} />
+      </header>
       {event ? (
         <>
-          <div className={styles.recordHeader}>
-            <SignalText active={event.status !== 'ARCHIVED'}>
-              {statusLabel(event.status)}
-            </SignalText>
-            <span className={styles.recordRole}>
-              {event.status === 'ARCHIVED' ? 'LAST SESSION' : 'NEXT SESSION'}
-            </span>
-            <span className={styles.recordId}>{event.id}</span>
-          </div>
-          <div className={styles.featuredBody}>
-            <div className={styles.hero}>
-              {event.status === 'ARCHIVED' && (
-                <p className={styles.noUpcoming}>다음 행사 미정</p>
-              )}
-              <h2>{event.session}</h2>
-              <p className={styles.subtitle}>{event.subtitle}</p>
-              <EventCountdown event={event} />
-            </div>
-            <div className={styles.dossier}>
+          {event.status === 'ARCHIVED' && (
+            <p className={styles.noUpcoming}>다음 행사 미정</p>
+          )}
+          <h2 className={styles.session}>{event.session}</h2>
+          <p className={styles.subtitle}>{event.subtitle}</p>
+          <div className={styles.featuredGrid}>
+            <EventCountdown event={event} />
+            <div>
+              <Sub>Schedule</Sub>
               <Facts
                 rows={[
-                  [
-                    '일시 / KST',
-                    `${event.date} · ${event.time.replace(' KST', '')}`,
-                  ],
+                  ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
                   ['장소', event.venue],
+                  ['지역', event.district],
                 ]}
-              />
-              {publicArtists(event).length > 0 && (
-                <div className={styles.lineup}>
-                  <p className={styles.lineupLabel}>LINEUP</p>
-                  <ul className={styles.names}>
-                    {publicArtists(event).map((artist) => (
-                      <li key={artist.id}>{artist.name}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <FullText
-                language={language}
-                paragraphs={paragraphs(event.description, language)}
               />
             </div>
           </div>
+          <Sub>Lineup</Sub>
+          <ul className={styles.lineupCells}>
+            {artists.length
+              ? artists.map((artist) => (
+                  <li key={artist.id}>
+                    <b>{artist.name}</b>
+                    <small aria-hidden="true">{artist.dock ? `STAGE ${artist.dock}` : 'STAGE TBA'}</small>
+                  </li>
+                ))
+              : Array.from({ length: 4 }, (_, index) => (
+                  <li key={index} data-empty="">
+                    <b>{index === 0 ? '공개 전' : '----'}</b>
+                    <small aria-hidden="true">TBA</small>
+                  </li>
+                ))}
+          </ul>
+          {paragraphs(event.description, language).length > 0 && (
+            <>
+              <Sub>Briefing</Sub>
+              <FullText language={language} paragraphs={paragraphs(event.description, language)} />
+            </>
+          )}
+          <Bay label={`${event.id} / SESSION FILE`} />
           <div className={styles.featuredActions}>
             <Action primary href={eventHref(event.id)}>
               행사 상세 보기
@@ -78,7 +89,7 @@ export function FeaturedEvent({
         </>
       ) : (
         <StateNotice title="공개된 행사가 아직 없습니다">
-          <div className={styles.columnActions}>
+          <div className={styles.featuredActions}>
             <Action href="/signal">소식 신청</Action>
             <Action href="/about">소개</Action>
           </div>

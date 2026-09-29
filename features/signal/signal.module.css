@@ -1,42 +1,39 @@
 .layout {
   display: grid;
-  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
-  gap: var(--gutter);
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr) minmax(240px, 300px);
+  gap: var(--gap);
   align-items: stretch;
 }
-.lead {
-  color: var(--ink);
-  font: 500 18px/1.55 var(--sans);
+.channel {
+  min-width: 0;
 }
-/* Channel state: the real request lifecycle as one cell row. */
+.lead {
+  font: 700 20px/1.4 var(--sans);
+}
+/* Channel state: the real request lifecycle as one printed status cell. */
 .signalMatrix {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-block: 22px 18px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  font: 600 13px/1 var(--display);
-  letter-spacing: .2em;
+  margin-block: 16px 14px;
+  padding: 8px 12px;
+  border: var(--stroke) solid var(--line);
+  font: 700 14px/1 var(--display);
+  letter-spacing: .16em;
 }
 .signalMatrix i {
-  width: 8px;
-  height: 8px;
-  border: 1px solid currentColor;
-}
-.signalMatrix[data-state=sending] {
-  border-color: var(--cyan);
-  color: var(--cyan);
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid currentColor;
 }
 .signalMatrix[data-state=sending] i,
 .signalMatrix[data-state=saved] i {
   background: currentColor;
 }
 .signalMatrix[data-state=saved] {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--bg);
+  border-color: var(--fill);
+  background: var(--fill);
+  color: var(--on-fill);
 }
 .signalMatrix[data-state=error] {
   border-color: var(--danger);
@@ -50,6 +47,10 @@
   .signalMatrix[data-state=sending] i {
     animation: signalLamp .6s steps(1, end) infinite;
   }
+}
+@media (max-width: 1280px) {
+  .layout { grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); }
+  .channel { grid-column: 1 / -1; }
 }
 @media (max-width: 860px) {
   .layout { grid-template-columns: minmax(0, 1fr); }

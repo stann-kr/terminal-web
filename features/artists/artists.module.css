@@ -1,55 +1,86 @@
-/* ── Roster: register tiles on one panel; open slots complete the last row. ── */
-.roster {
+/* ── Roster: dark code cells on a mint plate, summary plates beside it. ───── */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: var(--gap);
+  align-items: stretch;
+}
+.roster,
+.side {
   min-width: 0;
 }
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.origins {
+  flex: 1;
+}
+.originCells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 4px;
+}
+.originCells li {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  background: var(--fill);
+  color: var(--on-fill);
+}
+.originCells b {
+  font: 800 30px/.9 var(--display);
+}
+.originCells span {
+  color: var(--on-fill-muted);
+  font: 700 11px/1 var(--display);
+  letter-spacing: .12em;
+}
 .count {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: var(--muted);
-  font: 500 13px/1 var(--sans);
+  font: 600 13px/1 var(--sans);
 }
 .grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-auto-rows: minmax(176px, auto);
-  gap: 6px;
+  grid-auto-rows: minmax(148px, auto);
+  gap: 4px;
 }
+/* A cell reads like a core module: a thin head row, the name, a tag and a serial. */
 .cell {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 0 14px 12px;
-  border: 1px solid var(--line);
-  color: var(--ink);
+  padding: 0 10px 10px;
+  background: var(--fill);
+  color: var(--on-fill);
   text-decoration: none;
-  transition: border-color .12s var(--ease), background-color .12s var(--ease);
 }
 .cell[data-surface] {
-  border-color: transparent;
+  color: var(--ink);
   clip-path: var(--clip-br);
 }
 .cellHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  margin-inline: -14px;
-  padding: 8px 14px;
-  border-bottom: 1px solid var(--line);
-  color: var(--muted);
-  font: 600 11px/1.2 var(--display);
-  letter-spacing: .16em;
-}
-.cellHeader > span:first-child {
-  color: var(--accent);
+  gap: 6px;
+  margin-inline: -10px;
+  padding: 6px 10px;
+  border-bottom: 1px solid currentColor;
+  font: 700 11px/1.2 var(--display);
+  letter-spacing: .12em;
 }
 .cellHeader > span:last-child {
-  font: 500 11px/1.2 var(--sans);
+  font: 600 11px/1.2 var(--sans);
   letter-spacing: 0;
 }
 .cell h2 {
-  margin-top: 16px;
-  font: 600 28px/.95 var(--display);
-  letter-spacing: .05em;
+  margin-top: 12px;
+  font: 800 28px/.92 var(--display);
+  letter-spacing: .02em;
   text-transform: uppercase;
   overflow-wrap: anywhere;
 }
@@ -57,57 +88,49 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: 10px;
 }
 .tag {
-  padding: 3px 7px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  font: 400 11px/1 var(--mono);
+  padding: 2px 6px;
+  border: 1px solid currentColor;
+  font: 700 11px/1 var(--display);
   letter-spacing: .1em;
 }
 .serialNumber {
-  color: var(--accent);
-  font: 400 22px/1 var(--mono);
-  letter-spacing: .04em;
+  font: 400 24px/1 var(--mono);
 }
-.cell:not([data-surface]):hover,
-.cell:not([data-surface]):focus-visible {
-  border-color: var(--accent);
-  background: rgb(var(--accent-rgb) / .08);
-}
-.cell[data-surface]:hover {
-  filter: brightness(1.07);
+.cell:hover {
+  filter: brightness(1.18);
 }
 .cell:focus-visible {
-  outline-offset: -5px;
+  outline-offset: 2px;
 }
 .emptyCell {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  padding: 14px;
-  border: 1px solid var(--faint);
-  color: var(--line);
-  font: 400 30px/1 var(--mono);
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 10px;
+  border: 2px dashed var(--line);
+  color: var(--muted);
+  font: 400 26px/1 var(--mono);
 }
 .emptyCell:not([data-fills~='6']) {
   display: none;
 }
 .emptyCell small {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 11px;
   letter-spacing: .14em;
 }
 
-/* ── Profile: identity plate / chronology / biography. ─────────────────────── */
+/* ── Profile: identity plate / records / biography. ───────────────────────── */
 .detail {
   display: grid;
   grid-template-columns: minmax(280px, 340px) minmax(0, 1.3fr) minmax(280px, 1fr);
-  gap: var(--gutter);
+  gap: var(--gap);
   align-items: stretch;
 }
 .profile,
@@ -115,21 +138,25 @@
   min-width: 0;
 }
 .profileSignal {
+  background: var(--fill);
+  color: var(--on-fill);
   clip-path: var(--clip-br);
+}
+.profileSignal[data-surface] {
+  color: var(--ink);
 }
 .profileHead {
   display: flex;
   justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
-  font: 600 12px/1 var(--display);
-  letter-spacing: .2em;
+  padding: 8px 12px;
+  border-bottom: 2px solid currentColor;
+  font: 700 12px/1 var(--display);
+  letter-spacing: .16em;
 }
 .profileName {
   display: block;
-  padding: 36px 16px 40px;
-  font: 700 clamp(40px, 3.6vw, 60px)/.9 var(--display);
-  letter-spacing: .02em;
+  padding: 28px 14px 32px;
+  font: 800 clamp(42px, 3.8vw, 64px)/.88 var(--display);
   text-transform: uppercase;
   overflow-wrap: anywhere;
   text-wrap: balance;
@@ -137,7 +164,7 @@
 .profileActions {
   display: grid;
   margin-top: auto;
-  padding-top: 18px;
+  padding-top: 12px;
 }
 .timeline {
   display: grid;
@@ -145,55 +172,52 @@
 }
 .timeline li {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
+  grid-template-columns: 116px minmax(0, 1fr);
   gap: 4px;
 }
 .timeline time {
   display: flex;
   align-items: flex-start;
-  padding: 12px;
-  background: var(--accent);
-  color: var(--bg);
-  font: 400 14px/1.2 var(--mono);
+  padding: 10px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 400 15px/1.2 var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .timeline li > div {
-  padding: 10px 14px 6px;
-  border: 1px solid var(--line);
+  padding: 8px 12px 4px;
+  border: var(--stroke) solid var(--line);
 }
 .timeline a {
   display: flex;
   align-items: center;
   min-height: 40px;
-  color: var(--ink);
-  font: 600 var(--text-lead)/1.1 var(--display);
-  letter-spacing: .05em;
+  font: 800 24px/1 var(--display);
   text-decoration: none;
   text-transform: uppercase;
 }
 .timeline a:hover {
   text-decoration: underline;
-  text-decoration-thickness: 2px;
+  text-decoration-thickness: 3px;
 }
 .timeline p {
   color: var(--muted);
   font-size: 13px;
+  font-weight: 600;
 }
 .state {
   display: inline-block;
-  color: var(--accent);
-  font: 600 12px/1.2 var(--display);
-  letter-spacing: .2em;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  font: 700 12px/1.3 var(--sans);
 }
 .note {
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid var(--faint);
   color: var(--muted);
   font-size: 13px;
-}
-.note a {
-  color: var(--accent);
+  font-weight: 600;
 }
 
 @media (max-width: 1500px) {
@@ -202,6 +226,7 @@
   .emptyCell:not([data-fills~='4']) { display: none; }
 }
 @media (max-width: 1180px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .emptyCell[data-fills~='4'] { display: none; }
   .emptyCell[data-fills~='3'] { display: flex; }
@@ -210,8 +235,7 @@
 }
 @media (max-width: 700px) {
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
-  .emptyCell { display: none; }
-  .cellHeader { flex-wrap: wrap; }
+  .emptyCell { display: none !important; }
   .detail { grid-template-columns: minmax(0, 1fr); }
   .timeline li { grid-template-columns: minmax(0, 1fr); }
 }

@@ -34,7 +34,12 @@ export function EventCard({
         {artists.length > 0 && (
           <span className={styles.cardArtists}>
             <span className={styles.srOnly}>출연 </span>
-            {artists.map(artist => artist.name).join(' · ')}
+            {artists.map((artist, index) => (
+              <span key={artist.id}>
+                {index > 0 && ' '}
+                {artist.name}
+              </span>
+            ))}
           </span>
         )}
       </div>

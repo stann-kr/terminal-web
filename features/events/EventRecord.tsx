@@ -197,7 +197,8 @@ export function EventRecord({
       <EventOverview event={event} />
       <Panel
         title="공연표"
-        label="RUNNING ORDER"
+        label="Running order"
+        surface="mint"
         className={styles.runningOrder}
       >
         <Lineup event={event} events={events} stages />
@@ -213,7 +214,7 @@ export function EventRecord({
       </Panel>
       <div className={styles.notes}>
         <EventIntroduction event={event} language={language} />
-        <Panel title="참여 안내" label="ACCESS" className={styles.accessPanel}>
+        <Panel title="참여 안내" label="Access" surface="sage" className={styles.accessPanel}>
           <EventActions event={event} events={events} now={now} />
         </Panel>
       </div>
@@ -223,7 +224,13 @@ export function EventRecord({
 
 function EventOverview({ event }: { event: TerminalEvent }) {
   return (
-    <Panel title="행사 개요" label="SESSION" code={event.id} className={styles.overview}>
+    <Panel
+      title="행사 개요"
+      label="Session"
+      code={event.id}
+      surface={event.status === 'ARCHIVED' ? 'sage' : event.status === 'LIVE' ? 'peach' : 'sand'}
+      className={styles.overview}
+    >
       <div data-event-state={event.status} className={styles.status}>
         {statusLabel(event.status)}
       </div>
@@ -258,7 +265,7 @@ function EventIntroduction({
   language: 'ko' | 'en';
 }) {
   return (
-    <Panel title="행사 소개" label="BRIEFING" code={language.toUpperCase()}>
+    <Panel title="행사 소개" label="Briefing" code={language.toUpperCase()} surface="cream">
       <div className={styles.annotation}>
         {paragraphs(event.description, language).length ? (
           <FullText

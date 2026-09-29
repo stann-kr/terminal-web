@@ -1,337 +1,401 @@
-/* Index · featured session · recent log, stretched to the bottom of the screen. */
-.dashboard {
+/* The home wall: six plates locked together with narrow slate gutters. */
+.wall {
   display: grid;
-  grid-template-columns: minmax(270px, 320px) minmax(0, 1fr) minmax(280px, 340px);
-  gap: var(--gutter);
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(250px, .72fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "next archive status"
+    "next roster log"
+    "next signal log";
+  gap: var(--gap);
 }
-.column {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gutter);
-  min-width: 0;
-}
-.columnActions {
+.featured { grid-area: next; }
+.archive { grid-area: archive; }
+.status { grid-area: status; }
+.roster { grid-area: roster; }
+.log { grid-area: log; }
+.signal { grid-area: signal; }
+.plateActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 18px;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 12px;
 }
-.columnActions > a {
+.plateActions > a {
   flex: 1;
 }
+.empty {
+  color: var(--muted);
+  font-size: var(--text-ui);
+}
 
-/* ── Index: register tiles (code / number / label), status meters, one line. ── */
-.index .columnActions {
-  margin-top: auto;
-  padding-top: 18px;
+/* ── Featured session ────────────────────────────────────────────────────── */
+.featured {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 12px 22px 20px;
+  clip-path: var(--clip-tr);
 }
-.stats {
-  display: grid;
-  gap: 6px;
-}
-.stats a {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
-  align-items: center;
+.featuredHead {
+  display: flex;
+  align-items: flex-end;
   gap: 12px;
-  padding: 8px 12px 8px 0;
-  border: 1px solid var(--line);
-  color: var(--ink);
-  text-decoration: none;
-  transition: border-color .12s var(--ease), background-color .12s var(--ease);
+  padding-bottom: 6px;
+  border-bottom: var(--rule) solid var(--line);
 }
-.statCode {
-  align-self: stretch;
-  display: grid;
-  place-items: center;
-  border-right: 1px solid var(--line);
-  color: var(--accent);
-  font: 600 13px/1 var(--display);
-  letter-spacing: .1em;
+.featuredLabel {
+  font: 700 30px/1 var(--display);
+  letter-spacing: .02em;
+  text-transform: uppercase;
 }
-.stats strong {
-  font: 400 30px/1 var(--mono);
-  font-weight: 400;
-  font-variant-numeric: tabular-nums;
+.featuredChips {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 3px;
 }
-.statLabel {
-  color: var(--muted);
-  font-size: 13px;
-  text-align: right;
+.featuredMark {
+  width: 34px;
+  height: 34px;
+  margin-left: auto;
 }
-.stats a:hover {
-  border-color: var(--accent);
-  background: rgb(var(--accent-rgb) / .08);
-}
-.stats a:focus-visible {
-  outline-offset: -4px;
-}
-.statusMix {
-  display: grid;
-  gap: 6px;
-  margin-top: 22px;
-}
-.smallHeading {
-  margin-bottom: 4px;
-  color: var(--muted);
-  font: 600 var(--text-label)/1 var(--display);
-  letter-spacing: .22em;
-}
-.statusMix > div {
-  display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) 32px;
-  align-items: center;
-  gap: 10px;
-}
-.statusName {
-  padding: 5px 8px;
-  border: 1px solid var(--line);
-  color: var(--sub);
-  font: 600 12px/1 var(--display);
+.noUpcoming {
+  width: fit-content;
+  margin-top: 14px;
+  padding: 2px 8px;
+  border: var(--stroke) solid var(--line);
+  font: 700 12px/1.4 var(--display);
   letter-spacing: .14em;
 }
-.statusCount {
-  color: var(--muted);
-  font: 400 13px/1 var(--mono);
-  text-align: right;
-}
-.intro {
-  margin-top: 26px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-  color: var(--ink);
-  font: 500 19px/1.45 var(--sans);
-}
-
-/* ── Featured session: a big name, digit wells and a briefing column. ─────── */
-.featured {
-  --state: var(--accent);
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  border: 1px solid var(--line);
-  background: rgb(var(--color-bg-panel) / .78);
-  container-type: inline-size;
-}
-.featured[data-state=UPCOMING] {
-  --state: var(--sand);
-}
-.featured[data-state=LIVE] {
-  --state: var(--cyan);
-}
-.recordHeader {
-  display: flex;
-  align-items: stretch;
-  min-height: 44px;
-  border-bottom: 1px solid var(--line);
-  color: var(--muted);
-  font: 600 13px/1 var(--display);
-  letter-spacing: .2em;
-}
-.recordHeader > * {
-  display: flex;
-  align-items: center;
-  padding-inline: 16px;
-}
-.recordHeader > :first-child {
-  padding-right: 26px;
-  background: var(--state);
-  color: var(--bg);
-  font-size: 15px;
-  clip-path: var(--clip-br);
-}
-.recordRole {
-  flex: 1;
-}
-.recordId {
-  color: var(--ink);
-  font: 400 15px/1 var(--mono);
-  letter-spacing: .08em;
-}
-.featuredBody {
-  display: grid;
-  flex: 1;
-  align-content: start;
-  gap: 28px 40px;
-  padding: clamp(22px, 2.6vw, 40px);
-}
-@container (min-width: 820px) {
-  .featuredBody {
-    grid-template-columns: minmax(0, 1.3fr) minmax(250px, 1fr);
-  }
-}
-.hero {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.featured h2 {
-  color: var(--ink);
-  font: 700 var(--text-display)/.9 var(--display);
-  letter-spacing: .02em;
+.session {
+  margin-top: 14px;
+  font: 800 clamp(44px, 5vw, 84px)/.86 var(--display);
+  letter-spacing: 0;
   text-transform: uppercase;
   text-wrap: balance;
 }
 .subtitle {
-  margin-top: 14px;
-  color: var(--sub);
-  font: 500 18px/1.4 var(--sans);
-}
-.noUpcoming {
-  width: fit-content;
-  margin-bottom: 14px;
+  margin-top: 8px;
   color: var(--muted);
-  font: 600 var(--text-label)/1 var(--display);
-  letter-spacing: .2em;
+  font: 700 18px/1.3 var(--display);
+  letter-spacing: .04em;
+}
+.featuredGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 18px;
+  margin-top: 18px;
 }
 
-/* Countdown: four outlined digit wells; the unit sits in a filled foot. */
+/* Countdown: heavy ink frames, big digits, the unit and a hatched foot underneath. */
 .countdown {
-  margin-top: 36px;
+  min-width: 0;
 }
 .countdownMode {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 14px;
-  margin-bottom: 10px;
-  color: var(--muted);
-  font: 500 13px/1 var(--sans);
+  gap: 4px 10px;
+  margin-bottom: 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--faint);
+  font: 600 12px/1.2 var(--sans);
 }
 .countdownMode > :first-child {
-  color: var(--state);
-  font: 600 13px/1 var(--display);
-  letter-spacing: .2em;
+  font: 700 15px/1.1 var(--display);
+  letter-spacing: .06em;
 }
 .countdownUnits {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  max-width: 540px;
+  gap: 4px;
+  padding: 4px;
+  border: 2px solid var(--line);
   font-variant-numeric: tabular-nums;
 }
 .countdownUnits > div {
   display: flex;
   flex-direction: column-reverse;
-  border: 1px solid var(--accent);
+  border: 2px solid var(--line);
 }
 .countdownUnits dt {
-  padding: 5px 10px;
-  background: var(--accent);
-  color: var(--bg);
-  font: 600 12px/1.2 var(--sans);
-}
-.countdownUnits dd {
-  padding: 14px 12px 12px;
-  color: var(--ink);
-  font: 400 clamp(36px, 3.6vw, 58px)/1 var(--mono);
-}
-.dossier {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  min-width: 0;
+  gap: 4px;
+  padding: 4px 6px 0;
+  font: 700 13px/1 var(--display);
 }
-.lineup {
+.countdownUnits dt::after {
+  content: '';
+  height: 26px;
+  margin-inline: -6px;
+  color: var(--line);
+  background: var(--hatch);
+}
+.countdownUnits dd {
+  padding: 8px 6px 2px;
+  font: 400 clamp(34px, 3.4vw, 54px)/1 var(--mono);
+}
+.lineupCells {
   display: grid;
-  gap: 8px;
-}
-.lineupLabel {
-  color: var(--muted);
-  font: 600 var(--text-label)/1 var(--display);
-  letter-spacing: .22em;
-}
-.names {
-  display: flex;
-  flex-wrap: wrap;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 4px;
 }
-.names li {
-  padding: 5px 10px;
-  border: 1px solid var(--line);
+.lineupCells li {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  background: var(--fill);
+  color: var(--on-fill);
+}
+.lineupCells b {
+  font: 700 18px/1.05 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.lineupCells small {
+  color: var(--on-fill-muted);
+  font: 700 11px/1 var(--display);
+  letter-spacing: .14em;
+}
+.lineupCells li[data-empty] {
+  border: 2px dashed var(--line);
+  background: transparent;
   color: var(--ink);
-  font: 600 15px/1.2 var(--display);
-  letter-spacing: .08em;
+}
+.lineupCells li[data-empty] small {
+  color: var(--muted);
 }
 .featuredActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 16px clamp(22px, 2.6vw, 40px) clamp(22px, 2.6vw, 32px);
-  border-top: 1px solid var(--faint);
-}
-.featured > [role=status],
-.featured > [role=alert] {
-  margin: 18px;
-}
-
-/* ── Right column ────────────────────────────────────────────────────────── */
-.recent {
-  flex: 1;
-}
-.recent .columnActions {
+  gap: 6px;
   margin-top: auto;
   padding-top: 16px;
 }
-/* The one colour plate on the screen: a solid key into the notice sign-up. */
-.signalTile {
+
+/* ── Archive: counters and session cells ─────────────────────────────────── */
+.counters {
   display: grid;
-  gap: 6px;
-  padding: 18px 20px 16px;
-  text-decoration: none;
-  clip-path: var(--clip-tr);
-  transition: filter .12s var(--ease);
+  gap: 4px;
 }
-.tileLabel {
-  font: 700 34px/.9 var(--display);
+.counters a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+.counters a > span {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 14px/1.2 var(--display);
+  letter-spacing: .04em;
+}
+.counters strong {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 4px 10px;
+  border: var(--stroke) solid var(--line);
+  font: 400 22px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.counters a:hover strong {
+  background: rgb(0 0 0 / .08);
+}
+.counters a:focus-visible {
+  outline-offset: 2px;
+}
+.sessions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 4px;
+}
+.sessions a {
+  display: grid;
+  gap: 2px;
+  min-height: 76px;
+  padding: 6px 8px 6px;
+  background: var(--fill);
+  color: var(--on-fill);
+  text-decoration: none;
+}
+.sessionCode {
+  font: 800 28px/.9 var(--display);
+}
+.sessionName {
+  font: 700 12px/1.15 var(--display);
+  letter-spacing: .04em;
+}
+.sessionState {
+  width: fit-content;
+  margin-top: auto;
+  padding: 1px 6px;
+  border: 1px solid var(--on-fill-muted);
+  color: var(--on-fill-muted);
+  font: 600 11px/1.3 var(--sans);
+}
+.sessions a[data-state=UPCOMING],
+.sessions a[data-state=LIVE] {
+  background: var(--peach);
+  color: #243033;
+}
+.sessions a:is([data-state=UPCOMING], [data-state=LIVE]) .sessionState {
+  border-color: #243033;
+  background: #243033;
+  color: var(--peach);
+}
+.sessions a:hover {
+  filter: brightness(1.15);
+}
+.sessions a:focus-visible {
+  outline-offset: 2px;
+}
+
+/* ── Status board ────────────────────────────────────────────────────────── */
+.statusRows {
+  display: grid;
+  gap: 4px;
+}
+.statusRows li {
+  display: grid;
+  grid-template-columns: 30px 82px minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 4px;
+}
+.statusIndex,
+.statusName {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 4px 6px;
+  font: 700 13px/1 var(--display);
   letter-spacing: .08em;
 }
-.tileText {
-  font: 500 15px/1.4 var(--sans);
+.statusIndex {
+  justify-content: center;
+  border: var(--stroke) solid var(--line);
 }
-.tileCode {
+.statusName {
+  background: var(--fill);
+  color: var(--on-fill);
+}
+.statusCount {
+  font: 400 18px/1 var(--mono);
+  text-align: right;
+}
+.statusLine {
   margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-  font: 600 12px/1 var(--display);
-  letter-spacing: .2em;
 }
-.signalTile:hover {
-  filter: brightness(1.08);
+.intro {
+  font: 700 19px/1.35 var(--sans);
 }
-.signalTile:focus-visible {
+
+/* ── Roster cells ───────────────────────────────────────────────────────── */
+.rosterCells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 4px;
+}
+.rosterCells a {
+  display: grid;
+  gap: 4px;
+  min-height: 48px;
+  padding: 6px 9px;
+  background: var(--fill);
+  color: var(--on-fill);
+  text-decoration: none;
+}
+.rosterName {
+  font: 700 17px/1 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.rosterMeta {
+  color: var(--on-fill-muted);
+  font: 400 11px/1 var(--mono);
+}
+.rosterCells a[data-upcoming] {
+  background: var(--sand);
+  color: #243033;
+}
+.rosterCells a[data-featured] {
+  background: var(--signal);
+  color: #1f1410;
+}
+.rosterCells a:is([data-upcoming], [data-featured]) .rosterMeta {
+  color: rgb(0 0 0 / .72);
+}
+.rosterCells a:hover {
+  filter: brightness(1.15);
+}
+.rosterCells a:focus-visible {
+  outline-offset: 2px;
+}
+
+/* ── Signal plate ───────────────────────────────────────────────────────── */
+.signal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 18px 12px;
+  text-decoration: none;
+  clip-path: var(--clip-tr);
+}
+.signalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: var(--rule) solid var(--line);
+}
+.signalHead b {
+  font: 800 30px/.9 var(--display);
+}
+.signalMark {
+  width: 34px;
+  height: 34px;
+}
+.signalText {
+  font: 700 17px/1.3 var(--sans);
+}
+.signalChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: auto;
+}
+.signal:hover {
+  filter: brightness(1.05);
+}
+.signal:focus-visible {
   outline-offset: -6px;
 }
 
 @media (max-width: 1280px) {
-  .dashboard {
-    grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
-  }
-  .dashboard > .column {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  .wall {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-areas:
+      "next archive"
+      "next status"
+      "roster roster"
+      "log signal";
+    grid-template-rows: auto;
   }
 }
-@media (max-width: 1000px) {
-  .dashboard,
-  .dashboard > .column {
+@media (max-width: 900px) {
+  .wall {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "next" "archive" "status" "roster" "log" "signal";
   }
-  .featured {
-    order: -1;
-  }
+  .featuredGrid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 700px) {
-  .recordRole {
-    display: none !important;
-  }
-  .recordHeader > :first-child {
-    flex: 1;
-  }
-  .countdownUnits dd {
-    padding-inline: 8px;
-    font-size: clamp(28px, 8vw, 38px);
-  }
+  .featured { padding-inline: 14px; }
+  .countdownUnits dd { font-size: clamp(26px, 8vw, 36px); }
 }

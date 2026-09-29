@@ -2,102 +2,125 @@
 @font-face { font-family: 'Barlow'; src: url('/fonts/instrument/Barlow-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Barlow'; src: url('/fonts/instrument/Barlow-Medium.woff2') format('woff2'); font-weight: 500 700; font-display: swap; }
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: swap; }
-@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600 700; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: swap; }
 @font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
 /*
- * Ship-console screens: a deep navy field lit by pale mint line work and flat, bright panels.
- * One hue family per screen; colour marks state only (cyan = live, sand = upcoming, signal = one highlight).
- * A panel with `data-surface` re-points the same tokens, so anything inside it inverts cleanly.
+ * Ship-console wall: a slate field tiled with dusty, light plates (sage, mint, sand, cream, peach)
+ * printed in dark ink, with dark code cells on the plates. Cyan appears only as small titles on the
+ * steel bars. `data-surface` sets a plate; components read the same role tokens on every plate.
+ *   --ink / --muted: text   --line: rules and frames   --fill / --on-fill: dark cells and their text
  */
 :root {
   color-scheme: dark;
-  --color-bg-base: 16 40 58;
-  --color-bg-panel: 23 52 71;
-  --color-text-primary: 230 252 246;
-  --color-text-subdued: 179 220 212;
-  --color-text-muted: 134 185 177;
-  --color-accent-primary: 196 246 234;
-  --color-accent-tertiary: 79 227 220;
-  --color-accent-alert: 255 123 123;
+  /* Legacy role channels, still used for alpha mixes and the contrast test. */
+  --color-bg-base: 57 79 86;
+  --color-bg-panel: 68 102 111;
+  --color-text-primary: 233 239 230;
+  --color-text-subdued: 207 224 220;
+  --color-text-muted: 207 224 220;
+  --color-accent-primary: 159 242 245;
+  --color-accent-tertiary: 159 242 245;
+  --color-accent-alert: 255 220 216;
+
   --bg: rgb(var(--color-bg-base));
-  --panel: rgb(var(--color-bg-panel));
-  --well: #0b1f2e;
+  --gutter-bg: #2d3f45;
+  --steel: rgb(var(--color-bg-panel));
+  --cyan: rgb(var(--color-accent-primary));
   --ink: rgb(var(--color-text-primary));
-  --sub: rgb(var(--color-text-subdued));
   --muted: rgb(var(--color-text-muted));
-  --accent: rgb(var(--color-accent-primary));
-  --accent-rgb: var(--color-accent-primary);
-  --cyan: rgb(var(--color-accent-tertiary));
+  --line: rgb(233 239 230 / .45);
+  --faint: rgb(233 239 230 / .2);
+  --fill: #e9efe6;
+  --on-fill: #243033;
+  --on-fill-muted: #2f4245;
+  --well: rgb(0 0 0 / .18);
   --danger: rgb(var(--color-accent-alert));
-  --sand: #f2d9a0;
-  --signal: #ff8c4a;
-  --line: #46798a;
-  --faint: #21465b;
-  --focus: var(--signal);
+  --focus: #ffb070;
+
+  --sage: #9fbab4;
+  --mint: #b3d3cd;
+  --sand: #d9c29c;
+  --cream: #e6e8d9;
+  --peach: #f2c78f;
+  --signal: #e0844e;
 
   --display: 'Barlow Condensed', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   --sans: 'Barlow', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   --mono: 'Share Tech Mono', 'Apple SD Gothic Neo', 'Noto Sans KR', monospace;
 
-  /* Type steps: label, UI, body, lead, title, display. */
   --text-label: 12px;
   --text-ui: 14px;
-  --text-body: 16px;
-  --text-lead: 20px;
-  --text-title: 28px;
-  --text-display: clamp(44px, 5vw, 80px);
+  --text-body: 15px;
 
+  --rule: 3px;
+  --stroke: 1.5px;
+  --clip-tr: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
   --clip-br: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
-  --clip-tr: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
-  --hatch: repeating-linear-gradient(-45deg, currentColor 0 1px, transparent 1px 6px);
-  --gutter: 12px;
+  --clip-house: polygon(0 14px, 14px 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  --hatch: repeating-linear-gradient(-45deg, currentColor 0 1.5px, transparent 1.5px 8px);
+  --gap: 8px;
   --ease: cubic-bezier(.2, .8, .2, 1);
 }
 
 [data-surface] {
-  --ink: rgb(var(--plate-ink));
-  --sub: rgb(var(--plate-ink));
-  --accent: rgb(var(--plate-ink));
-  --accent-rgb: var(--plate-ink);
-  --cyan: rgb(var(--plate-ink));
-  --sand: rgb(var(--plate-ink));
-  --line: rgb(var(--plate-ink) / .45);
-  --faint: rgb(var(--plate-ink) / .2);
-  --focus: rgb(var(--plate-ink));
-  --color-bg-base: var(--plate);
-  --bg: rgb(var(--plate));
-  --panel: rgb(var(--plate));
-  --well: rgb(var(--plate));
-  background-color: rgb(var(--plate));
+  --ink: #243033;
+  --muted: #2f4245;
+  --line: #243033;
+  --faint: rgb(36 48 51 / .28);
+  --fill: #3a4547;
+  --on-fill: #e9efe6;
+  --on-fill-muted: #b9c9c4;
+  --well: rgb(255 255 255 / .42);
+  --danger: #7a1520;
+  --focus: #243033;
+  --cyan: #243033;
+  background-color: var(--plate);
   color: var(--ink);
 }
-[data-surface=mint] { --plate: 196 246 234; --plate-ink: 10 27 41; --muted: #2f5d58; --danger: #8c1f28; }
-[data-surface=cyan] { --plate: 79 227 220; --plate-ink: 8 30 36; --muted: #1d4a4a; --danger: #7a1520; }
-[data-surface=sand] { --plate: 242 217 160; --plate-ink: 10 27 41; --muted: #5a4a28; --danger: #8c1f28; }
-[data-surface=signal] { --plate: 255 140 74; --plate-ink: 26 12 4; --muted: #4a2410; --danger: #3a0a0f; }
+[data-surface=sage] { --plate: var(--sage); }
+[data-surface=mint] { --plate: var(--mint); }
+[data-surface=sand] { --plate: var(--sand); }
+[data-surface=cream] { --plate: var(--cream); }
+[data-surface=peach] { --plate: var(--peach); }
+[data-surface=signal] { --plate: var(--signal); --ink: #1f1410; --muted: #2a1a12; --line: #1f1410; --fill: #1f1410; --on-fill: #f7d9c3; }
+[data-surface=steel] {
+  --plate: var(--steel);
+  --ink: #eef3ea;
+  --muted: #cfe0dc;
+  --line: rgb(238 243 234 / .6);
+  --faint: rgb(238 243 234 / .25);
+  --fill: #e9efe6;
+  --on-fill: #243033;
+  --on-fill-muted: #2f4245;
+  --well: rgb(0 0 0 / .2);
+  --cyan: #9ff2f5;
+  --focus: #ffb070;
+  --danger: #ffd0cb;
+}
 
 * { box-sizing: border-box; }
 html { background: var(--bg); color: var(--ink); scrollbar-color: var(--line) var(--bg); }
-body { margin: 0; font: var(--text-ui)/1.6 var(--sans); overflow-wrap: anywhere; word-break: keep-all; -webkit-font-smoothing: antialiased; }
+body { margin: 0; font: var(--text-ui)/1.55 var(--sans); overflow-wrap: anywhere; word-break: keep-all; -webkit-font-smoothing: antialiased; }
 button, input, select, textarea { font: inherit; }
 button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }
-a { color: inherit; text-underline-offset: 4px; }
+a { color: inherit; text-underline-offset: 3px; }
 button, summary { cursor: pointer; }
 button:disabled { cursor: wait; opacity: .6; }
 :focus { outline: none; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-::selection { background: var(--accent); color: var(--bg); }
+::selection { background: var(--ink); color: var(--plate, var(--bg)); }
 h1,h2,h3,p,dl,dd,ul,ol { margin: 0; }
 ul,ol { padding: 0; list-style: none; }
 img { max-width: 100%; height: auto; }
-input,select,textarea { min-width: 0; max-width: 100%; color: var(--ink); background: var(--well); border: 1px solid var(--line); border-radius: 0; padding: 10px 12px; min-height: 44px; font-size: 16px; }
+input,select,textarea { min-width: 0; max-width: 100%; color: var(--ink); background: var(--well); border: var(--stroke) solid var(--line); border-radius: 0; padding: 10px 12px; min-height: 44px; font-size: 16px; }
 textarea { resize: vertical; }
-input[type=checkbox] { appearance: none; display: inline-grid; place-items: center; width: 20px; height: 20px; min-height: 20px; padding: 0; border: 1px solid var(--accent); background: transparent; cursor: pointer; }
-input[type=checkbox]::before { content: ''; width: 10px; height: 10px; background: var(--accent); transform: scale(0); }
+input[type=checkbox] { appearance: none; display: inline-grid; place-items: center; width: 20px; height: 20px; min-height: 20px; padding: 0; border: 2px solid var(--line); background: transparent; cursor: pointer; }
+input[type=checkbox]::before { content: ''; width: 10px; height: 10px; background: var(--ink); transform: scale(0); }
 input[type=checkbox]:checked::before { transform: scale(1); }
 @media (forced-colors: active) { input[type=checkbox] { appearance: auto; } }
 button { color: inherit; }
-summary { min-height: 44px; padding-block: 10px; color: var(--accent); font: 600 var(--text-ui)/1.4 var(--display); letter-spacing: .12em; text-transform: uppercase; }
-details[open] > summary { margin-bottom: 8px; }
+summary { min-height: 40px; padding-block: 8px; color: var(--ink); font: 700 var(--text-ui)/1.4 var(--display); letter-spacing: .1em; text-transform: uppercase; }
+details[open] > summary { margin-bottom: 6px; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }

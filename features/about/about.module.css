@@ -7,75 +7,77 @@
 }
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
-  gap: var(--gutter);
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 1fr) minmax(240px, 300px);
+  gap: var(--gap);
   align-items: stretch;
 }
+.node {
+  min-width: 0;
+}
 .statement {
-  margin-block: 12px 32px;
-  color: var(--ink);
-  font: 700 clamp(56px, 6.4vw, 112px)/.88 var(--display);
-  letter-spacing: .02em;
+  margin-block: 8px 24px;
+  font: 800 clamp(58px, 6.6vw, 118px)/.84 var(--display);
 }
 .statement > span {
   display: block;
 }
 .statement > span:nth-child(2) {
-  color: var(--cyan);
+  -webkit-text-stroke: 2px var(--ink);
+  color: transparent;
 }
 .credit {
   margin-top: auto;
-  padding-top: 14px;
-  border-top: 1px solid var(--faint);
-  color: var(--muted);
-  font: 600 12px/1 var(--display);
-  letter-spacing: .2em;
+  padding-top: 10px;
+  border-top: var(--rule) solid var(--line);
+  font: 700 13px/1 var(--display);
+  letter-spacing: .16em;
 }
-/* Channel directory: numbered rows of cells, inverse on hover. */
+/* Channel directory: a dark index cell beside an outlined name cell. */
 .channels {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 .channels a {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-columns: 54px minmax(0, 1fr);
   grid-template-areas: "n name" "n host";
-  gap: 2px 14px;
-  padding: 10px 14px 10px 0;
-  border: 1px solid var(--line);
+  column-gap: 4px;
   color: var(--ink);
   text-decoration: none;
-  transition: background-color .12s var(--ease), color .12s var(--ease);
 }
 .channels a > span:first-child {
   grid-area: n;
   display: grid;
   place-items: center;
-  border-right: 1px solid var(--line);
-  color: var(--accent);
-  font: 400 16px/1 var(--mono);
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 800 22px/1 var(--display);
 }
 .channels strong {
   grid-area: name;
-  font: 600 19px/1.1 var(--display);
-  letter-spacing: .1em;
+  padding: 8px 12px 0;
+  border: var(--stroke) solid var(--line);
+  border-bottom: 0;
+  font: 800 20px/1.1 var(--display);
+  letter-spacing: .04em;
 }
 .host {
   grid-area: host;
+  padding: 2px 12px 8px;
+  border: var(--stroke) solid var(--line);
+  border-top: 0;
   color: var(--muted);
   font: 400 12px/1.3 var(--mono);
 }
-.channels a:hover,
-.channels a:focus-visible {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--bg);
-  outline-offset: -5px;
-  outline-color: var(--bg);
+.channels a:hover :is(strong, .host) {
+  background: rgb(0 0 0 / .07);
 }
-.channels a:is(:hover, :focus-visible) :is(span, .host) {
-  border-color: currentColor;
-  color: var(--bg);
+.channels a:focus-visible {
+  outline-offset: 2px;
+}
+@media (max-width: 1280px) {
+  .layout { grid-template-columns: minmax(0, 1.3fr) minmax(280px, 1fr); }
+  .node { grid-column: 1 / -1; }
 }
 @media (max-width: 860px) {
   .layout { grid-template-columns: minmax(0, 1fr); }

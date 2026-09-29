@@ -1,15 +1,15 @@
 .layout {
   display: grid;
   grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
-  gap: var(--gutter);
+  gap: var(--gap);
   align-items: stretch;
 }
 .legend {
   width: 100%;
   margin-bottom: 6px;
   padding: 7px 12px;
-  background: var(--accent);
-  color: var(--bg);
+  background: var(--fill);
+  color: var(--on-fill);
   font: 600 14px/1.2 var(--display);
   letter-spacing: .12em;
 }
@@ -21,7 +21,7 @@
 }
 .codeMessage {
   min-height: 1.4em;
-  color: var(--accent);
+  color: var(--ink);
   font-size: var(--text-ui);
 }
 .inviter {
@@ -29,14 +29,14 @@
   align-items: baseline;
   gap: 14px;
   padding: 10px 12px;
-  border: 1px solid var(--accent);
+  border: var(--stroke) solid var(--line);
   border-left-width: 6px;
   color: var(--muted);
   font-size: var(--text-label);
   letter-spacing: .1em;
 }
 .inviter strong {
-  color: var(--accent);
+  color: var(--ink);
   font-size: var(--text-ui);
   font-weight: 400;
   letter-spacing: .04em;
