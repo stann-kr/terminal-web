@@ -10,15 +10,9 @@ export function nodeTag(id: string) {
   return `NODE-${hash.toString(16).toUpperCase().padStart(8, '0').slice(-4)}`;
 }
 
-/** `2026.05.09 / 00:10` → `05.09 00:10`: the node rows print month, day and KST time only. */
-function compact(ts: string) {
-  const match = ts.match(/^\d{4}\.(\d{2}\.\d{2})\s*\/\s*(\d{2}:\d{2})/);
-  return match ? `${match[1]} ${match[2]}` : ts;
-}
-
 /**
- * Recent public-log activity as node records: when a node left a record, without the message
- * or the public handle, so the home screen never surfaces free text from visitors.
+ * Recent public-log activity as node records, newest first: which node left a record, without
+ * the time, the message or the public handle, so the home screen never surfaces free text from visitors.
  */
 export function NodeActivity({ limit = 6 }: { limit?: number }) {
   const query = useTransmit(1);
@@ -34,7 +28,6 @@ export function NodeActivity({ limit = 6 }: { limit?: number }) {
     <ol className={styles.nodes}>
       {logs.map((log) => (
         <li key={log.id}>
-          <time dateTime={log.createdAt}>{compact(log.ts)}</time>
           <b>{nodeTag(log.id)}</b>
           <span>LOGGED</span>
         </li>

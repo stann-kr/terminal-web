@@ -70,7 +70,7 @@ export function Chip({ children, solid = false }: { children: ReactNode; solid?:
   return <span className={styles.chip} data-solid={solid || undefined}>{children}</span>;
 }
 
-/** A hatched reserve that takes the remaining height of a panel; decorative, labelled like a bay. */
+/** A quiet reserve that takes the remaining height of a panel; decorative, labelled like a bay. */
 export function Bay({ label }: { label: string }) {
   return (
     <p className={styles.bay} aria-hidden="true">
@@ -137,14 +137,17 @@ export function StateNotice({
 }) {
   return (
     <div
-      className={`${styles.notice} ${error ? styles.error : ''}`}
+      className={styles.notice}
+      data-surface={error ? 'red' : undefined}
       role={error ? 'alert' : 'status'}
     >
-      <p className={styles.eyebrow}>{error ? 'READ ERROR' : 'INFORMATION'}</p>
-      <h2>{title}</h2>
-      {children && <div>{children}</div>}
+      <div className={styles.noticeText}>
+        <p className={styles.eyebrow} aria-hidden="true">{error ? 'ERROR' : 'NOTICE'}</p>
+        <h2>{title}</h2>
+        {children && <div className={styles.noticeBody}>{children}</div>}
+      </div>
       {retry && (
-        <button type="button" className={styles.button} onClick={retry}>
+        <button type="button" className={`${styles.button} ${styles.primary}`} onClick={retry}>
           다시 불러오기
         </button>
       )}

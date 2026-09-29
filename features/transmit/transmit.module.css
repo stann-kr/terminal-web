@@ -36,7 +36,7 @@
   align-items: baseline;
   gap: 8px;
   padding: 6px 12px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
   font: 400 var(--t-2xl)/1 var(--mono);
   font-variant-numeric: tabular-nums;
 }
@@ -97,8 +97,7 @@
 }
 .logs p {
   padding: 8px 10px 10px;
-  border: var(--stroke) solid var(--line);
-  border-top: 0;
+  background: var(--well);
   color: var(--ink);
   font-size: var(--text-body);
   font-weight: 500;
@@ -120,11 +119,11 @@
 .feedRule i {
   width: 9px;
   height: 9px;
-  border: 1.5px solid currentColor;
-}
-.feedRule[data-state=ready] i,
-.feedRule[data-state=loading] i {
   background: currentColor;
+  opacity: .35;
+}
+.feedRule:is([data-state=ready], [data-state=loading], [data-state=error]) i {
+  opacity: 1;
 }
 .feedRule[data-state=error] {
   color: var(--danger);
@@ -146,26 +145,18 @@
   .layout { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* Node activity: time · node tag · event, one ruled row per record. */
+/* Node activity: newest first, one node tag cell and its event per row; the newest row is gold. */
 .nodes {
   display: grid;
   gap: 4px;
 }
 .nodes li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 4px;
 }
-.nodes time {
-  padding: 9px 12px;
-  border: var(--stroke) solid var(--line);
-  color: var(--muted);
-  font: 400 var(--t-sm)/1.2 var(--mono);
-  font-variant-numeric: tabular-nums;
-}
 .nodes b {
-  padding: 7px 10px;
+  padding: 7px 12px;
   background: var(--fill);
   color: var(--on-fill);
   font: 800 var(--t-lg)/1.2 var(--display);
@@ -176,7 +167,10 @@
   color: var(--navy);
 }
 .nodes span {
-  padding: 7px 8px;
+  display: flex;
+  align-items: center;
+  padding: 7px 12px;
+  background: var(--well);
   color: var(--accent);
   font: 700 var(--t-xs)/1.2 var(--display);
   letter-spacing: .14em;
@@ -191,7 +185,6 @@
 .counter strong,
 .logs time,
 .logs strong,
-.nodes time,
 .nodes b,
 .nodes span,
 .feedRule {

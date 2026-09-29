@@ -17,7 +17,7 @@
   letter-spacing: .16em;
 }
 
-/* ── Plate: a flat dusty face with one cut corner; the station name sits on a heavy rule. ── */
+/* ── Plate: a flat face; the station name sits on a heavy rule. ── */
 .panel {
   display: flex;
   flex-direction: column;
@@ -85,7 +85,7 @@
   flex-shrink: 0;
   min-height: 22px;
   padding: 2px 8px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
   color: var(--ink);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .1em;
@@ -93,7 +93,6 @@
   white-space: nowrap;
 }
 .chip[data-solid] {
-  border-color: var(--fill);
   background: var(--fill);
   color: var(--on-fill);
 }
@@ -114,7 +113,8 @@
   letter-spacing: .2em;
 }
 
-/* ── Keys: an outlined key, or a solid ink key for the one primary action. ── */
+/* ── Keys: a tinted key, or a solid ink key for the one primary action. Hover lights either up
+   in the plate's highlight colour; nothing moves and no frame appears. ── */
 .action,
 .button {
   display: inline-flex;
@@ -123,15 +123,15 @@
   gap: 16px;
   min-height: 52px;
   padding: 0 22px;
-  border: var(--stroke) solid var(--line);
-  background: transparent;
+  border: 0;
+  background: var(--well);
   color: var(--ink);
   font: 700 var(--t-lg)/1.2 var(--display);
   letter-spacing: .1em;
   text-align: left;
   text-decoration: none;
   text-transform: uppercase;
-  transition: background-color .12s var(--ease), color .12s var(--ease);
+  transition: background-color .14s var(--ease), color .14s var(--ease);
 }
 /* Every occurrence of TERMINAL is set in the brand face. */
 .brandWord {
@@ -153,8 +153,11 @@
   color: var(--cream);
   --ink: var(--cream);
   --line: rgb(252 229 205 / .45);
+  --well: rgb(252 229 205 / .08);
   --fill: var(--gold);
   --on-fill: var(--navy);
+  --hi: var(--cream);
+  --on-hi: var(--navy);
   --focus: var(--gold);
 }
 .deckLabel {
@@ -173,20 +176,14 @@
 .deckKeys > * {
   flex: 1 1 auto;
 }
+.primary {
+  background: var(--fill);
+  color: var(--on-fill);
+}
 .action:hover,
 .button:hover:not(:disabled) {
-  background: rgb(0 0 0 / .08);
-}
-.primary {
-  padding-right: 20px;
-  border-color: var(--fill);
-  background: var(--fill);
-  color: var(--on-fill);
-}
-.primary:hover:not(:disabled) {
-  background: var(--fill);
-  color: var(--on-fill);
-  filter: brightness(1.2);
+  background: var(--hi);
+  color: var(--on-hi);
 }
 .action:focus-visible,
 .button:focus-visible {
@@ -200,7 +197,7 @@
   background: currentColor;
 }
 
-/* ── Facts: a dark label cell beside an outlined value cell (STR ALPHA · 122). ── */
+/* ── Facts: a solid label cell beside a tinted value cell (STR ALPHA · 122). ── */
 .facts {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -225,52 +222,44 @@
   align-items: center;
   justify-content: flex-end;
   padding: 6px 10px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
   color: var(--ink);
   font: 700 var(--t-lg)/1.25 var(--display);
   letter-spacing: .03em;
   text-align: right;
 }
 
-/* ── Notices ─────────────────────────────────────────────────────────────── */
+/* ── Notices: a tinted block, or a red plate when a read failed; retry sits at the right. ── */
 .notice {
-  position: relative;
-  display: grid;
-  align-content: start;
-  justify-items: start;
-  gap: 8px;
-  padding: 14px 64px 14px 14px;
-  border: var(--stroke) solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 14px var(--pad);
+  background: var(--well);
   color: var(--ink);
 }
-.notice::before {
-  content: '';
-  position: absolute;
-  right: 14px;
-  top: 14px;
-  width: 34px;
-  height: 34px;
-  border: 2px solid var(--line);
-  background:
-    linear-gradient(45deg, transparent calc(50% - 1px), var(--line) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
-    linear-gradient(-45deg, transparent calc(50% - 1px), var(--line) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
+.notice[data-surface] {
+  background: var(--plate);
+}
+.noticeText {
+  display: grid;
+  flex: 1 1 280px;
+  gap: 6px;
+  min-width: 0;
+}
+.noticeText .eyebrow {
+  margin-bottom: 0;
 }
 .notice h2 {
-  font: 700 var(--t-xl)/1.2 var(--display);
+  font: 700 var(--t-xl)/1.15 var(--display);
   letter-spacing: .03em;
 }
-.error {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-.error::before {
-  border-color: var(--danger);
-  background:
-    linear-gradient(45deg, transparent calc(50% - 1px), var(--danger) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
-    linear-gradient(-45deg, transparent calc(50% - 1px), var(--danger) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px));
-}
-.error .eyebrow {
-  color: var(--danger);
+.noticeBody {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  font-size: var(--text-body);
 }
 .loading {
   display: flex;
@@ -301,25 +290,27 @@
 .pagination > * {
   display: flex;
   align-items: center;
-  min-height: 38px;
+  min-height: 44px;
   padding-inline: 14px;
-  border: var(--stroke) solid var(--faint);
   color: var(--muted);
+}
+.pagination > span:not([aria-live]) {
+  opacity: .55;
 }
 .pagination > span[aria-live] {
   flex: 1;
   justify-content: center;
-  border-color: transparent;
   font-family: var(--mono);
 }
 .pagination a {
-  border-color: var(--line);
+  background: var(--well);
   color: var(--ink);
   text-decoration: none;
+  transition: background-color .14s var(--ease), color .14s var(--ease);
 }
 .pagination a:hover {
-  background: var(--fill);
-  color: var(--on-fill);
+  background: var(--hi);
+  color: var(--on-hi);
 }
 
 /* ── Prose ───────────────────────────────────────────────────────────────── */
@@ -363,7 +354,7 @@
   margin-top: 14px;
 }
 @media (forced-colors: active) {
-  .notice::before { display: none; }
+  .notice, .action, .button, .chip, .facts dd, .pagination a { border: 1px solid CanvasText; }
   .facts dt { border: 1px solid CanvasText; }
 }
 
@@ -376,11 +367,7 @@
 .eyebrow,
 .bay span,
 .deckLabel {
-  padding-right: 14px;
-  border-right: 1px solid rgb(252 229 205 / .2);
-  color: var(--gold);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .22em;
+  white-space: nowrap;
 }
 .panelHead {
   flex-wrap: wrap;
@@ -397,7 +384,6 @@
   }
   .facts dd {
     justify-content: flex-start;
-    border-top: 0;
     text-align: left;
   }
 }

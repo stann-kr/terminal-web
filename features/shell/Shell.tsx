@@ -70,7 +70,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
         <p className={styles.node} aria-hidden="true">SEOUL NODE</p>
       </header>
-      <main ref={main} id="main" aria-label="본문" tabIndex={0} className={styles.main}>
+      <main ref={main} id="main" aria-label="본문" tabIndex={-1} className={styles.main}>
         {children}
       </main>
       <footer className={styles.foot} data-surface="deep">

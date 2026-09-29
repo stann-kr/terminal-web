@@ -29,8 +29,8 @@
   align-items: baseline;
   gap: 14px;
   padding: 10px 12px;
-  border: var(--stroke) solid var(--line);
-  border-left-width: 6px;
+  border-left: 6px solid var(--line);
+  background: var(--well);
   color: var(--muted);
   font-size: var(--text-label);
   letter-spacing: .1em;

@@ -36,7 +36,7 @@
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .16em;
 }
-/* A row of framed cells; the ID cell is the dark code cell, peach while a session is pending. */
+/* A row of tinted cells; the ID cell is the solid code cell, gold while a session is pending. */
 .card {
   min-height: 70px;
   color: var(--ink);
@@ -47,18 +47,16 @@
   align-items: center;
   min-width: 0;
   padding: 8px 10px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
 }
 .cardId {
   justify-content: center;
-  border-color: var(--fill) !important;
   background: var(--fill);
   color: var(--on-fill);
   font: 800 var(--t-xl)/1 var(--display);
   letter-spacing: .03em;
 }
 .card:is([data-event-state=UPCOMING], [data-event-state=LIVE]) .cardId {
-  border-color: var(--gold) !important;
   background: var(--gold);
   color: var(--navy);
 }
@@ -86,7 +84,7 @@
 }
 .cardArtists > span:not(.srOnly) {
   padding: 1px 6px;
-  border: 1px solid var(--line);
+  background: var(--well);
   font: 700 var(--t-xs)/1.4 var(--display);
   letter-spacing: .08em;
 }
@@ -110,19 +108,15 @@
 }
 .stateChip {
   padding: 3px 8px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
   font: 700 var(--t-sm)/1 var(--sans);
 }
 .card:is([data-event-state=UPCOMING], [data-event-state=LIVE]) .stateChip {
   background: var(--fill);
-  border-color: var(--fill);
   color: var(--on-fill);
 }
 .card > * {
-  transition: border-color .14s var(--ease), background-color .14s var(--ease);
-}
-/* The whole row answers the pointer: every cell lights gold. */
-.card:hover {
+  transition: background-color .14s var(--ease), color .14s var(--ease);
 }
 .card:focus-visible {
   outline-offset: 2px;
@@ -139,7 +133,7 @@
   container-type: inline-size;
   display: grid;
   gap: 6px;
-  transition: box-shadow .14s var(--ease);
+  transition: background-color .14s var(--ease), color .14s var(--ease);
   padding: 12px 18px 16px;
 }
 .nextLabel {
@@ -192,7 +186,7 @@
 }
 .venueChips li {
   padding: 3px 8px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
   font: 700 var(--t-xs)/1.2 var(--display);
   letter-spacing: .1em;
 }
@@ -246,7 +240,7 @@
 .poster {
   display: block;
   margin-top: 14px;
-  border: 2px solid var(--line);
+  background: var(--well);
 }
 .poster img {
   display: block;
@@ -315,14 +309,13 @@
   align-items: center;
   min-height: 50px;
   padding: 6px 10px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
 }
 .slotCode {
   flex-direction: column;
   align-items: flex-start !important;
   justify-content: center;
   gap: 3px;
-  border-color: var(--fill) !important;
   background: var(--fill);
   color: var(--on-fill);
   font: 800 var(--t-lg)/1 var(--display);
@@ -352,7 +345,7 @@
   inset: 0;
 }
 .stageSlots li > * {
-  transition: border-color .14s var(--ease), background-color .14s var(--ease);
+  transition: background-color .14s var(--ease), color .14s var(--ease);
 }
 .stageSlots li:has(a:focus-visible) {
   outline: 2px solid var(--focus);
@@ -360,7 +353,7 @@
 }
 .slotArtist small {
   padding: 1px 5px;
-  border: 1px solid var(--line);
+  background: var(--well);
   font: 700 var(--t-xs)/1.2 var(--display);
   letter-spacing: .12em;
 }
@@ -396,8 +389,8 @@
   text-decoration: none;
 }
 .lineup a:hover {
-  background: var(--ink);
-  color: var(--plate, var(--navy));
+  background: var(--hi);
+  color: var(--on-hi);
 }
 .lineup small {
   display: block;
@@ -426,12 +419,11 @@
 .protocolLabel {
   width: fit-content;
   padding: 4px 10px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .16em;
 }
 .protocolLabel[data-open=true] {
-  border-color: var(--fill);
   background: var(--fill);
   color: var(--on-fill);
 }
@@ -532,38 +524,29 @@
   white-space: nowrap;
 }
 
-/* Hover inverts: outlined cells fill with ink, filled cells open to an outline. */
+/* Hover lights the whole row up: tinted cells take the highlight colour, the code cell turns cream. */
 .card:hover > :not(.cardId),
 .stageSlots li:has(a:hover) > :not(.slotCode) {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--plate, var(--navy));
+  background: var(--hi);
+  color: var(--on-hi);
 }
 .card:hover > :not(.cardId) *,
 .stageSlots li:has(a:hover) > :not(.slotCode) * {
-  border-color: currentColor !important;
   background: transparent !important;
   color: inherit !important;
 }
 .card:hover .cardId,
 .stageSlots li:has(a:hover) .slotCode {
-  background: transparent;
-  color: var(--fill);
-  box-shadow: inset 0 0 0 2px currentColor;
+  background: var(--cream);
+  color: var(--navy);
 }
 .stageSlots li:has(a:hover) .slotCode span {
-  color: inherit;
-}
-.card:is([data-event-state=UPCOMING], [data-event-state=LIVE]):hover .cardId {
-  background: transparent;
-  color: var(--gold);
+  color: #3d5566;
 }
 .nextEvent:has(a:hover) {
-  background-color: #001a29;
-  color: var(--orange);
-}
-.nextEvent:has(a:hover) .nextLabel {
-  border-color: currentColor;
+  --line: var(--navy);
+  background-color: var(--hi);
+  color: var(--on-hi);
 }
 .nextEvent p:last-child {
   font: 700 var(--t-sm)/1.3 var(--display);

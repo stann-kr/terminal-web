@@ -10,13 +10,14 @@
 .activity i {
   width: 8px;
   height: 8px;
-  border: 1px solid currentColor;
+  background: currentColor;
+  opacity: .35;
 }
 .activity[data-busy=true] {
   color: var(--accent);
 }
 .activity[data-busy=true] i {
-  background: currentColor;
+  opacity: 1;
 }
 .value {
   color: inherit;
@@ -30,10 +31,11 @@
   flex-shrink: 0;
   width: 7px;
   height: 7px;
-  border: 1px solid currentColor;
+  background: currentColor;
+  opacity: .35;
 }
 .signalText[data-active=true] i {
-  background: currentColor;
+  opacity: 1;
 }
 
 /* Meter: thin equal segments on one baseline. */
@@ -46,10 +48,9 @@
 }
 .meter[data-tone=danger] { --tone: var(--danger); }
 .meter i {
-  border: 1.5px solid var(--tone);
+  background: var(--well);
 }
 .meter i[data-on] {
-  border-color: var(--tone);
   background: var(--tone);
 }
 @keyframes lampPulse {

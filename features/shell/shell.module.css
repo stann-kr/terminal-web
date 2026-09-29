@@ -1,12 +1,12 @@
-/* The console: a deep top bar, the navy work field, a deep foot bar. */
+/* The console: a deep top bar, the navy work field, a deep foot bar. The page itself scrolls;
+   the foot bar closes the page at the viewport bottom or after the last plate. */
 .frame {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--gap);
   width: 100%;
-  height: 100dvh;
+  min-height: 100dvh;
   padding: 10px clamp(10px, 1.4vw, 24px);
-  overflow: hidden;
   background: var(--bg);
 }
 .srOnly {
@@ -65,11 +65,11 @@
   min-width: 0;
   height: 40px;
   padding: 0 16px 0 10px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
-  transition: background-color .12s var(--ease), color .12s var(--ease), border-color .12s var(--ease);
+  transition: background-color .14s var(--ease), color .14s var(--ease);
 }
 .tabIndex {
   color: var(--muted);
@@ -87,17 +87,25 @@
   font: 500 var(--t-xs)/1 var(--sans);
   letter-spacing: 0;
 }
-.tab:hover {
-  border-color: var(--gold);
-  color: var(--gold);
+/* Bar controls rest as tinted cells, light up cream under the pointer, and hold gold when current. */
+.tab:hover,
+.language button:hover,
+.secondary a:hover {
+  background: var(--cream);
+  color: var(--navy);
 }
-.tab[aria-current=page] {
-  border-color: var(--gold);
+.tab[aria-current=page],
+.language button[aria-pressed=true],
+.secondary a[aria-current=page] {
   background: var(--gold);
   color: var(--navy);
 }
-.tab[aria-current=page] :is(.tabIndex, small) {
+.tab:is(:hover, [aria-current=page]) :is(.tabIndex, small),
+.secondary a:is(:hover, [aria-current=page]) {
   color: #3d5566;
+}
+.secondary a:is(:hover, [aria-current=page]) b {
+  color: var(--navy);
 }
 .tab:focus-visible {
   outline-offset: -5px;
@@ -124,23 +132,19 @@
 .language {
   display: flex;
 }
+.language {
+  gap: 2px;
+}
 .language button {
   min-width: 40px;
   height: 32px;
   padding: 0 8px;
-  border: var(--stroke) solid var(--line);
-  background: transparent;
+  border: 0;
+  background: var(--well);
   color: var(--muted);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .12em;
-}
-.language button + button {
-  border-left: 0;
-}
-.language button[aria-pressed=true] {
-  border-color: var(--cream);
-  background: var(--cream);
-  color: var(--navy);
+  transition: background-color .14s var(--ease), color .14s var(--ease);
 }
 /* A ring block closes each bar: the site's motif at its loudest, in orange on deep navy. */
 .brandNode {
@@ -204,18 +208,12 @@
 .main {
   display: flex;
   flex-direction: column;
+  gap: var(--gap);
   min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  scrollbar-width: thin;
   outline: none;
 }
 .main > :not(h1, [role=alert], [role=status]) {
   flex: 1 0 auto;
-}
-.main:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--focus);
 }
 
 /* ── Foot bar ──────────────────────────────────────────────────────────── */
@@ -240,27 +238,17 @@
   gap: 8px;
   min-height: 32px;
   padding-inline: 12px;
-  border: var(--stroke) solid var(--line);
+  background: var(--well);
   color: var(--muted);
   font: 500 var(--t-xs)/1 var(--sans);
   letter-spacing: 0;
   text-decoration: none;
+  transition: background-color .14s var(--ease), color .14s var(--ease);
 }
 .secondary b {
   color: var(--ink);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .1em;
-}
-.secondary a:hover {
-  border-color: var(--gold);
-}
-.secondary a[aria-current=page] {
-  border-color: var(--gold);
-  background: var(--gold);
-  color: #3d5566;
-}
-.secondary a[aria-current=page] b {
-  color: var(--navy);
 }
 .zone {
   color: var(--muted);
@@ -292,6 +280,7 @@
   .secondary a { flex: 1; justify-content: center; min-height: 40px; }
 }
 @media (forced-colors: active) {
+  .tab, .language button, .secondary a { border: 1px solid CanvasText; }
   .tab[aria-current=page] { border: 2px solid Highlight; }
   .node { background: none; }
 }

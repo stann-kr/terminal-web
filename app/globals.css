@@ -46,7 +46,11 @@
   --fill: var(--cream);
   --on-fill: var(--navy);
   --on-fill-muted: #3d5566;
-  --well: rgb(0 0 0 / .28);
+  /* A tinted cell in place of an outline: cells are told apart by tone, never by a frame. */
+  --well: rgb(252 229 205 / .08);
+  /* Hover lights a control up in this colour. */
+  --hi: var(--gold);
+  --on-hi: var(--navy);
   --danger: rgb(var(--color-accent-alert));
   --focus: var(--gold);
 
@@ -92,7 +96,9 @@
   --fill: var(--navy);
   --on-fill: var(--cream);
   --on-fill-muted: #c9b8a6;
-  --well: rgb(255 255 255 / .5);
+  --well: rgb(0 48 73 / .08);
+  --hi: var(--red);
+  --on-hi: #fff8f0;
   --danger: #9b1111;
   --focus: var(--navy);
 }
@@ -106,7 +112,9 @@
   --fill: var(--navy);
   --on-fill: var(--cream);
   --on-fill-muted: var(--gold);
-  --well: rgb(255 255 255 / .35);
+  --well: rgb(0 48 73 / .1);
+  --hi: var(--red);
+  --on-hi: #fff8f0;
   --danger: #7a0c0c;
   --focus: var(--navy);
 }
@@ -120,7 +128,9 @@
   --fill: #001a29;
   --on-fill: var(--cream);
   --on-fill-muted: var(--gold);
-  --well: rgb(255 255 255 / .25);
+  --well: rgb(0 26 41 / .12);
+  --hi: var(--cream);
+  --on-hi: var(--navy);
   --danger: #3a0505;
   --focus: #001a29;
 }
@@ -134,7 +144,9 @@
   --fill: #001a29;
   --on-fill: var(--cream);
   --on-fill-muted: var(--gold);
-  --well: rgb(0 0 0 / .2);
+  --well: rgb(0 0 0 / .16);
+  --hi: var(--cream);
+  --on-hi: var(--navy);
   --danger: #fff8f0;
   --focus: #fff8f0;
 }
@@ -153,7 +165,7 @@ button:disabled { cursor: wait; opacity: .6; }
 h1,h2,h3,p,dl,dd,ul,ol { margin: 0; }
 ul,ol { padding: 0; list-style: none; }
 img { max-width: 100%; height: auto; }
-input,select,textarea { min-width: 0; max-width: 100%; color: var(--ink); background: var(--well); border: var(--stroke) solid var(--line); border-radius: 0; padding: 10px 12px; min-height: 44px; font-size: 16px; }
+input,select,textarea { min-width: 0; max-width: 100%; color: var(--ink); background: var(--well); border: 0; border-radius: 0; padding: 10px 12px; min-height: 44px; font-size: 16px; }
 textarea { resize: vertical; }
 input[type=checkbox] { appearance: none; display: inline-grid; place-items: center; width: 20px; height: 20px; min-height: 20px; padding: 0; border: 2px solid var(--line); background: transparent; cursor: pointer; }
 input[type=checkbox]::before { content: ''; width: 10px; height: 10px; background: var(--ink); transform: scale(0); }
