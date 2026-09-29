@@ -278,11 +278,10 @@
 }
 .sessions a,
 .rosterCells a {
-  transition: transform .14s var(--ease), box-shadow .14s var(--ease);
+  transition: box-shadow .14s var(--ease);
 }
 .sessions a:hover,
 .rosterCells a:hover {
-  transform: translateY(-3px);
   box-shadow: 0 3px 0 var(--gold);
 }
 .sessions a:focus-visible {

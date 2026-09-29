@@ -120,15 +120,11 @@
   border-color: var(--fill);
   color: var(--on-fill);
 }
-.card {
-  transition: transform .14s var(--ease);
-}
 .card > * {
   transition: border-color .14s var(--ease), background-color .14s var(--ease);
 }
-/* The whole row answers the pointer: every cell lights gold and the row lifts. */
+/* The whole row answers the pointer: every cell lights gold. */
 .card:hover {
-  transform: translateX(4px);
 }
 .card:hover > * {
   border-color: var(--gold);
@@ -150,7 +146,7 @@
   position: relative;
   display: grid;
   gap: 6px;
-  transition: transform .14s var(--ease), box-shadow .14s var(--ease);
+  transition: box-shadow .14s var(--ease);
   padding: 12px 18px 16px;
 }
 .nextLabel {
@@ -172,7 +168,6 @@
   inset: 0;
 }
 .nextEvent:has(a:hover) {
-  transform: translateY(-3px);
   box-shadow: 0 3px 0 var(--gold);
 }
 .nextEvent p:last-child {
