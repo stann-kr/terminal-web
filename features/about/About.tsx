@@ -44,7 +44,7 @@ export function About() {
 
 function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
   return (
-    <Panel title="TERMINAL 소개" label="Terminal" code="SEOUL" surface="navy">
+    <Panel title="TERMINAL 소개" label="About" code="SEOUL" surface="navy">
       <p className={styles.statement} aria-hidden="true">TERMINAL</p>
       <FullText
         language={language}

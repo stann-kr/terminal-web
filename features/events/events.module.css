@@ -311,7 +311,8 @@
   padding: 6px 10px;
   background: var(--well);
 }
-.slotCode {
+/* Scoped under the row so the solid code cell outranks the tinted-cell rule above. */
+.stageSlots li > .slotCode {
   flex-direction: column;
   align-items: flex-start !important;
   justify-content: center;
