@@ -10,7 +10,7 @@
   padding: 7px 12px;
   background: var(--fill);
   color: var(--on-fill);
-  font: 600 14px/1.2 var(--display);
+  font: 600 var(--t-sm)/1.2 var(--display);
   letter-spacing: .12em;
 }
 .code {

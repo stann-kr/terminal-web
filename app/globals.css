@@ -56,12 +56,21 @@
   /* The word TERMINAL is always set in the brand face. */
   --brand: 'ProcrastinatingPixie', 'Barlow Condensed', sans-serif;
 
-  --text-label: 12px;
-  --text-ui: 14px;
-  --text-body: 15px;
+  /* Seven fluid type steps, 1280px → 1920px. Nothing on screen is smaller than --t-xs. */
+  --t-xs: clamp(12px, .78vw, 14px);   /* chips, meta labels, codes */
+  --t-sm: clamp(14px, .9vw, 16px);    /* secondary text, table meta */
+  --t-md: clamp(16px, 1.05vw, 18px);  /* body, values, controls */
+  --t-lg: clamp(19px, 1.4vw, 24px);   /* cell names, sub-heads, keys */
+  --t-xl: clamp(26px, 2.1vw, 38px);   /* plate titles, row titles */
+  --t-2xl: clamp(36px, 3.2vw, 60px);  /* counters, big digits, section names */
+  --t-3xl: clamp(56px, 6.4vw, 124px); /* the featured session name */
+  --text-label: var(--t-xs);
+  --text-ui: var(--t-sm);
+  --text-body: var(--t-md);
   --rule: 3px;
   --stroke: 1.5px;
-  --gap: 8px;
+  --gap: clamp(8px, .7vw, 12px);
+  --pad: clamp(16px, 1.5vw, 28px);
   --ease: cubic-bezier(.2, .8, .2, 1);
   /* Concentric rings from the bottom-right corner: the site's one graphic motif. */
   --rings: repeating-radial-gradient(circle at 100% 100%, currentColor 0 1.5px, transparent 1.5px 12px);

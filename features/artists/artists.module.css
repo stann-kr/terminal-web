@@ -30,22 +30,22 @@
   color: var(--on-fill);
 }
 .originCells b {
-  font: 800 30px/.9 var(--display);
+  font: 800 var(--t-xl)/.9 var(--display);
 }
 .originCells span {
   color: var(--on-fill-muted);
-  font: 700 11px/1 var(--display);
+  font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .12em;
 }
 .count {
   margin-bottom: 8px;
   color: var(--muted);
-  font: 600 13px/1 var(--sans);
+  font: 600 var(--t-sm)/1 var(--sans);
 }
 .grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-auto-rows: minmax(148px, auto);
+  grid-auto-rows: minmax(clamp(170px, 13vw, 240px), auto);
   gap: 4px;
 }
 /* A cell reads like a core module: a thin head row, the name, a tag and a serial. */
@@ -69,16 +69,16 @@
   margin-inline: -10px;
   padding: 6px 10px;
   border-bottom: 1px solid currentColor;
-  font: 700 11px/1.2 var(--display);
+  font: 700 var(--t-sm)/1.2 var(--display);
   letter-spacing: .12em;
 }
 .cellHeader > span:last-child {
-  font: 600 11px/1.2 var(--sans);
+  font: 600 var(--t-xs)/1.2 var(--sans);
   letter-spacing: 0;
 }
 .cell h2 {
   margin-top: 12px;
-  font: 800 28px/.92 var(--display);
+  font: 800 var(--t-xl)/.92 var(--display);
   letter-spacing: .02em;
   text-transform: uppercase;
   overflow-wrap: anywhere;
@@ -94,11 +94,11 @@
 .tag {
   padding: 2px 6px;
   border: 1px solid currentColor;
-  font: 700 11px/1 var(--display);
+  font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .1em;
 }
 .serialNumber {
-  font: 400 24px/1 var(--mono);
+  font: 400 var(--t-lg)/1 var(--mono);
 }
 .cell {
   transition: transform .14s var(--ease), box-shadow .14s var(--ease);
@@ -118,14 +118,14 @@
   padding: 10px;
   border: 2px dashed var(--line);
   color: var(--muted);
-  font: 400 26px/1 var(--mono);
+  font: 400 var(--t-xl)/1 var(--mono);
 }
 .emptyCell:not([data-fills~='6']) {
   display: none;
 }
 .emptyCell small {
   margin-top: 4px;
-  font-size: 11px;
+  font-size: var(--t-xs);
   letter-spacing: .14em;
 }
 
@@ -163,17 +163,17 @@
 .identityOrigin,
 .identityCode {
   position: relative;
-  font: 700 13px/1 var(--display);
+  font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .22em;
 }
 .identityCode {
-  font: 400 18px/1 var(--mono);
+  font: 400 var(--t-lg)/1 var(--mono);
   letter-spacing: .08em;
 }
 .profileName {
   position: relative;
   display: block;
-  font: 800 clamp(44px, 4vw, 72px)/.88 var(--display);
+  font: 800 clamp(48px, 4.6vw, 88px)/.88 var(--display);
   text-transform: uppercase;
   overflow-wrap: anywhere;
   text-wrap: balance;
@@ -199,7 +199,7 @@
   padding: 10px;
   background: var(--fill);
   color: var(--on-fill);
-  font: 400 15px/1.2 var(--mono);
+  font: 400 var(--t-md)/1.2 var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .recordBody {
@@ -210,7 +210,7 @@
   display: flex;
   align-items: center;
   min-height: 40px;
-  font: 800 24px/1 var(--display);
+  font: 800 var(--t-xl)/1 var(--display);
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -221,7 +221,7 @@
 }
 .timeline p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
   font-weight: 600;
 }
 .slot {
@@ -233,12 +233,12 @@
 }
 .slot span {
   color: var(--accent) !important;
-  font: 700 12px/1 var(--display);
+  font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .16em;
 }
 .slot b {
   color: var(--ink);
-  font: 400 15px/1.2 var(--mono);
+  font: 400 var(--t-md)/1.2 var(--mono);
 }
 .timeline li:hover {
   transform: translateX(4px);
@@ -254,7 +254,7 @@
 .state {
   display: inline-block;
   color: var(--accent);
-  font: 700 12px/1.3 var(--display);
+  font: 700 var(--t-xs)/1.3 var(--display);
   letter-spacing: .16em;
 }
 .shared {
@@ -276,7 +276,7 @@
 }
 .sharedCells a,
 .sharedCells span {
-  font: 800 18px/1.05 var(--display);
+  font: 800 var(--t-lg)/1.05 var(--display);
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -287,7 +287,7 @@
 }
 .sharedCells small {
   color: var(--on-fill-muted);
-  font: 700 11px/1 var(--display);
+  font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .12em;
 }
 .sharedCells li:has(a:hover) {
@@ -299,7 +299,7 @@
   padding-top: 12px;
   border-top: 1px solid var(--faint);
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
   font-weight: 600;
 }
 

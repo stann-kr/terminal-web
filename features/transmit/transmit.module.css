@@ -28,7 +28,7 @@
   padding: 6px 10px;
   background: var(--fill);
   color: var(--on-fill);
-  font: 700 14px/1.2 var(--display);
+  font: 700 var(--t-md)/1.2 var(--display);
   letter-spacing: .1em;
 }
 .counter strong {
@@ -37,12 +37,12 @@
   gap: 8px;
   padding: 6px 12px;
   border: var(--stroke) solid var(--line);
-  font: 400 28px/1 var(--mono);
+  font: 400 var(--t-2xl)/1 var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .counter small {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--t-sm);
 }
 .gauge {
   height: 18px;
@@ -85,14 +85,14 @@
   padding: 4px 10px;
   border-right: 1px solid var(--on-fill-muted);
   color: var(--on-fill-muted);
-  font: 400 12px/1.2 var(--mono);
+  font: 400 var(--t-xs)/1.2 var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .logs strong {
   display: flex;
   align-items: center;
   padding: 4px 10px;
-  font: 700 15px/1.2 var(--display);
+  font: 700 var(--t-lg)/1.2 var(--display);
   letter-spacing: .08em;
 }
 .logs p {
@@ -114,7 +114,7 @@
   gap: 10px;
   margin-top: 12px;
   color: var(--muted);
-  font: 700 12px/1 var(--display);
+  font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .18em;
 }
 .feedRule i {
@@ -158,17 +158,17 @@
   gap: 4px;
 }
 .nodes time {
-  padding: 7px 10px;
+  padding: 9px 12px;
   border: var(--stroke) solid var(--line);
   color: var(--muted);
-  font: 400 13px/1.2 var(--mono);
+  font: 400 var(--t-sm)/1.2 var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .nodes b {
   padding: 7px 10px;
   background: var(--fill);
   color: var(--on-fill);
-  font: 800 16px/1.2 var(--display);
+  font: 800 var(--t-lg)/1.2 var(--display);
   letter-spacing: .06em;
 }
 .nodes li:first-child b {
@@ -178,7 +178,7 @@
 .nodes span {
   padding: 7px 8px;
   color: var(--accent);
-  font: 700 12px/1.2 var(--display);
+  font: 700 var(--t-xs)/1.2 var(--display);
   letter-spacing: .14em;
 }
 .nodeEmpty {

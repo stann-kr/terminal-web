@@ -4,7 +4,7 @@
   flex-direction: column;
   width: 100%;
   min-width: 0;
-  padding: 12px 18px 18px;
+  padding: calc(var(--pad) * .7) var(--pad) var(--pad);
 }
 .formHeading {
   display: flex;
@@ -17,12 +17,12 @@
 }
 .formCode {
   color: var(--ink);
-  font: 700 28px/1 var(--display);
+  font: 700 var(--t-xl)/1 var(--display);
   letter-spacing: .02em;
 }
 .formHeading h2 {
   color: var(--muted);
-  font: 600 13px/1.3 var(--sans);
+  font: 600 var(--t-md)/1.3 var(--sans);
 }
 .formInterior {
   display: flex;
@@ -59,12 +59,12 @@
   padding: 6px 10px;
   background: var(--fill);
   color: var(--on-fill);
-  font: 700 14px/1.2 var(--display);
+  font: 700 var(--t-md)/1.2 var(--display);
   letter-spacing: .06em;
 }
 .field label > span {
   color: var(--on-fill-muted);
-  font: 700 11px/1 var(--display);
+  font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .16em;
 }
 .field :is(input, textarea) {
@@ -127,7 +127,7 @@
   padding: 18px;
 }
 .success h2 {
-  font: 700 26px/1.1 var(--display);
+  font: 700 var(--t-xl)/1.1 var(--display);
   word-break: keep-all;
   text-wrap: balance;
 }

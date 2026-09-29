@@ -73,18 +73,18 @@
 }
 .tabIndex {
   color: var(--muted);
-  font: 400 12px/1 var(--mono);
+  font: 400 var(--t-xs)/1 var(--mono);
 }
 .tabLabel {
   display: flex;
   align-items: baseline;
   gap: 7px;
-  font: 700 18px/1 var(--display);
+  font: 700 var(--t-lg)/1 var(--display);
   letter-spacing: .08em;
 }
 .tabLabel small {
   color: var(--muted);
-  font: 500 12px/1 var(--sans);
+  font: 500 var(--t-xs)/1 var(--sans);
   letter-spacing: 0;
 }
 .tab:hover {
@@ -113,12 +113,12 @@
   align-items: baseline;
   gap: 7px;
   color: var(--gold);
-  font: 400 22px/1 var(--mono);
+  font: 400 var(--t-lg)/1 var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .clockZone {
   color: var(--muted);
-  font: 700 11px/1 var(--display);
+  font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .2em;
 }
 .language {
@@ -131,7 +131,7 @@
   border: var(--stroke) solid var(--line);
   background: transparent;
   color: var(--muted);
-  font: 700 13px/1 var(--display);
+  font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .12em;
 }
 .language button + button {
@@ -146,7 +146,7 @@
 .brandNode {
   font-family: var(--brand);
   font-weight: 400;
-  font-size: 22px;
+  font-size: var(--t-lg);
 }
 .node {
   display: flex;
@@ -159,7 +159,7 @@
     transparent calc(var(--ring-phase) - 18px),
     currentColor calc(var(--ring-phase) - 18px) calc(var(--ring-phase) - 16px),
     transparent calc(var(--ring-phase) - 16px) var(--ring-phase));
-  font: 800 18px/1 var(--display);
+  font: 800 var(--t-lg)/1 var(--display);
   letter-spacing: .06em;
 }
 
@@ -186,7 +186,7 @@
 .tickerTrack p > span {
   padding-right: 48px;
   color: var(--ink);
-  font: 700 13px/1 var(--display);
+  font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .16em;
 }
 .tickerTrack p > span:nth-child(odd) {
@@ -227,7 +227,7 @@
   min-height: 46px;
   padding-left: 14px;
   border-top: 3px solid var(--red);
-  font: 700 12px/1 var(--display);
+  font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .2em;
 }
 .secondary {
@@ -242,13 +242,13 @@
   padding-inline: 12px;
   border: var(--stroke) solid var(--line);
   color: var(--muted);
-  font: 500 12px/1 var(--sans);
+  font: 500 var(--t-xs)/1 var(--sans);
   letter-spacing: 0;
   text-decoration: none;
 }
 .secondary b {
   color: var(--ink);
-  font: 700 14px/1 var(--display);
+  font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .1em;
 }
 .secondary a:hover {
@@ -286,7 +286,7 @@
   .clock, .zone, .ticker { display: none; }
   .tab { flex-direction: column; justify-content: center; gap: 3px; height: 48px; padding: 0 4px; }
   .tabIndex { display: none; }
-  .tabLabel { flex-direction: column; align-items: center; gap: 3px; font-size: 15px; }
+  .tabLabel { flex-direction: column; align-items: center; gap: 3px; font-size: var(--t-md); }
   .foot { grid-template-columns: minmax(0, 1fr); padding: 6px; }
   .secondary { width: 100%; }
   .secondary a { flex: 1; justify-content: center; min-height: 40px; }

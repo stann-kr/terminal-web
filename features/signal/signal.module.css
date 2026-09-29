@@ -8,7 +8,7 @@
   min-width: 0;
 }
 .lead {
-  font: 700 20px/1.4 var(--sans);
+  font: 700 var(--t-lg)/1.4 var(--sans);
 }
 /* Channel state: the real request lifecycle as one printed status cell. */
 .signalMatrix {
@@ -18,7 +18,7 @@
   margin-block: 16px 14px;
   padding: 8px 12px;
   border: var(--stroke) solid var(--line);
-  font: 700 14px/1 var(--display);
+  font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .16em;
 }
 .signalMatrix i {
