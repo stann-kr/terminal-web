@@ -52,6 +52,7 @@ dist/
 .agents/
 .claude/
 .codex/
+/.orca/
 build_log.txt
 
 # 프로젝트 문서 정책
