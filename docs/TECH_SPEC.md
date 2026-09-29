@@ -9,7 +9,7 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 - `features/events`: 행사 조회·통합 카드 목록·상세·기록
 - `features/artists`: 인물 식별과 공개 출연 이력
 - `features/home`, `features/about`: 개요와 편집 콘텐츠
-- `features/home/terminal`: 사이트 명령어 해석·공개 데이터 텍스트 출력·입력 및 탭별 기록
+- `features/console`: 사이트 명령어 해석·공개 데이터 텍스트 출력·입력 및 탭별 기록
 - `features/access`, `features/signal`, `features/transmit`: 각 입력 상태와 요청
 - `features/display`: 순차 표시·상태 점멸·공통 모션 정책
 - `features/ui`: 중립 control, HTTP 오류, 표시 primitive

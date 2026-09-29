@@ -6,7 +6,7 @@ import { createTerminalSessionStore } from './session';
 import { PrintedResponse } from './PrintedResponse';
 import styles from './terminal.module.css';
 
-export function HomeTerminal({ events, language = 'ko' }: { events: readonly TerminalEvent[]; language?: 'ko'|'en' }) {
+export function Console({ events, language = 'ko' }: { events: readonly TerminalEvent[]; language?: 'ko'|'en' }) {
   const [store] = useState(createTerminalSessionStore);
   const session = useSyncExternalStore(store.subscribe,store.getSnapshot,store.getServerSnapshot);
   const { entries,history,draft:input } = session;

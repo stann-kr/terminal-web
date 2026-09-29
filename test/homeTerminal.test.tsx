@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { HomeTerminal } from '../features/home/terminal/HomeTerminal';
-import { runCommand } from '../features/home/terminal/commands';
-import { TERMINAL_SESSION_KEY } from '../features/home/terminal/session';
+import { Console as HomeTerminal } from '../features/console/Console';
+import { runCommand } from '../features/console/commands';
+import { TERMINAL_SESSION_KEY } from '../features/console/session';
 import type { Artist, TerminalEvent } from '../lib/events/types';
 
 const push = vi.hoisted(() => vi.fn());
