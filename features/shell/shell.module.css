@@ -179,40 +179,9 @@
 
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .node { animation: ringOut var(--bar) linear infinite; }
-  /* A command kicks the ring blocks: gold rings rushing out for two beats. */
-  .frame[data-kick] .node {
-    color: var(--gold);
-    animation-duration: var(--q8);
-  }
 }
 
-/* ── Command ping: three rings burst from the operated point. ── */
-.ping {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  overflow: hidden;
-  pointer-events: none;
-  color: var(--orange);
-}
-.ping b {
-  position: absolute;
-  left: var(--px);
-  top: var(--py);
-  border: 2px solid currentColor;
-  border-radius: 50%;
-  translate: -50% -50%;
-  animation: ringBurst calc(var(--beat) * 2) var(--settle) var(--q16) both;
-}
-.ping b:nth-of-type(2) { animation-delay: var(--q8); }
-.ping b:nth-of-type(3) { animation-delay: calc(var(--q8) + var(--q16)); color: var(--gold); }
-@keyframes ringBurst {
-  from { width: 0; height: 0; opacity: 1; }
-  to { width: 240vmax; height: 240vmax; opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce), (forced-colors: active) {
-  .ping { display: none; }
-}
+
 
 /* ── Ticker: real schedule facts running along the foot bar. ─────────────── */
 .ticker {

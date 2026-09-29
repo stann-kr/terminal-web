@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, type RefObject } from 'react';
 
 const motionAllowed = () =>
   !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches &&
@@ -128,28 +128,3 @@ export function useSmoothWheel() {
     };
   }, []);
 }
-
-export type PingPoint = { x: number; y: number; at: number };
-
-/** Remembers where the last in-site link was operated, by pointer or keyboard. */
-export function useLastPress() {
-  const point = useRef<PingPoint | null>(null);
-  useEffect(() => {
-    const press = (event: MouseEvent) => {
-      const link = (event.target as Element | null)?.closest?.('a[href]');
-      if (!(link instanceof HTMLAnchorElement) || link.target === '_blank' || link.origin !== location.origin) return;
-      const rect = link.getBoundingClientRect();
-      const keyboard = event.detail === 0;
-      point.current = {
-        x: keyboard ? rect.left + rect.width / 2 : event.clientX,
-        y: keyboard ? rect.top + rect.height / 2 : event.clientY,
-        at: performance.now(),
-      };
-    };
-    document.addEventListener('click', press, true);
-    return () => document.removeEventListener('click', press, true);
-  }, []);
-  return point;
-}
-
-export { motionAllowed };
