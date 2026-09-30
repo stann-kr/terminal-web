@@ -81,6 +81,20 @@ const feedStateLabel = {
 } as const;
 
 /**
+ * The drawn log list cut into sub-pages that fit its height. Stacked under the write form (a narrow
+ * plate), the log is read by scrolling instead: the whole server page shows at once and a spill
+ * grows the sheet, rather than cutting it into one-entry pages.
+ */
+function cutLog(list: HTMLElement) {
+  const entries = [...list.children];
+  const grid = list.closest<HTMLElement>(`.${styles.logGrid}`);
+  if (grid && getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length === 1) return [entries.map((_, index) => index)];
+  const heights = entries.map(child => child.getBoundingClientRect().height);
+  const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
+  return packHeights(heights, list.clientHeight, gap);
+}
+
+/**
  * One server page of the public log (five entries). On the stage, entries that do not fit the
  * panel are split into sub-pages by their measured height; turning past the last sub-page moves to
  * the next server page, so the reader never meets a scrollbar or a cut entry.
@@ -100,9 +114,7 @@ function LogPages({ page, query }: { page: number; query: ReturnType<typeof useT
   useLayoutEffect(() => {
     const element = list.current;
     if (stageMode !== 'stage' || pages || !element || !logs?.length) return;
-    const heights = [...element.children].map(child => child.getBoundingClientRect().height);
-    const gap = parseFloat(getComputedStyle(element).rowGap) || 0;
-    setSplit({ key: `${logKey}:${stageMode}`, pages: packHeights(heights, element.clientHeight, gap) });
+    setSplit({ key: `${logKey}:${stageMode}`, pages: cutLog(element) });
   }, [stageMode, pages, logs, logKey]);
   useEffect(() => {
     const element = list.current;
