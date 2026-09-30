@@ -247,7 +247,7 @@
   pointer-events: none;
   color: var(--cream);
   mix-blend-mode: difference;
-  transition: opacity var(--q8) var(--settle);
+  transition: opacity var(--dur-hover) var(--ease-move);
 }
 .cursor[data-visible=false],
 .cursor[data-mode=text] {
@@ -272,7 +272,7 @@
   height: 30px;
   margin: -15px 0 0 -15px;
   border: 1.5px solid currentColor;
-  transition: scale var(--q8) var(--settle), border-color var(--q8) var(--settle), border-width var(--q8) var(--settle);
+  transition: scale var(--dur-hover) var(--ease-move), border-color var(--dur-hover) var(--ease-move), border-width var(--dur-hover) var(--ease-move);
 }
 .cursor[data-mode=control] .cursorRing {
   scale: 1.6;
@@ -281,7 +281,7 @@
 }
 .cursor[data-pressed] .cursorRing {
   scale: .7;
-  transition-duration: var(--q32);
+  transition-duration: 60ms;
 }
 .cursor[data-mode=control][data-pressed] .cursorRing {
   scale: 1.2;

@@ -27,10 +27,10 @@ export function ConsoleCursor() {
     let last = 0;
 
     const tick = (time: number) => {
-      // Frame-rate independent damping: the ring closes ~90% of the gap every 109ms (a 16th at 138 BPM).
+      // Frame-rate independent damping: the ring closes ~90% of the gap every 90ms, a light trail.
       const dt = last ? Math.min(64, time - last) : 16;
       last = time;
-      const follow = reduced?.matches ? 1 : 1 - Math.pow(0.1, dt / 109);
+      const follow = reduced?.matches ? 1 : 1 - Math.pow(0.1, dt / 90);
       trail.x += (target.x - trail.x) * follow;
       trail.y += (target.y - trail.y) * follow;
       ring.style.translate = `${trail.x}px ${trail.y}px`;

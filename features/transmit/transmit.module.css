@@ -1,21 +1,3 @@
-.layout {
-  display: grid;
-  grid-template-columns: minmax(320px, 440px) minmax(0, 1fr) minmax(240px, 300px);
-  gap: var(--gap);
-  align-items: stretch;
-}
-.column {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.write {
-  flex: 1;
-}
-.statusPlate {
-  min-width: 0;
-}
-
 /* Length readout: a dark label cell and an outlined digit cell, then the gauge. */
 .counter {
   display: grid;
@@ -55,94 +37,10 @@
   font-weight: 600;
 }
 
-/* Public log: each entry is a dark head strip (stamp · handle) over an outlined message cell. */
-.console {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
-.console > [role] {
-  margin-bottom: 10px;
-}
-.console > p {
-  padding: 10px 0;
-}
-.logs {
-  display: grid;
-  gap: 6px;
-}
-.logs header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  background: var(--fill);
-  color: var(--on-fill);
-}
-.logs time {
-  display: flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-right: 1px solid var(--on-fill-muted);
-  color: var(--on-fill-muted);
-  font: 400 var(--t-xs)/1.2 var(--mono);
-  font-variant-numeric: tabular-nums;
-}
-.logs strong {
-  display: flex;
-  align-items: center;
-  padding: 4px 10px;
-  font: 700 var(--t-lg)/1.2 var(--display);
-  letter-spacing: .08em;
-}
-.logs p {
-  padding: 8px 10px 10px;
-  background: var(--well);
-  color: var(--ink);
-  font-size: var(--text-body);
-  font-weight: 500;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 /* Query state line: steady when current, blinking while reading, alert on failure. */
-.feedRule {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  color: var(--muted);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .18em;
-}
-.feedRule i {
-  width: 9px;
-  height: 9px;
-  background: currentColor;
-  opacity: .35;
-}
-.feedRule:is([data-state=ready], [data-state=loading], [data-state=error]) i {
-  opacity: 1;
-}
-.feedRule[data-state=error] {
-  color: var(--danger);
-}
 @keyframes readPulse {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: .25; }
-}
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .feedRule[data-state=loading] i {
-    animation: readPulse .6s steps(1, end) infinite;
-  }
-}
-@media (max-width: 1280px) {
-  .layout { grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); }
-  .statusPlate { grid-column: 1 / -1; }
-}
-@media (max-width: 860px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Node activity: newest first, one node tag cell and its event per row; the newest row is gold. */
@@ -183,10 +81,7 @@
 /* Short labels, codes and times never break mid-phrase. */
 .counter > span,
 .counter strong,
-.logs time,
-.logs strong,
 .nodes b,
-.nodes span,
-.feedRule {
+.nodes span {
   white-space: nowrap;
 }

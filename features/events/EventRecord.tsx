@@ -1,22 +1,13 @@
-/* eslint-disable @next/next/no-img-element -- Posters retain their source aspect ratio without invented dimensions. */
 'use client';
 import Link from 'next/link';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
-import { useLanguage } from '@/features/shell/Providers';
-import { Action, ActionDeck, Bay, BrandText, Facts, FullText, Panel, StateNotice, ui } from '@/features/ui/Ui';
-import { Morph } from '@/features/display/Morph';
+import { Action, ActionDeck, Facts, ui } from '@/features/ui/Ui';
 import {
   buildArtistArchive,
   profileForAppearance,
   artistHref,
 } from '@/features/artists/model';
-import {
-  accessAvailability,
-  eventHref,
-  paragraphs,
-  publicArtists,
-  statusLabel,
-} from './model';
+import { accessAvailability, eventHref, publicArtists } from './model';
 import styles from './events.module.css';
 
 export function EventFacts({
@@ -145,7 +136,7 @@ export function Lineup({
                   <span>STAGE {dock}</span>
                   <span>공개 공연표</span>
                 </h3>
-                <ul className={styles.stageSlots} data-cells="">
+                <ul className={styles.stageSlots}>
                   {visible
                     .filter((artist) => (artist.dock || 'TBA') === dock)
                     .map((artist) => (
@@ -184,118 +175,5 @@ export function Lineup({
         </ul>
       )}
     </>
-  );
-}
-export function EventRecord({
-  event,
-  events,
-  now,
-  compact = false,
-}: {
-  event: TerminalEvent;
-  events: TerminalEvent[];
-  now: Date;
-  compact?: boolean;
-}) {
-  const { language } = useLanguage();
-  return (
-    <div className={compact ? styles.recordCompact : styles.record}>
-      <div className={styles.column}>
-        <EventOverview event={event} />
-        <ActionDeck label="SESSION">
-          <Action href="/events">이벤트 목록</Action>
-        </ActionDeck>
-      </div>
-      <Panel
-        title="공연표"
-        label="Running order"
-        surface="navy"
-        className={styles.runningOrder}
-      >
-        <Lineup event={event} events={events} stages />
-        {publicArtists(event).length > 0 && <Bay label="END OF ORDER" />}
-        {publicArtists(event).length === 0 && (
-          <div className={styles.orderPending}>
-            <StateNotice title="공연표 공개 전입니다">
-              출연진과 시간표는 공개되는 대로 이곳에 표시됩니다.
-            </StateNotice>
-            <Bay label="STAGE BAY" />
-          </div>
-        )}
-      </Panel>
-      <div className={styles.notes}>
-        <EventIntroduction event={event} language={language} />
-        <Panel title="참여 안내" label="Access" surface="cream" className={styles.accessPanel}>
-          <EventActions event={event} events={events} now={now} />
-        </Panel>
-      </div>
-    </div>
-  );
-}
-
-function EventOverview({ event }: { event: TerminalEvent }) {
-  return (
-    <Morph name={`session-${event.id}`}>
-    <Panel
-      title="행사 개요"
-      label="Session"
-      code={event.id}
-      surface={event.status === 'ARCHIVED' ? 'cream' : event.status === 'LIVE' ? 'red' : 'orange'}
-      className={styles.overview}
-    >
-      <div data-event-state={event.status} className={styles.status}>
-        {statusLabel(event.status)}
-      </div>
-      <p className={styles.overviewTitle}><BrandText text={event.session} /></p>
-      <p className={styles.overviewSubtitle}>{event.subtitle}</p>
-      <EventFacts event={event} modular />
-      {event.posterUrl && (
-        <a
-          className={styles.poster}
-          href={event.posterUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img
-            src={event.posterUrl}
-            alt={`${event.session} 행사 포스터 — 새 탭에서 확대`}
-          />
-        </a>
-      )}
-    </Panel>
-    </Morph>
-  );
-}
-
-function EventIntroduction({
-  event,
-  language,
-}: {
-  event: TerminalEvent;
-  language: 'ko' | 'en';
-}) {
-  return (
-    <Panel title="행사 소개" label="Briefing" code={language.toUpperCase()} surface="navy">
-      <div className={styles.annotation}>
-        {paragraphs(event.description, language).length ? (
-          <FullText
-            language={language}
-            paragraphs={paragraphs(event.description, language)}
-          />
-        ) : (
-          <p className={ui.muted}>행사 소개는 공개되는 대로 이곳에 표시됩니다.</p>
-        )}
-        {paragraphs(event.invitationLines, language).length > 0 && (
-          <details>
-            <summary>초대 안내 전체 읽기</summary>
-            <FullText
-              language={language}
-              excerpt={false}
-              paragraphs={paragraphs(event.invitationLines, language)}
-            />
-          </details>
-        )}
-      </div>
-    </Panel>
   );
 }

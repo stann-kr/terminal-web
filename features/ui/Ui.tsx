@@ -59,12 +59,6 @@ export function Panel({
   );
 }
 
-/** A sub-section label inside a plate, like ALPHA CORES; decorative unless given as a heading. */
-export function Sub({ children, as = 'p' }: { children: ReactNode; as?: 'p' | 'h3' }) {
-  const Tag = as;
-  return <Tag className={styles.sub}>{children}</Tag>;
-}
-
 /** A small printed tag; `solid` fills it with ink. */
 export function Chip({ children, solid = false }: { children: ReactNode; solid?: boolean }) {
   return <span className={styles.chip} data-solid={solid || undefined}>{children}</span>;
@@ -119,7 +113,7 @@ export function Facts({
   rows: readonly (readonly [string, ReactNode])[];
 }) {
   return (
-    <dl className={styles.facts} data-cells="">
+    <dl className={styles.facts}>
       {rows.map(([label, value]) => (
         <div key={label}>
           <dt>{label}</dt>
@@ -164,68 +158,6 @@ export function Loading() {
     <p role="status" className={styles.loading}>
       기록을 불러오는 중<span aria-hidden="true" />
     </p>
-  );
-}
-export function Pagination({
-  page,
-  totalPages,
-  href,
-}: {
-  page: number;
-  totalPages: number;
-  href: (page: number) => string;
-}) {
-  if (totalPages < 2 && page === 1) return null;
-  return (
-    <nav aria-label="페이지 이동" className={styles.pagination}>
-      {page > 1 ? <Link href={href(page - 1)}>← 이전</Link> : <span>이전</span>}
-      <span aria-live="polite">
-        {page} / {Math.max(totalPages, 1)}
-      </span>
-      {page < totalPages ? (
-        <Link href={href(page + 1)}>다음 →</Link>
-      ) : (
-        <span>다음</span>
-      )}
-    </nav>
-  );
-}
-export function FullText({
-  paragraphs,
-  excerpt = true,
-  language,
-}: {
-  paragraphs: string[];
-  excerpt?: boolean;
-  language?: 'ko' | 'en';
-}) {
-  if (!paragraphs.length) return null;
-  const text = paragraphs.join('\n\n');
-  return (
-    <div className={styles.prose} lang={language}>
-      {excerpt && text.length > 260 ? (
-        <>
-          <p>{text.slice(0, 240)}…</p>
-          <details>
-            <summary lang="ko">
-              <span className={styles.readMore}>전체 읽기</span>
-              <span className={styles.readLess}>접기</span>
-            </summary>
-            {paragraphs.map((p, i) => (
-              <p key={i}>
-                {p}
-              </p>
-            ))}
-          </details>
-        </>
-      ) : (
-        paragraphs.map((p, i) => (
-          <p key={i}>
-            {p}
-          </p>
-        ))
-      )}
-    </div>
   );
 }
 export { styles as ui };

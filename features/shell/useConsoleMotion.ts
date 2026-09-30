@@ -1,55 +1,9 @@
 'use client';
-import { useEffect, type RefObject } from 'react';
+import { useEffect } from 'react';
 
 const motionAllowed = () =>
   !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches &&
   !window.matchMedia?.('(forced-colors: active)').matches;
-
-/**
- * Plates power up as they arrive: every plate of the page (a grandchild of `main`) waits clipped
- * until it enters the viewport, then opens on the next sixteenth note after the one before it.
- * Without script, or with reduced motion, nothing is ever clipped.
- */
-export function usePlateReveal(main: RefObject<HTMLElement | null>) {
-  useEffect(() => {
-    const root = main.current;
-    if (!root || typeof IntersectionObserver === 'undefined' || !motionAllowed()) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        let order = 0;
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          const plate = entry.target as HTMLElement;
-          plate.style.setProperty('--stagger', String(Math.min(order++, 6)));
-          plate.dataset.reveal = 'in';
-          io.unobserve(plate);
-        }
-      },
-      { rootMargin: '0px 0px -6% 0px' },
-    );
-    const seen = new WeakSet<Element>();
-    let frame = 0;
-    const scan = () => {
-      frame = 0;
-      for (const plate of root.querySelectorAll<HTMLElement>(':scope > :not(h1, [role]) > *')) {
-        if (seen.has(plate)) continue;
-        seen.add(plate);
-        plate.dataset.reveal = 'pending';
-        io.observe(plate);
-      }
-    };
-    scan();
-    const mutations = new MutationObserver(() => {
-      if (!frame) frame = requestAnimationFrame(scan);
-    });
-    mutations.observe(root, { childList: true, subtree: true });
-    return () => {
-      cancelAnimationFrame(frame);
-      mutations.disconnect();
-      io.disconnect();
-    };
-  }, [main]);
-}
 
 /**
  * Hover light-up sweeps in from the side the pointer came from: each control (and the row it
@@ -73,8 +27,8 @@ export function useSweepDirection() {
 }
 
 /**
- * Smooth wheel: wheel input sets a target and the page glides to it, closing ~90% of the gap per
- * eighth note at 138 BPM. Keyboard, scrollbar, touch, zoom and horizontal input stay native, as
+ * Smooth wheel (flow mode only): wheel input sets a target and the page glides to it, closing ~90%
+ * of the gap every 200ms. Keyboard, scrollbar, touch, zoom and horizontal input stay native, as
  * does any wheel over a field or an inner scroller; any outside scroll hands control back at once.
  */
 export function useSmoothWheel() {
@@ -89,7 +43,7 @@ export function useSmoothWheel() {
     const step = (time: number) => {
       const dt = last ? Math.min(64, time - last) : 16;
       last = time;
-      current += (target - current) * (1 - Math.pow(0.1, dt / 217));
+      current += (target - current) * (1 - Math.pow(0.1, dt / 200));
       if (Math.abs(target - current) < 0.5) current = target;
       window.scrollTo(0, current);
       frame = current === target ? 0 : requestAnimationFrame(step);

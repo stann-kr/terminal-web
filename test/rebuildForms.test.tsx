@@ -3,9 +3,9 @@ import { act,cleanup,render,screen,waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
-import { Access, AccessForm } from '../features/access/Access';
-import { TransmitForm } from '../features/transmit/Transmit';
-import { Signal } from '../features/signal/Signal';
+import { AccessForm, AccessRequest } from '../features/access/Access';
+import { TransmitForm } from '../features/transmit/TransmitForm';
+import { SignalBody } from '../features/signal/Signal';
 
 afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}});
@@ -16,7 +16,7 @@ describe('guest request UI',()=>{
     const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});client.setQueryData(['events'],[event]);
     let resolve!:(value:Response)=>void;
     const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockReturnValueOnce(new Promise<Response>(r=>{resolve=r;}));vi.stubGlobal('fetch',fetch);
-    const user=userEvent.setup();const mounted=render(<QueryClientProvider client={client}><Access eventId="A"/></QueryClientProvider>);
+    const user=userEvent.setup();const mounted=render(<QueryClientProvider client={client}><AccessRequest eventId="A"/></QueryClientProvider>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
     await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByLabelText(/^이메일/),'example@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     await act(async()=>{client.setQueryData(['events'],[{...event,status:'ARCHIVED'}]);});
@@ -92,7 +92,7 @@ describe('signal UI',()=>{
   it.each([true,false])('requires consent and syncs the matrix with the actual request result (saved=%s)',async saved=>{
     let resolve!:(value:Response)=>void;
     const fetch=vi.fn().mockReturnValue(new Promise<Response>(done=>{resolve=done;}));vi.stubGlobal('fetch',fetch);
-    const user=userEvent.setup();const {container}=render(<Signal/>);
+    const user=userEvent.setup();const {container}=render(<SignalBody/>);
     const matrix=container.querySelector('[aria-hidden=true][data-state]')!;
     expect(matrix).toHaveAttribute('data-state','idle');
     await user.type(screen.getByLabelText(/^이메일/),'reader@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'reader');await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));expect(fetch).not.toHaveBeenCalled();
@@ -118,7 +118,7 @@ describe('field error recovery',()=>{
     const fetch=vi.fn();
     if(form==='access') fetch.mockResolvedValueOnce(json({name:'INVITER'}));
     fetch.mockResolvedValue(json({error:'INVALID_EMAIL_FORMAT'},400));vi.stubGlobal('fetch',fetch);
-    const user=userEvent.setup();render(form==='access'?<AccessForm eventId="A"/>:<Signal/>);
+    const user=userEvent.setup();render(form==='access'?<AccessForm eventId="A"/>:<SignalBody/>);
     if(form==='access') {
       await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
       await user.type(screen.getByLabelText(/^이름/),'Example');

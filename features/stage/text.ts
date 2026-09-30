@@ -16,7 +16,7 @@ export interface Measurer {
   wrap(text: string, font: string, width: number, options?: WrapOptions): WrappedLine[];
 }
 
-export const pretextMeasurer: Measurer = {
+const pretextMeasurer: Measurer = {
   wrap(text, font, width, options = {}) {
     const prepared = prepareWithSegments(text, font, {
       whiteSpace: 'pre-wrap',
@@ -50,12 +50,6 @@ export function whenFontsReady(then: () => void): () => void {
 export function fontOf(style: Pick<CSSStyleDeclaration, 'fontStyle' | 'fontWeight' | 'fontSize' | 'fontFamily'>, sizePx?: number): string {
   const size = sizePx === undefined ? style.fontSize : `${sizePx}px`;
   return `${style.fontStyle === 'normal' ? '' : `${style.fontStyle} `}${style.fontWeight} ${size} ${style.fontFamily}`;
-}
-
-/** Height of a block of text at a width. */
-export function measureBlock(text: string, font: string, width: number, lineHeight: number, measurer: Measurer, options?: WrapOptions) {
-  const lines = text ? measurer.wrap(text, font, width, options).length : 0;
-  return { lines, height: lines * lineHeight };
 }
 
 export interface TextChunk {

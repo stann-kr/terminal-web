@@ -1,6 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import {
   getEventBoundaryTimes,
@@ -8,7 +8,6 @@ import {
 } from '@/lib/events/lifecycle';
 import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
 import { requestJson } from '@/features/ui/http';
-import { Loading, StateNotice } from '@/features/ui/Ui';
 
 export function useEvents() {
   const query = useQuery({
@@ -39,35 +38,4 @@ export function useEvents() {
     now,
     events: query.data?.map((event) => withEffectiveEventStatus(event, now)),
   };
-}
-export function EventsData({
-  children,
-}: {
-  children: (events: TerminalEvent[], now: Date) => ReactNode;
-}) {
-  const query = useEvents();
-  if (!query.events)
-    return query.isError ? (
-      <StateNotice
-        error
-        title="행사 기록을 불러오지 못했습니다"
-        retry={() => void query.refetch()}
-      />
-    ) : (
-      <Loading />
-    );
-  return (
-    <>
-      {query.isError && (
-        <StateNotice
-          error
-          title="최신 정보를 불러오지 못했습니다"
-          retry={() => void query.refetch()}
-        >
-          아래는 마지막으로 확인한 기록입니다.
-        </StateNotice>
-      )}
-      {children(query.events, query.now)}
-    </>
-  );
 }

@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { SignalChannel, SignalForm, SignalInformation } from '@/features/signal/Signal';
-import { useSignalSubscription } from '@/features/signal/useSignalSubscription';
+import { SignalBody } from '@/features/signal/Signal';
 import { Chip } from '@/features/ui/Ui';
 import { FocusHead, RailFace, Tags } from './faces';
 import type { PlateProps } from './Plates';
@@ -27,20 +26,11 @@ export function SignalPlate({ mode }: PlateProps) {
 }
 
 function SignalFocus() {
-  const request = useSignalSubscription();
   return (
     <div className={styles.focus}>
       <FocusHead label="Signal" title="소식 신청" chips={<Tags items={['CH 01', 'MAIL', 'INSTAGRAM']} />} />
       <div className={styles.panelRow} data-columns="3">
-        <div className={styles.fitColumn} data-fit="">
-          <SignalInformation request={request} />
-        </div>
-        <div className={styles.fitColumn} data-fit="">
-          <SignalForm request={request} />
-        </div>
-        <div className={styles.fitColumn} data-fit="">
-          <SignalChannel request={request} />
-        </div>
+        <SignalBody wrap={part => <div className={styles.fitColumn} data-fit="">{part}</div>} />
       </div>
     </div>
   );

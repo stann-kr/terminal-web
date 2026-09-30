@@ -6,7 +6,6 @@ export const isPublicArtist = (artist: Artist) => artist.status === 'CONFIRMED' 
 export const publicArtists = (event: TerminalEvent) => event.artists.filter(isPublicArtist);
 export const eventHref = (id: string) => `/events/${encodeURIComponent(id)}`;
 export const statusLabel = (status: TerminalEvent['status']) => ({ LIVE: '진행 중', UPCOMING: '예정', ARCHIVED: '행사 기록' })[status];
-export const EVENT_PAGE_SIZE = 4;
 export function orderEventDirectory(events: readonly TerminalEvent[], now = new Date()) {
   const effective = events.map(event => withEffectiveEventStatus(event,now));
   const upcoming = effective.filter(event => event.status === 'UPCOMING').sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || a.id.localeCompare(b.id));

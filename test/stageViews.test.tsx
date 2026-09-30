@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { Shell } from '../features/shell/Shell';
+import { EventCountdown } from '../features/events/EventCountdown';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
@@ -242,5 +243,106 @@ describe('visitor log plate', () => {
     await act(async () => { resolve(new Response(JSON.stringify(result))); });
     await waitFor(() => expect(indicator()).toHaveAttribute('data-state', 'ready'));
     vi.unstubAllGlobals();
+  });
+});
+
+describe('directory and roster contracts', () => {
+  const stage = (container: HTMLElement) => container.querySelector<HTMLElement>('#stage')!;
+
+  it('keeps past events reachable in the unified list when nothing is upcoming', () => {
+    const { container, go } = shell();
+    go('/events');
+    expect(within(item(container, 'event:OLD')).getByRole('link', { name: /Past event/ })).toHaveAttribute('href', '/events/OLD');
+    expect(within(plate(container, 'events')).getByText('지난 행사').nextElementSibling).toHaveTextContent('1');
+    expect(within(stage(container)).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
+  });
+
+  it('shows every public artist and every record without reviving removed search or filters', () => {
+    const { container, go } = shell([past, upcoming]);
+    go('/artists', 'q=PRIVATE&origin=US&sort=count');
+    expect(within(stage(container)).getByRole('heading', { name: 'VISIBLE ARTIST' })).toBeInTheDocument();
+    expect(container).not.toHaveTextContent('PRIVATE NAME');
+    go('/events', 'q=absent&year=2024&venue=OTHER');
+    expect(within(stage(container)).getByRole('heading', { name: 'Past event' })).toBeInTheDocument();
+    expect(within(stage(container)).getByRole('heading', { name: 'TERMINAL [03]' })).toBeInTheDocument();
+    expect(within(stage(container)).queryByRole('textbox')).not.toBeInTheDocument();
+    expect(within(stage(container)).queryByRole('combobox')).not.toBeInTheDocument();
+  });
+
+  it('pages the flow roster twelve at a time', () => {
+    viewport(390, 844);
+    const events = [{ ...past, artists: Array.from({ length: 13 }, (_, index) => artist(`A${index}`, `ARTIST ${String(index).padStart(2, '0')}`)) }];
+    const { container, go } = shell(events);
+    go('/artists', 'page=2');
+    const cells = [...container.querySelectorAll<HTMLElement>('[data-item^="artist:"]')].filter(shown);
+    expect(cells).toHaveLength(1);
+    expect(within(cells[0]).getByRole('heading', { name: 'ARTIST 12' })).toBeInTheDocument();
+    expect(within(screen.getByRole('navigation', { name: '목록 쪽 이동' })).getByRole('link', { name: '← 이전' })).toHaveAttribute('href', '/artists');
+  });
+
+  it('orders upcoming sessions by start time and moves one to the past at its start boundary', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
+    const later = { ...past, id: 'LATER', session: 'Later event', date: '2026-11-28', time: '23:30', status: 'UPCOMING' as const };
+    const next = { ...past, id: 'NEXT', session: 'Next event', date: '2026-11-28', time: '23:00', status: 'UPCOMING' as const };
+    const { container, go } = shell([past, later, next]);
+    go('/events');
+    const order = () => [...container.querySelectorAll<HTMLElement>('[data-item^="event:"][data-mode=row]')].map(row => row.dataset.item);
+    expect(order()).toEqual(['event:NEXT', 'event:LATER', 'event:OLD']);
+    const row = within(item(container, 'event:NEXT')).getByRole('link');
+    expect(row).toHaveAttribute('data-event-state', 'UPCOMING');
+    act(() => vi.advanceTimersByTime(1000));
+    expect(row).toHaveAttribute('data-event-state', 'ARCHIVED');
+    expect(order()).toEqual(['event:LATER', 'event:NEXT', 'event:OLD']);
+  });
+
+  it('keeps the home clock after a session starts, then counts down to the next one registered', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
+    const soon = { ...upcoming, date: '2026-11-28', time: '23:00 KST' };
+    const { container, client } = shell([past, soon]);
+    const next = () => within(plate(container, 'next'));
+    expect(next().getByRole('timer', { name: '이벤트 시작까지 남은 시간' })).toHaveTextContent('T- COUNTDOWN');
+    act(() => vi.advanceTimersByTime(1000));
+    expect(next().getByRole('timer', { name: '이벤트 시작 후 경과 시간' })).toHaveTextContent('T+ ELAPSED');
+    act(() => vi.advanceTimersByTime(2000));
+    expect(within(next().getByRole('timer')).getByText('초').nextElementSibling).toHaveTextContent('02');
+    const registered = { ...soon, id: 'TRM-04', session: 'TERMINAL [04]', date: '2026-12-28' };
+    act(() => {
+      client.setQueryData(['events'], [past, { ...soon, status: 'LIVE' }, registered]);
+      vi.advanceTimersByTime(1);
+    });
+    expect(next().getByRole('heading', { name: 'TERMINAL [04]' })).toBeInTheDocument();
+    expect(next().getByRole('timer', { name: '이벤트 시작까지 남은 시간' })).toHaveTextContent('T- COUNTDOWN');
+  });
+
+  it('never presents a failed event query as zero records', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 500 })));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    clients.push(client);
+    const { container } = render(<QueryClientProvider client={client}><Shell>{null}</Shell></QueryClientProvider>);
+    await waitFor(() => expect(within(plate(container, 'next')).getByRole('alert')).toHaveTextContent('행사 기록을 불러오지 못했습니다'));
+    expect(container).not.toHaveTextContent('공개된 행사가 아직 없습니다');
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('event countdown', () => {
+  it('resynchronizes the KST timer after a hidden tab and omits invalid start times', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-28T13:59:59.500Z'));
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    const { rerender } = render(<EventCountdown event={{ date: '2026-11-28', time: '23:00 KST' }} />);
+    expect(within(screen.getByRole('timer')).getByText('초').nextElementSibling).toHaveTextContent('01');
+    visibility.mockReturnValue('hidden');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    act(() => vi.advanceTimersByTime(6500));
+    expect(screen.getByRole('timer')).toHaveTextContent('T- COUNTDOWN');
+    visibility.mockReturnValue('visible');
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(screen.getByRole('timer', { name: '이벤트 시작 후 경과 시간' })).toHaveTextContent('T+ ELAPSED');
+    expect(within(screen.getByRole('timer')).getByText('초').nextElementSibling).toHaveTextContent('06');
+    rerender(<EventCountdown event={{ date: '2026-11-28', time: 'TBA' }} />);
+    expect(screen.queryByRole('timer')).not.toBeInTheDocument();
   });
 });

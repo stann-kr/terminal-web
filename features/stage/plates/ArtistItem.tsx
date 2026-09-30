@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { ArtistChronology } from '@/features/artists/ArtistDetail';
+import { ArtistChronology } from '@/features/artists/ArtistChronology';
 import { artistHref, type ArtistProfile } from '@/features/artists/model';
 import { SignalText } from '@/features/display/Display';
 import { eventHref, paragraphs } from '@/features/events/model';

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { getEventDateTime } from '@/lib/events/lifecycle';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref, publicArtists, statusLabel } from '@/features/events/model';
-import { EventCountdown } from '@/features/home/EventCountdown';
+import { EventCountdown } from '@/features/events/EventCountdown';
 import { Action, BrandText, Chip, Facts, Loading, StateNotice } from '@/features/ui/Ui';
 import { stageConfig } from '../config';
 import { FitTitle } from '../FitTitle';
@@ -12,7 +12,7 @@ import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
 /** `D-12`, `D-DAY`, or the state once the session has started. */
-export function dayMark(event: TerminalEvent, now: Date) {
+function dayMark(event: TerminalEvent, now: Date) {
   if (event.status === 'LIVE') return 'LIVE';
   if (event.status === 'ARCHIVED') return 'ARCHIVE';
   const start = getEventDateTime(event).getTime();

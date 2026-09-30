@@ -1,6 +1,5 @@
 'use client';
-import { useLanguage } from '@/features/shell/Providers';
-import { Bay, Facts, FullText, PageHeading, Panel } from '@/features/ui/Ui';
+import { Bay, Facts, Panel } from '@/features/ui/Ui';
 import styles from './about.module.css';
 export const aboutCopy = {
   ko: [
@@ -18,20 +17,6 @@ export const channels = [
   ['STANN LUMO INSTAGRAM', 'https://www.instagram.com/stannlumo/'],
   ['STANN OS HUB', 'https://stann.kr'],
 ] as const;
-export function About() {
-  const { language } = useLanguage();
-  return (
-    <>
-      <PageHeading title="TERMINAL 소개" />
-      <div className={styles.layout}>
-        <AboutIntroduction language={language} />
-        <OfficialChannels />
-        <NodeFacts />
-      </div>
-    </>
-  );
-}
-
 export function NodeFacts() {
   return (
     <Panel title="노드 정보" label="Node" surface="gold" className={styles.node}>
@@ -48,23 +33,10 @@ export function NodeFacts() {
   );
 }
 
-function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
-  return (
-    <Panel title="TERMINAL 소개" label="About" code="SEOUL" surface="navy">
-      <p className={styles.statement} aria-hidden="true">TERMINAL</p>
-      <FullText
-        language={language}
-        excerpt={false}
-        paragraphs={aboutCopy[language]}
-      />
-    </Panel>
-  );
-}
-
 export function OfficialChannels() {
   return (
     <Panel title="공식 채널" label="Channels" surface="navy">
-      <ul className={styles.channels} data-cells="">
+      <ul className={styles.channels}>
         {channels.map(([label, href], index) => (
           <li key={href}>
             <a href={href} target="_blank" rel="noopener noreferrer">

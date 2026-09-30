@@ -1,136 +1,4 @@
-/* ── Roster: dark code cells on a mint plate, summary plates beside it. ───── */
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
-  gap: var(--gap);
-  align-items: stretch;
-}
-.roster,
-.side {
-  min-width: 0;
-}
-.side {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap);
-}
-.origins {
-  flex: 1;
-}
-.originCells {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-  gap: 4px;
-}
-.originCells li {
-  display: grid;
-  gap: 4px;
-  padding: 8px 10px;
-  background: var(--fill);
-  color: var(--on-fill);
-}
-.originCells b {
-  font: 800 var(--t-xl)/.9 var(--display);
-}
-.originCells span {
-  color: var(--on-fill-muted);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .12em;
-}
-.count {
-  margin-bottom: 8px;
-  color: var(--muted);
-  font: 600 var(--t-sm)/1 var(--sans);
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  grid-auto-rows: minmax(clamp(170px, 13vw, 240px), auto);
-  gap: 4px;
-}
-/* A cell reads like a core module: a thin head row, the name, a tag and a serial. */
-.cell {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  container-type: inline-size;
-  padding: 0 10px 10px;
-  background: var(--fill);
-  color: var(--on-fill);
-  text-decoration: none;
-}
-.cell[data-surface] {
-  background: var(--plate);
-  color: var(--ink);
-}
-.cellHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  margin-inline: -10px;
-  padding: 6px 10px;
-  border-bottom: 1px solid currentColor;
-  font: 700 var(--t-sm)/1.2 var(--display);
-  letter-spacing: .12em;
-}
-.cellHeader > span:last-child {
-  font: 600 var(--t-xs)/1.2 var(--sans);
-  letter-spacing: 0;
-}
-.cell h2 {
-  margin-top: 12px;
-  font: 800 clamp(20px, 15cqi, 38px)/.92 var(--display);
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  overflow-wrap: break-word;
-}
-.cellFoot {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: 10px;
-}
-.tag {
-  padding: 2px 6px;
-  background: rgb(0 48 73 / .12);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .1em;
-}
-.serialNumber {
-  font: 400 var(--t-lg)/1 var(--mono);
-}
-.cell {
-  transition: var(--light-motion);
-}
-.emptyCell {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 2px;
-  padding: 10px;
-  background: var(--well);
-  color: var(--muted);
-  font: 400 var(--t-xl)/1 var(--mono);
-}
-.emptyCell:not([data-fills~='6']) {
-  display: none;
-}
-.emptyCell small {
-  margin-top: 4px;
-  font-size: var(--t-xs);
-  letter-spacing: .14em;
-}
-
 /* ── Profile: identity plate · records and shared lineup · biography. ─────── */
-.detail {
-  display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1.3fr) minmax(280px, 1fr);
-  gap: var(--gap);
-  align-items: stretch;
-}
 .column {
   display: flex;
   flex-direction: column;
@@ -141,34 +9,6 @@
   flex: 1;
 }
 /* The artist's name, large, on the file plate. */
-.identity {
-  position: relative;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  gap: 14px;
-  min-height: 260px;
-  padding: 12px 0;
-}
-.identityOrigin,
-.identityCode {
-  position: relative;
-  font: 700 var(--t-sm)/1 var(--display);
-  letter-spacing: .22em;
-}
-.identityCode {
-  font: 400 var(--t-lg)/1 var(--mono);
-  letter-spacing: .08em;
-}
-.profileName {
-  position: relative;
-  display: block;
-  font: 800 clamp(36px, 13cqi, 88px)/.88 var(--display);
-  text-transform: uppercase;
-  overflow-wrap: break-word;
-  text-wrap: balance;
-}
 .timeline {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr) max-content;
@@ -270,66 +110,23 @@
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .12em;
 }
-
-@media (max-width: 1500px) {
-  .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .emptyCell[data-fills] { display: flex; }
-  .emptyCell:not([data-fills~='4']) { display: none; }
-}
-@media (max-width: 1180px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
-  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .emptyCell[data-fills~='4'] { display: none; }
-  .emptyCell[data-fills~='3'] { display: flex; }
-  .detail { grid-template-columns: minmax(260px, 300px) minmax(0, 1fr); }
-  .detail > :last-child { grid-column: 1 / -1; }
-}
-@media (max-width: 700px) {
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
-  .emptyCell { display: none !important; }
-  .detail { grid-template-columns: minmax(0, 1fr); }
-  .identity { min-height: 220px; }
-}
 @container (max-width: 560px) {
   .timeline { grid-template-columns: minmax(0, 1fr); }
 }
-@media (max-width: 360px) {
-  .grid { grid-template-columns: minmax(0, 1fr); }
-}
-@media (forced-colors: active) {
-  .cell[data-featured=true] { border: 3px double CanvasText; }
-}
 
 /* Short labels, codes and times never break mid-phrase. */
-.cellHeader > span,
-.tag,
-.serialNumber,
-.count,
 .timeline time,
 .slot span,
 .slot b,
 .state,
-.identityOrigin,
-.identityCode,
-.originCells span,
 .sharedCells small {
   white-space: nowrap;
-}
-.cellHeader {
-  flex-wrap: wrap;
 }
 
 /* Hover sweeps a card up from the side the pointer entered: cream cells turn gold, coloured cells
    turn cream; record rows light gold. */
-.cell:hover,
 .sharedCells li:has(a:hover) {
   box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--gold);
-  color: var(--navy);
-}
-.cell[data-surface]:hover {
-  --ink: var(--navy);
-  --muted: #3d5566;
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
   color: var(--navy);
 }
 .sharedCells li:has(a:hover) small {
@@ -346,18 +143,7 @@
   box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
   color: var(--navy);
 }
-.cell:focus-visible {
-  outline-offset: 2px;
-}
 .timeline li:has(a:focus-visible) {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
-}
-.note {
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid var(--faint);
-  color: var(--muted);
-  font-size: var(--t-sm);
-  font-weight: 600;
 }

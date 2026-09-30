@@ -1,10 +1,10 @@
 'use client';
 import { Loading, StateNotice } from '@/features/ui/Ui';
-import { useTransmit } from './Feed';
+import { useTransmit } from './useTransmit';
 import styles from './transmit.module.css';
 
 /** A stable four-character node tag derived from a log id; it never exposes the handle. */
-export function nodeTag(id: string) {
+function nodeTag(id: string) {
   let hash = 2166136261;
   for (const char of id) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
   return `NODE-${hash.toString(16).toUpperCase().padStart(8, '0').slice(-4)}`;
@@ -25,7 +25,7 @@ export function NodeActivity({ limit = 6 }: { limit?: number }) {
   const logs = query.data.logs.slice(0, limit);
   if (!logs.length) return <p className={styles.nodeEmpty}>아직 기록된 노드가 없습니다.</p>;
   return (
-    <ol className={styles.nodes} data-cells="">
+    <ol className={styles.nodes}>
       {logs.map((log) => (
         <li key={log.id}>
           <b>{nodeTag(log.id)}</b>

@@ -2,7 +2,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useTransmit } from '@/features/transmit/Feed';
+import { useTransmit } from '@/features/transmit/useTransmit';
 import { NodeActivity } from '@/features/transmit/NodeActivity';
 import { TransmitForm } from '@/features/transmit/TransmitForm';
 import { Loading, Panel, StateNotice, ui } from '@/features/ui/Ui';

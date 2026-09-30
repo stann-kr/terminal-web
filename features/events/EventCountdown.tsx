@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { getEventDateTime } from '@/lib/events/lifecycle';
 import type { TerminalEvent } from '@/lib/events/types';
 import { LiveValue } from '@/features/display/Display';
-import styles from './home.module.css';
+import styles from './countdown.module.css';
 
 export function EventCountdown({
   event,
@@ -54,7 +54,7 @@ export function EventCountdown({
         <span>{remaining ? 'T- COUNTDOWN' : 'T+ ELAPSED'}</span>
         <span>{remaining ? '이벤트 시작까지' : '이벤트 시작 이후'}</span>
       </div>
-      <dl className={styles.countdownUnits} data-cells="">
+      <dl className={styles.countdownUnits}>
         {units.map(([label, value]) => (
           <div key={label}>
             <dt>{label}</dt>

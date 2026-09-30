@@ -12,7 +12,7 @@ const EXIT_MS = 120;
  * content fades in. Layers are keyed, so the outgoing content is the same live instance (never
  * remounted) showing what it last showed, and it is inert while it leaves.
  */
-export function Swap({ id, children }: { id: string; children: ReactNode }) {
+function Swap({ id, children }: { id: string; children: ReactNode }) {
   // The last rendered content and the layers on their way out, both derived during render so a
   // swap paints in the same frame as the change that caused it.
   const [shown, setShown] = useState<Layer>({ key: id, node: children });

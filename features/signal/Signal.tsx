@@ -1,5 +1,6 @@
 'use client';
-import { Action, ActionDeck, Bay, Facts, PageHeading, Panel, ui } from '@/features/ui/Ui';
+import { Fragment, type ReactNode } from 'react';
+import { Action, ActionDeck, Bay, Facts, Panel, ui } from '@/features/ui/Ui';
 import {
   Consent,
   Field,
@@ -11,21 +12,24 @@ import {
 import { errorMessage } from '@/features/ui/http';
 import { useSignalSubscription } from './useSignalSubscription';
 import styles from './signal.module.css';
-export function Signal() {
+
+/**
+ * The channel, the form and the channel state around one subscription request, so all three read
+ * the same state. `wrap` places each part (the stage puts each in its own column).
+ */
+export function SignalBody({ wrap = node => node }: { wrap?: (node: ReactNode) => ReactNode }) {
   const request = useSignalSubscription();
   return (
     <>
-      <PageHeading title="소식 신청" />
-      <div className={styles.layout}>
-        <SignalInformation request={request} />
-        <SignalForm request={request} />
-        <SignalChannel request={request} />
-      </div>
+      {[
+        <SignalInformation key="info" request={request} />,
+        <SignalForm key="form" request={request} />,
+        <SignalChannel key="channel" request={request} />,
+      ].map(part => <Fragment key={part.key}>{wrap(part)}</Fragment>)}
     </>
   );
 }
-
-export function SignalChannel({ request }: { request: ReturnType<typeof useSignalSubscription> }) {
+function SignalChannel({ request }: { request: ReturnType<typeof useSignalSubscription> }) {
   return (
     <Panel title="채널 정보" label="Channel" surface="navy" className={styles.channel}>
       <Facts
@@ -41,7 +45,7 @@ export function SignalChannel({ request }: { request: ReturnType<typeof useSigna
   );
 }
 
-export function SignalInformation({
+function SignalInformation({
   request,
 }: {
   request: ReturnType<typeof useSignalSubscription>;
@@ -74,7 +78,7 @@ export function SignalInformation({
   );
 }
 
-export function SignalForm({
+function SignalForm({
   request,
 }: {
   request: ReturnType<typeof useSignalSubscription>;

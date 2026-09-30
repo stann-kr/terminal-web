@@ -88,16 +88,8 @@
   --ring-period: 3.2s;
   --dur-hover: 200ms;
   --ease-hover: ease-out;
-  /* Motion runs on one clock: 138 BPM. Every duration and delay is a note value of it. */
-  --bar: 1739ms;  /* four beats: one ring per bar */
-  --beat: 435ms;
-  --q8: 217ms;
-  --q16: 109ms;
-  --q32: 54ms;
-  --snap: cubic-bezier(.7, 0, .2, 1);    /* instrument travel: a hard start, a hard stop */
-  --settle: cubic-bezier(.16, 1, .3, 1); /* a readout locking into place */
-  /* Hover light-up: the fill sweeps in, the label flips once the fill is half across. */
-  --light-motion: box-shadow var(--q8) var(--snap), color 0s linear var(--q32);
+  /* Hover light-up: the fill sweeps in, the label flips once the fill is part way across. */
+  --light-motion: box-shadow var(--dur-hover) var(--ease-hover), color 0s linear calc(var(--dur-hover) / 4);
   /* Concentric rings from the bottom-right corner: the site's one graphic motif. */
   --rings: repeating-radial-gradient(circle at 100% 100%, currentColor 0 1.5px, transparent 1.5px 12px);
 }
@@ -196,7 +188,7 @@ input[type=checkbox]:checked::before { transform: scale(1); }
 button { color: inherit; }
 summary { min-height: 40px; padding-block: 8px; color: var(--ink); font: 700 var(--text-ui)/1.4 var(--display); letter-spacing: .1em; text-transform: uppercase; }
 details[open] > summary { margin-bottom: 6px; }
-/* All rings drift outward on one clock: one ring per bar at 138 BPM (4 beats = 1.739s). */
+/* Rings drift outward: one ring per `--ring-period`. */
 @keyframes ringOut {
   from { --ring-phase: 0px; }
   to { --ring-phase: 18px; }
@@ -204,65 +196,9 @@ details[open] > summary { margin-bottom: 6px; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }
 
-/* ── Motion: a console operated by hand ─────────────────────────────────────────────────────
-   Plates power up on arrival (a lit line at the top edge, then the face opens down from it),
-   their cells light on sixteenth notes, readouts roll digit by digit, and a pressed key flashes
-   inverse like a backlit switch. Everything is quantised to the 138 BPM grid above. */
-@keyframes plateOpen {
-  0% { clip-path: inset(0 100% calc(100% - 3px) 0); filter: brightness(1.9); }
-  30% { clip-path: inset(0 0 calc(100% - 3px) 0); filter: brightness(1.9); }
-  100% { clip-path: inset(0); filter: none; }
-}
-@keyframes cellOn {
-  from { opacity: 0; filter: brightness(2.2); }
-  to { opacity: 1; filter: none; }
-}
+/* Readouts roll: a changed digit drops into its window. */
 @keyframes glyphRoll {
   from { transform: translateY(-105%); }
-}
-[data-cells] > * { --cell: 0; }
-[data-cells] > :nth-child(2) { --cell: 1; }
-[data-cells] > :nth-child(3) { --cell: 2; }
-[data-cells] > :nth-child(4) { --cell: 3; }
-[data-cells] > :nth-child(5) { --cell: 4; }
-[data-cells] > :nth-child(6) { --cell: 5; }
-[data-cells] > :nth-child(7) { --cell: 6; }
-[data-cells] > :nth-child(8) { --cell: 7; }
-[data-cells] > :nth-child(n+9) { --cell: 8; }
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  [data-reveal=pending] { clip-path: inset(0 0 100% 0); }
-  [data-reveal=in] {
-    animation: plateOpen var(--beat) var(--snap) backwards;
-    animation-delay: calc(var(--stagger, 0) * var(--q16));
-  }
-  [data-reveal=in] [data-cells] > * {
-    animation: cellOn var(--q8) var(--settle) backwards;
-    animation-delay: calc(var(--stagger, 0) * var(--q16) + var(--q8) + var(--cell) * var(--q32));
-  }
-}
-
-/* Shared elements carry across a page change: a record row grows into its file plate, the gold
-   tab travels to the next tab. The rest of the page swaps at once; the plates do the arriving. */
-::view-transition { pointer-events: none; }
-::view-transition-old(root) { animation: none; opacity: 0; }
-::view-transition-new(root) { animation: none; }
-::view-transition-group(.morph) { animation-duration: var(--beat); animation-timing-function: var(--snap); }
-::view-transition-image-pair(.morph) { overflow: hidden; animation: morphGlow var(--beat) linear; }
-/* Snapshots keep their own size, pinned top-left: the frame opens like a window onto the plate
-   instead of stretching the record into it. */
-::view-transition-old(.morph),
-::view-transition-new(.morph) { height: 100%; object-fit: none; object-position: left top; }
-::view-transition-old(.morph) { animation-duration: var(--q8); }
-::view-transition-new(.morph) { animation-duration: var(--beat); }
-::view-transition-group(.slide) { animation-duration: var(--q8); animation-timing-function: var(--snap); z-index: 50; }
-@keyframes morphGlow {
-  40% { filter: brightness(1.5); }
-}
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(*), ::view-transition-new(*), ::view-transition-group(*), ::view-transition-image-pair(*) {
-    animation-duration: 0s !important;
-    animation-delay: 0s !important;
-  }
 }
 
 /* The console draws its own pointer (Shell); the system caret returns over text fields. */

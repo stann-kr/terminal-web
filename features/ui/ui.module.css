@@ -64,21 +64,6 @@
 }
 
 /* Sub-section label: bold condensed caps with a hairline under it. */
-.sub {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 14px 0 6px;
-  padding-bottom: 3px;
-  border-bottom: 1px solid var(--faint);
-  color: var(--ink);
-  font: 700 var(--t-lg)/1.1 var(--display);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-}
-.panelBody > .sub:first-child {
-  margin-top: 0;
-}
 .chip {
   display: inline-flex;
   align-items: center;
@@ -284,80 +269,10 @@
   background: var(--rings);
 }
 
-/* ── Pagination ──────────────────────────────────────────────────────────── */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-top: 12px;
-  font: 700 var(--t-sm)/1 var(--display);
-  letter-spacing: .1em;
-}
-.pagination > * {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding-inline: 14px;
-  color: var(--muted);
-}
-.pagination > span:not([aria-live]) {
-  opacity: .55;
-}
-.pagination > span[aria-live] {
-  flex: 1;
-  justify-content: center;
-  font-family: var(--mono);
-}
-.pagination a {
-  background: var(--well);
-  color: var(--ink);
-  text-decoration: none;
-  transition: var(--light-motion);
-}
-.pagination a:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
-}
-.pagination a:active {
-  box-shadow: inset 0 0 0 100vmax var(--on-hi);
-  color: var(--hi);
-  transition: none;
-}
-
 /* ── Prose ───────────────────────────────────────────────────────────────── */
-.prose {
-  color: var(--ink);
-  font-size: var(--text-body);
-  line-height: 1.75;
-}
-.prose p {
-  margin-bottom: 10px;
-  white-space: pre-wrap;
-}
-.prose:lang(ko) {
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-}
-.readLess,
-.prose details[open] .readMore,
-.prose:has(> details[open]) > p {
-  display: none;
-}
-.prose details[open] .readLess {
-  display: inline;
-}
-.prose summary {
-  width: fit-content;
-}
 .muted {
   color: var(--muted);
   font-size: var(--text-ui);
-}
-.stack {
-  display: grid;
-  gap: var(--gap);
-  align-content: start;
 }
 .actions {
   display: flex;
@@ -366,7 +281,7 @@
   margin-top: 14px;
 }
 @media (forced-colors: active) {
-  .notice, .action, .button, .chip, .facts dd, .pagination a { border: 1px solid CanvasText; }
+  .notice, .action, .button, .chip, .facts dd { border: 1px solid CanvasText; }
   .facts dt { border: 1px solid CanvasText; }
 }
 

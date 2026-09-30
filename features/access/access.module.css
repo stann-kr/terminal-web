@@ -1,9 +1,3 @@
-.layout {
-  display: grid;
-  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
-  gap: var(--gap);
-  align-items: stretch;
-}
 .legend {
   width: 100%;
   margin-bottom: 6px;
@@ -47,15 +41,10 @@
   gap: 16px;
 }
 @media (max-width: 860px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
   .contacts { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 400px) {
   .code { grid-template-columns: minmax(0, 1fr); }
-}
-
-.deck {
-  margin-top: 12px;
 }
 
 /* Short labels, codes and times never break mid-phrase. */
