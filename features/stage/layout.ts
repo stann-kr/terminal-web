@@ -37,6 +37,9 @@ export interface StageMetrics {
   head: Record<'hero' | 'panel' | 'index', number>;
   pagerH: number;
   rowH: number;
+  /** A row narrower than `narrowRowW` lays out on three lines and needs this height instead. */
+  rowHNarrow: number;
+  narrowRowW: number;
   rowGap: number;
   cellMinW: number;
   cellH: number;
@@ -56,7 +59,9 @@ export function stageMetrics(viewportW: number): StageMetrics {
     pad: clamp(16, viewportW * 0.015, 28), // --pad
     head: { hero: 120, panel: 96, index: 72 },
     pagerH: 56,
-    rowH: viewportW < 1280 ? 80 : 92,
+    rowH: viewportW < 1280 ? 84 : 92,
+    rowHNarrow: 124,
+    narrowRowW: 760,
     // Sub-plates sit flush against each other and the plate's edges; plates keep their gap.
     rowGap: 0,
     cellMinW: 200,
@@ -178,18 +183,22 @@ export function tile(node: LayoutNode, area: Rect, gap: number, out: [LayoutLeaf
   return out;
 }
 
+/** A list row's height: taller in a plate narrow enough for the row to stack its lines. */
+export const rowHeight = (areaW: number, m: StageMetrics) => (areaW < m.narrowRowW ? m.rowHNarrow : m.rowH);
+
 /** Rows fill the plate below its head; how many fit decides the page size (at least one). */
-export function listRowsPerPage(areaH: number, head: number, m: StageMetrics): number {
-  return Math.max(1, Math.floor((areaH - head - m.pagerH + m.rowGap) / (m.rowH + m.rowGap)));
+export function listRowsPerPage(areaH: number, head: number, m: StageMetrics, areaW = Infinity): number {
+  return Math.max(1, Math.floor((areaH - head - m.pagerH + m.rowGap) / (rowHeight(areaW, m) + m.rowGap)));
 }
 
 /** Slot rects of one list page, flush from edge to edge: rows for events, a grid of cards for artists. */
 function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics): Rect[] {
   const top = area.y + head;
   if (kind === 'event') {
-    return Array.from({ length: listRowsPerPage(area.h, head, m) }, (_, index) => {
-      const y = top + index * (m.rowH + m.rowGap);
-      return edges(area.x, y, area.x + area.w, y + m.rowH);
+    const rowH = rowHeight(area.w, m);
+    return Array.from({ length: listRowsPerPage(area.h, head, m, area.w) }, (_, index) => {
+      const y = top + index * (rowH + m.rowGap);
+      return edges(area.x, y, area.x + area.w, y + rowH);
     });
   }
   const cols = Math.max(1, Math.floor(area.w / m.cellMinW));

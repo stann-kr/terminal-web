@@ -1,6 +1,7 @@
 import { BrandText } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import type { PlateId, StageState } from '../state';
+import { FitTitle } from '../FitTitle';
 import { CardLink } from './faces';
 import styles from './plates.module.css';
 
@@ -43,8 +44,10 @@ export function BackCard({ href, target, data }: { href: string; target: StageSt
           <span className={styles.backLabel}>BACK</span>
           <span className={styles.tag}>ESC</span>
         </span>
-        <span className={styles.backName} aria-hidden="true">{name}</span>
-        <span className={styles.backTitle} aria-hidden="true"><BrandText text={title} /></span>
+        <FitTitle as="span" text={name} maxLines={1} minPx={12} className={styles.backName}>{name}</FitTitle>
+        <FitTitle as="span" text={title} maxLines={2} minPx={12} className={styles.backTitle}>
+          <BrandText text={title} />
+        </FitTitle>
       </CardLink>
       {home && (
         <CardLink href="/" className={styles.homeKey} label="홈으로">

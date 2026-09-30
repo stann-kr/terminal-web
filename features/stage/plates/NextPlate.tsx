@@ -81,11 +81,11 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextChip}`} data-carrier={carrier} scroll={false}>
         <span className={styles.chipName} aria-hidden="true">NEXT</span>
-        <span className={styles.chipTitle}>
+        <FitTitle as="span" text={`${event.session} · ${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine}>
           <span className={styles.srOnly}>다음 행사 </span>
           <BrandText text={event.session} />
-        </span>
-        <span className={styles.chipMeta} aria-hidden="true">{event.id} · {dayMark(event, now)}</span>
+          <span aria-hidden="true"> · {event.id} · {dayMark(event, now)}</span>
+        </FitTitle>
       </Link>
     );
   }

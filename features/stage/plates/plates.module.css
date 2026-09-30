@@ -275,25 +275,15 @@
   font: 800 clamp(20px, 1.6vw, 30px)/1 var(--display);
   letter-spacing: .04em;
 }
-.chipTitle {
+.chipLine {
   min-width: 0;
-  overflow: hidden;
-  opacity: .85;
+  opacity: .9;
   font: 600 var(--t-sm)/1.2 var(--sans);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .chipMeta {
   font: 400 var(--t-xs)/1 var(--mono);
   letter-spacing: .06em;
   white-space: nowrap;
-}
-/* Short chips keep the name first, then the meta; the title is also the link's name. */
-@container layer (max-height: 96px) {
-  .chip .chipTitle { display: none; }
-}
-@container layer (max-height: 60px) {
-  .chipMeta { display: none; }
 }
 :global([data-stage]:not([data-stage=stage])) .chip {
   flex-direction: row;
@@ -301,7 +291,7 @@
   justify-content: center;
   padding: 0 14px;
 }
-:global([data-stage]:not([data-stage=stage])) .chip :is(.chipTitle, .chipMeta) {
+:global([data-stage]:not([data-stage=stage])) .chip .chipLine {
   display: none;
 }
 
@@ -377,21 +367,22 @@
   color: inherit;
 }
 .backName {
-  overflow: hidden;
+  --title-ls: .06em;
   font: 800 var(--t-lg)/1 var(--display);
-  letter-spacing: .06em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .backTitle {
-  overflow: hidden;
   color: var(--muted);
   font: 600 var(--t-sm)/1.2 var(--sans);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
-@container layer (max-height: 90px) {
-  .backTitle { display: none; }
+/* A short back card puts HOME beside BACK, so neither has to give up a line. */
+@container layer (max-height: 150px) {
+  .backStack[data-home] {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .homeKey {
+    padding-inline: 14px;
+  }
 }
 
 /* ── Cells, index lines ──────────────────────────────────────────────────── */
@@ -426,12 +417,10 @@
   font: 400 var(--t-sm)/1 var(--mono);
 }
 .cellName {
-  overflow: hidden;
+  --title-ls: .03em;
+  min-width: 0;
   font: 800 var(--t-lg)/1.1 var(--display);
-  letter-spacing: .03em;
-  text-overflow: ellipsis;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 .cellState {
   padding: 3px 8px;
@@ -647,12 +636,10 @@
 .next[data-density=chip] .nextChip .chipName {
   font-size: var(--t-lg);
 }
-.next[data-density=chip] .nextChip .chipTitle {
+.next[data-density=chip] .nextChip .chipLine {
   flex: 1 1 auto;
 }
-@container layer (max-width: 300px) {
-  .next[data-density=chip] .nextChip .chipTitle { display: none; }
-}
+
 
 .lineupCells {
   display: grid;
@@ -710,18 +697,16 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-.rowLine {
-  display: flex;
-  gap: 12px;
+.rowLine,
+.rowNarrowMeta {
   min-width: 0;
-  overflow: hidden;
   color: var(--muted);
   font: 600 var(--t-sm)/1.2 var(--sans);
-  white-space: nowrap;
 }
-.rowLine > * {
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Wide rows print code, time and venue in their own columns; the one-line summary is for narrow rows. */
+.rowNarrowMeta {
+  display: none;
+  font-family: var(--mono);
 }
 .rowArtists {
   font-family: var(--display);
@@ -739,11 +724,9 @@
   font-size: var(--t-xs);
 }
 .rowVenue {
-  overflow: hidden;
+  --title-ls: .04em;
+  min-width: 0;
   font: 700 var(--t-md)/1.2 var(--display);
-  letter-spacing: .04em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .rowState {
   padding: 4px 10px;
@@ -760,11 +743,11 @@
   background: var(--red);
   color: #fff8f0;
 }
+/* A narrow row: name, subtitle and one fitted summary line (code · time · venue) beside its state. */
 @container layer (max-width: 760px) {
   .eventRow { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
-  .rowId, .rowVenue { display: none; }
-  .rowWhen { grid-column: 1; grid-row: 2; display: flex; gap: 8px; }
-  .rowState { grid-column: 2; grid-row: 1 / span 2; }
+  .rowId, .rowWhen, .rowVenue { display: none; }
+  .rowNarrowMeta { display: block; }
 }
 
 /* Artist file cards in the open roster grid. */
@@ -794,7 +777,7 @@
   letter-spacing: .04em;
 }
 .cardName {
-  font: 800 var(--t-xl)/1 var(--display);
+  font: 800 var(--t-lg)/1.05 var(--display);
   letter-spacing: .02em;
   text-transform: uppercase;
 }
@@ -1128,4 +1111,52 @@
 @media (forced-colors: active) {
   .tag, .card, .bandLink { border: 1px solid CanvasText; }
   .rings { display: none; }
+}
+
+/* ── Sub-plates inside faces and files ────────────────────────────────────
+   Every padded part publishes its side padding as --bleed; lists inside pull out by it and run
+   flush to the plate's edges, told apart by hairlines instead of gaps. */
+.part,
+.face,
+.sessionMain,
+.sessionOrder,
+.sessionBriefing,
+.sessionAccess,
+.fileMain,
+.fileBio {
+  --bleed: var(--pad);
+}
+.part:has(> dl:only-child) {
+  padding-block: 0;
+}
+.lineupCells,
+.logList {
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.lineupCells li {
+  box-shadow: inset -1px -1px 0 var(--faint);
+}
+.lineupCells li,
+.logList li > * {
+  padding-inline: max(10px, var(--bleed, 0px));
+}
+.logList li + li {
+  border-top: 1px solid var(--faint);
+}
+/* A file's columns are its sub-plates: flush, edge to edge, no gutters. */
+.session,
+.artistFile,
+.sessionSide,
+.fileRecords {
+  gap: 0;
+  padding: 0;
+}
+.sessionMain,
+.fileMain {
+  padding: 12px var(--pad) var(--pad);
+}
+.sessionSide > * + *,
+.fileRecords > * + * {
+  border-top: 1px solid var(--faint);
 }

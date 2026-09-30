@@ -36,7 +36,7 @@ export function ArtistItem({ profile, shape, current = false }: { profile: Artis
   if (shape === 'cell') {
     return (
       <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.artistCell}`} data-carrier={carrier} scroll={false}>
-        <span className={styles.cellName}>{profile.name}</span>
+        <FitTitle as="span" text={profile.name} maxLines={1} minPx={12} className={styles.cellName}>{profile.name}</FitTitle>
         <span className={styles.cellMeta} aria-hidden="true">{profile.origin} · {records} REC</span>
       </Link>
     );
@@ -45,7 +45,7 @@ export function ArtistItem({ profile, shape, current = false }: { profile: Artis
     return (
       <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} aria-current={current ? 'page' : undefined} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{profile.origin || '—'}</span>
-        <span className={styles.cellName}>{profile.name}</span>
+        <FitTitle as="span" text={profile.name} maxLines={1} minPx={12} className={styles.cellName}>{profile.name}</FitTitle>
       </Link>
     );
   }

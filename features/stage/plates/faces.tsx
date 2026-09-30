@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { BrandText } from '@/features/ui/Ui';
+import { FitTitle } from '../FitTitle';
 import styles from './plates.module.css';
 
 /**
@@ -19,13 +20,19 @@ export function CardLink({ href, className = '', label, carrier, children }: { h
   );
 }
 
-/** A chip: the plate's name large, its Korean name, one line of meta. */
+/**
+ * A chip: the plate's name large over one line with its Korean name and meta. The line is set as
+ * large as the chip's width allows (pretext), never cut short.
+ */
 export function ChipFace({ href, name, title, meta, carrier }: { href: string | null; name: string; title: string; meta?: string; carrier?: string }) {
+  const line = meta ? `${title} · ${meta}` : title;
   const body = (
     <>
       <span className={styles.chipName} aria-hidden="true">{name}</span>
-      <span className={styles.chipTitle}>{title}</span>
-      {meta && <span className={styles.chipMeta} aria-hidden="true">{meta}</span>}
+      <FitTitle as="span" text={line} maxLines={1} minPx={12} className={styles.chipLine}>
+        <span>{title}</span>
+        {meta && <span aria-hidden="true"> · {meta}</span>}
+      </FitTitle>
     </>
   );
   if (!href) return <div className={`${styles.card} ${styles.chip}`}>{body}</div>;

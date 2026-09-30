@@ -168,3 +168,39 @@
 .field label > span {
   white-space: nowrap;
 }
+
+/* ── Sub-plates: fields run flush across the form plate, one under the other, told apart by a
+   hairline; the submit key is the last full-width bar. ─────────────────── */
+.terminalForm {
+  --bleed: var(--pad);
+  padding: 0 var(--pad) var(--pad);
+}
+.formHeading {
+  margin: 0 calc(var(--pad) * -1);
+  padding: 12px var(--pad) 8px;
+}
+.formInterior {
+  padding-top: 12px;
+}
+.fields {
+  gap: 0;
+  margin-inline: calc(var(--bleed) * -1);
+}
+.fields > * + * {
+  border-top: 1px solid var(--faint);
+}
+.fieldHead,
+.consent {
+  padding-inline: var(--bleed);
+}
+.field :is(input, textarea) {
+  padding-inline: var(--bleed);
+}
+.hint {
+  margin: 0;
+  padding: 6px var(--bleed);
+}
+.fields > button {
+  justify-content: center;
+  min-height: 56px;
+}

@@ -30,7 +30,7 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventCell}`} data-state={event.status} data-carrier={carrier} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
-        <span className={styles.cellName}><BrandText text={event.session} /></span>
+        <FitTitle as="span" text={event.session} maxLines={1} minPx={12} className={styles.cellName}><BrandText text={event.session} /></FitTitle>
         <span className={styles.cellState}>{statusLabel(event.status)}</span>
       </Link>
     );
@@ -39,12 +39,14 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} aria-current={current ? 'page' : undefined} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
-        <span className={styles.cellName}><BrandText text={event.session} /></span>
+        <FitTitle as="span" text={event.session} maxLines={1} minPx={12} className={styles.cellName}><BrandText text={event.session} /></FitTitle>
       </Link>
     );
   }
   if (shape === 'row') {
-    const artists = publicArtists(event);
+    const artists = publicArtists(event).map(artist => artist.name).join(' · ');
+    const line = [event.subtitle, artists].filter(Boolean).join(' · ');
+    const when = `${event.date} ${event.time.replace(' KST', '')} KST`;
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventRow}`} data-event-state={event.status} data-carrier={carrier} scroll={false}>
         <span className={styles.rowId}>{event.id}</span>
@@ -52,21 +54,23 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
           <FitTitle as="h2" text={event.session} maxLines={1} minPx={16} className={styles.rowName}>
             <BrandText text={event.session} />
           </FitTitle>
-          <span className={styles.rowLine}>
-            {event.subtitle && <span>{event.subtitle}</span>}
-            {artists.length > 0 && (
-              <span className={styles.rowArtists}>
-                <span className={styles.srOnly}>출연 </span>
-                {artists.map(artist => artist.name).join(' · ')}
-              </span>
-            )}
-          </span>
+          {line && (
+            <FitTitle as="span" text={line} maxLines={1} minPx={12} className={styles.rowLine}>
+              {event.subtitle}
+              {event.subtitle && artists && ' · '}
+              {artists && <span className={styles.rowArtists}><span className={styles.srOnly}>출연 </span>{artists}</span>}
+            </FitTitle>
+          )}
+          {/* A narrow row prints its code, time and venue here, on one fitted line. */}
+          <FitTitle as="span" text={`${event.id} · ${when} · ${event.venue}`} maxLines={1} minPx={12} className={styles.rowNarrowMeta}>
+            {event.id} · {when} · {event.venue}
+          </FitTitle>
         </span>
         <span className={styles.rowWhen}>
           {event.date}
           <small>{event.time.replace(' KST', '')} KST</small>
         </span>
-        <span className={styles.rowVenue}>{event.venue}</span>
+        <FitTitle as="span" text={event.venue} maxLines={1} minPx={12} className={styles.rowVenue}>{event.venue}</FitTitle>
         <span className={styles.rowState}>{statusLabel(event.status)}</span>
       </Link>
     );

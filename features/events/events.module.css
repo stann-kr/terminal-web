@@ -224,3 +224,33 @@
 .stageSlots li:has(a:hover) .slotCode span {
   color: #3d5566;
 }
+
+/* ── Sub-plates: the running order runs flush across its plate, rows told apart by hairlines. ── */
+.stageBoard {
+  gap: 12px;
+}
+.stage h3 {
+  margin: 0 calc(var(--bleed, 0px) * -1);
+}
+.stage h3 > span:first-child {
+  padding-left: max(10px, var(--bleed, 0px));
+}
+.stage h3 > span:last-child {
+  padding-right: max(10px, var(--bleed, 0px));
+}
+.stageSlots {
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.stageSlots li + li > * {
+  border-top: 1px solid var(--faint);
+}
+.stageSlots li > :first-child {
+  padding-left: max(10px, var(--bleed, 0px));
+}
+.stageSlots li > :last-child {
+  padding-right: max(10px, var(--bleed, 0px));
+}
+.factModules {
+  gap: 12px;
+}

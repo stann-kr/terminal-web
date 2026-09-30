@@ -85,3 +85,27 @@
 .nodes span {
   white-space: nowrap;
 }
+
+/* ── Sub-plates: node rows and the length readout run flush across their plate. ── */
+.nodes,
+.counter {
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.nodes li {
+  gap: 0;
+}
+.nodes li + li > * {
+  border-top: 1px solid var(--faint);
+}
+.nodes b,
+.counter > span {
+  padding-left: max(12px, var(--bleed, 0px));
+}
+.nodes span,
+.counter strong {
+  padding-right: max(12px, var(--bleed, 0px));
+}
+.gauge {
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
