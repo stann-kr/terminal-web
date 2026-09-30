@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { AccessRequest } from '@/features/access/Access';
 import { EventActions, EventFacts, Lineup } from '@/features/events/EventRecord';
-import { eventHref, paragraphs, publicArtists, statusLabel } from '@/features/events/model';
+import { eventHref, isRuleLine, paragraphs, publicArtists, statusLabel } from '@/features/events/model';
 import { useLanguage } from '@/features/shell/Providers';
 import { BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
@@ -108,7 +108,8 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
   const current = state.view === 'session' && state.eventId === event.id;
   const request = current && state.view === 'session' && state.request;
   const briefing = paragraphs(event.description, language);
-  const invitation = paragraphs(event.invitationLines, language);
+  // The invitation's text-art frame lines are dropped: drawn in characters, they break with the width.
+  const invitation = paragraphs(event.invitationLines, language).filter(line => !isRuleLine(line));
   const hasOrder = publicArtists(event).length > 0;
   return (
     <article className={styles.session} data-request={request || undefined} aria-labelledby={`session-${event.id}`}>

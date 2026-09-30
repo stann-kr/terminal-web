@@ -186,6 +186,16 @@ describe('stage views', () => {
     expect(within(file).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
   });
 
+  it('drops the text-art frame lines of an invitation but keeps its title', () => {
+    const framed = { ...past, invitationLines: { ko: ['인사말', '┌──────────┐', ' TERMINAL [01] : BOOT', '└──────────┘', '[ NOTICE ]'], en: [] } } as TerminalEvent;
+    const { container, go } = shell([framed]);
+    go('/events/OLD');
+    const file = detail(container, 'event:OLD');
+    expect(file).toHaveTextContent('TERMINAL [01] : BOOT');
+    expect(file).toHaveTextContent('[ NOTICE ]');
+    expect(file.textContent).not.toMatch(/[┌└─]/);
+  });
+
   it('opens the guest form inside the session file on /request', () => {
     const { container, go } = shell([past, upcoming]);
     go('/events/TRM-03/request');
@@ -221,7 +231,7 @@ describe('stage views', () => {
     const rows = [...container.querySelectorAll<HTMLElement>('[data-item^="event:"]')].filter(shown);
     expect(rows[0]).toHaveAttribute('data-item', `event:EVENT ${String(perPage).padStart(2, '0')}`);
     const pager = screen.getByRole('navigation', { name: '목록 쪽 이동' });
-    expect(within(pager).getByRole('link', { name: '이전' })).toHaveAttribute('href', '/events');
+    expect(within(pager).getByRole('link', { name: 'PREV' })).toHaveAttribute('href', '/events');
     expect(screen.queryByRole('textbox', { name: /검색/ })).not.toBeInTheDocument();
   });
 
@@ -343,7 +353,7 @@ describe('directory and roster contracts', () => {
     go('/artists', 'page=2');
     const cells = [...container.querySelectorAll<HTMLElement>('[data-item^="artist:"]')].filter(shown);
     expect(within(cells[0]).getByRole('heading', { name: `ARTIST ${String(perPage).padStart(2, '0')}` })).toBeInTheDocument();
-    expect(within(screen.getByRole('navigation', { name: '목록 쪽 이동' })).getByRole('link', { name: '이전' })).toHaveAttribute('href', '/artists');
+    expect(within(screen.getByRole('navigation', { name: '목록 쪽 이동' })).getByRole('link', { name: 'PREV' })).toHaveAttribute('href', '/artists');
   });
 
   it('orders upcoming sessions by start time and moves one to the past at its start boundary', () => {

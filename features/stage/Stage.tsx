@@ -440,10 +440,10 @@ export function Stage({ state: address }: { state: StageState }) {
                   data={{ pager: pager.kind }}
                 >
                   <div className={styles.pager}>
-                    {pager.page > 1 ? <Link href={listHref(pager.kind, pager.page - 1)} scroll={false}>이전</Link> : <span>이전</span>}
+                    {pager.page > 1 ? <Link href={listHref(pager.kind, pager.page - 1)} scroll={false}>PREV</Link> : <span>PREV</span>}
                     <span aria-hidden="true">{pageReadout(pager.page, pager.pages)}</span>
                     <span className={styles.srOnly} aria-live="polite">{pageAnnouncement(pager.page, pager.pages)}</span>
-                    {pager.page < pager.pages ? <Link href={listHref(pager.kind, pager.page + 1)} scroll={false}>다음</Link> : <span>다음</span>}
+                    {pager.page < pager.pages ? <Link href={listHref(pager.kind, pager.page + 1)} scroll={false}>NEXT</Link> : <span>NEXT</span>}
                   </div>
                 </Box>
               )}

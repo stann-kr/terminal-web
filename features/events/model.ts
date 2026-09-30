@@ -20,6 +20,8 @@ export function paragraphs(value: unknown, language: 'ko'|'en'): string[] {
   }
   return [];
 }
+/** A line drawn only of box or rule characters (a text-art frame): it is decoration, and its width breaks. */
+export const isRuleLine = (line: string) => line.trim().length >= 3 && /^[\s\u2500-\u257f\-=_+|~]+$/.test(line);
 export function accessAvailability(event: TerminalEvent, events: TerminalEvent[], now: Date) {
   const target = getFutureUpcomingEvent(events,now);
   if (event.status !== 'UPCOMING') return { canRequest: false, message: event.status === 'ARCHIVED' ? '이 행사의 접수는 종료되었습니다.' : '진행 중인 행사는 접수할 수 없습니다.' };

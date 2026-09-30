@@ -96,13 +96,16 @@ const feedStateLabel = {
  * plate), the log is read by scrolling instead: the whole server page shows at once and a spill
  * grows the sheet, rather than cutting it into one-entry pages.
  */
+const stackedLog = (node: HTMLElement) => {
+  const grid = node.closest<HTMLElement>(`.${styles.logGrid}`);
+  return !!grid && getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length === 1;
+};
 function cutLog(list: HTMLElement) {
   const entries = [...list.children];
-  const grid = list.closest<HTMLElement>(`.${styles.logGrid}`);
-  if (grid && getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length === 1) return [entries.map((_, index) => index)];
+  if (stackedLog(list)) return { stacked: true, pages: [entries.map((_, index) => index)] };
   const heights = entries.map(child => child.getBoundingClientRect().height);
   const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
-  return packHeights(heights, list.clientHeight, gap);
+  return { stacked: false, pages: packHeights(heights, list.clientHeight, gap) };
 }
 
 /**
@@ -125,7 +128,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
   const region = useRef<HTMLDivElement>(null);
   const logs = query.data?.logs;
   const logKey = logs?.map(log => log.id).join() ?? '';
-  const [split, setSplit] = useState<{ key: string; pages: number[][] } | null>(null);
+  const [split, setSplit] = useState<{ key: string; pages: number[][]; stacked: boolean } | null>(null);
   const [sub, setSub] = useState({ key: '', index: 0 });
 
   // Everything is drawn once, measured, then cut: a stale cut (other entries or another size) is dropped.
@@ -133,7 +136,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
   useLayoutEffect(() => {
     const element = list.current;
     if (stageMode !== 'stage' || pages || !element || !logs?.length) return;
-    setSplit({ key: `${logKey}:${stageMode}`, pages: cutLog(element) });
+    setSplit({ key: `${logKey}:${stageMode}`, ...cutLog(element) });
   }, [stageMode, pages, logs, logKey]);
   useEffect(() => {
     const element = list.current;
@@ -164,13 +167,14 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
   useEffect(() => {
     at.current = { page, capacity, first: pages?.[index]?.[0] ?? 0 };
   });
+  // Measured when the window settles on a new size (and once at the start), never when the plate's
+  // own height moves (a sheet growing or a page turning), so turning a page cannot re-page it.
   useEffect(() => {
     const element = region.current;
-    if (stageMode !== 'stage' || !element || typeof ResizeObserver === 'undefined') return;
+    if (stageMode !== 'stage' || !element) return;
     const measure = () => {
       if (!element.clientHeight) return;
-      const grid = element.closest<HTMLElement>(`.${styles.logGrid}`);
-      const stacked = !!grid && getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length === 1;
+      const stacked = stackedLog(element);
       const fits = Math.max(1, Math.min(LOG_MAX, Math.floor((element.clientHeight - LOG_CHROME) / LOG_ROW)));
       const next = stacked ? TRANSMIT_PAGE_SIZE : fits;
       const { page: current, capacity: was, first } = at.current;
@@ -180,20 +184,17 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
       onCapacity(next);
       if (target !== current) router.replace(logHref(target), { scroll: false });
     };
-    // The first reading applies at once; later ones wait for the window to hold still.
-    let first = true;
     let timer = 0;
-    const observer = new ResizeObserver(() => {
+    const frame = requestAnimationFrame(measure);
+    const resize = () => {
       window.clearTimeout(timer);
-      if (first) {
-        first = false;
-        measure();
-      } else timer = window.setTimeout(measure, 150);
-    });
-    observer.observe(element);
+      timer = window.setTimeout(measure, 200);
+    };
+    window.addEventListener('resize', resize);
     return () => {
+      cancelAnimationFrame(frame);
       window.clearTimeout(timer);
-      observer.disconnect();
+      window.removeEventListener('resize', resize);
     };
   }, [stageMode, onCapacity, router]);
   // An address past the last page (the log got shorter, or pages got larger) shows the last one.
@@ -237,7 +238,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
           {!query.data.logs.length ? (
             <p className={ui.muted}>{page > 1 ? '이 페이지에 남아 있는 글이 없습니다.' : '아직 남겨진 글이 없습니다.'}</p>
           ) : (
-            <ol ref={list} className={styles.logList} data-busy={query.isFetching} data-fit="">
+            <ol ref={list} className={styles.logList} data-busy={query.isFetching} data-fit={split?.stacked ? '' : undefined}>
               {shown.map(log => (
                 <li key={log.id}>
                   <header>
@@ -250,7 +251,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
             </ol>
           )}
           <nav className={styles.logPager} aria-label="로그 쪽 이동">
-            {prev ? <button type="button" onClick={prev}>← 이전</button> : <span>이전</span>}
+            {prev ? <button type="button" onClick={prev}>PREV</button> : <span>PREV</span>}
             <span aria-hidden="true">
               {pageReadout(page, Math.max(totalPages, 1))}
               {subCount > 1 && ` · ${index + 1}/${subCount}`}
@@ -259,7 +260,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
               {pageAnnouncement(page, Math.max(totalPages, 1))}
               {subCount > 1 ? `, 나눈 쪽 ${subCount}쪽 중 ${index + 1}쪽` : ''}
             </span>
-            {next ? <button type="button" onClick={next}>다음 →</button> : <span>다음</span>}
+            {next ? <button type="button" onClick={next}>NEXT</button> : <span>NEXT</span>}
           </nav>
         </>
       )}

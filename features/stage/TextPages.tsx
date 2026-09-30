@@ -92,10 +92,10 @@ export function TextPages({ paragraphs, language, label, empty }: { paragraphs: 
           (and page count) because the pager came or went. */}
       {mode === 'stage' && paragraphs.length > 0 && (
         <div className={styles.textPager} data-single={count < 2 || undefined}>
-          <button type="button" onClick={() => turn(-1)} disabled={!turns.prev} aria-label="이전 쪽" hidden={count < 2}>PREV</button>
+          <button type="button" onClick={() => turn(-1)} disabled={!turns.prev} hidden={count < 2}>PREV</button>
           <span aria-hidden="true">{count > 1 && pageReadout(current + 1, count)}</span>
           <span className={styles.srOnly} aria-live="polite">{count > 1 ? pageAnnouncement(current + 1, count) : ''}</span>
-          <button type="button" onClick={() => turn(1)} disabled={!turns.next} aria-label="다음 쪽" hidden={count < 2}>NEXT</button>
+          <button type="button" onClick={() => turn(1)} disabled={!turns.next} hidden={count < 2}>NEXT</button>
         </div>
       )}
     </div>
