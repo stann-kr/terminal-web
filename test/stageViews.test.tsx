@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { Shell } from '../features/shell/Shell';
 import { EventCountdown } from '../features/events/EventCountdown';
+import { useViewport } from '../features/stage/data';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
@@ -424,5 +425,24 @@ describe('event countdown', () => {
     expect(within(screen.getByRole('timer')).getByText('초').nextElementSibling).toHaveTextContent('06');
     rerender(<EventCountdown event={{ date: '2026-11-28', time: 'TBA' }} />);
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+  });
+});
+
+describe('stage viewport', () => {
+  it('ignores a touch browser sliding its toolbar while the page scrolls, but follows a turn of the phone', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('coarse'), media: query, addEventListener() {}, removeEventListener() {} }));
+    viewport(390, 700);
+    const { result } = renderHook(() => useViewport());
+    expect(result.current).toMatchObject({ w: 390, h: 700 });
+    const settle = () => act(() => new Promise(resolve => setTimeout(resolve, 200)));
+    viewport(390, 780);
+    act(() => void window.dispatchEvent(new Event('resize')));
+    await settle();
+    expect(result.current).toMatchObject({ w: 390, h: 700, resizing: false });
+    viewport(844, 390);
+    act(() => void window.dispatchEvent(new Event('resize')));
+    await settle();
+    expect(result.current).toMatchObject({ w: 844, h: 390, resizing: false });
+    vi.unstubAllGlobals();
   });
 });

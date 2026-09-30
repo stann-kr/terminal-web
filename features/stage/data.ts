@@ -48,31 +48,61 @@ export type Viewport = { w: number; h: number; resizing: boolean };
 /** How long the window must hold still before a resize counts as finished (ms). */
 const RESIZE_SETTLE_MS = 150;
 
+/** Without `svh`, a touch browser's height change of less than this at the same width is its toolbar. */
+const TOOLBAR_SLACK = 120;
+
 /**
  * The window size, measured before the first paint and followed on every frame of a resize;
  * `resizing` holds while the window is being dragged. Null on the server.
+ *
+ * The height is the small viewport (`100svh`, browser toolbars shown). Mobile browsers slide their
+ * toolbars in and out while the page scrolls, which changes `innerHeight` and fires `resize`; the
+ * small viewport stays put, so scrolling never re-tiles the stage. A resize that leaves the size as
+ * it was is ignored altogether.
  */
 export function useViewport(): Viewport | null {
   const [viewport, setViewport] = useState<Viewport | null>(null);
   useLayoutEffect(() => {
     let frame = 0;
     let settle = 0;
-    const read = (resizing: boolean) => {
-      frame = 0;
-      const next = { w: window.innerWidth, h: window.innerHeight, resizing };
-      setViewport(previous => (previous && previous.w === next.w && previous.h === next.h && previous.resizing === resizing ? previous : next));
+    const probe = typeof CSS !== 'undefined' && CSS.supports?.('height', '100svh') ? document.createElement('div') : null;
+    if (probe) {
+      probe.setAttribute('aria-hidden', 'true');
+      probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100svh;visibility:hidden;pointer-events:none';
+      document.body.appendChild(probe);
+    }
+    const touch = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+    let last: { w: number; h: number } | null = null;
+    const measure = () => {
+      const small = probe ? Math.round(probe.getBoundingClientRect().height) : 0;
+      const size = { w: window.innerWidth, h: small > 0 ? small : window.innerHeight };
+      // No steady `svh` reading: at the same width, a small height change on a touch screen is the toolbar.
+      if (small <= 0 && touch && last && size.w === last.w && Math.abs(size.h - last.h) < TOOLBAR_SLACK) return last;
+      return size;
     };
-    read(false);
+    const commit = (size: { w: number; h: number }, resizing: boolean) => {
+      last = size;
+      setViewport(previous => (previous && previous.w === size.w && previous.h === size.h && previous.resizing === resizing ? previous : { ...size, resizing }));
+    };
+    commit(measure(), false);
     const resize = () => {
-      if (!frame) frame = requestAnimationFrame(() => read(true));
+      const size = measure();
+      if (last && size.w === last.w && size.h === last.h) return;
+      if (!frame) {
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          commit(measure(), true);
+        });
+      }
       window.clearTimeout(settle);
-      settle = window.setTimeout(() => read(false), RESIZE_SETTLE_MS);
+      settle = window.setTimeout(() => commit(measure(), false), RESIZE_SETTLE_MS);
     };
     window.addEventListener('resize', resize);
     return () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(settle);
       window.removeEventListener('resize', resize);
+      probe?.remove();
     };
   }, []);
   return viewport;

@@ -338,7 +338,7 @@
   align-content: center;
   justify-items: start;
   gap: 18px;
-  min-height: calc(100dvh - 2 * var(--frame-y, 10px));
+  min-height: calc(100svh - 2 * var(--frame-y, 10px));
   padding: clamp(24px, 6vw, 96px);
 }
 .enlargeMark {

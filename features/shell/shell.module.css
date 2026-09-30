@@ -2,7 +2,8 @@
    (html[data-stage-mode=stage]) the page scrolls only sheet to sheet: it snaps, like turning pages. */
 .frame {
   width: 100%;
-  min-height: 100dvh;
+  /* The small viewport: steady while a mobile browser slides its toolbars in and out. */
+  min-height: 100svh;
   padding: var(--frame-y) clamp(10px, 1.4vw, 24px);
   background: var(--bg);
 }
