@@ -2,7 +2,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useTransmit } from '@/features/transmit/useTransmit';
+import { TRANSMIT_PAGE_SIZE } from '@/lib/transmit/contract';
+import { useTransmit, useTransmitRange } from '@/features/transmit/useTransmit';
 import { NodeActivity } from '@/features/transmit/NodeActivity';
 import { TransmitForm } from '@/features/transmit/TransmitForm';
 import { Loading, Panel, StateNotice, ui } from '@/features/ui/Ui';
@@ -16,6 +17,11 @@ const pad = (value: number, size = 3) => String(value).padStart(size, '0');
 /** Height of one node row on the home plate, gap included (px). */
 const NODE_ROW = 46;
 const logHref = (page: number) => `/transmit${page > 1 ? `?page=${page}` : ''}`;
+/** A usual log entry's height (handle line and one line of message) and the pager and state line under the list, px. */
+const LOG_ROW = 84;
+const LOG_CHROME = 96;
+/** Most entries one page of the open log holds. */
+const LOG_MAX = 30;
 
 /** The visitor log: node activity on the home, the write form and the public log when open. */
 export function LogPlate({ mode, state, size }: PlateProps) {
@@ -47,11 +53,16 @@ export function LogPlate({ mode, state, size }: PlateProps) {
 function LogFocus({ page }: { page: number }) {
   const router = useRouter();
   const client = useQueryClient();
-  const query = useTransmit(page);
-  const latest = query.data?.logs[0];
+  // How many entries a page holds follows the room the public log has (LogPages measures it).
+  const [capacity, setCapacity] = useState(TRANSMIT_PAGE_SIZE);
+  const query = useTransmitRange((page - 1) * capacity, capacity);
+  const newest = useTransmit(1);
+  const latest = newest.data?.logs[0];
+  const total = query.data?.total ?? newest.data?.total;
+  const totalPages = total === undefined ? 1 : Math.max(1, Math.ceil(total / capacity));
   return (
     <div className={styles.face}>
-      <FocusHead label="Log" title="방문자 로그" tags={<Tags items={[query.data ? `${pad(query.data.total)} RECORDS` : 'READ', latest ? `LAST ${latest.ts} KST` : null]} />} />
+      <FocusHead label="Log" title="방문자 로그" tags={<Tags items={[total !== undefined ? `${pad(total)} RECORDS` : 'READ', latest ? `LAST ${latest.ts} KST` : null]} />} />
       <div className={styles.logGrid}>
         <Panel title="기록 남기기" label="Write log" surface="fresh" className={styles.logWrite}>
           <div className={styles.fitColumn} data-fit="">
@@ -65,8 +76,8 @@ function LogFocus({ page }: { page: number }) {
             />
           </div>
         </Panel>
-        <Panel title="공개 로그" label="Public log" code={query.data ? `${query.data.total} RECORDS` : 'READ'} surface="panel" className={styles.logPublic}>
-          <LogPages page={page} query={query} />
+        <Panel title="공개 로그" label="Public log" code={total !== undefined ? `${total} RECORDS` : 'READ'} surface="panel" className={styles.logPublic}>
+          <LogPages page={page} capacity={capacity} totalPages={totalPages} query={query} onCapacity={setCapacity} />
         </Panel>
       </div>
     </div>
@@ -95,11 +106,19 @@ function cutLog(list: HTMLElement) {
 }
 
 /**
- * One server page of the public log (five entries). On the stage, entries that do not fit the
- * panel are split into sub-pages by their measured height; turning past the last sub-page moves to
- * the next server page, so the reader never meets a scrollbar or a cut entry.
+ * One page of the public log, as many entries as the panel has room for (read from the server's
+ * pages of five). On the stage, entries that still do not fit are split into sub-pages by their
+ * measured height; turning past the last sub-page moves to the next page, so the reader never meets
+ * a scrollbar or a cut entry. When the room changes, so does the page size, and the page is chosen
+ * again so that the entry at the top stays in view.
  */
-function LogPages({ page, query }: { page: number; query: ReturnType<typeof useTransmit> }) {
+function LogPages({ page, capacity, totalPages, query, onCapacity }: {
+  page: number;
+  capacity: number;
+  totalPages: number;
+  query: ReturnType<typeof useTransmitRange>;
+  onCapacity: (capacity: number) => void;
+}) {
   const router = useRouter();
   const stageMode = useStageMode();
   const list = useRef<HTMLOListElement>(null);
@@ -136,9 +155,53 @@ function LogPages({ page, query }: { page: number; query: ReturnType<typeof useT
     };
   }, [stageMode, logKey]);
 
-  const totalPages = query.data?.totalPages ?? 1;
   const subCount = pages?.length ?? 1;
   const index = sub.key === logKey ? Math.min(sub.index, subCount - 1) : 0;
+
+  // The page size follows the room: entries of a usual height that fit under the list's head (a taller
+  // one goes to a sub-page). Stacked under the form, the log scrolls and keeps the server's five.
+  const at = useRef({ page, capacity, first: 0 });
+  useEffect(() => {
+    at.current = { page, capacity, first: pages?.[index]?.[0] ?? 0 };
+  });
+  useEffect(() => {
+    const element = region.current;
+    if (stageMode !== 'stage' || !element || typeof ResizeObserver === 'undefined') return;
+    const measure = () => {
+      if (!element.clientHeight) return;
+      const grid = element.closest<HTMLElement>(`.${styles.logGrid}`);
+      const stacked = !!grid && getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).length === 1;
+      const fits = Math.max(1, Math.min(LOG_MAX, Math.floor((element.clientHeight - LOG_CHROME) / LOG_ROW)));
+      const next = stacked ? TRANSMIT_PAGE_SIZE : fits;
+      const { page: current, capacity: was, first } = at.current;
+      if (next === was) return;
+      // Keep the entry at the top of what is shown on the page that now holds it.
+      const target = Math.floor(((current - 1) * was + first) / next) + 1;
+      onCapacity(next);
+      if (target !== current) router.replace(logHref(target), { scroll: false });
+    };
+    // The first reading applies at once; later ones wait for the window to hold still.
+    let first = true;
+    let timer = 0;
+    const observer = new ResizeObserver(() => {
+      window.clearTimeout(timer);
+      if (first) {
+        first = false;
+        measure();
+      } else timer = window.setTimeout(measure, 150);
+    });
+    observer.observe(element);
+    return () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [stageMode, onCapacity, router]);
+  // An address past the last page (the log got shorter, or pages got larger) shows the last one.
+  const read = !!query.data;
+  useEffect(() => {
+    if (read && page > totalPages) router.replace(logHref(totalPages), { scroll: false });
+  }, [read, page, totalPages, router]);
+
   const shown = pages ? pages[index].map(i => logs![i]) : logs ?? [];
   const prev = index > 0 ? () => setSub({ key: logKey, index: index - 1 }) : page > 1 ? () => router.push(logHref(page - 1), { scroll: false }) : undefined;
   const next = index < subCount - 1 ? () => setSub({ key: logKey, index: index + 1 }) : page < totalPages ? () => router.push(logHref(page + 1), { scroll: false }) : undefined;

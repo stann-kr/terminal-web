@@ -6,6 +6,9 @@ export interface PublicTransmitLog {
   createdAt: string;
 }
 
+/** Entries per server page of the public log (`GET /api/transmit?page=N`). */
+export const TRANSMIT_PAGE_SIZE = 5;
+
 export interface TransmitLogPage {
   logs: PublicTransmitLog[];
   total: number;

@@ -5,6 +5,7 @@ import type { TerminalEvent } from '../lib/events/types';
 import { Shell } from '../features/shell/Shell';
 import { EventCountdown } from '../features/events/EventCountdown';
 import { useViewport } from '../features/stage/data';
+import { useTransmitRange } from '../features/transmit/useTransmit';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
@@ -438,6 +439,23 @@ describe('stage scroll', () => {
     go('/transmit', 'page=2');
     expect(scrollTo).toHaveBeenCalledTimes(1);
     scrollTo.mockRestore();
+  });
+});
+
+describe('public log window', () => {
+  it('puts a page of any size together from the server pages of five, in order', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+    clients.push(client);
+    const log = (n: number) => ({ id: `L${n}`, handle: `h${n}`, message: 'm', ts: '09.30 12:00', createdAt: '2026-09-30T03:00:00.000Z' });
+    for (const page of [1, 2, 3]) {
+      client.setQueryData(['transmit', page], { logs: [1, 2, 3, 4, 5].map(i => log((page - 1) * 5 + i)), total: 14, page, totalPages: 3 });
+    }
+    const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    // Entries 8 to 13 (the second page of six) span server pages 2 and 3.
+    const { result } = renderHook(() => useTransmitRange(7, 6), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+    expect(result.current.data!.logs.map(entry => entry.id)).toEqual(['L8', 'L9', 'L10', 'L11', 'L12', 'L13']);
+    expect(result.current.data!.total).toBe(14);
   });
 });
 
