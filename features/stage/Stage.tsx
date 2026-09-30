@@ -7,7 +7,7 @@ import { stageConfig } from './config';
 import { stageSizeFor, useStageData, useViewport } from './data';
 import { Box } from './Box';
 import { computeFlowLayout, computeLayout, stageMetrics, type PlacedItem, type Rect, type StageLayout } from './layout';
-import { decideStageMode, type StageMode } from './mode';
+import { decideStageMode, MODE_HYSTERESIS, type StageMode } from './mode';
 import {
   PLATE_ORDER,
   carrierKey,
@@ -74,7 +74,8 @@ export function Stage({ state: address }: { state: StageState }) {
   };
   const size = viewport ? stageSizeFor(viewport) : null;
   const staged = viewport && size && state.view !== 'none' ? computeLayout(state, size, { viewportW: viewport.w, items }) : null;
-  const failed = failure?.key === key ? failure : null;
+  // A view that did not fit stays in flow until the window grows past where it failed.
+  const failed = failure?.key === key && viewport && viewport.w < failure.w + MODE_HYSTERESIS ? failure : null;
   const mode: StageRenderMode = !viewport
     ? 'boot'
     : decideStageMode({ viewport, fit: failed ? { required: failed.h + 1, available: viewport.h } : null, layoutFits: staged?.fits ?? true }, lastMode);

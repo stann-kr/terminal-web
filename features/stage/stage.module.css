@@ -66,6 +66,8 @@
   container: layer / inline-size;
 }
 .stage[data-stage=stage] .layer {
+  /* A fixed rect on the stage, so faces can answer its height as well as its width. */
+  container-type: size;
   position: absolute;
   left: 0;
   top: 0;

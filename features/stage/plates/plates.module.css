@@ -146,6 +146,13 @@ a.rail:focus-visible {
   letter-spacing: .06em;
   white-space: nowrap;
 }
+/* Short rail slots (low windows) keep the name first, then the meta; the title is also the link's name. */
+@container layer (max-height: 96px) {
+  .railTitle { display: none; }
+}
+@container layer (max-height: 60px) {
+  .railMeta { display: none; }
+}
 /* In flow the rail is a row of chips: the name only. */
 :global([data-stage]:not([data-stage=stage])) .rail {
   flex-direction: row;
@@ -167,6 +174,11 @@ a.rail:focus-visible {
   flex-direction: column;
   min-width: 0;
   padding: 10px var(--pad) var(--pad);
+}
+:global([data-stage=stage]) .tileHead {
+  /* The stage starts home cells right under this height. */
+  max-height: calc(var(--tile-head) - 10px - var(--gap));
+  overflow: hidden;
 }
 .tileHead {
   display: flex;
@@ -457,7 +469,7 @@ a.rail:focus-visible {
 /* A list plate's head has the exact height the stage reserves above the rows. */
 :global([data-stage=stage]) .listFocus .focusHead {
   height: calc(var(--list-head) - 12px - var(--gap));
-  overflow: hidden;
+  overflow: hidden; /* measured (data-fit): a head that needs more sends the view to flow */
 }
 .focusTitleRow {
   display: flex;
@@ -731,6 +743,10 @@ a.rail:focus-visible {
 .fitPanel {
   min-height: 0;
   overflow: hidden;
+}
+/* A panel's body may shrink to the height it is given, so paged content inside can measure it. */
+:is(.fitPanel, .logWrite, .logPublic) > :last-child {
+  min-height: 0;
 }
 .statement {
   margin-bottom: 10px;

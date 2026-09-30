@@ -31,7 +31,7 @@ export function RailFace({ href, name, title, meta, carrier }: { href: string | 
  */
 export function TileHead({ href, label, title, chips, carrier }: { href: string; label: string; title: string; chips?: ReactNode; carrier?: string }) {
   return (
-    <header className={styles.tileHead}>
+    <header className={styles.tileHead} data-fit="">
       <h2 className={styles.tileTitle}>
         <Link href={href} className={styles.stretch} data-carrier={carrier} scroll={false}>
           <span className={styles.tileLabel} aria-hidden="true">{label}</span>
@@ -46,7 +46,7 @@ export function TileHead({ href, label, title, chips, carrier }: { href: string;
 /** An open plate's head: the view's h1 (focus lands on it), its printed name, and chips. */
 export function FocusHead({ label, title, chips, children }: { label: string; title: string; chips?: ReactNode; children?: ReactNode }) {
   return (
-    <header className={styles.focusHead}>
+    <header className={styles.focusHead} data-fit="">
       <div className={styles.focusTitleRow}>
         <h1 className={styles.focusTitle} tabIndex={-1} data-stage-title="">
           <span className={styles.focusLabel} aria-hidden="true">{label}</span>
