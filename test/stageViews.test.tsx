@@ -50,18 +50,34 @@ afterEach(() => {
 });
 
 describe('stage shell', () => {
-  it('has no menu tabs: a path in the status line, the plates as the menu, and no effects toggle', () => {
+  it('has no header, footer or menu: the wordmark rides on the next plate and the plates are the menu', () => {
     const { container, go } = shell();
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument();
+    expect(screen.queryByRole('contentinfo')).not.toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: '주 메뉴' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '화면 효과' })).not.toBeInTheDocument();
+    const next = plate(container, 'next');
+    expect(within(next).getAllByText('TERMINAL').some(word => !word.closest('a'))).toBe(true);
+    expect(within(next).getByRole('group', { name: '콘텐츠 언어' })).toBeInTheDocument();
     go('/events');
-    const path = screen.getByRole('navigation', { name: '경로' });
-    expect(within(path).getAllByRole('link').map(link => link.getAttribute('href'))).toEqual(['/', '/events']);
-    expect(within(path).getByRole('link', { name: /EVENTS/ })).toHaveAttribute('aria-current', 'page');
-    // The other plates wait in the rail as real links.
-    expect(within(plate(container, 'artists')).getByRole('link')).toHaveAttribute('href', '/artists');
+    expect(plate(container, 'events')).toHaveAttribute('data-mode', 'hero');
+    expect(within(plate(container, 'events')).getByRole('heading', { level: 1, name: /이벤트/ })).toBeInTheDocument();
+    // The other plates are still there, re-fitted, as real links.
     expect(within(plate(container, 'log')).getByRole('link')).toHaveAttribute('href', '/transmit');
-    expect(plate(container, 'events')).toHaveAttribute('data-mode', 'focus');
+    expect(within(plate(container, 'artists')).getByRole('link', { name: /아티스트/ })).toHaveAttribute('href', '/artists');
+    expect(within(plate(container, 'next')).getAllByText('TERMINAL').length).toBeGreaterThan(0);
+  });
+
+  it('gives every view but the home a back card to the view before it', () => {
+    const { container, go } = shell([past, upcoming]);
+    const back = () => container.querySelector<HTMLElement>('[data-back]')!;
+    expect(back()).toHaveAttribute('data-visible', 'false');
+    go('/events');
+    expect(within(back()).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
+    go('/events/OLD');
+    expect(within(back()).getByRole('link', { name: '이전 화면으로: 이벤트' })).toHaveAttribute('href', '/events');
+    go('/events');
+    expect(within(back()).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
   });
 
   it('keeps layout children and typed drafts mounted across views', () => {
@@ -73,14 +89,16 @@ describe('stage shell', () => {
     expect(draft).toHaveValue('typed');
   });
 
-  it('decides stage or flow by the window and marks the document', () => {
+  it('never switches to a scrolling page: a narrow window gets sheets to snap between', () => {
     const { container } = shell();
     expect(container.querySelector('#stage')).toHaveAttribute('data-stage', 'stage');
     expect(document.documentElement.dataset.stageMode).toBe('stage');
+    expect(document.documentElement.dataset.sheets).toBe('1');
     cleanup();
     viewport(390, 844);
     const small = shell();
-    expect(small.container.querySelector('#stage')).toHaveAttribute('data-stage', 'flow');
+    expect(small.container.querySelector('#stage')).toHaveAttribute('data-stage', 'stage');
+    expect(Number(document.documentElement.dataset.sheets)).toBeGreaterThan(1);
   });
 });
 
@@ -96,15 +114,17 @@ describe('stage views', () => {
     expect(row).toHaveAttribute('data-mode', 'detail');
     const title = await within(row).findByRole('heading', { level: 1, name: 'Past event' });
     await waitFor(() => expect(title).toHaveFocus());
-    expect(plate(container, 'events')).toHaveAttribute('data-mode', 'strip');
-    expect(shown(item(container, 'event:TRM-03'))).toBe(false);
+    expect(plate(container, 'events')).toHaveAttribute('data-mode', 'index');
+    // The other sessions stay on hand as index lines beside the open file.
+    expect(item(container, 'event:TRM-03')).toHaveAttribute('data-mode', 'index');
     go('/events');
     expect(item(container, 'event:OLD')).toBe(row);
     expect(row).toHaveAttribute('data-mode', 'row');
   });
 
-  it('goes one level up on Escape, but not while typing', () => {
+  it('goes back on Escape like the back card, but not while typing', () => {
     const { go } = shell();
+    go('/events');
     go('/events/OLD');
     fireEvent.keyDown(screen.getByRole('textbox', { name: '초안' }), { key: 'Escape' });
     expect(router.push).not.toHaveBeenCalled();
@@ -134,7 +154,7 @@ describe('stage views', () => {
   it('shows an unknown session as an error inside the open directory', () => {
     const { container, go } = shell();
     go('/events/NOPE');
-    expect(plate(container, 'events')).toHaveAttribute('data-mode', 'focus');
+    expect(plate(container, 'events')).toHaveAttribute('data-mode', 'hero');
     expect(screen.getByRole('alert')).toHaveTextContent('NOPE');
   });
 
@@ -147,15 +167,17 @@ describe('stage views', () => {
     expect(container).not.toHaveTextContent('PRIVATE NAME');
   });
 
-  it('pages the flow directory four at a time and links pages without removed filters', () => {
-    viewport(390, 844);
-    const events = Array.from({ length: 5 }, (_, index) => ({ ...past, id: `EVENT ${index}`, session: `EVENT ${index}` }));
+  it('pages the directory by the rows that fit and links pages without removed filters', () => {
+    const events = Array.from({ length: 40 }, (_, index) => ({ ...past, id: `EVENT ${String(index).padStart(2, '0')}`, session: `EVENT ${index}` }));
     const { container, go } = shell(events);
+    go('/events');
+    const perPage = [...container.querySelectorAll<HTMLElement>('[data-item^="event:"]')].filter(shown).length;
+    expect(perPage).toBeGreaterThan(2);
     go('/events', 'page=2&q=absent&year=1900');
     const rows = [...container.querySelectorAll<HTMLElement>('[data-item^="event:"]')].filter(shown);
-    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveAttribute('data-item', `event:EVENT ${String(perPage).padStart(2, '0')}`);
     const pager = screen.getByRole('navigation', { name: '목록 쪽 이동' });
-    expect(within(pager).getByRole('link', { name: '← 이전' })).toHaveAttribute('href', '/events');
+    expect(within(pager).getByRole('link', { name: '이전 쪽' })).toHaveAttribute('href', '/events');
     expect(screen.queryByRole('textbox', { name: /검색/ })).not.toBeInTheDocument();
   });
 
@@ -207,14 +229,14 @@ describe('home plates', () => {
     expect(container).not.toHaveTextContent('free text');
   });
 
-  it('draws the session cells as the sessions’ own elements on the stage, and inside the plate in flow', () => {
-    const { container } = shell([past, upcoming]);
-    expect(item(container, 'event:TRM-03')).toHaveAttribute('data-mode', 'cell');
+  it('draws the session cells as the sessions’ own elements, which become the directory rows', () => {
+    const { container, go } = shell([past, upcoming]);
+    const cell = item(container, 'event:TRM-03');
+    expect(cell).toHaveAttribute('data-mode', 'cell');
     expect(within(plate(container, 'events')).queryAllByRole('listitem')).toHaveLength(0);
-    cleanup();
-    viewport(390, 844);
-    const small = shell([past, upcoming]);
-    expect(within(plate(small.container, 'events')).getAllByRole('link', { name: /TERMINAL \[03\]|Past event/ }).length).toBeGreaterThan(0);
+    go('/events');
+    expect(item(container, 'event:TRM-03')).toBe(cell);
+    expect(cell).toHaveAttribute('data-mode', 'row');
   });
 });
 
@@ -222,7 +244,7 @@ describe('visitor log plate', () => {
   it('tracks initial load, refresh, failure and retry without discarding the last public logs', async () => {
     let resolve!: (value: Response) => void;
     vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(done => { resolve = done; })));
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
     clients.push(client);
     client.setQueryData(['events'], [past]);
     navigation.pathname = '/transmit';
@@ -264,20 +286,20 @@ describe('directory and roster contracts', () => {
     expect(container).not.toHaveTextContent('PRIVATE NAME');
     go('/events', 'q=absent&year=2024&venue=OTHER');
     expect(within(stage(container)).getByRole('heading', { name: 'Past event' })).toBeInTheDocument();
-    expect(within(stage(container)).getByRole('heading', { name: 'TERMINAL [03]' })).toBeInTheDocument();
+    expect(within(stage(container)).getAllByRole('heading', { name: 'TERMINAL [03]' }).length).toBeGreaterThan(0);
     expect(within(stage(container)).queryByRole('textbox')).not.toBeInTheDocument();
     expect(within(stage(container)).queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('pages the flow roster twelve at a time', () => {
-    viewport(390, 844);
-    const events = [{ ...past, artists: Array.from({ length: 13 }, (_, index) => artist(`A${index}`, `ARTIST ${String(index).padStart(2, '0')}`)) }];
+  it('pages the roster grid by the cells that fit', () => {
+    const events = [{ ...past, artists: Array.from({ length: 60 }, (_, index) => artist(`A${index}`, `ARTIST ${String(index).padStart(2, '0')}`)) }];
     const { container, go } = shell(events);
+    go('/artists');
+    const perPage = [...container.querySelectorAll<HTMLElement>('[data-item^="artist:"]')].filter(shown).length;
     go('/artists', 'page=2');
     const cells = [...container.querySelectorAll<HTMLElement>('[data-item^="artist:"]')].filter(shown);
-    expect(cells).toHaveLength(1);
-    expect(within(cells[0]).getByRole('heading', { name: 'ARTIST 12' })).toBeInTheDocument();
-    expect(within(screen.getByRole('navigation', { name: '목록 쪽 이동' })).getByRole('link', { name: '← 이전' })).toHaveAttribute('href', '/artists');
+    expect(within(cells[0]).getByRole('heading', { name: `ARTIST ${String(perPage).padStart(2, '0')}` })).toBeInTheDocument();
+    expect(within(screen.getByRole('navigation', { name: '목록 쪽 이동' })).getByRole('link', { name: '이전 쪽' })).toHaveAttribute('href', '/artists');
   });
 
   it('orders upcoming sessions by start time and moves one to the past at its start boundary', () => {

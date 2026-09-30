@@ -4,74 +4,79 @@ import { BrandText } from '@/features/ui/Ui';
 import styles from './plates.module.css';
 
 /**
- * The faces a plate wears besides its open content. Every face is a real link, so plates work with
- * the middle click, a new tab and a copied address like any page link.
+ * The faces a plate wears. One rule for pointing: a face with nothing else to press inside is one
+ * link, and the whole face lights up; a face that holds other controls or carriers has a head band
+ * that is the link, and only that band lights up. What lights up is exactly what is pressed.
+ * Every face link is a real link (middle click, new tab and copied address work).
  */
 
-/** A rail slot: the plate's name large, its Korean name for assistive tech, one line of meta. */
-export function RailFace({ href, name, title, meta, carrier }: { href: string | null; name: string; title: string; meta?: string; carrier?: string }) {
-  const body = (
-    <>
-      <span className={styles.railName} aria-hidden="true">{name}</span>
-      <span className={styles.railTitle}>{title}</span>
-      {meta && <span className={styles.railMeta} aria-hidden="true">{meta}</span>}
-    </>
-  );
-  if (!href) return <div className={styles.rail}>{body}</div>;
+/** A whole face that is a single link: chips, the back card, summary plates with nothing inside to press. */
+export function CardLink({ href, className = '', label, carrier, children }: { href: string; className?: string; label?: string; carrier?: string; children: ReactNode }) {
   return (
-    <Link href={href} className={styles.rail} data-carrier={carrier} scroll={false}>
-      {body}
+    <Link href={href} className={`${styles.card} ${className}`} aria-label={label} data-carrier={carrier} scroll={false}>
+      {children}
     </Link>
   );
 }
 
-/**
- * A home plate's head. The title link stretches over the whole plate, so the plate is one target;
- * controls placed inside the plate sit above that stretch.
- */
-export function TileHead({ href, label, title, chips, carrier }: { href: string; label: string; title: string; chips?: ReactNode; carrier?: string }) {
+/** A chip: the plate's name large, its Korean name, one line of meta. */
+export function ChipFace({ href, name, title, meta, carrier }: { href: string | null; name: string; title: string; meta?: string; carrier?: string }) {
+  const body = (
+    <>
+      <span className={styles.chipName} aria-hidden="true">{name}</span>
+      <span className={styles.chipTitle}>{title}</span>
+      {meta && <span className={styles.chipMeta} aria-hidden="true">{meta}</span>}
+    </>
+  );
+  if (!href) return <div className={`${styles.card} ${styles.chip}`}>{body}</div>;
   return (
-    <header className={styles.tileHead} data-fit="">
-      <h2 className={styles.tileTitle}>
-        <Link href={href} className={styles.stretch} data-carrier={carrier} scroll={false}>
-          <span className={styles.tileLabel} aria-hidden="true">{label}</span>
-          <span className={styles.tileKo}><BrandText text={title} /></span>
-        </Link>
-      </h2>
-      {chips && <span className={styles.tileChips} aria-hidden="true">{chips}</span>}
-    </header>
+    <CardLink href={href} className={styles.chip} carrier={carrier}>
+      {body}
+    </CardLink>
   );
 }
 
-/** An open plate's head: the view's h1 (focus lands on it), its printed name, and chips. */
-export function FocusHead({ label, title, chips, children }: { label: string; title: string; chips?: ReactNode; children?: ReactNode }) {
+/** The printed name of a plate over its rule: English station name, Korean title, tags. */
+function BandBody({ label, title, tags }: { label: string; title: string; tags?: ReactNode }) {
   return (
-    <header className={styles.focusHead} data-fit="">
-      <div className={styles.focusTitleRow}>
-        <h1 className={styles.focusTitle} tabIndex={-1} data-stage-title="">
-          <span className={styles.focusLabel} aria-hidden="true">{label}</span>
-          <span className={styles.focusKo}><BrandText text={title} /></span>
+    <>
+      <span className={styles.bandTitle}>
+        <span className={styles.bandLabel} aria-hidden="true">{label}</span>
+        <span className={styles.bandKo}><BrandText text={title} /></span>
+      </span>
+      {tags && <span className={styles.bandTags} aria-hidden="true">{tags}</span>}
+    </>
+  );
+}
+
+/**
+ * A head band that is the plate's link (summary plates and indexes, whose carriers sit below it).
+ * `data-head` marks where the carriers may start.
+ */
+export function HeadLink({ href, label, title, tags, heading = 'h2' }: { href: string; label: string; title: string; tags?: ReactNode; heading?: 'h2' | 'p' }) {
+  const Tag = heading;
+  return (
+    <Tag className={styles.bandWrap} data-head="">
+      <Link href={href} className={`${styles.band} ${styles.bandLink}`} scroll={false}>
+        <BandBody label={label} title={title} tags={tags} />
+      </Link>
+    </Tag>
+  );
+}
+
+/** An open plate's head: the view's h1 (focus lands on it), its printed name, tags, and more below. */
+export function FocusHead({ label, title, tags, children }: { label: string; title: string; tags?: ReactNode; children?: ReactNode }) {
+  return (
+    <header className={styles.focusHead} data-head="" data-fit="">
+      <div className={styles.band}>
+        <h1 className={styles.bandTitle} tabIndex={-1} data-stage-title="">
+          <span className={`${styles.bandLabel} ${styles.heroLabel}`} aria-hidden="true">{label}</span>
+          <span className={styles.bandKo}><BrandText text={title} /></span>
         </h1>
-        {chips && <span className={styles.focusChips} aria-hidden="true">{chips}</span>}
+        {tags && <span className={styles.bandTags} aria-hidden="true">{tags}</span>}
       </div>
       {children}
     </header>
-  );
-}
-
-/** A parent plate folded above its open detail: its name, a count, and the way back to the list. */
-export function StripFace({ href, label, title, meta, back }: { href: string; label: string; title: string; meta?: string; back: string }) {
-  return (
-    <div className={styles.strip}>
-      <p className={styles.stripTitle}>
-        <span className={styles.stripLabel} aria-hidden="true">{label}</span>
-        <span>{title}</span>
-      </p>
-      {meta && <span className={styles.stripMeta} aria-hidden="true">{meta}</span>}
-      <Link href={href} className={styles.stripBack} scroll={false}>
-        {back}
-      </Link>
-    </div>
   );
 }
 

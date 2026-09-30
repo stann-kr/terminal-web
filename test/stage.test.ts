@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { PLATE_ORDER, parseCarrierMark, resolveMissing, stageOrigin, stageParentHref, stageStateFromUrl, stateKey, type StageState } from '../features/stage/state';
-import { computeFlowLayout, computeLayout, listRowsPerPage, stageMetrics, type LayoutInput, type Rect, type StageLayout } from '../features/stage/layout';
+import { PLATE_ORDER, parseCarrierMark, resolveMissing, stageOrigin, stageParentHref, stageStateFromUrl, stateHref, stateKey, type StageState } from '../features/stage/state';
+import { computeFlowLayout, computeLayout, listRowsPerPage, stageMetrics, tile, type LayoutInput, type Rect, type StageLayout } from '../features/stage/layout';
 import { stageConfig } from '../features/stage/config';
-import { decideStageMode, MODE_HYSTERESIS } from '../features/stage/mode';
 import { fitTitle, packHeights, paginate, type Measurer } from '../features/stage/text';
 
 describe('stage state from the address', () => {
@@ -49,6 +48,10 @@ describe('stage state from the address', () => {
     expect(stageParentHref(stageStateFromUrl('/artists/lucii'))).toBe('/artists');
     expect(stageParentHref(stageStateFromUrl('/transmit'))).toBe('/');
     expect(stageParentHref({ view: 'home' })).toBeNull();
+    for (const path of ['/', '/events?page=2', '/events/A%20B/request', '/artists/x', '/transmit']) {
+      const [pathname, search] = path.split('?');
+      expect(stateHref(stageStateFromUrl(pathname, new URLSearchParams(search)))).toBe(path);
+    }
   });
 
   it('keys each distinct view once, paging included', () => {
@@ -81,32 +84,34 @@ describe('carrier memory', () => {
   });
 });
 
-// Stage sizes under the status line and the ticker, for 1440×900, 1280×720, 1920×1080 and 1024×680.
+// Stage sizes (window minus frame padding) for 1440×900, 1280×720, 1920×1080 and 1024×680.
 const STAGES = [
-  { viewportW: 1440, stage: { w: 1400, h: 766 } },
-  { viewportW: 1280, stage: { w: 1244, h: 590 } },
-  { viewportW: 1920, stage: { w: 1872, h: 940 } },
-  { viewportW: 1024, stage: { w: 1000, h: 540 } },
+  { viewportW: 1440, stage: { w: 1400, h: 880 } },
+  { viewportW: 1280, stage: { w: 1244, h: 700 } },
+  { viewportW: 1920, stage: { w: 1872, h: 1060 } },
+  { viewportW: 1024, stage: { w: 995, h: 660 } },
 ];
 const EVENTS = ['TRM-09', 'TRM-08', 'TRM-07', 'TRM-06', 'TRM-05', 'TRM-04', 'TRM-03', 'TRM-02', 'TRM-01'];
 const ARTISTS = ['stann-lumo', 'lucii', 'marcus-l', 'nusnoom', 'a', 'b', 'c', 'd', 'e'];
 const items = (eventPage = 1, artistPage = 1): LayoutInput['items'] => ({ event: { order: EVENTS, page: eventPage }, artist: { order: ARTISTS, page: artistPage } });
-const PATHS = ['/', '/events', '/events/TRM-02', '/events/TRM-01/request', '/artists', '/artists/lucii', '/transmit', '/signal', '/about'];
+const PATHS = ['/', '/events', '/events/TRM-05', '/events/TRM-01/request', '/artists', '/artists/lucii', '/transmit', '/signal', '/about'];
 
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const contains = (outer: Rect, inner: Rect) => inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.w <= outer.x + outer.w && inner.y + inner.h <= outer.y + outer.h;
-const shownPlates = (layout: StageLayout) => PLATE_ORDER.filter(id => layout.plates[id].mode !== 'hidden').map(id => layout.plates[id].rect);
 const shownItems = (layout: StageLayout) => Object.entries(layout.items).filter(([, item]) => item.visible);
 
 describe('stage layout', () => {
-  it('keeps every shown plate and carrier on the stage, plates apart, carriers inside their plate or the detail', () => {
+  it('tiles every view with all six plates, apart, on one screen, carriers inside their plate or the detail', () => {
     for (const { viewportW, stage } of STAGES) {
       for (const path of PATHS) {
         const layout = computeLayout(stageStateFromUrl(path), stage, { viewportW, items: items() });
         const label = `${viewportW} ${path}`;
         expect(layout.fits, label).toBe(true);
-        const plates = shownPlates(layout);
-        plates.forEach((a, i) => plates.slice(i + 1).forEach(b => expect(overlaps(a, b), label).toBe(false)));
+        expect(layout.sheets, label).toEqual([{ y: 0, h: stage.h }]);
+        const boxes = [...PLATE_ORDER.map(id => layout.plates[id].rect), ...(layout.detail ? [layout.detail] : []), ...(layout.back ? [layout.back] : [])];
+        expect(PLATE_ORDER.every(id => layout.plates[id].mode !== 'hidden'), label).toBe(true);
+        boxes.forEach((a, i) => boxes.slice(i + 1).forEach(b => expect(overlaps(a, b), label).toBe(false)));
+        boxes.forEach(box => expect(contains({ x: 0, y: 0, ...stage }, box), label).toBe(true));
         const shown = shownItems(layout);
         shown.forEach(([, a], i) => shown.slice(i + 1).forEach(([, b]) => expect(overlaps(a.rect, b.rect), label).toBe(false)));
         for (const [key, item] of shown) {
@@ -116,109 +121,100 @@ describe('stage layout', () => {
           }
           const owner = key.startsWith('event:') ? layout.plates.events : layout.plates.artists;
           expect(contains(owner.rect, item.rect), `${label} ${key}`).toBe(true);
-          if (layout.list) expect(item.rect.y + item.rect.h, `${label} ${key}`).toBeLessThanOrEqual(layout.list.pager.y);
+          if (layout.list && item.mode === 'row') expect(item.rect.y + item.rect.h, `${label} ${key}`).toBeLessThanOrEqual(layout.list.pager.y);
         }
       }
     }
   });
 
-  it('lays the home out by the configured columns, next session largest, side column wide enough', () => {
-    const { plates, rail, homeCells } = computeLayout({ view: 'home' }, STAGES[0].stage, { viewportW: 1440, items: items() });
-    expect(rail).toBeNull();
-    expect(PLATE_ORDER.every(id => plates[id].mode === 'tile')).toBe(true);
-    expect(plates.next.rect.h).toBe(STAGES[0].stage.h);
-    expect(plates.events.rect.x).toBe(plates.artists.rect.x);
-    expect(plates.signal.rect.x).toBe(plates.about.rect.x);
-    expect(plates.signal.rect.y).toBeLessThan(plates.log.rect.y);
-    expect(plates.next.rect.w).toBeGreaterThan(plates.events.rect.w);
-    expect(homeCells.event).toBeGreaterThan(0);
-    expect(homeCells.event).toBeLessThanOrEqual(3);
-    expect(homeCells.artist).toBeLessThanOrEqual(8);
-    const narrow = computeLayout({ view: 'home' }, STAGES[3].stage, { viewportW: 1024 });
-    expect(narrow.plates.about.rect.w).toBeGreaterThanOrEqual(stageConfig.home.sideMinW);
+  it('gives every view its own arrangement and a way back everywhere but the home', () => {
+    const stage = STAGES[0].stage;
+    const signature = (path: string) => JSON.stringify(PLATE_ORDER.map(id => computeLayout(stageStateFromUrl(path), stage).plates[id]));
+    const views = ['/', '/events', '/events/TRM-05', '/artists', '/artists/lucii', '/transmit', '/signal', '/about'];
+    expect(new Set(views.map(signature)).size).toBe(views.length);
+    expect(computeLayout({ view: 'home' }, stage).back).toBeNull();
+    for (const path of views.slice(1)) expect(computeLayout(stageStateFromUrl(path), stage).back, path).not.toBeNull();
+    const home = computeLayout({ view: 'home' }, stage);
+    expect(home.plates.next.mode).toBe('hero');
+    expect(home.plates.next.rect.h).toBe(stage.h);
   });
 
-  it('keeps the rail in its fixed order with the open plate’s slot left empty, on either side', () => {
-    for (const path of ['/events', '/transmit', '/events/TRM-02', '/artists/lucii']) {
-      const layout = computeLayout(stageStateFromUrl(path), STAGES[0].stage, { viewportW: 1440 });
-      const slots = PLATE_ORDER.map(id => layout.rail![id]);
-      slots.forEach((slot, i) => i && expect(slot.y).toBeGreaterThan(slots[i - 1].y));
-      for (const id of PLATE_ORDER) {
-        const plate = layout.plates[id];
-        if (plate.mode === 'rail') expect(plate.rect).toEqual(layout.rail![id]);
-        else expect(layout.openSlots).toContain(id);
-      }
-    }
-    expect(computeLayout(stageStateFromUrl('/events/TRM-02'), STAGES[0].stage).openSlots).toEqual(['events']);
-    const right = computeLayout(stageStateFromUrl('/events'), STAGES[0].stage, { viewportW: 1440, config: { ...stageConfig, railSide: 'right' } });
-    expect(right.rail!.next.x).toBeGreaterThan(right.plates.events.rect.x + right.plates.events.rect.w);
+  it('opens a detail beside an index of its siblings, leaving the line it grew from empty', () => {
+    const layout = computeLayout(stageStateFromUrl('/events/TRM-05'), STAGES[0].stage, { viewportW: 1440, items: items() });
+    expect(layout.plates.events.mode).toBe('index');
+    expect(layout.items['event:TRM-05']).toMatchObject({ mode: 'detail', visible: true, rect: layout.detail });
+    expect(layout.indexOpen).not.toBeNull();
+    expect(contains(layout.plates.events.rect, layout.indexOpen!)).toBe(true);
+    const lines = shownItems(layout).filter(([, item]) => item.mode === 'index').map(([key]) => key);
+    expect(lines).toContain('event:TRM-06');
+    expect(lines).toContain('event:TRM-04');
   });
 
-  it('opens a detail under its parent strip, or in the parent’s place without one', () => {
-    const layout = computeLayout(stageStateFromUrl('/events/TRM-02'), STAGES[0].stage, { viewportW: 1440, items: items() });
-    expect(layout.items['event:TRM-02']).toMatchObject({ mode: 'detail', visible: true, rect: layout.detail });
-    expect(layout.plates.events).toMatchObject({ mode: 'strip' });
-    expect(layout.plates.events.rect.h).toBe(64);
-    expect(layout.detail!.y).toBeGreaterThan(64);
-    expect(EVENTS.filter(id => id !== 'TRM-02').every(id => !layout.items[`event:${id}`].visible)).toBe(true);
-    const bare = computeLayout(stageStateFromUrl('/events/TRM-02'), STAGES[0].stage, { viewportW: 1440, config: { ...stageConfig, detailStrip: false } });
-    expect(bare.plates.events.mode).toBe('rail');
-    expect(bare.detail).toEqual(bare.focus);
+  it('starts carriers under the measured head of their plate', () => {
+    const state = stageStateFromUrl('/events');
+    const plain = computeLayout(state, STAGES[0].stage, { viewportW: 1440, items: items() });
+    const measured = computeLayout(state, STAGES[0].stage, { viewportW: 1440, items: items(), heads: { events: 200 } });
+    expect(measured.items['event:TRM-09'].rect.y).toBe(plain.plates.events.rect.y + 200);
+    expect(measured.list!.perPage).toBeLessThanOrEqual(plain.list!.perPage);
   });
 
-  it('pages the list by the rows that fit, never fewer than three, and parks other pages beside their slot', () => {
-    const layout = computeLayout(stageStateFromUrl('/events', { page: '2' }), STAGES[0].stage, { viewportW: 1440, items: items(2) });
-    const perPage = listRowsPerPage(layout.focus!.h, stageMetrics(1440));
+  it('pages the list by the rows that fit and parks other pages beside their slot', () => {
+    const layout = computeLayout(stageStateFromUrl('/events', { page: '2' }), STAGES[1].stage, { viewportW: 1280, items: items(2) });
+    const metrics = stageMetrics(1280);
+    const perPage = listRowsPerPage(layout.plates.events.rect.h, metrics.head.hero, metrics);
     expect(layout.list).toMatchObject({ kind: 'event', perPage, page: 2, pages: Math.ceil(EVENTS.length / perPage) });
-    expect(shownItems(layout).map(([key]) => key)).toEqual(EVENTS.slice(perPage, perPage * 2).map(id => `event:${id}`));
+    expect(shownItems(layout).filter(([, item]) => item.mode === 'row').map(([key]) => key)).toEqual(EVENTS.slice(perPage, perPage * 2).map(id => `event:${id}`));
     const earlier = layout.items[`event:${EVENTS[0]}`];
     const same = layout.items[`event:${EVENTS[perPage]}`];
     expect(earlier.visible).toBe(false);
-    expect(earlier.rect.y).toBe(same.rect.y - stageMetrics(1440).pageShift);
-    expect(listRowsPerPage(300, stageMetrics(1440))).toBe(3);
-    expect(computeLayout(stageStateFromUrl('/events', { page: '99' }), STAGES[0].stage, { items: items(99) }).list!.page).toBe(layout.list!.pages);
+    expect(earlier.rect.y).toBe(same.rect.y - metrics.pageShift);
+    const last = computeLayout(stageStateFromUrl('/events'), STAGES[0].stage, { items: items() }).list!.pages;
+    expect(computeLayout(stageStateFromUrl('/events', { page: '99' }), STAGES[0].stage, { items: items(99) }).list!.page).toBe(last);
   });
 
-  it('is deterministic for the same state and size', () => {
+  it('spreads a view over sheets instead of scrolling: the open plate first, spilled plates after, growing last', () => {
+    const stage = STAGES[1].stage;
+    const state = stageStateFromUrl('/transmit');
+    const alone = computeLayout(state, stage, { spill: { alone: true, moved: [], grow: {} }, sheetGap: 20 });
+    expect(alone.sheets).toEqual([{ y: 0, h: stage.h }, { y: stage.h + 20, h: stage.h }]);
+    expect(alone.sheetOf).toMatchObject({ log: 0, back: 0, next: 1, events: 1, signal: 1 });
+    expect(alone.plates.log.rect.w).toBe(stage.w);
+    const moved = computeLayout(state, stage, { spill: { alone: false, moved: ['signal'], grow: {} }, sheetGap: 20 });
+    expect(moved.sheetOf.signal).toBe(1);
+    expect(moved.plates.signal.rect).toMatchObject({ y: stage.h + 20, h: stage.h, w: stage.w });
+    const grown = computeLayout(state, stage, { spill: { alone: true, moved: [], grow: { log: 300 } }, sheetGap: 20 });
+    expect(grown.sheets[0].h).toBe(stage.h + 300);
+    expect(grown.sheets[1].y).toBe(stage.h + 300 + 20);
+  });
+
+  it('puts a narrow window’s columns on sheets of their own, the open plate first', () => {
+    const narrow = { w: 370, h: 824 };
+    const layout = computeLayout(stageStateFromUrl('/events'), narrow, { viewportW: 390, items: items() });
+    expect(layout.sheets.length).toBeGreaterThan(1);
+    expect(layout.sheetOf.events).toBe(0);
+    expect(PLATE_ORDER.every(id => layout.plates[id].rect.w === narrow.w)).toBe(true);
+  });
+
+  it('is deterministic for the same inputs', () => {
     const state = stageStateFromUrl('/artists/lucii');
     expect(computeLayout(state, STAGES[1].stage, { items: items() })).toEqual(computeLayout(state, STAGES[1].stage, { items: items() }));
   });
 
-  it('reports a stage too small for its shown elements', () => {
-    expect(computeLayout(stageStateFromUrl('/events'), { w: 1000, h: 200 }, { items: items() }).fits).toBe(false);
-  });
-
-  it('uses the same states in flow mode with the long-standing page sizes and no cells', () => {
+  it('lays out the server’s first markup in document order with the long-standing page sizes', () => {
     const list = computeFlowLayout(stageStateFromUrl('/events', { page: '2' }), { items: items(2) });
-    expect(list.plates.events.mode).toBe('focus');
+    expect(list.plates.events.mode).toBe('hero');
     expect(list.list).toMatchObject({ perPage: 4, page: 2, pages: 3 });
     expect(shownItems(list).map(([key]) => key)).toEqual(['event:TRM-05', 'event:TRM-04', 'event:TRM-03', 'event:TRM-02']);
-    const home = computeFlowLayout({ view: 'home' }, { items: items() });
-    expect(shownItems(home)).toHaveLength(0);
-    expect(PLATE_ORDER.every(id => home.plates[id].mode === 'tile')).toBe(true);
     expect(computeFlowLayout(stageStateFromUrl('/artists/lucii'), { items: items() }).items['artist:lucii']).toMatchObject({ mode: 'detail', visible: true });
   });
-});
 
-describe('stage mode', () => {
-  const fit = (required: number, available = 600) => ({ required, available });
-
-  it('uses the stage only when the window and the content both fit', () => {
-    expect(decideStageMode({ viewport: { w: 1440, h: 900 }, fit: fit(500) })).toBe('stage');
-    expect(decideStageMode({ viewport: { w: 1024, h: 680 } })).toBe('stage');
-    expect(decideStageMode({ viewport: { w: 1023, h: 900 } })).toBe('flow');
-    expect(decideStageMode({ viewport: { w: 1440, h: 679 } })).toBe('flow');
-    expect(decideStageMode({ viewport: { w: 1440, h: 900 }, fit: fit(601) })).toBe('flow');
-    expect(decideStageMode({ viewport: { w: 1440, h: 900 }, layoutFits: false })).toBe('flow');
-  });
-
-  it('leaves the stage at the limit but returns only with room to spare', () => {
-    expect(decideStageMode({ viewport: { w: 1023, h: 900 } }, 'stage')).toBe('flow');
-    expect(decideStageMode({ viewport: { w: 1440, h: 900 }, fit: fit(601) }, 'stage')).toBe('flow');
-    expect(decideStageMode({ viewport: { w: 1024 + MODE_HYSTERESIS - 1, h: 900 } }, 'flow')).toBe('flow');
-    expect(decideStageMode({ viewport: { w: 1024 + MODE_HYSTERESIS, h: 680 + MODE_HYSTERESIS } }, 'flow')).toBe('stage');
-    expect(decideStageMode({ viewport: { w: 1440, h: 900 }, fit: fit(600 - MODE_HYSTERESIS + 1) }, 'flow')).toBe('flow');
-    expect(decideStageMode({ viewport: { w: 1440, h: 900 }, fit: fit(600 - MODE_HYSTERESIS) }, 'flow')).toBe('stage');
+  it('keeps every configured view complete: six plates once each, a detail only on details', () => {
+    for (const [view, tree] of Object.entries(stageConfig.layouts)) {
+      const leaves = tile(tree, { x: 0, y: 0, w: 1000, h: 1000 }, 0).map(([leaf]) => ('plate' in leaf ? leaf.plate : leaf.slot));
+      expect(leaves.filter(key => (PLATE_ORDER as readonly string[]).includes(key)).sort(), view).toEqual([...PLATE_ORDER].sort());
+      expect(leaves.includes('detail'), view).toBe(view === 'session' || view === 'artist');
+      expect(leaves.includes('back'), view).toBe(view !== 'home');
+    }
   });
 });
 

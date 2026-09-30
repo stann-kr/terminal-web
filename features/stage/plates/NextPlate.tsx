@@ -2,12 +2,14 @@
 import Link from 'next/link';
 import { getEventDateTime } from '@/lib/events/lifecycle';
 import type { TerminalEvent } from '@/lib/events/types';
+import { DataActivity } from '@/features/display/Display';
 import { eventHref, publicArtists, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
+import { Clock } from '@/features/shell/Clock';
+import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { Action, BrandText, Chip, Facts, Loading, StateNotice } from '@/features/ui/Ui';
 import { stageConfig } from '../config';
 import { FitTitle } from '../FitTitle';
-import { RailFace } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
@@ -22,97 +24,137 @@ function dayMark(event: TerminalEvent, now: Date) {
 }
 
 /**
- * The next-session plate. It has no open state of its own: pressing it opens that session, and
- * the session's element sets out from this plate.
+ * The console's own plate: the TERMINAL wordmark and the readouts ride on top of it everywhere,
+ * over the next session drawn as large as the plate is. The wordmark is a name, not a control.
+ */
+function BrandBar({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={styles.brandBar} data-compact={compact || undefined}>
+      <p className={styles.brandMark}>
+        <BrandText text="TERMINAL" />
+      </p>
+      <div className={styles.brandSystem}>
+        {!compact && <DataActivity />}
+        {!compact && <Clock />}
+        <LanguageToggle />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The next-session plate. It has no open state of its own: its session block opens that session,
+ * and the session's element sets out from this plate.
  */
 export function NextPlate({ mode, data, query }: PlateProps) {
   const event = data.next;
-  if (mode !== 'tile') {
-    return (
-      <RailFace
-        href={event ? eventHref(event.id) : null}
-        name="NEXT"
-        title={event ? `다음 행사 ${event.session}` : '다음 행사 미정'}
-        meta={event ? `${event.id} · ${dayMark(event, data.now)}` : 'TBA'}
-        carrier={event ? `event:${event.id}` : undefined}
-      />
-    );
-  }
-  if (!data.events) {
-    return (
-      <div className={styles.tile}>
-        {query.isError ? <StateNotice error title="행사 기록을 불러오지 못했습니다" retry={() => void query.refetch()} /> : <Loading />}
-      </div>
-    );
-  }
-  if (!event) {
-    return (
-      <section className={styles.next} aria-label="대표 행사">
+  const body = () => {
+    if (!data.events) {
+      return query.isError ? <StateNotice error title="행사 기록을 불러오지 못했습니다" retry={() => void query.refetch()} /> : <Loading />;
+    }
+    if (!event) {
+      return (
         <StateNotice title="공개된 행사가 아직 없습니다">
           <div className={styles.keys}>
             <Action href="/signal">소식 신청</Action>
             <Action href="/about">소개</Action>
           </div>
         </StateNotice>
-      </section>
+      );
+    }
+    return <NextSession event={event} mode={mode} now={data.now} />;
+  };
+  return (
+    <section className={styles.next} aria-label="대표 행사" data-density={mode} data-origin="">
+      {stageConfig.rings && (mode === 'hero' || mode === 'panel') && <i className={styles.rings} aria-hidden="true" />}
+      <BrandBar compact={mode === 'chip'} />
+      {body()}
+    </section>
+  );
+}
+
+function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlateProps['mode']; now: Date }) {
+  const carrier = `event:${event.id}`;
+  const label = event.status === 'ARCHIVED' ? 'Last session' : 'Next session';
+  if (mode === 'chip' || mode === 'index') {
+    return (
+      <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextChip}`} data-carrier={carrier} scroll={false}>
+        <span className={styles.chipName} aria-hidden="true">NEXT</span>
+        <span className={styles.chipTitle}>
+          <span className={styles.srOnly}>다음 행사 </span>
+          <BrandText text={event.session} />
+        </span>
+        <span className={styles.chipMeta} aria-hidden="true">{event.id} · {dayMark(event, now)}</span>
+      </Link>
     );
   }
   const artists = publicArtists(event);
-  const carrier = `event:${event.id}`;
   return (
-    <section className={styles.next} aria-label="대표 행사" data-origin="">
-      {stageConfig.rings && <i className={styles.rings} aria-hidden="true" />}
-      <header className={styles.nextHead}>
-        <p className={styles.nextLabel} aria-hidden="true">{event.status === 'ARCHIVED' ? 'Last session' : 'Next session'}</p>
-        <span className={styles.tileChips} aria-hidden="true">
-          <Chip solid>{statusLabel(event.status)}</Chip>
-          <Chip>{event.id}</Chip>
+    <>
+      {/* The session block is the link: it lights up whole, and it is all that opens the session. */}
+      <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextBlock}`} data-carrier={carrier} scroll={false}>
+        <span className={styles.nextHead} aria-hidden="true">
+          <span className={styles.nextLabel}>{label}</span>
+          <span className={styles.bandTags}>
+            <Chip solid>{statusLabel(event.status)}</Chip>
+            <Chip>{event.id}</Chip>
+            {mode !== 'hero' && <Chip>{dayMark(event, now)}</Chip>}
+          </span>
         </span>
-      </header>
-      {event.status === 'ARCHIVED' && <p className={styles.noUpcoming}>다음 행사 미정</p>}
-      <h2 className={styles.nextTitle}>
-        <Link href={eventHref(event.id)} className={styles.stretch} data-carrier={carrier} scroll={false}>
-          <FitTitle as="span" text={event.session} maxLines={2} minPx={32} className={styles.nextSession}>
-            <BrandText text={event.session} />
-          </FitTitle>
-        </Link>
-      </h2>
-      {event.subtitle && <p className={styles.nextSubtitle}>{event.subtitle}</p>}
-      <EventCountdown event={event} />
-      <div className={styles.nextGrid}>
-        <div className={styles.nextSchedule}>
-          <p className={styles.sub} aria-hidden="true">Schedule</p>
-          <Facts
-            rows={[
-              ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
-              ['장소', event.venue],
-              ['지역', event.district],
-            ]}
-          />
+        <FitTitle as="h2" text={event.session} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
+          <BrandText text={event.session} />
+        </FitTitle>
+        {mode !== 'tile' && event.subtitle && <span className={styles.nextSubtitle}>{event.subtitle}</span>}
+        {mode === 'tile' && <span className={styles.nextWhen}>{event.date} · {event.venue}</span>}
+      </Link>
+      {event.status === 'ARCHIVED' && mode === 'hero' && <p className={styles.noUpcoming}>다음 행사 미정</p>}
+      {mode !== 'tile' && <EventCountdown event={event} />}
+      {mode === 'panel' && (
+        <Facts
+          rows={[
+            ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
+            ['장소', event.venue],
+          ]}
+        />
+      )}
+      {mode === 'hero' && (
+        <div className={styles.nextGrid}>
+          <div className={styles.nextSchedule}>
+            <p className={styles.sub} aria-hidden="true">Schedule</p>
+            <Facts
+              rows={[
+                ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
+                ['장소', event.venue],
+                ['지역', event.district],
+              ]}
+            />
+          </div>
+          <div className={styles.nextLineup}>
+            <p className={styles.sub} aria-hidden="true">Lineup</p>
+            <ul className={styles.lineupCells}>
+              {artists.length
+                ? artists.map(artist => (
+                    <li key={artist.id}>
+                      <b>{artist.name}</b>
+                      <small aria-hidden="true">{artist.dock ? `STAGE ${artist.dock}` : 'STAGE TBA'}</small>
+                    </li>
+                  ))
+                : Array.from({ length: 4 }, (_, index) => (
+                    <li key={index} data-empty="">
+                      <b>{index === 0 ? '공개 전' : '----'}</b>
+                      <small aria-hidden="true">TBA</small>
+                    </li>
+                  ))}
+            </ul>
+          </div>
         </div>
-        <div className={styles.nextLineup}>
-          <p className={styles.sub} aria-hidden="true">Lineup</p>
-          <ul className={styles.lineupCells}>
-            {artists.length
-              ? artists.map(artist => (
-                  <li key={artist.id}>
-                    <b>{artist.name}</b>
-                    <small aria-hidden="true">{artist.dock ? `STAGE ${artist.dock}` : 'STAGE TBA'}</small>
-                  </li>
-                ))
-              : Array.from({ length: 4 }, (_, index) => (
-                  <li key={index} data-empty="">
-                    <b>{index === 0 ? '공개 전' : '----'}</b>
-                    <small aria-hidden="true">TBA</small>
-                  </li>
-                ))}
-          </ul>
+      )}
+      {mode === 'hero' && (
+        <div className={`${styles.keys} ${styles.nextKeys}`}>
+          <Action primary href={eventHref(event.id)} carrier={carrier}>행사 상세 보기</Action>
+          <Action href="/signal">소식 신청</Action>
         </div>
-      </div>
-      <div className={`${styles.keys} ${styles.nextKeys}`}>
-        <Action primary href={eventHref(event.id)} carrier={carrier}>행사 상세 보기</Action>
-        <Action href="/signal">소식 신청</Action>
-      </div>
-    </section>
+      )}
+    </>
   );
 }

@@ -35,9 +35,17 @@ export function ArtistItem({ profile, shape, state, data }: { profile: ArtistPro
   const records = String(profile.appearances.length).padStart(2, '0');
   if (shape === 'cell') {
     return (
-      <Link href={artistHref(profile.key)} className={styles.artistCell} data-carrier={carrier} scroll={false}>
+      <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.artistCell}`} data-carrier={carrier} scroll={false}>
         <span className={styles.cellName}>{profile.name}</span>
         <span className={styles.cellMeta} aria-hidden="true">{profile.origin} · {records} REC</span>
+      </Link>
+    );
+  }
+  if (shape === 'index') {
+    return (
+      <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} scroll={false}>
+        <span className={styles.cellCode} aria-hidden="true">{profile.origin || '—'}</span>
+        <span className={styles.cellName}>{profile.name}</span>
       </Link>
     );
   }
@@ -47,7 +55,7 @@ export function ArtistItem({ profile, shape, state, data }: { profile: ArtistPro
     return (
       <Link
         href={artistHref(profile.key)}
-        className={styles.artistCard}
+        className={`${styles.card} ${styles.artistCard}`}
         data-featured={featured(profile) || undefined}
         data-upcoming={upcoming(profile)}
         data-carrier={carrier}

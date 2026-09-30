@@ -8,7 +8,7 @@ import { TransmitForm } from '@/features/transmit/TransmitForm';
 import { Loading, Panel, StateNotice, ui } from '@/features/ui/Ui';
 import { packHeights } from '../text';
 import { pageAnnouncement, pageKey, pageReadout, useStageMode, useWheelPaging } from '../usePaging';
-import { FocusHead, RailFace, Tags, TileHead } from './faces';
+import { CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
@@ -20,17 +20,24 @@ const logHref = (page: number) => `/transmit${page > 1 ? `?page=${page}` : ''}`;
 /** The visitor log: node activity on the home, the write form and the public log when open. */
 export function LogPlate({ mode, state, size }: PlateProps) {
   const total = useTransmit(1).data?.total;
-  if (mode === 'rail' || mode === 'strip') return <RailFace href="/transmit" name="LOG" title="방문자 로그" meta={total === undefined ? 'READ' : `${pad(total)} REC`} />;
-  if (mode === 'tile') {
-    // As many node rows as the plate has room for, below its head.
-    const limit = size ? Math.max(1, Math.min(6, Math.floor((size.h - 120) / NODE_ROW))) : 6;
+  const meta = total === undefined ? 'READ' : `${pad(total)} REC`;
+  if (mode === 'chip' || mode === 'index') return <ChipFace href="/transmit" name="LOG" title="방문자 로그" meta={meta} />;
+  if (mode !== 'hero') {
+    // As many node rows as the plate has room for, below its band. The plate is one link.
+    const limit = size ? Math.max(1, Math.min(6, Math.floor((size.h - 110) / NODE_ROW))) : 6;
     return (
-      <div className={styles.tile}>
-        <TileHead href="/transmit" label="Log" title="방문자 로그" chips={<Tags items={['NODE ACTIVITY']} />} />
-        <div className={styles.tileBody}>
+      <CardLink href="/transmit" className={styles.summaryCard} label={`방문자 로그 · ${meta}`}>
+        <span className={styles.band}>
+          <span className={styles.bandTitle}>
+            <span className={styles.bandLabel}>Log</span>
+            <span className={styles.bandKo}>방문자 로그</span>
+          </span>
+          <span className={styles.bandTags}><Tags items={['NODE ACTIVITY']} /></span>
+        </span>
+        <span className={styles.cardBody} aria-hidden="true">
           <NodeActivity limit={limit} />
-        </div>
-      </div>
+        </span>
+      </CardLink>
     );
   }
   return <LogFocus page={state.view === 'plate' ? state.page : 1} />;
@@ -42,8 +49,8 @@ function LogFocus({ page }: { page: number }) {
   const query = useTransmit(page);
   const latest = query.data?.logs[0];
   return (
-    <div className={styles.focus}>
-      <FocusHead label="Log" title="방문자 로그" chips={<Tags items={[query.data ? `${pad(query.data.total)} RECORDS` : 'READ', latest ? `LAST ${latest.ts} KST` : null]} />} />
+    <div className={styles.face}>
+      <FocusHead label="Log" title="방문자 로그" tags={<Tags items={[query.data ? `${pad(query.data.total)} RECORDS` : 'READ', latest ? `LAST ${latest.ts} KST` : null]} />} />
       <div className={styles.logGrid}>
         <Panel title="기록 남기기" label="Write log" surface="gold" className={styles.logWrite}>
           <div className={styles.fitColumn} data-fit="">

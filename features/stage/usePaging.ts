@@ -1,9 +1,8 @@
 'use client';
 import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
-import type { StageMode } from './mode';
 
 /** `boot` is the server and first client render, before the window has been measured. */
-export type StageRenderMode = StageMode | 'boot';
+export type StageRenderMode = 'stage' | 'boot';
 export const StageModeContext = createContext<StageRenderMode>('boot');
 export const useStageMode = () => useContext(StageModeContext);
 
@@ -21,12 +20,13 @@ export interface Turn {
 /**
  * Wheel turns pages instead of scrolling: travel adds up until it passes `WHEEL_STEP`, then one page
  * turns and paging rests for `WHEEL_LOCK_MS`, so a trackpad's momentum never flips several pages.
- * The event stops here, so a pager inside another pager owns its own wheel.
+ * The event stops here, so a pager inside another pager owns its own wheel; past the last page the
+ * wheel is left alone and the page snaps to the next sheet instead.
  */
-export function useWheelPaging(ref: RefObject<HTMLElement | null>, turn: Turn, enabled: boolean) {
-  const latest = useRef(turn);
+export function useWheelPaging(ref: RefObject<HTMLElement | null>, turn: Turn, enabled: boolean, accept?: (target: Element) => boolean) {
+  const latest = useRef({ turn, accept });
   useEffect(() => {
-    latest.current = turn;
+    latest.current = { turn, accept };
   });
   useEffect(() => {
     const element = ref.current;
@@ -37,8 +37,9 @@ export function useWheelPaging(ref: RefObject<HTMLElement | null>, turn: Turn, e
     const wheel = (event: WheelEvent) => {
       if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
       const target = event.target as Element | null;
-      if (target?.closest('textarea, select')) return;
-      const { prev, next } = latest.current;
+      if (!target || target.closest('textarea, select')) return;
+      if (latest.current.accept && !latest.current.accept(target)) return;
+      const { prev, next } = latest.current.turn;
       const forward = event.deltaY > 0;
       if (!(forward ? next : prev)) return;
       event.preventDefault();

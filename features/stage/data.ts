@@ -43,25 +43,35 @@ export function useStageData() {
   return { data, query };
 }
 
-export type Viewport = { w: number; h: number };
+export type Viewport = { w: number; h: number; resizing: boolean };
 
-/** The window size, measured before the first paint and on every resize; null on the server. */
+/** How long the window must hold still before a resize counts as finished (ms). */
+const RESIZE_SETTLE_MS = 150;
+
+/**
+ * The window size, measured before the first paint and followed on every frame of a resize;
+ * `resizing` holds while the window is being dragged. Null on the server.
+ */
 export function useViewport(): Viewport | null {
   const [viewport, setViewport] = useState<Viewport | null>(null);
   useLayoutEffect(() => {
     let frame = 0;
-    const read = () => {
+    let settle = 0;
+    const read = (resizing: boolean) => {
       frame = 0;
-      const next = { w: window.innerWidth, h: window.innerHeight };
-      setViewport(previous => (previous && previous.w === next.w && previous.h === next.h ? previous : next));
+      const next = { w: window.innerWidth, h: window.innerHeight, resizing };
+      setViewport(previous => (previous && previous.w === next.w && previous.h === next.h && previous.resizing === resizing ? previous : next));
     };
-    read();
+    read(false);
     const resize = () => {
-      if (!frame) frame = requestAnimationFrame(read);
+      if (!frame) frame = requestAnimationFrame(() => read(true));
+      window.clearTimeout(settle);
+      settle = window.setTimeout(() => read(false), RESIZE_SETTLE_MS);
     };
     window.addEventListener('resize', resize);
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
       window.removeEventListener('resize', resize);
     };
   }, []);
@@ -70,13 +80,8 @@ export function useViewport(): Viewport | null {
 
 const clamp = (min: number, value: number, max: number) => Math.min(max, Math.max(min, value));
 
-/**
- * The stage's size in a window: the frame's side gutters and vertical padding, the status line,
- * the ticker and the gaps between them come off, exactly as the shell's CSS lays them out.
- */
+/** The stage's size in a window: the frame's side gutters and padding come off, as the shell's CSS lays them out. */
 export function stageSizeFor(viewport: Viewport, config = stageConfig) {
   const gutter = clamp(10, viewport.w * 0.014, 24);
-  const gap = clamp(8, viewport.w * 0.007, 12);
-  const bars = config.statusH + gap + (config.ticker ? config.tickerH + gap : 0);
-  return { w: Math.floor(viewport.w - 2 * gutter), h: Math.floor(viewport.h - 2 * config.frameY - bars) };
+  return { w: Math.floor(viewport.w - 2 * gutter), h: Math.floor(viewport.h - 2 * config.frameY) };
 }

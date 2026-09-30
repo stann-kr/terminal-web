@@ -1,51 +1,84 @@
 import type { PlateId } from './state';
 
+/**
+ * How much of itself a plate shows. `hero` is the open plate; `panel` and `tile` are summaries with
+ * room for cells; `index` is a narrow list beside an open detail; `chip` is a name to press.
+ */
+export type Density = 'hero' | 'panel' | 'tile' | 'index' | 'chip';
+
+/** A layout is a tiling: splits side by side (`row`) or stacked (`col`), each part with a weight. */
+export type LayoutLeaf = { plate: PlateId; density: Density } | { slot: 'detail' } | { slot: 'back' };
+export type LayoutNode = { dir: 'row' | 'col'; parts: [number, LayoutNode | LayoutLeaf][] };
+export type ViewName = 'home' | 'events' | 'session' | 'artists' | 'artist' | 'log' | 'signal' | 'about';
+
+const row = (...parts: [number, LayoutNode | LayoutLeaf][]): LayoutNode => ({ dir: 'row', parts });
+const col = (...parts: [number, LayoutNode | LayoutLeaf][]): LayoutNode => ({ dir: 'col', parts });
+const p = (plate: PlateId, density: Density): LayoutLeaf => ({ plate, density });
+const DETAIL: LayoutLeaf = { slot: 'detail' };
+const BACK: LayoutLeaf = { slot: 'back' };
+
 export interface StageConfig {
-  /**
-   * Home: columns left to right, each a width weight and its plates top to bottom with height
-   * weights. The last column never gets narrower than `sideMinW`; the others give way instead.
-   */
-  home: { columns: { width: number; plates: [PlateId, number][] }[]; sideMinW: number };
-  /** Rail side while a plate is open. */
-  railSide: 'left' | 'right';
-  /** Rail width: clamp(min, vw × viewport width, max). */
-  railWidth: { min: number; vw: number; max: number };
-  /** A detail keeps its parent plate as a strip above it; false leaves the parent in the rail. */
-  detailStrip: boolean;
-  /** The schedule ticker under the stage. */
-  ticker: boolean;
+  /** One tiling per view. Every view places all six plates; details add the detail, others the back card. */
+  layouts: Record<ViewName, LayoutNode>;
   /** Concentric rings behind the next-session plate (an ambient drift, not a beat). */
   rings: boolean;
   /** Where the plate chips sit in flow (scrolling) mode. */
   flowChips: 'top' | 'bottom';
-  /** Fixed bar heights in px; the shell hands the same values to CSS as variables. */
-  statusH: number;
-  tickerH: number;
-  /** Frame padding above the status line and below the ticker. */
+  /** Frame padding around the stage, px. */
   frameY: number;
 }
 
 /**
- * The stage's open design decisions, in one place. Layout, the shell and the CSS variables all
- * follow these, so trying another answer is an edit here, not a refactor.
+ * The stage's design decisions, in one place. Each view has its own arrangement, so moving between
+ * views re-tiles every plate; try another arrangement by editing its tree here.
  */
 export const stageConfig: StageConfig = {
-  // Signal sits high in the side column: subscribing is an action, not background.
-  home: {
-    columns: [
-      { width: 47, plates: [['next', 1]] },
-      { width: 30, plates: [['events', 50], ['artists', 50]] },
-      { width: 23, plates: [['signal', 26], ['log', 48], ['about', 26]] },
-    ],
-    sideMinW: 260,
+  layouts: {
+    // The next session leads; directory and roster in the middle; the call to subscribe high on the right.
+    home: row(
+      [47, p('next', 'hero')],
+      [30, col([50, p('events', 'panel')], [50, p('artists', 'panel')])],
+      [23, col([26, p('signal', 'panel')], [48, p('log', 'panel')], [26, p('about', 'tile')])],
+    ),
+    // The directory opens wide on the right; the way back, the next session and the roster step left.
+    events: row(
+      [30, col([15, BACK], [43, p('next', 'panel')], [42, p('artists', 'panel')])],
+      [70, col([86, p('events', 'hero')], [14, row([1, p('log', 'chip')], [1, p('signal', 'chip')], [1, p('about', 'chip')])])],
+    ),
+    // The roster mirrors the directory: wide on the left, the rest in a column on the right.
+    artists: row(
+      [70, col([86, p('artists', 'hero')], [14, row([1, p('log', 'chip')], [1, p('signal', 'chip')], [1, p('about', 'chip')])])],
+      [30, col([15, BACK], [40, p('next', 'panel')], [45, p('events', 'panel')])],
+    ),
+    // A session: the other sessions as an index on the left, the file beside it, a band of plates on top.
+    session: col(
+      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('artists', 'chip')], [15, p('log', 'chip')], [15, p('signal', 'chip')], [15, p('about', 'chip')])],
+      [87, row([21, p('events', 'index')], [79, DETAIL])],
+    ),
+    // An artist file mirrors it: the file with the roster index on the right, the band below.
+    artist: col(
+      [87, row([78, DETAIL], [22, p('artists', 'index')])],
+      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('events', 'chip')], [15, p('log', 'chip')], [15, p('signal', 'chip')], [15, p('about', 'chip')])],
+    ),
+    // The log sits in the middle between the session side and the rest.
+    log: row(
+      [25, col([15, BACK], [35, p('next', 'tile')], [50, p('events', 'panel')])],
+      [50, p('log', 'hero')],
+      [25, col([40, p('signal', 'panel')], [30, p('artists', 'chip')], [30, p('about', 'chip')])],
+    ),
+    // Subscribing sits beside the session it is about.
+    signal: row(
+      [28, col([15, BACK], [85, p('next', 'panel')])],
+      [50, p('signal', 'hero')],
+      [22, col([1, p('events', 'chip')], [1, p('artists', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])],
+    ),
+    // About leads wide; the roster and the rest in a column.
+    about: row(
+      [64, p('about', 'hero')],
+      [36, col([15, BACK], [27, p('next', 'tile')], [38, p('artists', 'panel')], [20, row([1, p('events', 'chip')], [1, p('log', 'chip')], [1, p('signal', 'chip')])])],
+    ),
   },
-  railSide: 'left',
-  railWidth: { min: 180, vw: 0.14, max: 240 },
-  detailStrip: true,
-  ticker: true,
   rings: true,
   flowChips: 'top',
-  statusH: 56,
-  tickerH: 28,
   frameY: 10,
 };

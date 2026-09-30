@@ -1,7 +1,8 @@
-/* The stage. On a window that fits (`data-stage=stage`) every plate and carrier is an absolutely
-   placed box that travels to its new rect by transform and size; its content is drawn at the
-   arrival size and the box opens over it like a window. Anywhere else (`flow`, and the server's
-   `boot`) the same boxes are ordinary blocks in document order and the page scrolls. */
+/* The stage. Once the window is measured (`data-stage=stage`) every plate, carrier and the back
+   card is an absolutely placed box that travels to its new rect by transform and size; its content
+   is drawn at the arrival size and the box opens over it like a window. A view that needs more
+   than one screen spans sheets, and the page snaps from sheet to sheet. The server's first markup
+   (`boot`, and pages without script) lays the same boxes out in document order. */
 .stage {
   position: relative;
   min-width: 0;
@@ -40,8 +41,18 @@
 .item[data-mode=detail] {
   z-index: 3;
 }
-.pagerBox {
+.pagerBox,
+.backBox {
   z-index: 2;
+}
+/* Snap points: one per sheet, so the wheel carries the page a whole screen at a time. */
+.sheet {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  scroll-snap-align: start;
+  scroll-margin-top: var(--frame-y, 10px);
 }
 /* Transitions start after the first stage layout has painted, so nothing flies in from a corner.
    Moving and resizing share one long natural settle; a new target mid-flight simply continues. */
@@ -55,6 +66,10 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+}
+.stage[data-resizing] .box {
+  /* Dragging the window: every box follows it at once. */
+  transition: none;
 }
 .stage[data-ready] .box[data-visible=false] {
   transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, 0s, var(--dur-exit);
@@ -92,21 +107,18 @@
   to { opacity: 0; }
 }
 
-/* The rail's fixed slots; the slot of the open plate stays lit, empty, as its place to go back to. */
-.slot {
+/* In an index, the empty line the open detail grew out of: its place to go back to. */
+.openSlot {
+  z-index: 2;
   position: absolute;
   left: 0;
   top: 0;
   display: flex;
-  align-items: flex-end;
-  padding: 10px 12px;
-  background: rgb(252 229 205 / .05);
-  visibility: hidden;
+  align-items: center;
+  padding: 0 12px;
+  background: rgb(252 229 205 / .06);
 }
-.slot[data-open] {
-  visibility: visible;
-}
-.slot b {
+.openSlot b {
   color: var(--gold);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .22em;
@@ -152,7 +164,7 @@
   outline-offset: -4px;
 }
 
-/* ── Flow mode (and the server's first markup) ───────────────────────────── */
+/* ── The server's first markup (and pages without script): document order ── */
 .stage:not([data-stage=stage]) {
   display: flex;
   flex-wrap: wrap;
@@ -166,19 +178,21 @@
 .stage:not([data-stage=stage]) .box[data-visible=false] {
   display: none;
 }
-/* Plates folded into the rail become a row of chips above the open plate (or below, by config). */
-.stage:not([data-stage=stage]) .box[data-mode=rail] {
+.stage:not([data-stage=stage]) .box[data-plate=next] {
+  order: -1;
+}
+/* Small plates become a row of chips above the open plate (or below, by config). */
+.stage:not([data-stage=stage]) .box[data-mode=chip] {
   flex: 0 0 auto;
   order: 0;
 }
-/* A chip sizes to its name, so its layer cannot be a size container here. */
-.stage:not([data-stage=stage]) .box[data-mode=rail] .layer {
+.stage:not([data-stage=stage]) .box[data-mode=chip] .layer {
   container-type: normal;
 }
-.stage[data-chips=bottom]:not([data-stage=stage]) .box[data-mode=rail] {
+.stage[data-chips=bottom]:not([data-stage=stage]) .box[data-mode=chip] {
   order: 9;
 }
-.stage:not([data-stage=stage]) .box:is([data-mode=focus], [data-mode=strip]) {
+.stage:not([data-stage=stage]) .box[data-mode=hero] {
   order: 1;
 }
 .stage:not([data-stage=stage]) .box[data-item] {
@@ -187,7 +201,6 @@
 .stage:not([data-stage=stage]) .pagerBox {
   order: 3;
 }
-/* The home stacks its plates; wider windows pair the smaller ones. */
 .stage[data-view=home]:not([data-stage=stage]) .box[data-plate]:not([data-plate=next]) {
   flex: 1 1 calc(50% - var(--gap));
 }
@@ -199,7 +212,7 @@
 
 /* The server cannot know the window. Where the stage will take over, its first markup waits
    hidden for the script instead of flashing the document layout; without script it shows. */
-@media (min-width: 1024px) and (min-height: 680px) {
+@media (scripting: enabled) {
   .stage[data-stage=boot] {
     visibility: hidden;
     animation: bootReveal 0s linear 2.5s forwards;
@@ -313,6 +326,6 @@
 }
 
 @media (forced-colors: active) {
-  .slot[data-open] { border: 1px dashed CanvasText; }
+  .openSlot { border: 1px dashed CanvasText; }
   .pager a, .textPager button { border: 1px solid CanvasText; }
 }

@@ -1,23 +1,25 @@
-/* The console: a deep status line, the stage, and the ticker. On the stage (html[data-stage-mode=
-   stage]) the frame is exactly the window and nothing scrolls; in flow the page scrolls as a document. */
+/* The console is the stage alone: the frame pads it, nothing sits above or below. On the stage
+   (html[data-stage-mode=stage]) the page scrolls only sheet to sheet: it snaps, like turning pages. */
 .frame {
-  display: grid;
-  grid-template-rows: var(--status-h) auto;
-  gap: var(--gap);
   width: 100%;
   min-height: 100dvh;
   padding: var(--frame-y) clamp(10px, 1.4vw, 24px);
   background: var(--bg);
 }
-.frame[data-ticker] {
-  grid-template-rows: var(--status-h) minmax(0, 1fr) var(--ticker-h);
-}
 :global(html[data-stage-mode=stage]) {
-  overflow: hidden;
+  overflow-x: hidden;
+  scrollbar-width: none;
 }
-:global(html[data-stage-mode=stage]) .frame {
-  height: 100dvh;
-  overflow: hidden;
+:global(html[data-stage-mode=stage])::-webkit-scrollbar {
+  display: none;
+}
+:global(html[data-stage-mode=stage]:not([data-sheets='1'])) {
+  scroll-snap-type: y mandatory;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :global(html[data-stage-mode=stage]) {
+    scroll-behavior: smooth;
+  }
 }
 .srOnly {
   position: absolute;
@@ -39,114 +41,20 @@
 .skip:focus {
   top: 10px;
 }
+.main {
+  min-width: 0;
+  outline: none;
+}
 
-/* ── Status line ───────────────────────────────────────────────────────── */
-.top {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 24px;
-  height: var(--status-h);
-  padding: 0 14px 0 18px;
-  border-bottom: 3px solid var(--orange);
-}
-.brand {
-  display: block;
-  color: var(--orange);
-  text-decoration: none;
-  transition: color var(--dur-hover) var(--ease-hover);
-}
-.brandMark {
-  display: block;
-  font: 400 clamp(28px, 2.2vw, 38px)/1 var(--brand);
-  letter-spacing: .02em;
-  white-space: nowrap;
-}
-.brand:hover {
-  color: var(--gold);
-}
-/* Path: HOME / EVENTS / TRM-02, each step a link; the current step is gold. */
-.path {
-  min-width: 0;
-  overflow: hidden;
-}
-.path ol {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-.path li {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-.path li + li::before {
-  content: '/';
-  color: var(--muted);
-  font: 400 var(--t-md)/1 var(--mono);
-}
-.path a {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  min-width: 0;
-  height: 36px;
-  padding: 9px 12px 0;
-  background: var(--well);
-  color: var(--ink);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: var(--light-motion);
-}
-.path b {
-  overflow: hidden;
-  font: 700 var(--t-lg)/1 var(--display);
-  letter-spacing: .08em;
-  text-overflow: ellipsis;
-}
-.path small {
-  color: var(--muted);
-  font: 500 var(--t-xs)/1 var(--sans);
-}
-.path a:not([aria-current=page]):hover,
-.language button:not([aria-pressed=true]):hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
-  color: var(--navy);
-}
-.path a:not([aria-current=page]):hover small {
-  color: #3d5566;
-}
-:is(.path a, .language button):active {
-  box-shadow: inset 0 0 0 100vmax var(--navy);
-  color: var(--gold);
-  transition: none;
-}
-.path a[aria-current=page],
-.language button[aria-pressed=true] {
-  background: var(--gold);
-  color: var(--navy);
-}
-.path a[aria-current=page] small {
-  color: #3d5566;
-}
-.path a:focus-visible {
-  outline-offset: -4px;
-  outline-color: currentColor;
-}
-.system {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+/* Readouts that ride on the next-session plate. */
 .clock {
   display: flex;
   align-items: baseline;
   gap: 7px;
   color: var(--gold);
-  font: 400 var(--t-lg)/1 var(--mono);
+  font: 400 var(--t-md)/1 var(--mono);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .clockZone {
   color: var(--muted);
@@ -163,80 +71,29 @@
   padding: 0 8px;
   border: 0;
   background: var(--well);
-  color: var(--muted);
+  color: var(--ink);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .12em;
   transition: var(--light-motion);
 }
-
-/* ── Ticker: real schedule facts running along the foot bar. ─────────────── */
-.foot {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  height: var(--ticker-h);
-  padding-inline: 14px;
-  border-top: 2px solid var(--red);
+.language button:not([aria-pressed=true]):hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
 }
-.ticker {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+.language button:active {
+  box-shadow: inset 0 0 0 100vmax var(--on-hi);
+  color: var(--hi);
+  transition: none;
 }
-.tickerTrack {
-  display: flex;
-  width: max-content;
+.language button[aria-pressed=true] {
+  background: var(--fill);
+  color: var(--on-fill);
 }
-.tickerTrack p {
-  display: flex;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-.tickerTrack p > span {
-  padding-right: 48px;
-  color: var(--ink);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .16em;
-}
-.tickerTrack p > span:nth-child(odd) {
-  color: var(--gold);
-}
-@keyframes tickerRun {
-  to { transform: translateX(-50%); }
-}
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .tickerTrack { animation: tickerRun 40s linear infinite; }
-  .ticker:hover .tickerTrack { animation-play-state: paused; }
-}
-.zone {
-  color: var(--muted);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .2em;
-}
-
-/* ── Work field ────────────────────────────────────────────────────────── */
-.main {
-  min-width: 0;
-  outline: none;
-}
-
-@media (max-width: 1100px) {
-  .path small { display: none; }
-}
-@media (max-width: 760px) {
-  .top { grid-template-columns: auto minmax(0, 1fr); gap: 12px; padding: 0 8px 0 12px; }
-  .system { display: none; }
-  .brandMark { font-size: 26px; }
-  /* Only the last two steps of the path fit a phone; the wordmark already leads home. */
-  .path li:not(:nth-last-child(-n+2)) { display: none; }
-  .path li:nth-last-child(2)::before { content: none; }
-  .frame { padding-inline: 6px; }
+.language button:focus-visible {
+  outline-offset: -4px;
 }
 @media (forced-colors: active) {
-  .path a, .language button { border: 1px solid CanvasText; }
-  .path a[aria-current=page] { border: 2px solid Highlight; }
+  .language button { border: 1px solid CanvasText; }
 }
 
 /* ── Console pointer: an exact point and a trailing ring, blended so it reads on every plate. ── */

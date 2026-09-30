@@ -1,6 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element -- Posters retain their source aspect ratio without invented dimensions. */
 import Link from 'next/link';
+import { useState } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { AccessRequest } from '@/features/access/Access';
 import { EventActions, EventFacts, Lineup } from '@/features/events/EventRecord';
@@ -28,17 +29,25 @@ export function EventItem({ event, shape, state, data }: { event: TerminalEvent;
   const carrier = `event:${event.id}`;
   if (shape === 'cell') {
     return (
-      <Link href={eventHref(event.id)} className={styles.eventCell} data-state={event.status} data-carrier={carrier} scroll={false}>
+      <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventCell}`} data-state={event.status} data-carrier={carrier} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
         <span className={styles.cellName}><BrandText text={event.session} /></span>
         <span className={styles.cellState}>{statusLabel(event.status)}</span>
       </Link>
     );
   }
+  if (shape === 'index') {
+    return (
+      <Link href={eventHref(event.id)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} scroll={false}>
+        <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
+        <span className={styles.cellName}><BrandText text={event.session} /></span>
+      </Link>
+    );
+  }
   if (shape === 'row') {
     const artists = publicArtists(event);
     return (
-      <Link href={eventHref(event.id)} className={styles.eventRow} data-event-state={event.status} data-carrier={carrier} scroll={false}>
+      <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventRow}`} data-event-state={event.status} data-carrier={carrier} scroll={false}>
         <span className={styles.rowId}>{event.id}</span>
         <span className={styles.rowMain}>
           <FitTitle as="h2" text={event.session} maxLines={1} minPx={16} className={styles.rowName}>
@@ -67,6 +76,27 @@ export function EventItem({ event, shape, state, data }: { event: TerminalEvent;
 }
 
 /**
+ * A poster in a slot the layout sizes, never the image: until the image has decoded the slot shows
+ * its ring pattern, then the poster fades in, contained. A late image never moves anything.
+ */
+function Poster({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <a className={styles.poster} href={src} target="_blank" rel="noopener noreferrer" data-loaded={loaded || undefined}>
+      <img
+        ref={image => {
+          if (image?.complete && image.naturalWidth) setLoaded(true);
+        }}
+        src={src}
+        alt={alt}
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+      />
+    </a>
+  );
+}
+
+/**
  * The session file a row grows into: overview, running order, and the briefing over the access
  * panel. On `/request` the access panel opens into the guest form and the briefing folds away.
  */
@@ -89,11 +119,7 @@ function SessionFile({ event, state, data }: { event: TerminalEvent; state: Stag
         </FitTitle>
         {event.subtitle && <p className={styles.sessionSubtitle}>{event.subtitle}</p>}
         <EventFacts event={event} modular />
-        {event.posterUrl && (
-          <a className={styles.poster} href={event.posterUrl} target="_blank" rel="noopener noreferrer">
-            <img src={event.posterUrl} alt={`${event.session} 행사 포스터 — 새 탭에서 확대`} />
-          </a>
-        )}
+        {event.posterUrl && <Poster src={event.posterUrl} alt={`${event.session} 행사 포스터 — 새 탭에서 확대`} />}
       </div>
       <section className={styles.sessionOrder} data-surface="navy" aria-label="공연표">
         <p className={styles.columnHead}><b aria-hidden="true">Running order</b><span>공연표</span></p>

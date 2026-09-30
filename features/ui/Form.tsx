@@ -52,10 +52,18 @@ export function Field({
       .join(' ') || undefined;
   return (
     <div className={styles.field}>
-      <label htmlFor={props.id}>
-        {label}
-        {props.required && <span>필수</span>}
-      </label>
+      {/* A field error is printed in the label bar, where "필수" sits: the form keeps its height. */}
+      <div className={styles.fieldHead}>
+        <label htmlFor={props.id}>
+          {label}
+          {props.required && !error && <span>필수</span>}
+        </label>
+        {error && (
+          <p id={`${props.id}-error`} className={styles.fieldError}>
+            {error}
+          </p>
+        )}
+      </div>
       <input
         {...props}
         aria-invalid={error ? true : undefined}
@@ -64,11 +72,6 @@ export function Field({
       {hint && (
         <p id={`${props.id}-hint`} className={styles.hint}>
           {hint}
-        </p>
-      )}
-      {error && (
-        <p id={`${props.id}-error`} className={styles.fieldError}>
-          {error}
         </p>
       )}
     </div>

@@ -5,10 +5,8 @@ import { useDisplayPolicy } from '@/features/display/useDisplayPolicy';
 import { stageConfig } from '@/features/stage/config';
 import { Stage } from '@/features/stage/Stage';
 import { stageStateFromUrl } from '@/features/stage/state';
-import { StatusLine } from './StatusLine';
-import { Ticker } from './Ticker';
 import { ConsoleCursor } from './ConsoleCursor';
-import { useSmoothWheel, useSweepDirection } from './useConsoleMotion';
+import { useSweepDirection } from './useConsoleMotion';
 import styles from './shell.module.css';
 
 /**
@@ -22,8 +20,9 @@ function SearchSync({ onChange }: { onChange: (search: string) => void }) {
 }
 
 /**
- * The console: a status line, the stage, and the schedule ticker. The address decides the stage
- * state; a page outside the stage (not found, errors) shows in its place.
+ * The console is the stage and nothing else: no header or footer, the wordmark rides on the
+ * next-session plate. The address decides the stage state; a page outside the stage (not found,
+ * errors) shows in its place.
  */
 export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -34,7 +33,6 @@ export function Shell({ children }: { children: ReactNode }) {
   const previousPath = useRef(pathname);
   useDisplayPolicy(frame);
   useSweepDirection();
-  useSmoothWheel();
 
   useEffect(() => {
     if (previousPath.current === pathname) return;
@@ -43,29 +41,19 @@ export function Shell({ children }: { children: ReactNode }) {
     if (state.view === 'none') main.current?.focus({ preventScroll: true });
   }, [pathname, state.view]);
 
-  const bars = {
-    '--status-h': `${stageConfig.statusH}px`,
-    '--ticker-h': `${stageConfig.tickerH}px`,
-    '--frame-y': `${stageConfig.frameY}px`,
-  } as CSSProperties;
+  const bars = { '--frame-y': `${stageConfig.frameY}px` } as CSSProperties;
 
   return (
-    <div ref={frame} className={styles.frame} style={bars} data-ticker={stageConfig.ticker || undefined}>
+    <div ref={frame} className={styles.frame} style={bars}>
       <a href="#main" className={styles.skip}>본문으로 이동</a>
       <Suspense fallback={null}>
         <SearchSync onChange={setSearch} />
       </Suspense>
-      <StatusLine state={state} />
       <main ref={main} id="main" aria-label="본문" tabIndex={-1} className={styles.main}>
         <Stage state={state} />
         {children}
       </main>
       <ConsoleCursor />
-      {stageConfig.ticker && (
-        <footer className={styles.foot} data-surface="deep">
-          <Ticker />
-        </footer>
-      )}
     </div>
   );
 }

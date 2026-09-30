@@ -94,6 +94,20 @@ export const PLATE_HREF: Record<PlateId, string> = {
   about: '/about',
 };
 
+/** The address of a state (the inverse of `stageStateFromUrl` for stage views). */
+export function stateHref(state: StageState): string {
+  switch (state.view) {
+    case 'plate':
+      return `${PLATE_HREF[state.plate]}${state.page > 1 ? `?page=${state.page}` : ''}`;
+    case 'session':
+      return `/events/${encodeURIComponent(state.eventId)}${state.request ? '/request' : ''}`;
+    case 'artist':
+      return `/artists/${encodeURIComponent(state.artistKey)}`;
+    default:
+      return '/';
+  }
+}
+
 /** A stable key per distinct view (paging included), for effects that run once per view. */
 export function stateKey(state: StageState): string {
   switch (state.view) {
@@ -108,15 +122,7 @@ export function stateKey(state: StageState): string {
   }
 }
 
-/** The plate that owns the current view: focused, or folded into the strip above a detail. */
-export function parentPlate(state: StageState): PlateId | null {
-  if (state.view === 'plate') return state.plate;
-  if (state.view === 'session') return 'events';
-  if (state.view === 'artist') return 'artists';
-  return null;
-}
-
-/** One level up, for Esc and the path display: detail → parent plate → home. */
+/** One level up (detail → parent plate → home): where the back card leads when there is no earlier view. */
 export function stageParentHref(state: StageState): string | null {
   if (state.view === 'session') return state.request ? `/events/${encodeURIComponent(state.eventId)}` : '/events';
   if (state.view === 'artist') return '/artists';
