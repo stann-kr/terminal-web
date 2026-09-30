@@ -104,6 +104,8 @@ export function useSmoothWheel() {
       return false;
     };
     const wheel = (event: WheelEvent) => {
+      // On the stage nothing scrolls: the wheel turns pages there instead.
+      if (document.documentElement.dataset.stageMode === 'stage') return;
       if (event.defaultPrevented || event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY) || ownsWheel(event.target)) return;
       event.preventDefault();
       if (!frame) target = current = window.scrollY;

@@ -73,7 +73,7 @@ export function Chip({ children, solid = false }: { children: ReactNode; solid?:
 /** A quiet reserve that takes the remaining height of a panel; decorative, labelled like a bay. */
 export function Bay({ label }: { label: string }) {
   return (
-    <p className={styles.bay} aria-hidden="true">
+    <p className={styles.bay} aria-hidden="true" data-bay="">
       <span>{label}</span>
     </p>
   );
@@ -82,15 +82,20 @@ export function Action({
   href,
   children,
   primary = false,
+  carrier,
 }: {
   href: string;
   children: ReactNode;
   primary?: boolean;
+  /** Marks a link that opens a detail (`event:ID`, `artist:KEY`), so the stage grows it from here. */
+  carrier?: string;
 }) {
   return (
     <Link
       className={`${styles.action} ${primary ? styles.primary : ''}`}
       href={href}
+      data-carrier={carrier}
+      scroll={carrier ? false : undefined}
     >
       {brand(children)}
     </Link>

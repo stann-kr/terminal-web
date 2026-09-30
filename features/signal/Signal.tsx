@@ -19,23 +19,29 @@ export function Signal() {
       <div className={styles.layout}>
         <SignalInformation request={request} />
         <SignalForm request={request} />
-        <Panel title="채널 정보" label="Channel" surface="navy" className={styles.channel}>
-          <Facts
-            rows={[
-              ['채널', 'CH 01'],
-              ['수신', '이메일 · 인스타그램'],
-              ['대상', '다음 행사 소식'],
-              ['상태', request.pending ? '전송 중' : request.done ? '등록 완료' : request.error ? '전송 실패' : '대기'],
-            ]}
-          />
-          <Bay label="OUTBOUND / KST" />
-        </Panel>
+        <SignalChannel request={request} />
       </div>
     </>
   );
 }
 
-function SignalInformation({
+export function SignalChannel({ request }: { request: ReturnType<typeof useSignalSubscription> }) {
+  return (
+    <Panel title="채널 정보" label="Channel" surface="navy" className={styles.channel}>
+      <Facts
+        rows={[
+          ['채널', 'CH 01'],
+          ['수신', '이메일 · 인스타그램'],
+          ['대상', '다음 행사 소식'],
+          ['상태', request.pending ? '전송 중' : request.done ? '등록 완료' : request.error ? '전송 실패' : '대기'],
+        ]}
+      />
+      <Bay label="OUTBOUND / KST" />
+    </Panel>
+  );
+}
+
+export function SignalInformation({
   request,
 }: {
   request: ReturnType<typeof useSignalSubscription>;
@@ -68,7 +74,7 @@ function SignalInformation({
   );
 }
 
-function SignalForm({
+export function SignalForm({
   request,
 }: {
   request: ReturnType<typeof useSignalSubscription>;

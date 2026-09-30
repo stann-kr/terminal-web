@@ -1,99 +1,71 @@
 'use client';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useRef, type ReactNode } from 'react';
-import { DataActivity } from '@/features/display/Display';
-import { Morph } from '@/features/display/Morph';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useDisplayPolicy } from '@/features/display/useDisplayPolicy';
-import { Clock } from './Clock';
+import { stageConfig } from '@/features/stage/config';
+import { Stage } from '@/features/stage/Stage';
+import { stageStateFromUrl } from '@/features/stage/state';
+import { StatusLine } from './StatusLine';
 import { Ticker } from './Ticker';
-import { useLanguage } from './Providers';
 import { ConsoleCursor } from './ConsoleCursor';
-import { usePlateReveal, useSmoothWheel, useSweepDirection } from './useConsoleMotion';
+import { useSmoothWheel, useSweepDirection } from './useConsoleMotion';
 import styles from './shell.module.css';
 
-const navigation = [
-  { href: '/', index: '01', label: 'HOME', ko: '홈' },
-  { href: '/events', index: '02', label: 'EVENTS', ko: '이벤트' },
-  { href: '/artists', index: '03', label: 'ARTISTS', ko: '아티스트' },
-  { href: '/transmit', index: '04', label: 'LOG', ko: '방문자 로그' },
-] as const;
-const secondary = [
-  { href: '/signal', label: 'SIGNAL', ko: '소식 신청' },
-  { href: '/about', label: 'ABOUT', ko: '소개' },
-] as const;
+/**
+ * Reads the query string for the stage. Kept in its own Suspense boundary, so the stage itself is
+ * part of the server's first HTML while only this reader waits for the client.
+ */
+function SearchSync({ onChange }: { onChange: (search: string) => void }) {
+  const search = useSearchParams().toString();
+  useLayoutEffect(() => onChange(search), [search, onChange]);
+  return null;
+}
 
+/**
+ * The console: a status line, the stage, and the schedule ticker. The address decides the stage
+ * state; a page outside the stage (not found, errors) shows in its place.
+ */
 export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { language, setLanguage } = useLanguage();
+  const [search, setSearch] = useState('');
+  const state = stageStateFromUrl(pathname, new URLSearchParams(search));
   const frame = useRef<HTMLDivElement>(null);
   const main = useRef<HTMLElement>(null);
   const previousPath = useRef(pathname);
-  const activeIndex = navigation.findIndex(({ href }) => href === '/' ? pathname === '/' : pathname.startsWith(href));
   useDisplayPolicy(frame);
-  usePlateReveal(main);
   useSweepDirection();
   useSmoothWheel();
 
   useEffect(() => {
     if (previousPath.current === pathname) return;
     previousPath.current = pathname;
-    // A real route change lands keyboard focus on the new page.
-    main.current?.focus({ preventScroll: true });
-  }, [pathname]);
+    // The stage moves focus to its own views; a page outside it gets focus here.
+    if (state.view === 'none') main.current?.focus({ preventScroll: true });
+  }, [pathname, state.view]);
+
+  const bars = {
+    '--status-h': `${stageConfig.statusH}px`,
+    '--ticker-h': `${stageConfig.tickerH}px`,
+    '--frame-y': `${stageConfig.frameY}px`,
+  } as CSSProperties;
 
   return (
-    <div ref={frame} className={styles.frame}>
+    <div ref={frame} className={styles.frame} style={bars} data-ticker={stageConfig.ticker || undefined}>
       <a href="#main" className={styles.skip}>본문으로 이동</a>
-      <header className={styles.top} data-surface="deep">
-        <Link href="/" className={styles.brand} aria-label="TERMINAL 홈">
-          <span className={styles.brandMark}>TERMINAL</span>
-        </Link>
-        <nav className={styles.tabs} aria-label="주 메뉴">
-          {navigation.map((item, index) => {
-            const tab = (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={styles.tab}
-                aria-current={index === activeIndex ? 'page' : undefined}
-              >
-                <span aria-hidden="true" className={styles.tabIndex}>{item.index}</span>
-                <span className={styles.tabLabel}>{item.label} <small>{item.ko}</small></span>
-              </Link>
-            );
-            // The gold current tab is one object that travels between tabs.
-            return index === activeIndex ? <Morph key={item.href} name="tab-current" kind="slide">{tab}</Morph> : tab;
-          })}
-        </nav>
-        <div className={styles.system}>
-          <DataActivity />
-          <Clock />
-          <div className={styles.language} role="group" aria-label="콘텐츠 언어">
-            {(['ko', 'en'] as const).map(lang => (
-              <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>
-                {lang.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-        <p className={styles.node} aria-hidden="true">SEOUL NODE</p>
-      </header>
+      <Suspense fallback={null}>
+        <SearchSync onChange={setSearch} />
+      </Suspense>
+      <StatusLine state={state} />
       <main ref={main} id="main" aria-label="본문" tabIndex={-1} className={styles.main}>
+        <Stage state={state} />
         {children}
       </main>
       <ConsoleCursor />
-      <footer className={styles.foot} data-surface="deep">
-        <nav className={styles.secondary} aria-label="보조 메뉴">
-          {secondary.map(item => (
-            <Link key={item.href} href={item.href} aria-current={pathname.startsWith(item.href) ? 'page' : undefined}>
-              <b>{item.label}</b> {item.ko}
-            </Link>
-          ))}
-        </nav>
-        <Ticker />
-        <p className={`${styles.node} ${styles.brandNode}`} aria-hidden="true">TERMINAL</p>
-      </footer>
+      {stageConfig.ticker && (
+        <footer className={styles.foot} data-surface="deep">
+          <Ticker />
+        </footer>
+      )}
     </div>
   );
 }

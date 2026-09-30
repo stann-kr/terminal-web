@@ -2,7 +2,7 @@
 import { useLanguage } from '@/features/shell/Providers';
 import { Bay, Facts, FullText, PageHeading, Panel } from '@/features/ui/Ui';
 import styles from './about.module.css';
-const copy = {
+export const aboutCopy = {
   ko: [
     'TERMINAL은 서울 기반의 테크노 플랫폼입니다.',
     '행사를 기획해 열고, 행사와 참여 아티스트의 기록을 공개합니다.',
@@ -12,7 +12,7 @@ const copy = {
     'We produce events and publish the records of each event and its artists.',
   ],
 };
-const channels = [
+export const channels = [
   ['TERMINAL INSTAGRAM', 'https://www.instagram.com/terminal_hub/'],
   ['STANN LUMO WEB', 'https://lumo.stann.kr'],
   ['STANN LUMO INSTAGRAM', 'https://www.instagram.com/stannlumo/'],
@@ -26,19 +26,25 @@ export function About() {
       <div className={styles.layout}>
         <AboutIntroduction language={language} />
         <OfficialChannels />
-        <Panel title="노드 정보" label="Node" surface="gold" className={styles.node}>
-          <Facts
-            rows={[
-              ['도시', 'SEOUL'],
-              ['시간대', 'KST / UTC+9'],
-              ['장르', 'TECHNO'],
-              ['설계', 'STANN LUMO'],
-            ]}
-          />
-          <Bay label="TERMINAL / NODE" />
-        </Panel>
+        <NodeFacts />
       </div>
     </>
+  );
+}
+
+export function NodeFacts() {
+  return (
+    <Panel title="노드 정보" label="Node" surface="gold" className={styles.node}>
+      <Facts
+        rows={[
+          ['도시', 'SEOUL'],
+          ['시간대', 'KST / UTC+9'],
+          ['장르', 'TECHNO'],
+          ['설계', 'STANN LUMO'],
+        ]}
+      />
+      <Bay label="TERMINAL / NODE" />
+    </Panel>
   );
 }
 
@@ -49,13 +55,13 @@ function AboutIntroduction({ language }: { language: 'ko' | 'en' }) {
       <FullText
         language={language}
         excerpt={false}
-        paragraphs={copy[language]}
+        paragraphs={aboutCopy[language]}
       />
     </Panel>
   );
 }
 
-function OfficialChannels() {
+export function OfficialChannels() {
   return (
     <Panel title="공식 채널" label="Channels" surface="navy">
       <ul className={styles.channels} data-cells="">

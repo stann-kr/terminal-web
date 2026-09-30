@@ -1,10 +1,13 @@
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { EventDetail } from '@/features/events/Events';
+import { notFound } from 'next/navigation';
+
 export default async function Page({ params }: { params: Promise<{ eventId: string }> }) {
-  const { eventId: encodedKey } = await params;
-  let eventId: string;
-  try { eventId = decodeURIComponent(encodedKey); } catch { notFound(); }
-  return <EventDetail eventId={eventId}/>;
+  const { eventId } = await params;
+  try {
+    decodeURIComponent(eventId);
+  } catch {
+    notFound();
+  }
+  return null;
 }
 export const metadata: Metadata = { title: '행사 상세' };

@@ -1,0 +1,144 @@
+'use client';
+/* eslint-disable @next/next/no-img-element -- Posters retain their source aspect ratio without invented dimensions. */
+import Link from 'next/link';
+import type { TerminalEvent } from '@/lib/events/types';
+import { AccessRequest } from '@/features/access/Access';
+import { EventActions, EventFacts, Lineup } from '@/features/events/EventRecord';
+import { eventHref, paragraphs, publicArtists, statusLabel } from '@/features/events/model';
+import { useLanguage } from '@/features/shell/Providers';
+import { BrandText, Chip, StateNotice, type Surface } from '@/features/ui/Ui';
+import type { StageData } from '../data';
+import { FitTitle } from '../FitTitle';
+import type { ItemMode } from '../layout';
+import type { StageState } from '../state';
+import { TextPages } from '../TextPages';
+import styles from './plates.module.css';
+
+/** The shapes a session's element takes; `folded` keeps whichever shape it last had. */
+export type ItemShape = Exclude<ItemMode, 'folded'>;
+
+/** A session reads in its state colour as a detail; as a cell or row it is a dark record. */
+export function eventSurface(event: TerminalEvent, shape: ItemShape): Surface {
+  if (shape === 'detail') return event.status === 'ARCHIVED' ? 'cream' : event.status === 'LIVE' ? 'red' : 'orange';
+  return 'deep';
+}
+
+/** A session's one element on the stage: a home cell, a directory row, or its full session file. */
+export function EventItem({ event, shape, state, data }: { event: TerminalEvent; shape: ItemShape; state: StageState; data: StageData }) {
+  const carrier = `event:${event.id}`;
+  if (shape === 'cell') {
+    return (
+      <Link href={eventHref(event.id)} className={styles.eventCell} data-state={event.status} data-carrier={carrier} scroll={false}>
+        <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
+        <span className={styles.cellName}><BrandText text={event.session} /></span>
+        <span className={styles.cellState}>{statusLabel(event.status)}</span>
+      </Link>
+    );
+  }
+  if (shape === 'row') {
+    const artists = publicArtists(event);
+    return (
+      <Link href={eventHref(event.id)} className={styles.eventRow} data-event-state={event.status} data-carrier={carrier} scroll={false}>
+        <span className={styles.rowId}>{event.id}</span>
+        <span className={styles.rowMain}>
+          <FitTitle as="h2" text={event.session} maxLines={1} minPx={16} className={styles.rowName}>
+            <BrandText text={event.session} />
+          </FitTitle>
+          <span className={styles.rowLine}>
+            {event.subtitle && <span>{event.subtitle}</span>}
+            {artists.length > 0 && (
+              <span className={styles.rowArtists}>
+                <span className={styles.srOnly}>출연 </span>
+                {artists.map(artist => artist.name).join(' · ')}
+              </span>
+            )}
+          </span>
+        </span>
+        <span className={styles.rowWhen}>
+          {event.date}
+          <small>{event.time.replace(' KST', '')} KST</small>
+        </span>
+        <span className={styles.rowVenue}>{event.venue}</span>
+        <span className={styles.rowState}>{statusLabel(event.status)}</span>
+      </Link>
+    );
+  }
+  return <SessionFile event={event} state={state} data={data} />;
+}
+
+/**
+ * The session file a row grows into: overview, running order, and the briefing over the access
+ * panel. On `/request` the access panel opens into the guest form and the briefing folds away.
+ */
+function SessionFile({ event, state, data }: { event: TerminalEvent; state: StageState; data: StageData }) {
+  const { language } = useLanguage();
+  const current = state.view === 'session' && state.eventId === event.id;
+  const request = current && state.view === 'session' && state.request;
+  const briefing = paragraphs(event.description, language);
+  const invitation = paragraphs(event.invitationLines, language);
+  const hasOrder = publicArtists(event).length > 0;
+  return (
+    <article className={styles.session} data-request={request || undefined} aria-labelledby={`session-${event.id}`}>
+      <div className={styles.sessionMain} data-fit="">
+        <p className={styles.sessionState} aria-hidden="true">
+          <span data-event-state={event.status}>{statusLabel(event.status)}</span>
+          <Chip>{event.id}</Chip>
+        </p>
+        <FitTitle as="h1" id={`session-${event.id}`} heading={current} text={event.session} maxLines={3} minPx={28} className={styles.sessionTitle}>
+          <BrandText text={event.session} />
+        </FitTitle>
+        {event.subtitle && <p className={styles.sessionSubtitle}>{event.subtitle}</p>}
+        <EventFacts event={event} modular />
+        {event.posterUrl && (
+          <a className={styles.poster} href={event.posterUrl} target="_blank" rel="noopener noreferrer">
+            <img src={event.posterUrl} alt={`${event.session} 행사 포스터 — 새 탭에서 확대`} />
+          </a>
+        )}
+      </div>
+      <section className={styles.sessionOrder} data-surface="navy" aria-label="공연표">
+        <p className={styles.columnHead}><b aria-hidden="true">Running order</b><span>공연표</span></p>
+        <div className={styles.fitColumn} data-fit="">
+          {hasOrder && data.events ? (
+            <Lineup event={event} events={data.events} stages />
+          ) : (
+            <StateNotice title="공연표 공개 전입니다">출연진과 시간표는 공개되는 대로 이곳에 표시됩니다.</StateNotice>
+          )}
+        </div>
+      </section>
+      <div className={styles.sessionSide}>
+        {!request && (
+          <section className={styles.sessionBriefing} data-surface="navy" aria-label="행사 소개">
+            <p className={styles.columnHead}><b aria-hidden="true">Briefing</b><span>행사 소개</span><small aria-hidden="true">{language.toUpperCase()}</small></p>
+            <TextPages
+              paragraphs={invitation.length ? [...briefing, '초대 안내', ...invitation] : briefing}
+              language={language}
+              label="행사 소개"
+              empty="행사 소개는 공개되는 대로 이곳에 표시됩니다."
+            />
+          </section>
+        )}
+        <section className={styles.sessionAccess} data-surface="cream" aria-label="참여 안내" data-origin="">
+          {request ? (
+            <>
+              <p className={styles.columnHead}>
+                <b aria-hidden="true">Access</b>
+                <span>게스트 신청</span>
+                <Link href={eventHref(event.id)} className={styles.closeKey} scroll={false}>신청 닫기</Link>
+              </p>
+              <div className={styles.fitColumn} data-fit="">
+                <AccessRequest eventId={event.id} />
+              </div>
+            </>
+          ) : (
+            <>
+              <p className={styles.columnHead}><b aria-hidden="true">Access</b><span>참여 안내</span></p>
+              <div className={styles.fitColumn} data-fit="">
+                {data.events && <EventActions event={event} events={data.events} now={data.now} />}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+    </article>
+  );
+}

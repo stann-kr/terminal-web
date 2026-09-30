@@ -4,7 +4,6 @@ import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { Events,EventDetail } from '../features/events/Events';
 import { Artists,ArtistDetail } from '../features/artists/Artists';
-import { Shell } from '../features/shell/Shell';
 import { Transmit } from '../features/transmit/Transmit';
 import { Home } from '../features/home/Home';
 import { EventCountdown } from '../features/home/EventCountdown';
@@ -17,17 +16,6 @@ const clients:QueryClient[]=[];
 function view(node:React.ReactNode,events:TerminalEvent[]=[event]) { const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});clients.push(client);client.setQueryData(['events'],events);client.setQueryData(['transmit',1],{logs:[],total:0,page:1,totalPages:0});return render(<QueryClientProvider client={client}>{node}</QueryClientProvider>); }
 afterEach(()=>{cleanup();clients.splice(0).forEach(client=>client.clear());navigation.search=new URLSearchParams();navigation.pathname='/';router.push.mockReset();sessionStorage.clear();vi.unstubAllGlobals();vi.useRealTimers();vi.restoreAllMocks();});
 describe('rebuild public views',()=>{
-  it('continues keyboard navigation in main after a route change without stealing focus on ordinary renders',()=>{
-    const {rerender}=view(<Shell><input aria-label="초안"/></Shell>);
-    const field=screen.getByRole('textbox',{name:'초안'});
-    field.focus();
-    rerender(<QueryClientProvider client={clients[0]}><Shell><input aria-label="초안"/></Shell></QueryClientProvider>);
-    expect(field).toHaveFocus();
-    navigation.pathname='/artists';
-    rerender(<QueryClientProvider client={clients[0]}><Shell><p>STANN LUMO</p></Shell></QueryClientProvider>);
-    expect(screen.getByRole('main')).toHaveFocus();
-    expect(screen.getByRole('link',{name:/ARTISTS/})).toHaveAttribute('aria-current','page');
-  });
   it('groups the public running order by stage without adding private artist cells',()=>{
     view(<EventDetail eventId="OLD"/>,[{...event,artists:[...event.artists,{...event.artists[0],id:'SECOND',dock:'2',name:'SECOND ARTIST',time:'02:00–03:00'}]}]);
     expect(within(screen.getByRole('region',{name:'무대 1'})).getByRole('link',{name:/VISIBLE ARTIST/})).toBeInTheDocument();
@@ -130,15 +118,6 @@ describe('rebuild public views',()=>{
     expect(screen.getAllByRole('heading',{level:2}).slice(0,4).map(node=>node.textContent)).toEqual(['Live event','Later event','Next event','Past event']);
     expect(screen.queryByText('PRIVATE NAME')).not.toBeInTheDocument();
   });
-  it('keeps four main menu links without the archive menu or a screen-effect toggle',()=>{
-    view(<Shell><input aria-label="초안" defaultValue="keep this"/></Shell>);
-    const menu=screen.getByRole('navigation',{name:'주 메뉴'});
-    expect(within(menu).getAllByRole('link')).toHaveLength(4);
-    expect(within(menu).queryByRole('link',{name:/ARCHIVE/})).not.toBeInTheDocument();
-    // Motion follows the OS reduced-motion, contrast and save-data settings instead of an FX switch.
-    expect(screen.queryByRole('button',{name:'화면 효과'})).not.toBeInTheDocument();
-    expect(screen.getByRole('textbox',{name:'초안'})).toHaveValue('keep this');
-  });
   it('keeps the Home clock after an event starts, then counts down to the newly registered next event',()=>{
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
@@ -207,22 +186,5 @@ describe('public log activity',() => {
     await waitFor(() => expect(indicator()).toHaveAttribute('data-state','loading'));
     await act(async () => {resolve(new Response(JSON.stringify(result)));});
     await waitFor(() => expect(indicator()).toHaveAttribute('data-state','ready'));
-  });
-});
-
-describe('shell',()=>{
-  function shell(node:React.ReactNode=<input aria-label="초안"/>) {
-    const result=view(<Shell>{node}</Shell>);
-    const again=(child:React.ReactNode=node)=>result.rerender(<QueryClientProvider client={clients[0]}><Shell>{child}</Shell></QueryClientProvider>);
-    return {...result,again};
-  }
-  it('keeps layout children mounted across a route change',()=>{
-    const {again}=shell(<input aria-label="초안" defaultValue="keep this"/>);
-    const draft=screen.getByRole('textbox',{name:'초안'});
-    fireEvent.change(draft,{target:{value:'typed'}});
-    navigation.pathname='/events';again();
-    expect(screen.getByRole('textbox',{name:'초안'})).toBe(draft);
-    expect(draft).toHaveValue('typed');
-    expect(screen.getByRole('main')).toHaveFocus();
   });
 });

@@ -78,7 +78,7 @@ function serialOf(key: string) {
   return String(sum % 10000).padStart(4, '0');
 }
 
-function ArtistChronology({
+export function ArtistChronology({
   profile,
   events,
 }: {
@@ -102,11 +102,11 @@ function ArtistChronology({
       <Panel title="출연 기록" label="Records" surface="navy" className={styles.chronology}>
         <ol className={styles.timeline} data-cells="">
           {profile.appearances.map(({ event, artist }) => (
-            <li key={`${event.id}:${artist.id}`}>
+            <li key={`${event.id}:${artist.id}`} data-origin="">
               <time dateTime={event.date}>{event.date}</time>
               <div className={styles.recordBody}>
                 <span className={styles.state}>{statusLabel(event.status)}</span>
-                <Link href={eventHref(event.id)}><BrandText text={event.session} /></Link>
+                <Link href={eventHref(event.id)} data-carrier={`event:${event.id}`} scroll={false}><BrandText text={event.session} /></Link>
                 <p>{event.venue}</p>
               </div>
               <p className={styles.slot}>
@@ -122,7 +122,7 @@ function ArtistChronology({
           <ul className={styles.sharedCells} data-cells="">
             {[...shared.entries()].map(([key, other]) => (
               <SharedCell key={key} name={other.href ? `artist-${key}` : undefined}>
-                {other.href ? <Link href={other.href}>{other.name}</Link> : <span>{other.name}</span>}
+                {other.href ? <Link href={other.href} data-carrier={`artist:${key}`} scroll={false}>{other.name}</Link> : <span>{other.name}</span>}
                 <small aria-hidden="true">{other.session}</small>
               </SharedCell>
             ))}
@@ -165,6 +165,6 @@ function ArtistBiography({
 
 /** A shared-lineup cell; a linked one carries its artist over into the next profile plate. */
 function SharedCell({ name, children }: { name?: string; children: ReactNode }) {
-  const cell = <li>{children}</li>;
+  const cell = <li data-origin="">{children}</li>;
   return name ? <Morph name={name}>{cell}</Morph> : cell;
 }

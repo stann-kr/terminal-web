@@ -42,8 +42,9 @@ function decodeSegment(segment: string): string | null {
 }
 
 /**
- * The address alone decides the stage. Paging only applies to plates that page; a malformed page
- * number reads as the first page, and a malformed detail id falls back to its parent plate.
+ * The address alone decides the stage. Paging only applies to plates that page and a malformed page
+ * number reads as the first page. A detail id that cannot be decoded is the route's own not-found
+ * page, so it is off the stage.
  */
 export function stageStateFromUrl(pathname: string, search?: SearchInput): StageState {
   const parts = pathname.split('/').filter(Boolean);
@@ -57,11 +58,11 @@ export function stageStateFromUrl(pathname: string, search?: SearchInput): Stage
   }
   if (plate === 'events' && (parts.length === 2 || (parts.length === 3 && parts[2] === 'request'))) {
     const eventId = decodeSegment(parts[1]);
-    return eventId ? { view: 'session', eventId, request: parts.length === 3 } : { view: 'plate', plate, page: 1 };
+    return eventId ? { view: 'session', eventId, request: parts.length === 3 } : { view: 'none' };
   }
   if (plate === 'artists' && parts.length === 2) {
     const artistKey = decodeSegment(parts[1]);
-    return artistKey ? { view: 'artist', artistKey } : { view: 'plate', plate, page: 1 };
+    return artistKey ? { view: 'artist', artistKey } : { view: 'none' };
   }
   return { view: 'none' };
 }
@@ -83,6 +84,30 @@ export function resolveMissing(
   return state;
 }
 
+/** Where each plate opens. */
+export const PLATE_HREF: Record<PlateId, string> = {
+  next: '/',
+  events: '/events',
+  artists: '/artists',
+  log: '/transmit',
+  signal: '/signal',
+  about: '/about',
+};
+
+/** A stable key per distinct view (paging included), for effects that run once per view. */
+export function stateKey(state: StageState): string {
+  switch (state.view) {
+    case 'plate':
+      return `plate:${state.plate}:${state.page}${state.missing ? `:missing:${state.missing.id}` : ''}`;
+    case 'session':
+      return `session:${state.eventId}${state.request ? ':request' : ''}`;
+    case 'artist':
+      return `artist:${state.artistKey}`;
+    default:
+      return state.view;
+  }
+}
+
 /** The plate that owns the current view: focused, or folded into the strip above a detail. */
 export function parentPlate(state: StageState): PlateId | null {
   if (state.view === 'plate') return state.plate;
@@ -100,24 +125,32 @@ export function stageParentHref(state: StageState): string | null {
 }
 
 // ─── Carrier memory ────────────────────────────────────────────────────────────────────────────
-// Which element grows into a detail cannot be read from the address, so the click records it just
-// before navigating and the next state computation takes it once.
+// Every event and artist has one element on the stage that grows into its detail. When the click
+// that opens a detail starts somewhere else (the next-session plate, a lineup slot, a record row),
+// the click records that spot so the element can set out from it. The next state takes it once.
 
-export type EventCarrierKind = 'event-row' | 'event-cell' | 'next-plate' | 'appearance-row';
-export type ArtistCarrierKind = 'artist-cell' | 'roster-cell' | 'cast-cell' | 'slot-row';
-export type Carrier =
-  | { kind: EventCarrierKind; id: string }
-  | { kind: ArtistCarrierKind; id: string };
+export type CarrierKind = 'event' | 'artist';
+export type OriginRect = { x: number; y: number; w: number; h: number };
+export interface Carrier {
+  kind: CarrierKind;
+  id: string;
+  /** Where the click happened, in stage coordinates; null when the element itself was clicked. */
+  rect: OriginRect | null;
+}
 
-const EVENT_CARRIERS: ReadonlySet<string> = new Set<EventCarrierKind>(['event-row', 'event-cell', 'next-plate', 'appearance-row']);
+/** Stable element id of a carrier, shared by every shape it takes (cell, row, detail). */
+export const carrierKey = (kind: CarrierKind, id: string) => `${kind}:${id}`;
 
-/** Stable element id of a carrier, shared by the list shape and the detail it grows into. */
-export const carrierId = (carrier: Carrier) => `${carrier.kind}:${carrier.id}`;
+/** Reads the `data-carrier="event:TRM-02"` mark put on links that open a detail. */
+export function parseCarrierMark(mark: string | null | undefined): { kind: CarrierKind; id: string } | null {
+  const match = /^(event|artist):(.+)$/.exec(mark ?? '');
+  return match ? { kind: match[1] as CarrierKind, id: match[2] } : null;
+}
 
 /** A carrier only counts for the detail it was recorded for, so a stale record never grows. */
-export function carrierMatches(carrier: Carrier, state: StageState): boolean {
-  if (state.view === 'session') return EVENT_CARRIERS.has(carrier.kind) && carrier.id === state.eventId;
-  if (state.view === 'artist') return !EVENT_CARRIERS.has(carrier.kind) && carrier.id === state.artistKey;
+export function carrierMatches(carrier: Pick<Carrier, 'kind' | 'id'>, state: StageState): boolean {
+  if (state.view === 'session') return carrier.kind === 'event' && carrier.id === state.eventId;
+  if (state.view === 'artist') return carrier.kind === 'artist' && carrier.id === state.artistKey;
   return false;
 }
 

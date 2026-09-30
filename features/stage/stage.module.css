@@ -1,0 +1,316 @@
+/* The stage. On a window that fits (`data-stage=stage`) every plate and carrier is an absolutely
+   placed box that travels to its new rect by transform and size; its content is drawn at the
+   arrival size and the box opens over it like a window. Anywhere else (`flow`, and the server's
+   `boot`) the same boxes are ordinary blocks in document order and the page scrolls. */
+.stage {
+  position: relative;
+  min-width: 0;
+  outline: none;
+}
+.stage[hidden] {
+  display: none;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Stage mode ──────────────────────────────────────────────────────────── */
+.stage[data-stage=stage] {
+  height: var(--stage-h);
+}
+.stage[data-stage=stage] .box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: clip;
+  contain: layout paint;
+}
+.box {
+  z-index: 1;
+  min-width: 0;
+}
+.item {
+  z-index: 2;
+}
+.item[data-mode=detail] {
+  z-index: 3;
+}
+.pagerBox {
+  z-index: 2;
+}
+/* Transitions start after the first stage layout has painted, so nothing flies in from a corner.
+   Moving and resizing share one long natural settle; a new target mid-flight simply continues. */
+.stage[data-ready] .box {
+  transition-property: transform, width, height, background-color, opacity, visibility;
+  transition-duration: var(--dur-move), var(--dur-move), var(--dur-move), var(--dur-move), var(--dur-exit), 0s;
+  transition-timing-function: var(--ease-move), var(--ease-move), var(--ease-move), var(--ease-move), linear, linear;
+  transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, 0s, 0s;
+}
+.box[data-visible=false] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.stage[data-ready] .box[data-visible=false] {
+  transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, 0s, var(--dur-exit);
+}
+
+/* Content layers. The new content arrives just after the move starts; the old one only fades. */
+.layer {
+  min-width: 0;
+  container: layer / inline-size;
+}
+.stage[data-stage=stage] .layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cw);
+  height: var(--ch);
+  overflow: hidden;
+}
+.stage[data-stage=stage] .layer[data-layer=current] {
+  animation: layerIn var(--dur-enter) var(--ease-move) calc(var(--enter-delay) + var(--order, 0) * var(--stagger)) backwards;
+}
+.layer[data-layer=leaving] {
+  pointer-events: none;
+  animation: layerOut var(--dur-exit) linear forwards;
+}
+.stage:not([data-stage=stage]) .layer[data-layer=leaving] {
+  display: none;
+}
+@keyframes layerIn {
+  from { opacity: 0; transform: translateY(6px); }
+}
+@keyframes layerOut {
+  to { opacity: 0; }
+}
+
+/* The rail's fixed slots; the slot of the open plate stays lit, empty, as its place to go back to. */
+.slot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 10px 12px;
+  background: rgb(252 229 205 / .05);
+  visibility: hidden;
+}
+.slot[data-open] {
+  visibility: visible;
+}
+.slot b {
+  color: var(--gold);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .22em;
+}
+
+/* List pager under an open list. */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: 100%;
+  font: 700 var(--t-sm)/1 var(--display);
+  letter-spacing: .1em;
+}
+.pager > * {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 16px;
+  color: var(--muted);
+}
+.pager > span:not([aria-hidden]):not(.srOnly) {
+  opacity: .55;
+}
+.pager > span[aria-hidden] {
+  flex: 1;
+  justify-content: center;
+  color: var(--gold);
+  font-family: var(--mono);
+}
+.pager a {
+  background: var(--well);
+  color: var(--ink);
+  text-decoration: none;
+  transition: var(--light-motion);
+}
+.pager a:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.pager a:focus-visible {
+  outline-offset: -4px;
+}
+
+/* ── Flow mode (and the server's first markup) ───────────────────────────── */
+.stage:not([data-stage=stage]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: var(--gap);
+}
+.stage:not([data-stage=stage]) .box {
+  position: relative;
+  flex: 1 1 100%;
+}
+.stage:not([data-stage=stage]) .box[data-visible=false] {
+  display: none;
+}
+/* Plates folded into the rail become a row of chips above the open plate (or below, by config). */
+.stage:not([data-stage=stage]) .box[data-mode=rail] {
+  flex: 0 0 auto;
+  order: 0;
+}
+/* A chip sizes to its name, so its layer cannot be a size container here. */
+.stage:not([data-stage=stage]) .box[data-mode=rail] .layer {
+  container-type: normal;
+}
+.stage[data-chips=bottom]:not([data-stage=stage]) .box[data-mode=rail] {
+  order: 9;
+}
+.stage:not([data-stage=stage]) .box:is([data-mode=focus], [data-mode=strip]) {
+  order: 1;
+}
+.stage:not([data-stage=stage]) .box[data-item] {
+  order: 2;
+}
+.stage:not([data-stage=stage]) .pagerBox {
+  order: 3;
+}
+/* The home stacks its plates; wider windows pair the smaller ones. */
+.stage[data-view=home]:not([data-stage=stage]) .box[data-plate]:not([data-plate=next]) {
+  flex: 1 1 calc(50% - var(--gap));
+}
+@media (max-width: 700px) {
+  .stage[data-view=home]:not([data-stage=stage]) .box[data-plate]:not([data-plate=next]) {
+    flex-basis: 100%;
+  }
+}
+
+/* The server cannot know the window. Where the stage will take over, its first markup waits
+   hidden for the script instead of flashing the document layout; without script it shows. */
+@media (min-width: 1024px) and (min-height: 680px) {
+  .stage[data-stage=boot] {
+    visibility: hidden;
+    animation: bootReveal 0s linear 2.5s forwards;
+  }
+}
+@media (scripting: none) {
+  .stage[data-stage=boot] {
+    visibility: visible;
+    animation: none;
+  }
+}
+@keyframes bootReveal {
+  to { visibility: visible; }
+}
+
+/* A plate's spare-height bay is only a filler for document pages; the stage has no spare height. */
+.stage[data-stage=stage] :global([data-bay]) {
+  display: none;
+}
+
+/* ── Paged text ──────────────────────────────────────────────────────────── */
+.textPages {
+  --para-gap: 10px;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+.textFrame {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.stage[data-stage=stage] .textFrame {
+  overflow: hidden;
+}
+.textPage p,
+.textEmpty {
+  margin: 0 0 var(--para-gap);
+  color: var(--ink);
+  font-size: var(--text-body);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.textEmpty {
+  color: var(--muted);
+}
+.textPage p:last-child {
+  margin-bottom: 0;
+}
+.textPage:lang(ko) {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.stage[data-stage=stage] .textPage {
+  animation: pageIn 220ms var(--ease-move) both;
+}
+.stage[data-stage=stage] .textPage[data-direction='-1'] {
+  animation-name: pageBack;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateX(12px); }
+}
+@keyframes pageBack {
+  from { opacity: 0; transform: translateX(-12px); }
+}
+.textPager {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font: 700 var(--t-sm)/1 var(--display);
+  letter-spacing: .1em;
+}
+.textPager > span[aria-hidden] {
+  flex: 1;
+  color: var(--accent);
+  font-family: var(--mono);
+  text-align: center;
+}
+.textPager button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  background: var(--well);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: inherit;
+  transition: var(--light-motion);
+}
+.textPager button:hover:not(:disabled) {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.textPager button:disabled {
+  cursor: default;
+  opacity: .4;
+}
+
+/* ── Fitted titles: the inner line carries the fitted size ────────────────── */
+.fitTitle {
+  display: block;
+  min-width: 0;
+}
+.fitTitle > span {
+  display: block;
+  letter-spacing: var(--title-ls, 0em);
+}
+
+@media (forced-colors: active) {
+  .slot[data-open] { border: 1px dashed CanvasText; }
+  .pager a, .textPager button { border: 1px solid CanvasText; }
+}

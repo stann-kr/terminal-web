@@ -95,7 +95,7 @@ export function EventActions({
     </div>
     <ActionDeck label="ACCESS" className={styles.accessDeck}>
       {access.canRequest && (
-        <Action primary href={`${eventHref(event.id)}/request`}>
+        <Action primary href={`${eventHref(event.id)}/request`} carrier={`event:${event.id}`}>
           게스트 신청
         </Action>
       )}
@@ -120,7 +120,7 @@ export function Lineup({
     return (
       <>
         {profile ? (
-          <Link href={artistHref(profile.key)}>{artist.name}</Link>
+          <Link href={artistHref(profile.key)} data-carrier={`artist:${profile.key}`} scroll={false}>{artist.name}</Link>
         ) : (
           artist.name
         )}
@@ -149,7 +149,7 @@ export function Lineup({
                   {visible
                     .filter((artist) => (artist.dock || 'TBA') === dock)
                     .map((artist) => (
-                      <li key={artist.id}>
+                      <li key={artist.id} data-origin="">
                         <div className={styles.slotCode}>
                           {artist.id}
                           <span>
@@ -175,7 +175,7 @@ export function Lineup({
       ) : (
         <ul className={styles.lineup}>
           {visible.map((artist) => (
-            <li key={artist.id}>
+            <li key={artist.id} data-origin="">
               <span className={styles.dock}>{artist.dock}</span>
               <div>{identity(artist)}</div>
               <time>{artist.time}</time>

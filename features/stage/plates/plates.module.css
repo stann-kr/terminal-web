@@ -1,0 +1,1055 @@
+/* Plate faces and carrier shapes. Sizes follow the box they are drawn in: on the stage a face fills
+   its arrival rect exactly (height: 100%), in flow it takes its natural height. Nothing here is
+   allowed to overflow its rect on the stage; if it would, the stage falls back to flow. */
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+:global([data-stage=stage]) :is(.tile, .next, .focus, .rail, .strip, .signalTile, .session, .artistFile, .eventRow, .eventCell, .artistCell, .artistCard) {
+  height: 100%;
+}
+
+/* ── Shared bits ─────────────────────────────────────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 8px;
+  background: var(--well);
+  color: var(--ink);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sub {
+  margin: 0 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--faint);
+  color: var(--ink);
+  font: 700 var(--t-lg)/1.1 var(--display);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.keys {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.empty {
+  color: var(--muted);
+  font-size: var(--text-ui);
+}
+/* A title link stretched over its whole plate; controls in the plate sit above it. */
+.stretch {
+  color: inherit;
+  text-decoration: none;
+}
+.stretch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.stretch:focus-visible {
+  outline: none;
+}
+.stretch:focus-visible::after {
+  outline: 2px solid var(--focus);
+  outline-offset: -4px;
+}
+.columnHead {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: var(--rule) solid var(--accent);
+  color: var(--muted);
+  font: 600 var(--t-md)/1.3 var(--sans);
+}
+.columnHead b {
+  color: var(--accent);
+  font: 700 var(--t-xl)/1 var(--display);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.columnHead small {
+  margin-left: auto;
+  color: var(--ink);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .1em;
+}
+/* A column that may not spill: on the stage it clips nothing, it is measured (data-fit). */
+.fitColumn {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+  min-height: 0;
+}
+:global([data-stage=stage]) .fitColumn {
+  overflow: hidden;
+}
+.fitColumn > * {
+  flex: none;
+}
+.fitColumn > :only-child {
+  flex: 1 1 auto;
+}
+
+/* ── Rail face ───────────────────────────────────────────────────────────── */
+.rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 44px;
+  padding: 10px 14px 12px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: var(--light-motion);
+}
+a.rail:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+a.rail:active {
+  box-shadow: inset 0 0 0 100vmax var(--on-hi);
+  color: var(--hi);
+  transition: none;
+}
+a.rail:focus-visible {
+  outline-offset: -4px;
+}
+.railName {
+  font: 800 clamp(20px, 1.6vw, 30px)/1 var(--display);
+  letter-spacing: .04em;
+}
+.railTitle {
+  color: inherit;
+  opacity: .8;
+  font: 600 var(--t-sm)/1.2 var(--sans);
+}
+.railMeta {
+  font: 400 var(--t-xs)/1 var(--mono);
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+/* In flow the rail is a row of chips: the name only. */
+:global([data-stage]:not([data-stage=stage])) .rail {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+}
+:global([data-stage]:not([data-stage=stage])) :is(.railTitle, .railMeta) {
+  display: none;
+}
+:global([data-stage]:not([data-stage=stage])) .railName {
+  font-size: var(--t-lg);
+}
+
+/* ── Home plate ──────────────────────────────────────────────────────────── */
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px var(--pad) var(--pad);
+}
+.tileHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-inline: calc(var(--pad) * -1);
+  padding: 4px var(--pad) 6px;
+  border-bottom: var(--rule) solid var(--accent);
+  transition: var(--light-motion);
+}
+/* The plate is one target: pointing anywhere on it lights its head. */
+.tile:has(.stretch:hover) .tileHead {
+  box-shadow: inset 100vw 0 0 0 var(--hi);
+  color: var(--on-hi);
+  --accent: var(--on-hi);
+  --well: rgb(0 0 0 / .12);
+}
+.tileTitle {
+  min-width: 0;
+  font-weight: 400;
+}
+.tileTitle a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+}
+.tileLabel {
+  color: var(--accent);
+  font: 700 var(--t-xl)/1 var(--display);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.tileKo {
+  color: inherit;
+  font: 600 var(--t-md)/1.3 var(--sans);
+  opacity: .85;
+}
+.tileChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tileBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 0;
+  margin-top: 12px;
+}
+.aboutLine {
+  margin-top: 14px;
+  font: 700 var(--t-lg)/1.35 var(--display);
+  letter-spacing: .02em;
+}
+
+/* Home cells drawn in the plate itself (flow mode only). */
+.inlineCells {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+}
+.inlineRoster {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+/* A session cell: code, name, state. */
+.eventCell,
+.artistCell {
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: var(--light-motion);
+}
+.eventCell {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.artistCell {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 2px;
+}
+.inlineCells .eventCell,
+.inlineCells .artistCell {
+  background: var(--well);
+}
+.cellCode {
+  color: var(--accent);
+  font: 400 var(--t-sm)/1 var(--mono);
+}
+.cellName {
+  overflow: hidden;
+  font: 800 var(--t-lg)/1.1 var(--display);
+  letter-spacing: .03em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cellState {
+  padding: 3px 8px;
+  background: var(--well);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+.eventCell[data-state=UPCOMING] .cellState {
+  background: var(--gold);
+  color: var(--navy);
+}
+.eventCell[data-state=LIVE] .cellState {
+  background: var(--red);
+  color: #fff8f0;
+}
+.cellMeta {
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+:is(.eventCell, .artistCell, .eventRow, .artistCard):hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+  --muted: var(--on-hi);
+  --accent: var(--on-hi);
+}
+:is(.eventCell, .artistCell, .eventRow, .artistCard):active {
+  box-shadow: inset 0 0 0 100vmax var(--on-hi);
+  color: var(--hi);
+  transition: none;
+}
+:is(.eventCell, .artistCell, .eventRow, .artistCard):focus-visible {
+  outline-offset: -4px;
+}
+
+/* ── Next session ────────────────────────────────────────────────────────── */
+.next {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 10px var(--pad) var(--pad);
+  overflow: hidden;
+  isolation: isolate;
+}
+:global([data-stage=stage]) .next {
+  container: next / size;
+}
+.next > :not(.rings) {
+  position: relative;
+}
+/* Rings drift outward behind the session name: ambient, slow, not tied to any tempo. */
+.rings {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: rgb(0 26 41 / .22);
+  background: repeating-radial-gradient(circle at 86% 26%,
+    transparent calc(var(--ring-phase) - 18px),
+    currentColor calc(var(--ring-phase) - 18px) calc(var(--ring-phase) - 16px),
+    transparent calc(var(--ring-phase) - 16px) var(--ring-phase));
+  -webkit-mask-image: radial-gradient(circle at 86% 26%, #000 0 40%, transparent 72%);
+  mask-image: radial-gradient(circle at 86% 26%, #000 0 40%, transparent 72%);
+  pointer-events: none;
+}
+[data-surface=red] .next .rings {
+  color: rgb(255 248 240 / .2);
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .rings { animation: ringOut var(--ring-period) linear infinite; }
+}
+.nextHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: var(--rule) solid var(--line);
+  transition: var(--light-motion);
+}
+.next:has(.stretch:hover) .nextHead {
+  box-shadow: inset 100vw 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.nextLabel {
+  font: 700 var(--t-xl)/1 var(--display);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.noUpcoming {
+  width: fit-content;
+  margin-top: 12px;
+  padding: 2px 8px;
+  background: var(--well);
+  font: 700 var(--t-xs)/1.4 var(--display);
+  letter-spacing: .14em;
+}
+.nextTitle {
+  margin-top: 12px;
+  font-weight: 400;
+}
+.nextSession {
+  font: 800 clamp(40px, 5.2vw, 124px)/.9 var(--display);
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.nextSubtitle {
+  margin-top: 6px;
+  color: var(--muted);
+  font: 700 var(--t-lg)/1.3 var(--display);
+  letter-spacing: .04em;
+}
+.next :global(section[role=timer]) {
+  margin-top: 16px;
+}
+.nextGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+.lineupCells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 4px;
+}
+.lineupCells li {
+  display: grid;
+  gap: 3px;
+  padding: 7px 10px;
+  background: var(--fill);
+  color: var(--on-fill);
+}
+.lineupCells b {
+  font: 700 var(--t-lg)/1.05 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.lineupCells small {
+  color: var(--on-fill-muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+}
+.lineupCells li[data-empty] {
+  background: var(--well);
+  color: var(--ink);
+}
+.nextKeys {
+  margin-top: auto;
+  padding-top: 14px;
+}
+/* On a short plate the session keeps its name, clock, schedule and keys; the lineup (also in
+   the session file) and then the subtitle step aside. */
+@container next (max-height: 640px) {
+  .nextLineup { display: none; }
+}
+@container next (max-height: 520px) {
+  .nextSubtitle, .noUpcoming { display: none; }
+  .nextGrid { margin-top: 10px; }
+}
+@container next (max-height: 440px) {
+  .nextSchedule .sub { display: none; }
+}
+
+/* ── Open plate ──────────────────────────────────────────────────────────── */
+.focus {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+  padding: 12px var(--pad) var(--pad);
+}
+.listFocus {}
+.focusHead {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+}
+/* A list plate's head has the exact height the stage reserves above the rows. */
+:global([data-stage=stage]) .listFocus .focusHead {
+  height: calc(var(--list-head) - 12px - var(--gap));
+  overflow: hidden;
+}
+.focusTitleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding-bottom: 6px;
+  border-bottom: var(--rule) solid var(--accent);
+}
+.focusTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 14px;
+  min-width: 0;
+  font-weight: 400;
+  outline: none;
+}
+.focusLabel {
+  color: var(--accent);
+  font: 700 var(--t-2xl)/.95 var(--display);
+  letter-spacing: .01em;
+  text-transform: uppercase;
+}
+.focusKo {
+  color: var(--ink);
+  font: 700 var(--t-lg)/1.2 var(--display);
+  letter-spacing: .04em;
+}
+.focusChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.counts {
+  display: flex;
+  gap: 4px;
+}
+.counts > div {
+  display: flex;
+  align-items: stretch;
+}
+.counts dt {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-sm)/1.1 var(--display);
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+.counts dd {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: var(--well);
+  color: var(--accent);
+  font: 400 var(--t-lg)/1 var(--mono);
+}
+.summaryTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.missing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px 12px;
+  background: var(--red);
+  color: #fff8f0;
+  font: 600 var(--t-sm)/1.35 var(--sans);
+}
+.missing b {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .2em;
+}
+
+/* Rows of the open directory (session elements laid out by the stage). */
+.eventRow {
+  display: grid;
+  grid-template-columns: minmax(64px, 96px) minmax(0, 1fr) minmax(120px, 150px) minmax(0, 180px) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 72px;
+  padding: 8px 16px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: var(--light-motion);
+}
+.rowId {
+  color: var(--accent);
+  font: 400 var(--t-md)/1 var(--mono);
+  white-space: nowrap;
+}
+.rowMain {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.rowName {
+  font: 800 var(--t-xl)/1 var(--display);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.rowLine {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font: 600 var(--t-sm)/1.2 var(--sans);
+  white-space: nowrap;
+}
+.rowLine > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rowArtists {
+  font-family: var(--display);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.rowWhen {
+  display: grid;
+  gap: 3px;
+  font: 400 var(--t-md)/1 var(--mono);
+  white-space: nowrap;
+}
+.rowWhen small {
+  color: var(--muted);
+  font-size: var(--t-xs);
+}
+.rowVenue {
+  overflow: hidden;
+  font: 700 var(--t-md)/1.2 var(--display);
+  letter-spacing: .04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowState {
+  padding: 4px 10px;
+  background: var(--well);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+.eventRow[data-event-state=UPCOMING] .rowState {
+  background: var(--gold);
+  color: var(--navy);
+}
+.eventRow[data-event-state=LIVE] .rowState {
+  background: var(--red);
+  color: #fff8f0;
+}
+@container layer (max-width: 760px) {
+  .eventRow { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .rowId, .rowVenue { display: none; }
+  .rowWhen { grid-column: 1; grid-row: 2; display: flex; gap: 8px; }
+  .rowState { grid-column: 2; grid-row: 1 / span 2; }
+}
+
+/* Artist file cards in the open roster grid. */
+.artistCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 112px;
+  padding: 10px 12px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: var(--light-motion);
+}
+.cardHead,
+.cardFoot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 8px;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .12em;
+}
+.cardFoot {
+  font-family: var(--mono);
+  letter-spacing: .04em;
+}
+.cardName {
+  font: 800 var(--t-xl)/1 var(--display);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+/* The strip: a parent plate folded over its open detail. */
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 0 8px 0 var(--pad);
+}
+.stripTitle {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  font: 600 var(--t-md)/1.2 var(--sans);
+}
+.stripLabel {
+  color: var(--accent);
+  font: 700 var(--t-xl)/1 var(--display);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.stripMeta {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1 var(--mono);
+  white-space: nowrap;
+}
+.stripBack,
+.closeKey {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  background: var(--well);
+  color: var(--ink);
+  font: 700 var(--t-md)/1 var(--display);
+  letter-spacing: .1em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: var(--light-motion);
+}
+.closeKey {
+  margin-left: auto;
+  min-height: 36px;
+  font-size: var(--t-sm);
+}
+:is(.stripBack, .closeKey):hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+:is(.stripBack, .closeKey):focus-visible {
+  outline-offset: -4px;
+}
+
+/* ── Plates holding panels (log, signal, about) ─────────────────────────── */
+.panelRow {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+  min-height: 0;
+}
+.panelRow > * {
+  min-height: 0;
+}
+.fitPanel {
+  min-height: 0;
+  overflow: hidden;
+}
+.statement {
+  margin-bottom: 10px;
+  color: var(--orange);
+  font: 400 clamp(30px, 14cqi, 72px)/1 var(--brand);
+}
+@container layer (max-width: 900px) {
+  .panelRow { grid-template-columns: minmax(0, 1fr); }
+}
+
+.logGrid {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr);
+  gap: var(--gap);
+  min-height: 0;
+}
+.logWrite,
+.logPublic {
+  min-height: 0;
+  overflow: hidden;
+}
+:global([data-stage=stage]) .logWrite textarea {
+  height: 96px;
+  min-height: 96px;
+}
+.logPages {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+.logList {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+:global([data-stage=stage]) .logList {
+  overflow: hidden;
+}
+.logList li {
+  flex: none;
+}
+.logList header {
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--fill);
+  color: var(--on-fill);
+}
+.logList time {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-right: 1px solid var(--on-fill-muted);
+  color: var(--on-fill-muted);
+  font: 400 var(--t-xs)/1.2 var(--mono);
+}
+.logList strong {
+  padding: 4px 10px;
+  font: 700 var(--t-lg)/1.2 var(--display);
+  letter-spacing: .08em;
+}
+.logList p {
+  padding: 8px 10px 10px;
+  background: var(--well);
+  color: var(--ink);
+  font-size: var(--text-body);
+  font-weight: 500;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.logPager {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font: 700 var(--t-sm)/1 var(--display);
+  letter-spacing: .1em;
+}
+.logPager > * {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 14px;
+  border: 0;
+  color: var(--muted);
+}
+.logPager > span[aria-hidden] {
+  flex: 1;
+  justify-content: center;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+.logPager button {
+  background: var(--well);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: inherit;
+  transition: var(--light-motion);
+}
+.logPager button:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.feedRule {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .18em;
+}
+.feedRule i {
+  width: 9px;
+  height: 9px;
+  background: currentColor;
+  opacity: .35;
+}
+.feedRule:is([data-state=ready], [data-state=loading], [data-state=error]) i {
+  opacity: 1;
+}
+.feedRule[data-state=error] {
+  color: var(--danger);
+}
+@container layer (max-width: 760px) {
+  .logGrid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── Signal home plate: the loudest call on the home ─────────────────────── */
+.signalTile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 140px;
+  padding: 12px var(--pad) var(--pad);
+  color: var(--ink);
+  text-decoration: none;
+  transition: var(--light-motion);
+}
+.signalTile:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+  --well: rgb(0 0 0 / .1);
+  --ink: var(--on-hi);
+}
+.signalTile:focus-visible {
+  outline-offset: -5px;
+}
+.signalHead {
+  font: 800 clamp(34px, 3.4vw, 72px)/.9 var(--display);
+  letter-spacing: .02em;
+}
+.signalText {
+  font: 700 var(--t-lg)/1.25 var(--display);
+  letter-spacing: .04em;
+}
+
+/* ── Session file ────────────────────────────────────────────────────────── */
+.session {
+  display: grid;
+  grid-template-columns: minmax(260px, .95fr) minmax(0, 1.2fr) minmax(280px, 1fr);
+  gap: var(--gap);
+  min-width: 0;
+  padding: var(--gap);
+}
+.sessionMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 6px calc(var(--pad) - var(--gap)) calc(var(--pad) - var(--gap));
+}
+:global([data-stage=stage]) .sessionMain {
+  overflow: hidden;
+}
+.sessionState {
+  display: flex;
+  gap: 4px;
+}
+.sessionState > span:first-child {
+  padding: 4px 14px 4px 8px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-sm)/1.1 var(--sans);
+}
+.sessionTitle {
+  margin-top: 12px;
+  font: 800 clamp(34px, 4.2vw, 76px)/.9 var(--display);
+  text-transform: uppercase;
+  outline: none;
+}
+.sessionSubtitle {
+  margin-top: 6px;
+  color: var(--muted);
+  font: 700 var(--t-md)/1.3 var(--display);
+  letter-spacing: .04em;
+}
+.poster {
+  display: flex;
+  flex: 1 1 0;
+  justify-content: center;
+  min-height: 64px;
+  margin-top: 12px;
+  background: var(--well);
+}
+.poster img {
+  display: block;
+  max-height: 100%;
+  object-fit: contain;
+}
+:global([data-stage]:not([data-stage=stage])) .poster {
+  flex: none;
+}
+:global([data-stage]:not([data-stage=stage])) .poster img {
+  max-height: 420px;
+}
+.sessionOrder,
+.sessionBriefing,
+.sessionAccess,
+.fileBio {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px var(--pad) var(--pad);
+  container-type: inline-size;
+}
+.sessionSide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+  min-height: 0;
+}
+.sessionBriefing {
+  flex: 1 1 0;
+}
+.sessionAccess {
+  flex: none;
+}
+.session[data-request] .sessionAccess {
+  flex: 1 1 auto;
+}
+/* The access panel's own deck already reads as the panel: no second card around it. */
+.sessionAccess :global(section[data-surface=cream]) {
+  padding: 0;
+}
+@container layer (max-width: 1080px) {
+  .session { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sessionSide { grid-column: 1 / -1; }
+}
+@container layer (max-width: 700px) {
+  .session { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── Artist file ─────────────────────────────────────────────────────────── */
+.artistFile {
+  display: grid;
+  grid-template-columns: minmax(240px, .8fr) minmax(0, 1.3fr) minmax(260px, 1fr);
+  gap: var(--gap);
+  min-width: 0;
+  padding: var(--gap);
+}
+.fileMain {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px calc(var(--pad) - var(--gap)) calc(var(--pad) - var(--gap));
+}
+.fileOrigin,
+.fileCode {
+  font: 700 var(--t-sm)/1 var(--display);
+  letter-spacing: .16em;
+}
+.fileCode {
+  font-family: var(--mono);
+  letter-spacing: .04em;
+}
+.fileName {
+  font: 800 clamp(40px, 4.8vw, 96px)/.9 var(--display);
+  text-transform: uppercase;
+  outline: none;
+}
+.fileRecords {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+  min-height: 0;
+}
+:global([data-stage=stage]) .fileRecords {
+  overflow: hidden;
+}
+.fileSource {
+  flex: none;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+@container layer (max-width: 1000px) {
+  .artistFile { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .fileBio { grid-column: 1 / -1; }
+}
+@container layer (max-width: 700px) {
+  .artistFile { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (forced-colors: active) {
+  .tag, .rail, .eventCell, .artistCell, .eventRow, .artistCard, .stripBack, .closeKey, .logPager button { border: 1px solid CanvasText; }
+  .rings { display: none; }
+}
