@@ -3,10 +3,10 @@ export type { Lang } from '@/lib/lang';
 import type { Lang } from '@/lib/lang';
 
 export type EntryMode = 'auto' | 'boot' | 'idle';
-export type Page = 'home' | 'gate' | 'lineup' | 'request' | 'status' | 'transmit' | 'signal' | 'about' | 'link' | 'entry';
+export type Page = 'artists' | 'home' | 'gate' | 'lineup' | 'request' | 'status' | 'transmit' | 'signal' | 'about' | 'link' | 'entry';
 export type Translate = (ko: string, en: string) => string;
 export const pagePaths: Record<Page, string> = {
-  home: '/home', gate: '/gate', lineup: '/lineup', request: '/gate/request',
+  artists: '/artists', home: '/home', gate: '/gate', lineup: '/lineup', request: '/gate/request',
   status: '/status', transmit: '/transmit', signal: '/signal', about: '/about', link: '/link', entry: '/entry',
 };
 

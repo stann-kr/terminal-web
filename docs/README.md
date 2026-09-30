@@ -1,6 +1,6 @@
-# terminal-2 개요
+# terminal-web 개요
 
-terminal-2는 STANN OS의 LIVE 표면이다.
+terminal-web는 STANN OS의 LIVE 표면이다.
 
 - 표면 역할: LIVE
 - SYS.ID: TM-02
@@ -10,7 +10,7 @@ terminal-2는 STANN OS의 LIVE 표면이다.
 ## 현재 정렬 기준
 
 - STANN OS 공통 토큰: `app/stann-os.css`
-- 이벤트 스킨 팔레트: terminal-2 고유 레이어로 유지
+- 이벤트 스킨 팔레트: terminal-web 고유 레이어로 유지
 - 제품 UI: Aspen 격자, TERMINAL 전용 Pixie·Orbit, 공통 CRT·출력 모션, `focus-visible`·reduced-motion
 - 3표면 링크: HUB(`stann.kr`) / ARCHIVE(`lumo.stann.kr`) / LIVE(`terminal.stann.kr`)
 

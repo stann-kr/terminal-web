@@ -33,7 +33,7 @@ export default function RequestAccessPage() {
   if (pending) return <PagePending code="GUEST_REQ" t={tr} />;
   if (closed) {
     return <section ref={pageRef} data-readout-region className="tm-form-closed tm-cell"><p className="tm-eyebrow">GUEST_REQ / {event?.id ?? 'EVENTS'}</p>
-      <h1 data-motion-title tabIndex={-1}><TerminalText>{eventState.kind === 'load-error' ? tr('정보를 불러오지 못했습니다.', 'Could not load information.') : tr('현재 신청 가능한\n이벤트가 없습니다.', 'No events are open\nfor guest requests.')}</TerminalText></h1>
+      <h2 data-view-title data-motion-title tabIndex={-1}><TerminalText>{eventState.kind === 'load-error' ? tr('정보를 불러오지 못했습니다.', 'Could not load information.') : tr('현재 신청 가능한\n이벤트가 없습니다.', 'No events are open\nfor guest requests.')}</TerminalText></h2>
       <div role={eventState.kind === 'load-error' ? 'alert' : 'status'}>{eventState.kind === 'load-error' ? t.request.eventLoadFailed : eventState.kind === 'inactive' ? <><p>{t.request.windowInfo(ACCESS_WINDOW_DAYS)}</p><p>{eventState.window.isElapsed ? t.request.eventElapsed : t.request.windowCountdown(eventState.window.opensInDays ?? 0)}</p></> : t.request.noEvent}</div>
       {details}
       {(eventState.kind === 'load-error' || eventState.kind === 'target-changed') && <button type="button" className="tm-button" onClick={request.retryEvent}>{t.request.retry}</button>}
@@ -42,7 +42,7 @@ export default function RequestAccessPage() {
   }
 
   return <section ref={pageRef} data-readout-region className="tm-contact-grid" data-kind="request">
-    <section className="tm-contact-context tm-cell"><p className="tm-eyebrow">TERMINAL / GUEST_REQ</p><h1 data-motion-title tabIndex={-1}><TerminalText>{tr('게스트 신청', 'Guest request')}</TerminalText></h1>
+    <section className="tm-contact-context tm-cell"><p className="tm-eyebrow">TERMINAL / GUEST_REQ</p><h2 data-view-title data-motion-title tabIndex={-1}><TerminalText>{tr('게스트 신청', 'Guest request')}</TerminalText></h2>
       <div className="tm-contact-context-bottom">{event && <><h2>{event.session}</h2><p className="tm-contact-meta">{event.date} / {event.time}<br />{event.venue}</p></>}
         {!submitted && <div className="tm-contact-notice"><p>{t.request.committedSub}</p><details className="tm-invitation"><summary>{tr('초대문·입장 안내 보기', 'Invitation and entry information')}</summary><div className="tm-prose">{invitationLines.map((line, index) => <p key={index}>{line}</p>)}</div></details></div>}
       </div>

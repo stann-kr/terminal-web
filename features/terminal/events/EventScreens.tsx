@@ -1,86 +1,84 @@
 'use client';
 
-/* eslint-disable @next/next/no-img-element -- Public event posters use the original image URL and retain the typography fallback. */
+/* eslint-disable @next/next/no-img-element -- Event artwork retains its public source URL. */
 import Link from 'next/link';
 import { useState } from 'react';
-import { getRequestWindowState, getFutureUpcomingEvent } from '@/lib/events/lifecycle';
-import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
-import { Action, EventPicker, EventState, NoEvent, PageHeading } from '../shared/Ui';
+import { useUrlQueryState } from '@/lib/useUrlQueryState';
+import { buildArtistRecords } from '../artists/records';
+import { DocumentReader } from '../shared/DocumentReader';
+import { Action, EventPicker, EventState, NoEvent, PageHeading, RecordControls } from '../shared/Ui';
+import { useRecordWindow } from '../shared/useRecordWindow';
 import { href, isPublicArtist, type ScreenProps } from './data';
-import { TerminalText } from '../motion/TerminalText';
+import { requestAvailable, sourceExcerpt } from './presentation';
 import { EventCountdown } from './EventCountdown';
 import './events.css';
 
-function requestAvailable({ event, events, now }: Pick<ScreenProps, 'event' | 'events' | 'now'>) {
-  return Boolean(event && event.id === getFutureUpcomingEvent(events, now)?.id && getRequestWindowState(event, ACCESS_WINDOW_DAYS, now).isActive);
-}
-
 export function Home(props: ScreenProps & { poster: string }) {
-  const { event, t, lang, poster } = props;
-  const [failedPoster, setFailedPoster] = useState('');
+  const { event, events, lang, t } = props;
   if (!event) return <NoEvent t={t} />;
-  const showPoster = Boolean(poster && poster !== failedPoster);
-  const session = event.session.match(/\[([^\]]+)\]/)?.[0] ?? event.id;
-  const title = event.session.replace(/\s*\[[^\]]+\]/, '');
-  const introduction = event.description?.[lang].split('\n\n')[0];
+  const records = buildArtistRecords(events);
+  const appearances = records.reduce((sum, artist) => sum + artist.appearances.length, 0);
+  const archived = events.filter(item => item.status === 'ARCHIVED');
+  const recent = [...events].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
   const canRequest = requestAvailable(props);
-  const artists = event.artists.filter(isPublicArtist);
-  return <article className="tm-home" data-poster={showPoster}>
-    <header className="tm-home-title">
-      <div className="tm-home-meta"><p className="tm-eyebrow">CURRENT EVENT / {event.id}</p><EventState event={event} t={t} /></div>
-      <h1 data-motion-title tabIndex={-1}><TerminalText afterglow>{title}</TerminalText>{title !== event.session && <span className="tm-home-session">{session}</span>}</h1>
-      <p className="tm-eyebrow">SEOUL / TECHNO</p>
-    </header>
-    <section className="tm-home-data tm-cell" aria-labelledby="home-data-title">
-      <h2 id="home-data-title" className="tm-section-title">EVENT DATA_</h2>
-      <dl className="tm-home-facts">
-        <div data-motion-copy><dt>{t('일시', 'Date / time')}</dt><dd><time dateTime={`${event.date}T${event.time.slice(0, 5)}:00+09:00`}>{event.date}</time><span>{event.time}</span></dd></div>
-        <div data-motion-copy><dt>{t('장소', 'Venue')}</dt><dd>{event.venue}<span className="tm-home-district">{event.district}</span></dd></div>
-        {event.sound && <div data-motion-copy><dt>{t('사운드', 'Sound')}</dt><dd>{event.sound}</dd></div>}
-      </dl>
-      <p className="tm-home-reference">{event.id}<br />STANN OS / LIVE</p>
+  const paragraphs = event.description?.[lang].split(/\n\s*\n/).filter(Boolean) ?? [];
+  return <article className="tm-overview">
+    <aside className="tm-overview-registry tm-panel">
+      <section><h2 className="tm-section-title">EVENT REGISTRY_</h2><dl className="tm-registry-totals">
+        <div><dt>{t('공개 행사', 'Events')}</dt><dd>{String(events.length).padStart(2, '0')}</dd></div>
+        <div><dt>{t('지난 행사', 'Archived')}</dt><dd>{String(archived.length).padStart(2, '0')}</dd></div>
+        <div><dt>{t('출연 기록', 'Appearances')}</dt><dd>{String(appearances).padStart(2, '0')}</dd></div>
+      </dl></section>
+      <section><h2 className="tm-section-title">ARTIST INDEX_</h2><div className="tm-overview-artists">{records.slice(0, 4).map(record => <Link scroll={false} href={href('artists', undefined, record.id)} key={record.id}><strong>{record.name}</strong><span>{record.origin} / {String(record.eventCount).padStart(2, '0')} {t('회', 'EVENTS')}</span></Link>)}</div><Link scroll={false} className="tm-text-link" href={href('artists')}>{t(`전체 아티스트 ${records.length}명`, `All ${records.length} artists`)} ↗</Link></section>
+      <div className="tm-overview-location"><span>BASED IN SEOUL</span><strong>TERMINAL</strong><span>TECHNO / SOUND / PEOPLE</span></div>
+    </aside>
+    <section className="tm-overview-file" aria-labelledby="overview-title">
+      <div className="tm-overview-file-top"><span>{event.status === 'ARCHIVED' ? 'LATEST EVENT RECORD' : event.status === 'LIVE' ? 'LIVE SESSION' : 'NEXT SESSION'}</span><EventState event={event} t={t} /></div>
+      <div className="tm-event-designation"><p>{event.session}</p><h2 id="overview-title" data-view-title data-motion-title tabIndex={-1}>{event.subtitle || event.session}</h2></div>
+      <dl className="tm-event-coordinates"><div><dt>DATE / KST</dt><dd><time dateTime={event.date}>{event.date.replaceAll('-', '.')}</time><span>{event.time}</span></dd></div><div><dt>DESTINATION</dt><dd>{event.venue}<span>{event.district}</span></dd></div></dl>
+      <div className="tm-overview-notes"><h3 className="tm-section-title">SESSION NOTES_</h3>{sourceExcerpt(paragraphs, lang, 160).map((line, index) => <p key={index}>{line}</p>)}{paragraphs.length > 0 && <DocumentReader key={`${event.id}:${lang}`} title={event.subtitle || event.session} paragraphs={paragraphs} t={t} />}</div>
+      {event.status === 'UPCOMING' && <EventCountdown event={event} t={t} />}
+      <Action page="gate" event={event.id}>{event.status === 'ARCHIVED' ? t('행사 기록 열기', 'Open event record') : t('행사 정보 열기', 'Open event file')}</Action>
     </section>
-    <section className="tm-home-actions tm-cell" aria-labelledby="home-access-title">
-      <h2 id="home-access-title" className="tm-section-title">PARTICIPATE_</h2>
-      <p data-motion-copy className="tm-home-request-state" data-open={canRequest}>{canRequest ? t('게스트 신청 가능', 'Guest requests open') : event.status === 'ARCHIVED' || event.status === 'LIVE' ? t('온라인 신청 마감', 'Online requests closed') : t('현재 온라인 신청 기간이 아닙니다.', 'Online requests are not open.')}</p>
-      {canRequest && <Action page="request" event={event.id}>{t('게스트 신청', 'Guest request')}</Action>}
-      <Action page="gate" event={event.id} secondary={canRequest}>{event.status === 'ARCHIVED' ? t('아카이브 보기', 'View archive') : t('이벤트 보기', 'View event')}</Action>
-      <Link scroll={false} className="tm-text-link" href={href('signal')}><span>{t('다음 이벤트 소식 받기', 'Get future event updates')}</span></Link>
-    </section>
-    <figure className="tm-home-visual">
-      {showPoster ? <img src={poster} alt={`${event.session} ${t('포스터', 'poster')}`} onError={() => setFailedPoster(poster)} /> : <div className="tm-orbital" aria-hidden="true">
-        <svg viewBox="0 0 200 200" fill="none"><g className="tm-orbit-primary"><ellipse cx="100" cy="100" rx="90" ry="30" transform="rotate(-15 100 100)" /><ellipse cx="100" cy="100" rx="90" ry="30" transform="rotate(15 100 100)" /></g><g className="tm-orbit-secondary"><ellipse cx="100" cy="100" rx="60" ry="20" transform="rotate(45 100 100)" /></g><path d="M100 85v30M85 100h30" /><circle cx="100" cy="100" r="2" fill="currentColor" /></svg>
-        <span>{session}</span>
-      </div>}
-      <figcaption><span>{showPoster ? 'EVENT ARTWORK' : 'TERMINAL / LIVE'}</span><span>{event.id}</span></figcaption>
-    </figure>
-    <EventCountdown key={event.id} event={event} t={t} />
-    <section className="tm-home-intro tm-cell" aria-labelledby="home-intro-title"><h2 id="home-intro-title" className="tm-section-title">EVENT NOTES_</h2><h3 data-motion-copy>{event.subtitle}</h3>{introduction && <p data-motion-copy>{introduction}</p>}</section>
-    <section className="tm-home-lineup tm-cell" aria-labelledby="home-lineup-title"><h2 id="home-lineup-title" className="tm-section-title">LINEUP_</h2>
-      {artists.length ? <ul>{artists.slice(0, 6).map((artist, index) => <li key={artist.id}><Link scroll={false} href={href('lineup', event.id, artist.id)}><span className="tm-eyebrow">{String(index + 1).padStart(2, '0')}</span><span>{artist.name}</span></Link><p>{artist.time === 'TBA' ? t('시간 미공개', 'Time TBA') : artist.time}</p></li>)}</ul> : <p>{t('라인업 공개 예정', 'Lineup to be announced')}</p>}
-      <Action page="lineup" event={event.id} secondary>{t('라인업 보기', 'Explore lineup')}</Action>
-    </section>
+    <aside className="tm-overview-comms tm-panel">
+      <section><h2 className="tm-section-title">ACCESS STATUS_</h2><div className="tm-access-monitor" data-open={canRequest}><span>{event.id}</span><strong>{canRequest ? 'OPEN' : event.status === 'ARCHIVED' ? 'ARCHIVED' : event.status === 'LIVE' ? 'LIVE' : 'STANDBY'}</strong><p>{canRequest ? t('게스트 신청을 접수 중입니다.', 'Guest requests are open.') : event.status === 'ARCHIVED' ? t('종료된 행사의 기록을 열람할 수 있습니다.', 'This event is preserved in the archive.') : t('현재 온라인 신청 기간이 아닙니다.', 'Online guest requests are closed.')}</p>{canRequest && <Action page="request" event={event.id}>{t('게스트 신청', 'Guest request')}</Action>}</div></section>
+      <section className="tm-overview-log"><h2 className="tm-section-title">EVENT LOG_</h2><ol>{recent.map(item => <li key={item.id}><time dateTime={item.date}>{item.date}</time><Link scroll={false} href={href('gate', item.id)}>{item.session}</Link><span>{item.venue}</span></li>)}</ol><Link scroll={false} className="tm-text-link" href={href('status')}>{t('행사 아카이브', 'Event archive')} ↗</Link></section>
+      <div className="tm-overview-links"><Action page="signal" secondary>{t('다음 이벤트 소식 받기', 'Get event updates')}</Action><Link scroll={false} className="tm-text-link" href={href('transmit')}>{t('통신 기록 · 방명록', 'Communications / guestbook')} ↗</Link></div>
+    </aside>
   </article>;
 }
 
 export function Gate(props: ScreenProps & { poster: string }) {
   const { event, events, t, lang } = props;
   const [failedPoster, setFailedPoster] = useState('');
+  const [, selectEvent] = useUrlQueryState('event');
+  const index = useRecordWindow(events, 4, 2);
+  const lineup = useRecordWindow(event?.artists.filter(isPublicArtist) ?? [], 5, 3, 'lineupFrom');
   if (!event) return <NoEvent t={t} invalid={events.length > 0} />;
-  const publicArtists = event.artists.filter(isPublicArtist);
   const canRequest = requestAvailable(props);
-  const details = [[t('일시', 'Date'), `${event.date} / ${event.time}`], [t('장소', 'Venue'), event.venue]];
-  const context = [[t('지역', 'District'), event.district], [t('위치', 'Coordinates'), event.coords], [t('정원', 'Capacity'), event.capacity.includes('CLASSIFIED') ? '' : event.capacity], [t('사운드', 'Sound'), event.sound]].filter(([, value]) => value);
-  const facts = (rows: string[][]) => <dl>{rows.map(([label, value]) => <div data-motion-copy key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>;
+  const paragraphs = event.description?.[lang].split(/\n\s*\n/).filter(Boolean) ?? [];
+  const publicArtists = event.artists.filter(isPublicArtist);
+  const artwork = Boolean(props.poster && props.poster !== failedPoster);
   return <>
-    <PageHeading code="GATE / EVENT FILE" title={event.session}><EventPicker {...props} page="gate" /></PageHeading>
-    <section className="tm-gate-summary tm-cell" aria-label={t('일정과 신청', 'Schedule and requests')}>
-      <div className="tm-gate-details"><EventState event={event} t={t} />{facts(details)}</div>
-      <div className="tm-gate-next">{canRequest ? <Action page="request" event={event.id}>{t('게스트 신청', 'Guest request')}</Action> : <p>{event.status === 'ARCHIVED' || event.status === 'LIVE' ? t('이 이벤트의 온라인 신청은 마감되었습니다.', 'Online requests for this event are closed.') : t('현재 온라인 신청 기간이 아닙니다.', 'Online requests are not open.')}</p>}<Action page="lineup" event={event.id} secondary>{t('라인업 보기', 'Explore lineup')}</Action></div>
-    </section>
-    <div className="tm-gate-grid">
-      <section className="tm-gate-copy tm-cell"><p className="tm-eyebrow">{event.id} / EVENT FILE</p><h2 data-motion-title><TerminalText>{event.subtitle}</TerminalText></h2><div className="tm-prose">{event.description?.[lang].split('\n\n').map((text, i) => <p data-motion-copy key={i}>{text}</p>)}</div>{props.poster && props.poster !== failedPoster && <img className="tm-gate-poster" src={props.poster} alt={`${event.session} ${t('포스터', 'poster')}`} onError={() => setFailedPoster(props.poster)} />}</section>
-      <div className="tm-gate-context"><section className="tm-gate-lineup tm-cell"><h2 className="tm-eyebrow">LINEUP</h2><ul>{publicArtists.map(artist => <li key={artist.id}><Link scroll={false} href={href('lineup', event.id, artist.id)}><span>{artist.name}</span></Link><p data-motion-copy>{artist.time === 'TBA' ? t('시간 미공개', 'Set time not announced') : artist.time}</p></li>)}</ul>{event.artists.length > publicArtists.length && <p className="tm-gate-note">{t(`그 외 ${event.artists.length - publicArtists.length}개 항목은 아티스트 정보 미공개`, `${event.artists.length - publicArtists.length} other artist records are unpublished`)}</p>}</section><section className="tm-gate-details tm-cell"><h2 className="tm-eyebrow">{t('장소 정보', 'VENUE INFO')}</h2>{facts(context)}</section></div>
+    <PageHeading code={`EVENT FILE / ${event.id}`} title={event.session}><EventPicker {...props} page="gate" /></PageHeading>
+    <div className="tm-event-file">
+      <aside className="tm-event-file-index tm-panel">
+        <section><h2 className="tm-section-title">EVENT INDEX_</h2><nav aria-label={t('행사 목록', 'Event index')} className="tm-event-index">{index.records.map(item => <Link scroll={false} href={href('gate', item.id)} key={item.id} aria-current={item.id === event.id ? 'true' : undefined} onClick={e => {
+          if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+          e.preventDefault();
+          if (item.id !== event.id) selectEvent(item.id, { artist: '', view: '', lineupFrom: '' });
+        }}><span>{item.id} / {item.date}</span><strong>{item.subtitle || item.session}</strong><EventState event={item} t={t} /></Link>)}</nav><RecordControls {...index} count={index.records.length} t={t} /></section>
+        <section><h2 className="tm-section-title">VENUE DATA_</h2><dl className="tm-file-facts">{[[t('장소', 'Venue'), event.venue], [t('지역', 'District'), event.district], [t('좌표', 'Coordinates'), event.coords], [t('사운드', 'Sound'), event.sound], [t('정원', 'Capacity'), event.capacity.includes('CLASSIFIED') ? '' : event.capacity]].filter(([, value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>
+      </aside>
+      <section className="tm-event-document" aria-labelledby="event-document-title">
+        <div className="tm-event-document-heading"><span className="tm-eyebrow">SESSION / {event.id}</span><h3 id="event-document-title" data-motion-title>{event.subtitle || event.session}</h3><p><time dateTime={event.date}>{event.date}</time> / {event.time}</p></div>
+        {artwork && <figure className="tm-event-artwork"><img src={props.poster} alt={`${event.session} ${t('포스터', 'poster')}`} onError={() => setFailedPoster(props.poster)} /><figcaption>{event.id} / EVENT ARTWORK</figcaption></figure>}
+        <div className="tm-event-brief"><h3 className="tm-section-title">SESSION NOTES_</h3>{sourceExcerpt(paragraphs, lang, artwork ? 140 : 300).map((text, i) => <p key={i}>{text}</p>)}{!paragraphs.length && <p>{t('공개된 행사 소개가 없습니다.', 'No event notes have been published.')}</p>}{paragraphs.length > 0 && <DocumentReader key={`${event.id}:${lang}`} title={event.subtitle || event.session} paragraphs={paragraphs} t={t} />}</div>
+      </section>
+      <aside className="tm-event-manifest tm-panel">
+        <section><h2 className="tm-section-title">PERFORMANCE MANIFEST_</h2><div className="tm-set-list">{lineup.records.map(artist => <Link scroll={false} href={href('lineup', event.id, artist.id)} key={artist.id}><div><strong>{artist.name}</strong><span>{artist.origin}</span></div><div><span>STAGE {artist.dock}</span><span>{artist.time === 'TBA' ? t('시간 미공개', 'Time TBA') : artist.time}</span></div></Link>)}</div>{!publicArtists.length && <p>{t('라인업 공개 예정', 'Lineup to be announced')}</p>}<RecordControls {...lineup} count={lineup.records.length} t={t} />{event.artists.length > publicArtists.length && <p className="tm-file-note">{t(`미공개 출연 기록 ${event.artists.length - publicArtists.length}건`, `${event.artists.length - publicArtists.length} unpublished appearances`)}</p>}<Link scroll={false} className="tm-text-link" href={href('lineup', event.id)}>{t('라인업 보기', 'Explore lineup')} ↗</Link></section>
+        <section className="tm-event-access"><h2 className="tm-section-title">ENTRY PROTOCOL_</h2><EventState event={event} t={t} />{canRequest ? <Action page="request" event={event.id}>{t('게스트 신청', 'Guest request')}</Action> : <><p>{t('이 이벤트의 온라인 신청은 현재 마감되어 있습니다.', 'Online requests for this event are currently closed.')}</p><Action page="signal" secondary>{t('다음 이벤트 소식 받기', 'Get future event updates')}</Action></>}</section>
+      </aside>
     </div>
   </>;
 }

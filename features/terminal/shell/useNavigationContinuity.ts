@@ -56,7 +56,8 @@ export function useNavigationContinuity(main: RefObject<HTMLElement | null>, pat
       const focus = focusTarget(event.target.closest('a[href]'));
       if (focus) snapshots.set(active, { top: element.scrollTop, focus });
     };
-    const contentReady = () => current.current.ready && !element.querySelector('.tm-page-pending') && Boolean(element.querySelector('h1'));
+    const title = () => element.querySelector<HTMLElement>('h1,[data-view-title]') ?? element.closest('.tm-shell')?.querySelector<HTMLElement>('#tm-screen-title');
+    const contentReady = () => current.current.ready && !element.querySelector('.tm-page-pending') && Boolean(title());
     const restore = () => {
       if (frame) return;
       if (!pending || !contentReady() || current.current.pathname !== pending.pathname) return;
@@ -78,7 +79,7 @@ export function useNavigationContinuity(main: RefObject<HTMLElement | null>, pat
           if (arrival) focusNavigationTarget(arrival);
           else if (destination.fresh || destination.snapshot) {
             for (let disclosure = focus?.closest('details:not([open])'); disclosure; disclosure = disclosure.parentElement?.closest('details:not([open])')) (disclosure as HTMLDetailsElement).open = true;
-            (focus ?? element.querySelector<HTMLElement>('h1') ?? element).focus({ preventScroll: true });
+            (focus ?? title() ?? element).focus({ preventScroll: true });
           }
           if (!arrival) element.scrollTop = Math.min(destination.snapshot?.top ?? 0, Math.max(0, element.scrollHeight - element.clientHeight));
           element.removeAttribute('data-restoring-navigation');

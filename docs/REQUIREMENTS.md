@@ -3,7 +3,7 @@
 이 문서는 프로젝트의 전체 기술 명세서 및 기능 요구 사항을 문서화함. 개발 시 이 문서를 최우선으로 참고하여 아키텍처 및 상태 관리를 일관성 있게 유지함.
 
 ## 1. 개요
-* 프로젝트 명: terminal-2 / STANN OS LIVE
+* 프로젝트 명: terminal-web / STANN OS LIVE
 * 표면 역할: LIVE (`TM-02`) — 공개 URL `https://terminal.stann.kr`
 * 주요 기술 스택: Next.js 16 App Router, React 19, Tailwind CSS, Docker (Apple Silicon), Cloudflare OpenNext Worker, Cloudflare D1, Drizzle ORM, TanStack Query
 * 디자인 시스템: STANN OS 공통 토큰 + 검정·오렌지 terminal 워크스페이스. Aspen 격자, 7개 디렉터리, 외곽 경계 없는 CRT와 모바일 재배치를 사용한다.

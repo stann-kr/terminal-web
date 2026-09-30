@@ -1,39 +1,40 @@
-.tm-lineup { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,3fr); flex: 1 0 auto; }
-.tm-roster { border-right: 1px solid var(--tm-line); min-width: 0; }
+.tm-lineup { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.2fr); align-items: start; gap: 20px; flex: 1; }
+.tm-roster { min-width: 0; border: 1px solid var(--tm-line); padding: 20px; background: rgba(var(--tm-ink-rgb),.02); }
 .tm-roster-summary { display: none; }
-.tm-roster-date { font: .75rem/1.8 var(--tm-mono); color: var(--tm-muted); margin: 12px 0 36px; }
-.tm-roster ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.tm-roster li a { display: flex; align-items: center; gap: 12px; min-height: 74px; padding: 18px var(--tm-pad); font: clamp(1rem,1.5vw,1.5rem)/1.4 var(--tm-display); text-decoration: none; }
-.tm-roster li a > span:last-child { min-width: 0; overflow-wrap: anywhere; }
-.tm-roster li a:hover { color: var(--tm-accent); }
-.tm-roster li a[aria-current] { background: var(--tm-accent); color: var(--tm-bg); text-shadow: none; }
-.tm-artist-index { flex: none; font: 12px/1.4 var(--tm-mono); }
-.tm-roster-unpublished { margin: var(--tm-pad); color: var(--tm-muted); font-size: .8rem; line-height: 1.9; word-break: keep-all; }
-.tm-roster-event { margin: 0 var(--tm-pad) 24px; font-size: .75rem; }
-.tm-artist-profile { min-width: 0; }
-.tm-profile-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-.tm-artist-profile h2 { font: clamp(1.75rem,4cqi,4rem)/1.25 var(--tm-display); color: var(--tm-accent); max-width: 100%; overflow-wrap: anywhere; margin-block: 24px; }
-.tm-artist-data { display: flex; flex-wrap: wrap; gap: 16px clamp(24px,4cqi,56px); }
-.tm-artist-data > div { min-width: 0; max-width: 100%; }
-.tm-artist-data dt { color: var(--tm-muted); font-size: .75rem; margin-bottom: 8px; }
-.tm-artist-data dd { overflow-wrap: anywhere; font: 1rem/1.5 var(--tm-mono); }
-.tm-artist-bio { margin-top: clamp(16px,2cqb,32px); max-width: 78ch; }
-.tm-roster-return { font-size: .75rem; }
-@media (max-width: 1099px) and (min-width: 761px) { .tm-lineup { grid-template-columns: 1fr 2fr; } .tm-roster li a { padding-inline: 18px; gap: 8px; } }
+.tm-roster .tm-cell { padding: 0 0 15px; border: 0; background: transparent; }
+.tm-roster-date { font-size: var(--tm-type-label); line-height: 1.8; color: var(--tm-muted); margin: 5px 0 15px; }
+.tm-roster ul { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.tm-roster li { min-width: 0; }
+.tm-roster li a { display: flex; height: 100%; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid var(--tm-dim); background: rgba(var(--tm-ink-rgb),.02); text-decoration: none; }
+.tm-roster-cell-header { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--tm-line); padding-bottom: 5px; font-size: var(--tm-type-meta); }
+.tm-roster li a > strong { font-size: var(--tm-type-subtitle); font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
+.tm-roster-cell-meta { display: flex; flex-direction: column; gap: 5px; margin-top: auto; font-size: var(--tm-type-label); color: var(--tm-muted); }
+.tm-roster li a:hover { background: rgba(var(--tm-ink-rgb),.08); }
+.tm-roster li a[aria-current] { border-color: var(--tm-warning); background: rgba(255,176,0,.05); color: var(--tm-warning); }
+.tm-roster li a[aria-current] .tm-roster-cell-header { border-color: var(--tm-warning-dim); }
+.tm-artist-index { font-size: var(--tm-type-meta); }
+.tm-roster-unpublished { margin-top: 15px; color: var(--tm-muted); font-size: var(--tm-type-body); line-height: 1.9; word-break: keep-all; }
+.tm-roster-event { margin-top: 15px; font-size: var(--tm-type-body); }
+.tm-artist-profile { min-width: 0; padding: 30px; }
+.tm-profile-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; border-bottom: 1px solid var(--tm-dim); padding-bottom: 10px; }
+.tm-artist-profile h2 { font: 700 var(--tm-type-title)/1.4 var(--tm-display); overflow-wrap: anywhere; margin-block: 20px; }
+.tm-artist-data { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 15px; padding: 15px; border: 1px solid var(--tm-dim); background: rgba(var(--tm-ink-rgb),.03); }
+.tm-artist-data dt { color: var(--tm-muted); font-size: var(--tm-type-label); margin-bottom: 5px; }
+.tm-artist-data dd { overflow-wrap: anywhere; font-size: var(--tm-type-body); line-height: 1.8; }
+.tm-artist-bio { margin-top: 20px; }
+.tm-roster-return { font-size: var(--tm-type-label); }
+.tm-lineup[data-has-profile=false] .tm-artist-profile h2 { font-size: var(--tm-type-title); line-height: 1.6; }
+@media (max-width: 1279px) and (min-width: 761px) { .tm-lineup { grid-template-columns: minmax(220px,.7fr) minmax(0,1fr); }.tm-roster ul { grid-template-columns: 1fr; }.tm-artist-profile { padding: 20px; }.tm-artist-data { grid-template-columns: 1fr; } }
 @media (max-width: 760px) {
-  .tm-lineup { grid-template-columns: 1fr; }
-  .tm-roster { border-right: 0; border-bottom: 1px solid var(--tm-line); }
-  .tm-roster-summary { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: center; min-height: 64px; padding: 16px; cursor: pointer; list-style: none; }
+  .tm-lineup { grid-template-columns: minmax(0,1fr); gap: 15px; }
+  .tm-roster { padding: 0; }
+  .tm-roster-summary { display: grid; grid-template-columns: 1fr auto; gap: 5px 15px; align-items: center; min-height: 60px; padding: 15px; cursor: pointer; list-style: none; }
   .tm-roster-summary::-webkit-details-marker { display: none; }
-  .tm-roster-summary > span:first-child { color: var(--tm-muted); font-size: .875rem; }
+  .tm-roster-summary > span:first-child { color: var(--tm-muted); }
   .tm-roster-summary > span:last-child { grid-row: 2; min-width: 0; overflow-wrap: anywhere; }
-  .tm-roster-summary::after { content: '+'; grid-column: 2; grid-row: 1 / span 2; color: var(--tm-accent); }
+  .tm-roster-summary::after { content: '+'; grid-column: 2; grid-row: 1 / span 2; }
   .tm-roster-disclosure[open] > summary::after { content: '−'; }
-  .tm-roster-date { margin-block: 8px 16px; }
-  .tm-roster li a { min-height: 58px; }
-  .tm-roster-unpublished { margin-block: 18px; }
-  .tm-artist-profile h2 { margin-block: 24px; font-size: clamp(1.75rem,8cqi,2.5rem); }
-  .tm-artist-data dd { font-size: 1rem; }
+  .tm-roster-disclosure > div { padding: 0 15px 15px; }
+  .tm-artist-profile { padding: 15px; }.tm-artist-data { grid-template-columns: 1fr; }
 }
-
-.tm-lineup[data-has-profile=false] .tm-artist-profile h2 { font-size: clamp(1.75rem,4cqi,3rem); line-height: 1.4; }
+@media (max-width: 400px) { .tm-roster ul { grid-template-columns: 1fr; } }

@@ -1,6 +1,6 @@
-# terminal-2 — STANN OS LIVE
+# terminal-web — STANN OS LIVE
 
-terminal-2 is the STANN OS LIVE surface for `https://terminal.stann.kr`.
+terminal-web is the STANN OS LIVE surface for `https://terminal.stann.kr`.
 
 - Surface role: LIVE
 - SYS.ID: TM-02

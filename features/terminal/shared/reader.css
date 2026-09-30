@@ -1,0 +1,9 @@
+.tm-reader-trigger { background: transparent; border: 0; padding: 0; text-align: left; cursor: pointer; }
+.tm-reader { width: min(700px,calc(100vw - 30px)); max-height: calc(100dvh - 40px); padding: 25px; color: var(--tm-text); border: 2px solid var(--tm-accent); background: var(--tm-bg); overflow: auto; overscroll-behavior: contain; }
+.tm-reader::backdrop { background: rgba(5,11,14,.94); }
+.tm-reader header { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--tm-dim); }
+.tm-reader h2 { margin-top: 8px; font: 700 var(--tm-type-title)/1.5 var(--tm-display); overflow-wrap: anywhere; }
+.tm-reader header .tm-button { flex: none; }
+.tm-reader-copy { padding-top: 20px; font-size: var(--tm-type-body); line-height: 1.9; overflow-wrap: anywhere; white-space: pre-line; }
+.tm-reader-copy p + p { margin-top: 15px; }
+@media (max-width: 767px) { .tm-reader { padding: 15px; } }

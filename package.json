@@ -43,7 +43,7 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "name": "next-app",
+  "name": "terminal-web",
   "private": true,
   "scripts": {
     "prebuild": "node scripts/check-token-sync.mjs",

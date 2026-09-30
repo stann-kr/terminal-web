@@ -16,7 +16,7 @@ export function TerminalFrame({ children }: { children: ReactNode }) {
   const { props, phase } = useEventScreen();
   const page: Page = pathname === '/' ? experience === 'terminal' ? 'entry' : 'home'
     : (Object.keys(pagePaths) as Page[]).find(page => pagePaths[page] === pathname) ?? 'home';
-  const eventPage = ['home', 'gate', 'lineup', 'status'].includes(page);
+  const eventPage = ['home', 'gate', 'lineup', 'status', 'artists'].includes(page);
   const screenPhase = eventPage ? phase : 'ready';
   const eventMotionKey = eventPage ? `${page === 'lineup' ? '' : props.event?.id}:${props.event?.status}` : '';
   const [crt, setCrt] = useState(true);
@@ -28,7 +28,7 @@ export function TerminalFrame({ children }: { children: ReactNode }) {
     return !previous;
   });
   return <MotionProvider crt={crt}><div className="tm-application">
-    <Shell page={page} eventId={props.event?.id} pathname={pathname} ready={screenPhase !== 'loading'} viewKey={`${pathname}:${page}`} motionKey={`${pathname}:${page}:${screenPhase}:${eventMotionKey}:${lang}`} lang={lang} t={props.t} setLang={setLang} crt={crt} toggleCrt={toggleCrt}>
+    <Shell page={page} eventId={props.event?.id} designation={['home','gate','lineup','request'].includes(page) ? props.event?.session : undefined} eventStatus={['home','gate','lineup'].includes(page) ? props.event?.status : undefined} pathname={pathname} ready={screenPhase !== 'loading'} viewKey={`${pathname}:${page}`} motionKey={`${pathname}:${page}:${screenPhase}:${eventMotionKey}:${lang}`} lang={lang} t={props.t} setLang={setLang} crt={crt} toggleCrt={toggleCrt}>
       <div data-active="true">{children}</div>
     </Shell>
   </div></MotionProvider>;

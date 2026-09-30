@@ -23,7 +23,16 @@
   --tm-body: var(--tm-mono);
   --tm-wordmark: var(--tm-display);
   --tm-pad: 20px;
-  --tm-title: clamp(20px,2.2cqi,30px);
+  --tm-type-screen: 24px;
+  --tm-type-title: 24px;
+  --tm-type-subtitle: 16px;
+  --tm-type-body: 12px;
+  --tm-type-label: 10px;
+  --tm-type-meta: 9px;
+  --tm-type-metric: 24px;
+  --tm-type-input: 14px;
+  --tm-type-brand: 32px;
+  --tm-title: var(--tm-type-title);
   --tm-label: 11px;
   --tm-meta: 10px;
   --tm-space-1: 4px;
@@ -40,14 +49,15 @@
 }
 * { box-sizing: border-box; }
 html,body { margin: 0; width: 100%; height: 100%; }
-body { font-size: 11px; line-height: 1.5; }
+body { font-size: var(--tm-type-body); line-height: 1.7; }
 h1,h2,h3,p,ul,ol,dl,dd,figure { margin: 0; }
-h1,h2,h3 { font-weight: 700; }
+h1,h2 { font: 700 var(--tm-type-title)/1.4 var(--tm-display); }
+h3 { font: 700 var(--tm-type-subtitle)/1.5 var(--tm-mono); }
 a { color: inherit; }
 button,input,textarea,select { font: inherit; color: inherit; border-radius: 0; }
 button { cursor: pointer; }
 button,a,input,select,textarea { -webkit-tap-highlight-color: transparent; }
-input,textarea,select { width: 100%; min-width: 0; border: 1px solid var(--tm-control-line); padding: 10px 12px; background: rgba(var(--tm-ink-rgb),.05); min-height: 44px; font-size: 14px; }
+input,textarea,select { width: 100%; min-width: 0; border: 1px solid var(--tm-control-line); padding: 10px 12px; background: rgba(var(--tm-ink-rgb),.05); min-height: 44px; font-size: var(--tm-type-input); }
 select { padding-right: 36px; }
 option { background: var(--tm-bg); color: var(--tm-text); }
 textarea { resize: vertical; }
@@ -60,5 +70,7 @@ h1:focus,h2[tabindex]:focus,main:focus { outline: none; }
 .tm-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .tm-application { display: flex; flex-direction: column; height: 100svh; height: 100dvh; }
 .tm-wordmark { font-family: var(--tm-wordmark); font-weight: 700; }
-@media (max-width: 767px) { input,textarea,select { font-size: 16px; } }
+@media (max-width: 767px) {
+  :root { --tm-type-screen: 18px; --tm-type-title: 20px; --tm-type-subtitle: 14px; --tm-type-body: 13px; --tm-type-input: 16px; --tm-type-brand: 24px; }
+}
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
