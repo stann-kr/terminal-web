@@ -1,45 +1,17 @@
-# 프로젝트 세부 명세서 (Requirements)
+# 기능 계약
 
-이 문서는 프로젝트의 전체 기술 명세서 및 기능 요구 사항을 문서화함. 개발 시 이 문서를 최우선으로 참고하여 아키텍처 및 상태 관리를 일관성 있게 유지함.
+이벤트 발견과 참여 동선을 우선합니다. 홈 / 이벤트 / 아티스트 / 방문자 로그를 주 메뉴로, 소식 신청 / 소개를 보조 동선으로 제공합니다.
 
-## 1. 개요
-* 프로젝트 명: terminal-2 / STANN OS LIVE
-* 표면 역할: LIVE (`TM-02`) — 공개 URL `https://terminal.stann.kr`
-* 주요 기술 스택: Next.js 16 App Router, React 19, Tailwind CSS, Docker (Apple Silicon), Cloudflare OpenNext Worker, Cloudflare D1, Drizzle ORM, TanStack Query
-* 디자인 시스템: STANN OS 공통 토큰 + terminal-2 이벤트 스킨, 모던 터미널 인터페이스 / 레트로 퓨처리즘 스타일 적용
+홈은 가장 가까운 미래 UPCOMING → LIVE → 최근 ARCHIVED 순으로 대표 행사를 선택합니다. 예정 행사가 없어도 지난 행사 기록을 제공합니다. 조회 실패와 데이터 없음은 구별합니다. 모든 화면 하단의 콘솔은 help/events/artists/archive/ls/open/cd/history/clear를 제공합니다. 홈에서는 출력이 펼쳐진 상태로 시작합니다. `cd`는 고정 경로(home/events/artists/log/signal/about)나 공개 행사 ID로만 이동하고 한 줄 확인을 남깁니다. 그 밖의 명령은 화면 이동 없이 공개 데이터의 텍스트 결과를 누적하며, `open`은 끝에 `cd <ID>` 안내를 붙입니다. 새 응답은 명령 순서대로 글자 단위로 빠르게 출력하고 줄바꿈을 유지합니다. 긴 응답은 묶어서 표시하며 약 1.2초 후 남은 내용을 펼칩니다. 입력은 한 줄 높이이며 출력 중에도 사용할 수 있습니다. Esc로 남은 출력을 즉시 펼치고, 출력이 끝난 뒤에는 출력 영역을 접습니다. 복원한 기록은 다시 출력하지 않습니다. events는 전체 행사, artists는 검토된 인물 매핑을 따르는 공개 명단, archive는 지난 행사, open은 선택 행사의 공개 공연표와 선택 언어 소개를 출력합니다. 입력은 허용된 명령어만 처리하고 한글 조합 중에는 실행하지 않습니다. 같은 탭의 최근200개 명령·출력과 초안을 보관하며, 위·아래 방향키와 history로 명령을 다시 확인합니다. clear는 화면만 비웁니다. 저장소를 사용할 수 없으면 현재 화면에서 동작을 유지하고 복원 불가 상태를 안내합니다.
 
-## 2. 주요 아키텍처 원칙
-* **Apple Silicon 최적화 Docker 환경:** Docker는 로컬/dev 또는 prod-like smoke 용도로 사용한다. 공개 배포의 정본 artifact는 `@opennextjs/cloudflare` Worker bundle이다.
-* **DB 연동:** Cloudflare D1 바인딩(`DB`) 및 Drizzle ORM을 활용한 데이터 관리.
-* **텍스트 렌더링:** 최종 문자열을 서버 HTML에 먼저 렌더링하고, 브라우저 레이아웃을 정본으로 유지한 채 대표 제목과 비필수 boot/sleep 화면에만 cipher를 점진적으로 적용함.
-* **UI/컴포넌트 설계:** 의미 텍스트와 상태는 서버 HTML부터 읽을 수 있어야 하며, cipher/WebGL은 콘텐츠를 대체하지 않는 점진적 향상으로만 사용한다.
-* **접근성:** route마다 하나의 `main`, skip link, 고유 title/h1을 제공하고 폼 label·오류·focus·reduced-motion 계약을 유지한다.
+아티스트는 공개 상태 CONFIRMED·ARCHIVED만 노출합니다. 출연 행 ID는 전역 인물 ID가 아닙니다. `features/artists/identities.ts`의 검토된 매핑만 인물을 합치고, 미확정 출연은 별도 기록으로 유지합니다. 사라지거나 비공개가 된 행은 프로필에서 제외합니다. 명부와 프로필에는 참여 횟수·최근/첫 출연 요약·연도 집계를 표시하지 않으며, 이름·출신·소개와 개별 출연 기록에 집중합니다.
 
-## 3. 기능 요구 사항
-* HOME: STANN OS LIVE 진입, 이벤트 카운트다운/elapsed 상태, 모듈 디렉토리 제공.
-* GATE: upcoming/archive 이벤트 정보, 상세 위치/세션 정보, request 진입 제공.
-* REQUEST: access code 검증, 게스트 신청, 개인정보/마케팅 동의 저장.
-* LINEUP: 이벤트별 아티스트/도크/상태 표시.
-* STATUS: 이벤트 레지스트리 기반 세션 요약과 정적 노드 시각화 표시. 실제 telemetry 또는 realtime 상태로 표현하지 않는다.
-* TRANSMIT: idempotency key 기반 방문자 로그 작성/조회.
-* SIGNAL: 이벤트 신호 수신 채널 등록.
-* LINK: STANN OS HUB / ARCHIVE / LIVE 및 외부 채널 연결.
+행사 상세는 공개 공연표와 원문 소개를 제공합니다. 무대 표기는 공간 위치가 아니며 TBA를 실제 시간으로 추정하지 않습니다. 포스터는 실제 URL이 있을 때만 표시합니다. 이벤트는 LIVE → 시작 시각순 UPCOMING → 최신순 ARCHIVED를 한 카드 목록에 표시하며, 목록 페이지는 URL에 보존합니다. 별도 행사 기록 화면은 없고 기존 `/archive`는 `/events`로, `/events?selected=...`는 해당 상세 주소로 연결합니다.
 
-## 4. 검증 및 배포 게이트
-* 최소 로컬 검증: `npm ci`, `npm audit --omit=dev`, `npm run db:check-history`, `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`, `npm run smoke:http`, `npm run build:worker`, Worker HTTP smoke, `npm run test:d1`, production environment Wrangler dry-run.
-* Cloudflare Workers Builds가 유일한 자동 배포 주체다. `dev`는 고정 development Worker, `main`은 production Worker를 대상으로 하며 GitHub Actions는 validation만 수행한다.
-* Worker code deploy는 D1 migration, secret, binding, route와 분리한다. production deploy와 모든 remote D1 migration은 별도 승인·검증 대상이다.
-* migration history는 `0000`부터 연속·고유한 SQL, SQL tag와 1:1인 journal, SQL과 1:1인 snapshot 및 유효한 `id`/`prevId` chain, exact path + SHA-256 lock을 유지한다. 기존 SQL·snapshot overwrite/delete와 wrapper 밖의 추가를 금지하고, 신규 migration은 `npm run db:generate -- --name <safe_name>`만 사용한다.
-* development와 production remote migration은 각각 명시적 environment로 list/apply/사후 검증하며, 한 환경의 적용 상태를 다른 환경의 증거로 간주하지 않는다.
-* 공개 API는 정확한 JSON media type, streaming byte limit, runtime DTO, no-store 민감 응답과 PII-safe log 계약을 유지한다.
-* rate-limit/Turnstile 검증 인터페이스는 로컬에서 테스트하지만, 실제 binding·secret과 Signal verification/unsubscribe/retention 운영이 없으면 public-release ready가 아니다.
-* push, PR, production deploy, remote D1 migration과 production secret/config/data는 별도 승인 대상이다.
+게스트 신청은 가장 가까운 미래 UPCOMING 행사 한 건에서 시작 30일 전부터 시작 직전까지 열립니다. 코드 확인 뒤 연락처와 동의를 받으며, 코드 변경은 이전 확인을 무효화합니다. 서버 행사 불일치는 자동 재제출하지 않습니다. 저장 성공은 입장 확정이나 티켓 발급을 의미하지 않습니다.
 
-## 5. 데이터베이스 구조 (Schema)
-* **Flexible JSON Model:** `events`, `artists` 테이블은 고정 컬럼 대신 `data` JSON 컬럼을 활용하여 데이터 속성 변경에 유연하게 대응함.
-* **Core Tables:**
-    * `events`: 이벤트 정보 (세션, 일정, 장소, 다국어 초대 메시지 등).
-    * `artists`: 출연진 정보 (프로필, 소개글 등).
-    * `access_requests`: 입장 신청 내역 (개인정보, 인스타그램 ID 등).
-    * `transmit_logs`: 메시지 전송 로그. 신규 입력과 공개 응답은 핸들러·메시지·시각만 사용하며 레거시 디바이스 식별 컬럼은 공개하지 않음. repository history는 현재 `0000`–`0009`의 10개 migration이며, `0009` 적용 후 `created_at`은 ISO timestamp `TEXT NOT NULL`이다.
-    * `signal`: 이벤트 소식 구독 채널. 현재 저장 계약만 존재하며 ownership verification·unsubscribe·retention lifecycle은 release gate다.
+Signal은 연락처 저장만 제공합니다. 인증 이메일, 발송, 수신 거부 API가 구현된 것처럼 표현하지 않습니다. 개인정보·마케팅 동의의 목적과 보존 기간 원문을 유지합니다.
+
+Transmit은 공개 닉네임과 280자 메시지, 서버 기준 5건 pagination을 제공합니다. 같은 요청의 네트워크 재시도에는 같은 Idempotency-Key를 사용합니다. 전송 중 수정한 초안은 저장 응답 후에도 유지합니다. 서버가 반환한 공개 글을 확인한 뒤에만 성공으로 표시합니다.
+
+가짜 관객 수, 실시간 재생 상태, 판매량, QR, 결제, 로그인, 아티스트 SNS·사진을 임의로 만들지 않습니다.

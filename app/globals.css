@@ -1,125 +1,216 @@
-@import "./stann-os.css";
+/* Barlow / Barlow Condensed (Jeremy Tribby, OFL) and Share Tech Mono (Carrois, OFL): public/fonts/instrument/OFL-*.txt */
+@font-face { font-family: 'Barlow'; src: url('/fonts/instrument/Barlow-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Barlow'; src: url('/fonts/instrument/Barlow-Medium.woff2') format('woff2'); font-weight: 500 700; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: swap; }
+@font-face { font-family: 'ProcrastinatingPixie'; src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype'); font-weight: 400 800; font-display: swap; }
+@font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
+/*
+ * Hypnotic console: plates on a workspace field, a few loud solid plates among them. Concentric rings
+ * are the signature motif. Colours come only from the active palette (app/palettes.css); here each
+ * plate role becomes the tokens every component reads, so every component reads the same names on
+ * every plate:
+ *   --ink / --muted: text   --line / --faint: rules   --fill / --on-fill: solid cells   --accent: numbers
+ *   --well: a tinted cell   --hi / --on-hi: hover     --danger: errors                   --focus: focus ring
+ */
+@property --ring-phase {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+:root {
+  --bg: var(--field);
 
-@font-face {
-  font-family: 'ProcrastinatingPixie';
-  src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+  --display: 'Barlow Condensed', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --sans: 'Barlow', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --mono: 'Share Tech Mono', 'Apple SD Gothic Neo', 'Noto Sans KR', monospace;
+  /* The word TERMINAL is always set in the brand face. */
+  --brand: 'ProcrastinatingPixie', 'Barlow Condensed', sans-serif;
+
+  /* Seven fluid type steps, 1280px → 1920px. Nothing on screen is smaller than --t-xs. */
+  --t-xs: clamp(12px, .78vw, 14px);   /* chips, meta labels, codes */
+  --t-sm: clamp(14px, .9vw, 16px);    /* secondary text, table meta */
+  --t-md: clamp(16px, 1.05vw, 18px);  /* body, values, controls */
+  --t-lg: clamp(19px, 1.4vw, 24px);   /* cell names, sub-heads, keys */
+  --t-xl: clamp(26px, 2.1vw, 38px);   /* plate titles, row titles */
+  --t-2xl: clamp(36px, 3.2vw, 60px);  /* counters, big digits, section names */
+  --t-3xl: clamp(56px, 6.4vw, 124px); /* the featured session name */
+  --text-label: var(--t-xs);
+  --text-ui: var(--t-sm);
+  --text-body: var(--t-md);
+  --rule: 3px;
+  --stroke: 1.5px;
+  --gap: clamp(8px, .7vw, 12px);
+  --pad: clamp(16px, 1.5vw, 28px);
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  /* Stage motion, tuned by feel rather than a tempo: a soft start and a long, calm settle that a
+     new target can pick up mid-flight. Old content dims at its own size while its box moves, and
+     the new content crossfades in over it partway through the move, so no box is ever blank. */
+  --dur-move: 620ms;
+  --ease-move: cubic-bezier(.33, 0, .12, 1);
+  --dur-enter: 360ms;
+  --enter-delay: 200ms;
+  --dur-exit: 260ms;
+  --stagger: 30ms;
+  /* Ambient rings: they flow outward by one 18px spacing each period, unrelated to any beat. */
+  --ring-period: 2.4s;
+  --dur-hover: 200ms;
+  --ease-hover: ease-out;
+  /* Hover light-up: the fill sweeps in, the label flips once the fill is part way across. */
+  --light-motion: box-shadow var(--dur-hover) var(--ease-hover), color 0s linear calc(var(--dur-hover) / 4);
+  /* Concentric rings from the bottom-right corner: the site's one graphic motif. */
+  --rings: repeating-radial-gradient(circle at 100% 100%, currentColor 0 1.5px, transparent 1.5px 12px);
 }
 
-@font-face {
-  font-family: 'Orbit';
-  src: url('/fonts/Orbit-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+/* Plate roles. Each role sets every token again, so a plate nested in another reads its own ink. The
+   page itself reads as a standard plate on the field. */
+:root,
+[data-surface=panel] {
+  --plate: var(--panel);
+  --ink: var(--panel-ink);
+  --muted: var(--panel-muted);
+  --accent: var(--panel-accent);
+  --fill: var(--panel-fill);
+  --on-fill: var(--panel-on-fill);
+  --on-fill-muted: var(--panel-on-fill-muted, color-mix(in srgb, var(--panel-on-fill) 72%, var(--panel-fill)));
+  --hi: var(--panel-hi);
+  --on-hi: var(--panel-on-hi);
+  --danger: var(--panel-danger);
+}
+[data-surface=inset] {
+  --plate: var(--inset);
+  --ink: var(--inset-ink);
+  --muted: var(--inset-muted);
+  --accent: var(--inset-accent);
+  --fill: var(--inset-fill);
+  --on-fill: var(--inset-on-fill);
+  --on-fill-muted: var(--inset-on-fill-muted, color-mix(in srgb, var(--inset-on-fill) 72%, var(--inset-fill)));
+  --hi: var(--inset-hi);
+  --on-hi: var(--inset-on-hi);
+  --danger: var(--inset-danger);
+}
+[data-surface=paper] {
+  --plate: var(--paper);
+  --ink: var(--paper-ink);
+  --muted: var(--paper-muted);
+  --accent: var(--paper-accent);
+  --fill: var(--paper-fill);
+  --on-fill: var(--paper-on-fill);
+  --on-fill-muted: var(--paper-on-fill-muted, color-mix(in srgb, var(--paper-on-fill) 72%, var(--paper-fill)));
+  --hi: var(--paper-hi);
+  --on-hi: var(--paper-on-hi);
+  --danger: var(--paper-danger);
+}
+[data-surface=feature] {
+  --plate: var(--feature);
+  --ink: var(--feature-ink);
+  --muted: var(--feature-muted);
+  --accent: var(--feature-accent);
+  --fill: var(--feature-fill);
+  --on-fill: var(--feature-on-fill);
+  --on-fill-muted: var(--feature-on-fill-muted, color-mix(in srgb, var(--feature-on-fill) 72%, var(--feature-fill)));
+  --hi: var(--feature-hi);
+  --on-hi: var(--feature-on-hi);
+  --danger: var(--feature-danger);
+}
+[data-surface=mark] {
+  --plate: var(--mark);
+  --ink: var(--mark-ink);
+  --muted: var(--mark-muted);
+  --accent: var(--mark-accent);
+  --fill: var(--mark-fill);
+  --on-fill: var(--mark-on-fill);
+  --on-fill-muted: var(--mark-on-fill-muted, color-mix(in srgb, var(--mark-on-fill) 72%, var(--mark-fill)));
+  --hi: var(--mark-hi);
+  --on-hi: var(--mark-on-hi);
+  --danger: var(--mark-danger);
+}
+[data-surface=alert] {
+  --plate: var(--alert);
+  --ink: var(--alert-ink);
+  --muted: var(--alert-muted);
+  --accent: var(--alert-accent);
+  --fill: var(--alert-fill);
+  --on-fill: var(--alert-on-fill);
+  --on-fill-muted: var(--alert-on-fill-muted, color-mix(in srgb, var(--alert-on-fill) 72%, var(--alert-fill)));
+  --hi: var(--alert-hi);
+  --on-hi: var(--alert-on-hi);
+  --danger: var(--alert-danger);
+}
+[data-surface=calm] {
+  --plate: var(--calm);
+  --ink: var(--calm-ink);
+  --muted: var(--calm-muted);
+  --accent: var(--calm-accent);
+  --fill: var(--calm-fill);
+  --on-fill: var(--calm-on-fill);
+  --on-fill-muted: var(--calm-on-fill-muted, color-mix(in srgb, var(--calm-on-fill) 72%, var(--calm-fill)));
+  --hi: var(--calm-hi);
+  --on-hi: var(--calm-on-hi);
+  --danger: var(--calm-danger);
+}
+[data-surface=fresh] {
+  --plate: var(--fresh);
+  --ink: var(--fresh-ink);
+  --muted: var(--fresh-muted);
+  --accent: var(--fresh-accent);
+  --fill: var(--fresh-fill);
+  --on-fill: var(--fresh-on-fill);
+  --on-fill-muted: var(--fresh-on-fill-muted, color-mix(in srgb, var(--fresh-on-fill) 72%, var(--fresh-fill)));
+  --hi: var(--fresh-hi);
+  --on-hi: var(--fresh-on-hi);
+  --danger: var(--fresh-danger);
+}
+/* Rules, tinted cells and focus follow the plate's own ink. */
+:root,
+[data-surface] {
+  --line: color-mix(in srgb, var(--ink) 38%, transparent);
+  --faint: color-mix(in srgb, var(--ink) 14%, transparent);
+  --well: color-mix(in srgb, var(--ink) 8%, transparent);
+  --focus: var(--ink);
+}
+[data-surface] {
+  background-color: var(--plate);
+  color: var(--ink);
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--ink); scrollbar-color: var(--line) var(--bg); }
+body { margin: 0; font: var(--text-ui)/1.55 var(--sans); overflow-wrap: break-word; word-break: keep-all; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea, summary { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; text-underline-offset: 3px; }
+button, summary { cursor: pointer; }
+button:disabled { cursor: wait; opacity: .6; }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+::selection { background: var(--hi); color: var(--on-hi); }
+h1,h2,h3,p,dl,dd,ul,ol { margin: 0; }
+ul,ol { padding: 0; list-style: none; }
+img { max-width: 100%; height: auto; }
+input,select,textarea { min-width: 0; max-width: 100%; color: var(--ink); background: var(--well); border: 0; border-radius: 0; padding: 10px 12px; min-height: 44px; font-size: 16px; }
+textarea { resize: vertical; }
+input[type=checkbox] { appearance: none; display: inline-grid; place-items: center; width: 20px; height: 20px; min-height: 20px; padding: 0; border: 2px solid var(--line); background: transparent; cursor: pointer; }
+input[type=checkbox]::before { content: ''; width: 10px; height: 10px; background: var(--ink); transform: scale(0); }
+input[type=checkbox]:checked::before { transform: scale(1); }
+@media (forced-colors: active) { input[type=checkbox] { appearance: auto; } }
+button { color: inherit; }
+summary { min-height: 40px; padding-block: 8px; color: var(--ink); font: 700 var(--text-ui)/1.4 var(--display); letter-spacing: .1em; text-transform: uppercase; }
+details[open] > summary { margin-bottom: 6px; }
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+[data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }
 
-@layer base {
-  html, body {
-    font-family: 'Orbit', monospace;
-  }
-
-  :root {
-    /* Base Colors - Monochrome Blueprint Theme */
-    --color-bg-base: 5 6 10;
-    --color-bg-panel: 10 13 20;
-    --color-bg-panel-border: 31 38 51;
-    --color-bg-overlay: 12 12 16; /* #0c0c10 */
-
-    --color-text-primary: 214 229 237;
-    --color-text-subdued: 140 155 165;
-    --color-text-muted: 112 124 134;
-
-    /* Semantic Accents - Monochromatic & Sterile */
-    --color-accent-primary: 214 229 237;   /* Icy Blue (포스터 메인 컬러와 동일) */
-    --color-accent-secondary: 140 155 165; /* Muted Icy Blue (투명도/명도로 계층 구분) */
-    --color-accent-tertiary: 112 124 134;  /* AA-readable Dark Icy Blue */
-    
-    /* Status Colors — STANN OS 상태색 역할(stann-os.css E섹션)과 값 일치
-       alert = --os-status-alert(#b34747 = 179 71 71) · warn = --os-status-warn(#b39847 = 179 152 71) */
-    --color-accent-alert: 205 88 88;       /* AA-readable muted red */
-    --color-accent-warn: 179 152 71;       /* Muted Gold (채도 빠진 건조한 노랑) */
-
-    /* ─── Typography Scale ──────────────────────────────────────────────────── */
-    /* mobile base — 장식용(home ASCII, 카운트다운) */
-    --text-pico:    0.5rem;      /* 8px  */
-    --text-nano:    0.5625rem;   /* 9px  */
-    /* content scale */
-    --text-micro:   0.625rem;    /* 10px - LabelText/MetaText 모바일, 뱃지 */
-    --text-caption: 0.6875rem;   /* 11px - ArtistRow meta 등 */
-    --text-small:   0.75rem;     /* 12px - body 모바일, label 데스크톱, input */
-    --text-body:    0.875rem;    /* 14px - body 데스크톱, heading 모바일 */
-    --text-heading: 1rem;        /* 16px - HeadingText 데스크톱 */
-    --text-h2:      1.25rem;     /* 20px - PageHeader 모바일 */
-    --text-h1:      1.5rem;      /* 24px - TitleText 모바일, PageHeader 데스크톱 */
-    --text-title:   1.875rem;    /* 30px - TitleText 데스크톱 */
-    --text-hero:    3rem;        /* 48px - home TERMINAL 모바일 */
-    --text-display: 6rem;        /* 96px - home TERMINAL 데스크톱 */
-  }
+/* The console draws its own pointer (Shell); the system caret returns over text fields. */
+html[data-cursor=console],
+html[data-cursor=console] * {
+  cursor: none;
+}
+html[data-cursor=console] :is(input:not([type=checkbox]), textarea, [contenteditable=true]) {
+  cursor: text;
 }
 
-@layer utilities {
-  .text-shadow-glow-primary {
-    text-shadow: 0 0 16px rgb(var(--color-accent-primary) / 0.4);
-  }
-  .text-shadow-glow-secondary {
-    text-shadow: 0 0 16px rgb(var(--color-accent-secondary) / 0.4);
-  }
-  .text-shadow-glow-alert {
-    text-shadow: 0 0 16px rgb(var(--color-accent-alert) / 0.4);
-  }
-  .text-shadow-glow-warn {
-    text-shadow: 0 0 16px rgb(var(--color-accent-warn) / 0.4);
-  }
-  .text-shadow-glow-tertiary {
-    text-shadow: 0 0 16px rgb(var(--color-accent-tertiary) / 0.4);
-  }
-}
-
-/* 셀렉션 — 액센트 배경 (STANN OS 불변 글루) */
-::selection {
-  background: rgb(var(--color-accent-primary));
-  color: rgb(var(--color-bg-base));
-}
-
-/* 포커스 가시화 — STANN OS 불변 글루 (canon: 2px accent, offset 2px) */
-:focus-visible {
-  outline: 2px solid rgb(var(--color-accent-primary));
-  outline-offset: 2px;
-}
-
-.skip-link {
-  position: fixed;
-  left: 1rem;
-  top: 1rem;
-  z-index: 100;
-  transform: translateY(calc(-100% - 2rem));
-  border: 1px solid rgb(var(--color-accent-primary));
-  background: rgb(var(--color-bg-base));
-  color: rgb(var(--color-text-primary));
-  padding: 0.75rem 1rem;
-  font-family: var(--font-jetbrains), monospace;
-  font-size: 0.875rem;
-  transition: transform 120ms ease-out;
-}
-
-.skip-link:focus-visible {
-  transform: translateY(0);
-}
-
-/* reduced-motion 전역 가드 (STANN OS 공통 — 디코드·스캔라인·CRT 즉시 표시 폴백) */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
+/* A sub-plate folded away by its stack (FitStack) is gone, whatever its display. */
+[data-priority][hidden] {
+  display: none !important;
 }

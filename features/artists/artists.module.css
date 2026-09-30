@@ -1,0 +1,149 @@
+/* ── Profile: identity plate · records and shared lineup · biography. ─────── */
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+}
+.column > :first-child {
+  flex: 1;
+}
+/* Appearances: flush lines across the plate (--bleed) of date · session · dock and time, in turns of
+   tone. Each line carries the plate's text inset itself, so its margins hold however it stacks; the
+   session link covers the whole line. */
+.timeline {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  column-gap: 16px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.timeline li {
+  position: relative;
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  row-gap: 4px;
+  padding: 10px max(12px, var(--bleed, 0px));
+  transition: var(--light-motion);
+}
+.timeline li:nth-child(odd) {
+  background: var(--well);
+}
+.timeline time {
+  color: var(--accent);
+  font: 400 var(--t-md)/1.2 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.recordBody {
+  min-width: 0;
+}
+.timeline a {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  font: 800 var(--t-xl)/1 var(--display);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.timeline a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.timeline p {
+  color: var(--muted);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+.slot {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+.slot span {
+  color: var(--accent);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+}
+.slot b {
+  color: var(--ink);
+  font: 400 var(--t-md)/1.2 var(--mono);
+}
+.state {
+  display: inline-block;
+  color: var(--accent);
+  font: 700 var(--t-xs)/1.3 var(--display);
+  letter-spacing: .16em;
+}
+.shared {
+  flex: 0 0 auto;
+}
+/* Shared lineups: flush cells across the plate (--bleed), in turns of tone. */
+.sharedCells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.sharedCells li {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 8px max(10px, var(--bleed, 0px));
+  color: var(--ink);
+  transition: var(--light-motion);
+}
+.sharedCells li:nth-child(odd) {
+  background: var(--well);
+}
+.sharedCells a,
+.sharedCells span {
+  font: 800 var(--t-lg)/1.05 var(--display);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.sharedCells a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.sharedCells small {
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .12em;
+}
+@container (max-width: 560px) {
+  .timeline,
+  .timeline li { grid-template-columns: minmax(0, 1fr); }
+  .slot { justify-items: start; }
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.timeline time,
+.slot span,
+.slot b,
+.state,
+.sharedCells small {
+  white-space: nowrap;
+}
+
+/* Hover sweeps a card or a line in from the side the pointer entered. */
+.sharedCells li:has(a:hover) {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.sharedCells li:has(a:hover) small {
+  color: inherit;
+}
+.timeline li:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.timeline li:hover * {
+  color: inherit !important;
+}
+.timeline li:has(a:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+

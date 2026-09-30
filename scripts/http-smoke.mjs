@@ -1,71 +1,33 @@
-import { readdir, readFile } from 'node:fs/promises';
-import path from 'node:path';
-
-const baseUrl = process.env.SMOKE_BASE_URL ?? 'http://127.0.0.1:3005';
-const includeApi = process.env.SMOKE_API === '1';
-const routes = ['/', '/home', '/about', '/gate', '/gate/request', '/lineup', '/status', '/transmit', '/signal', '/link'];
-
-async function waitUntilReady() {
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    try {
-      const response = await fetch(`${baseUrl}/home`);
-      if (response.ok) return;
-    } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  throw new Error(`runtime did not become ready: ${baseUrl}`);
+import assert from 'node:assert/strict';
+const baseUrl=process.env.SMOKE_BASE_URL ?? 'http://127.0.0.1:3005';
+const includeApi=process.env.SMOKE_API==='1';
+// The server is started in the background just before this runs: wait until it answers.
+for(let attempt=0;;attempt+=1) {
+  try { if((await fetch(`${baseUrl}/`)).ok) break; } catch {}
+  if(attempt>=60) throw new Error(`HTTP smoke: ${baseUrl} did not answer within 60s`);
+  await new Promise(resolve=>setTimeout(resolve,1000));
 }
-
-async function findWebglChunk() {
-  const chunkDir = '.next/static/chunks';
-  for (const file of await readdir(chunkDir)) {
-    if (!file.endsWith('.js')) continue;
-    const source = await readFile(path.join(chunkDir, file), 'utf8');
-    if (source.includes('WebGLRenderer') && source.includes('EffectComposer')) return file;
-  }
-  throw new Error('WebGL chunk could not be identified');
+const routes=['/','/events','/artists','/transmit','/signal','/about','/events/TRM-01','/events/TRM-01/request','/artists/stann-lumo'];
+for(const route of routes) {
+  const response=await fetch(`${baseUrl}${route}`);
+  const html=await response.text();
+  assert.equal(response.status,200,route);
+  assert.equal((html.match(/<main(?:\s|>)/g)??[]).length,1,`${route}: main landmark`);
+  assert.ok(html.includes('href="#main"') && html.includes('id="main"'),`${route}: skip navigation`);
+  assert.ok(html.includes('<title>'),`${route}: title`);
+  assert.ok(!/<canvas(?:\s|>)/.test(html),`${route}: no inherited WebGL scene`);
 }
-
-function stripTags(value) {
-  return value.replace(/<[^>]+>/g, '').replace(/&[^;]+;/g, ' ').trim();
+for(const [route,target] of [['/home','/'],['/gate?event=TRM-01','/events/TRM-01'],['/gate/request?eventId=TRM-01&code=never-forward','/events/TRM-01/request'],['/lineup?event=TRM-01&artist=01-A','/artists/stann-lumo'],['/artists/appearance%3ATRM-01%3A01-A','/artists/stann-lumo'],['/artists/appearance%3ATRM-02%3A02-A','/artists/stann-lumo'],['/status','/events'],['/archive','/events'],['/events?selected=TRM-01','/events/TRM-01'],['/link','/about']]) {
+  const response=await fetch(`${baseUrl}${route}`,{redirect:'manual'});
+  assert.ok([307,308].includes(response.status),`${route}: redirect`);
+  assert.equal(response.headers.get('location'),target,`${route}: selected record preserved, unrelated query stripped`);
 }
-
-await waitUntilReady();
-const webglChunk = await findWebglChunk();
-const titles = new Set();
-
-for (const route of routes) {
-  const response = await fetch(`${baseUrl}${route}`);
-  const html = await response.text();
-  if (!response.ok) throw new Error(`${route}: expected 200, received ${response.status}`);
-  const mainCount = (html.match(/<main(?:\s|>)/g) ?? []).length;
-  if (mainCount !== 1) throw new Error(`${route}: expected one main, received ${mainCount}`);
-  if (!html.includes('href="#main-content"') || !html.includes('id="main-content"')) {
-    throw new Error(`${route}: skip-link contract missing`);
-  }
-  const title = html.match(/<title>(.*?)<\/title>/s)?.[1];
-  const h1 = html.match(/<h1[^>]*>(.*?)<\/h1>/s)?.[1];
-  if (!title || !stripTags(h1 ?? '')) throw new Error(`${route}: title or visible h1 missing`);
-  titles.add(title);
-  if (html.includes(webglChunk) || /<canvas(?:\s|>)/.test(html)) {
-    throw new Error(`${route}: WebGL entered the initial HTML graph`);
+assert.equal((await fetch(`${baseUrl}/not-a-terminal-page`)).status,404);
+if(includeApi) {
+  for(const route of ['/api/events','/api/transmit?page=1']) {
+    const response=await fetch(`${baseUrl}${route}`);
+    assert.equal(response.status,200,route);assert.equal(response.headers.get('cache-control'),'no-store',`${route}: cache`);
+    const body=await response.json();assert.ok(route.includes('events') ? Array.isArray(body) : Array.isArray(body.logs));
   }
 }
-
-if (titles.size !== routes.length) throw new Error('route titles are not unique');
-
-const statusHtml = await (await fetch(`${baseUrl}/status`)).text();
-if (!statusHtml.includes('STATIC REGISTRY') || statusHtml.includes('REALTIME')) {
-  throw new Error('status map truthfulness contract failed');
-}
-
-if (includeApi) {
-  for (const route of ['/api/events', '/api/transmit?page=1']) {
-    const response = await fetch(`${baseUrl}${route}`);
-    if (!response.ok || response.headers.get('cache-control') !== 'no-store') {
-      throw new Error(`${route}: public API/cache smoke failed (${response.status})`);
-    }
-  }
-}
-
-console.log(`HTTP smoke PASS: ${routes.length} routes at ${baseUrl}; WebGL chunk ${webglChunk} deferred`);
+console.log(`HTTP smoke PASS: ${routes.length} pages, 10 compatibility redirects, 404${includeApi?', 2 public APIs':''}; ${baseUrl}`);

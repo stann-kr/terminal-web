@@ -16,12 +16,13 @@ invocation_logs = true
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-# Root binding은 local tooling 호환용이다. Remote deploy는 항상 explicit env를 사용한다.
+# Next.js 로컬 미리보기도 운영 D1을 사용한다. Remote deploy는 explicit env를 사용한다.
 [[d1_databases]]
 binding = "DB"
 database_name = "terminal-db"
 database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
+remote = true
 
 [env.production]
 name = "terminal-2"
@@ -47,6 +48,7 @@ binding = "ASSETS"
 
 [[env.development.d1_databases]]
 binding = "DB"
-database_name = "terminal-db-dev"
-database_id = "97a46d35-7674-4992-be95-a813d97b39a3"
+# Deployed development and production intentionally share live data.
+database_name = "terminal-db"
+database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"

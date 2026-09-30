@@ -1,0 +1,541 @@
+/* The stage. Once the window is measured (`data-stage=stage`) every plate, carrier and the back
+   card is an absolutely placed box that travels to its new rect by transform and size; its content
+   is drawn at the arrival size and the box opens over it like a window. A view that needs more
+   than one screen spans sheets, and the page snaps from sheet to sheet. The server's first markup
+   (`boot`, and pages without script) lays the same boxes out in document order. */
+.stage {
+  position: relative;
+  min-width: 0;
+  outline: none;
+}
+.stage[hidden] {
+  display: none;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Stage mode ──────────────────────────────────────────────────────────── */
+.stage[data-stage=stage] {
+  height: var(--stage-h);
+}
+.stage[data-stage=stage] .box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: clip;
+  contain: layout paint;
+}
+.box {
+  z-index: 1;
+  min-width: 0;
+}
+.item {
+  z-index: 2;
+}
+/* Sub-plates sit flush; every other one is a shade lighter, so neighbours part by tone, not by a line. */
+.item[data-zebra] > .layer {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+.detail {
+  z-index: 3;
+}
+.pagerBox,
+.backBox {
+  z-index: 2;
+}
+/* Snap points: one per sheet, so the wheel carries the page a whole screen at a time. */
+.sheet {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  scroll-snap-align: start;
+  scroll-margin-top: var(--frame-y, 10px);
+}
+/* Transitions start after the first stage layout has painted, so nothing flies in from a corner.
+   Moving and resizing share one long natural settle; a new target mid-flight simply continues. */
+.stage[data-ready] .box {
+  transition-property: transform, width, height, background-color, opacity, visibility;
+  transition-duration: var(--dur-move), var(--dur-move), var(--dur-move), var(--dur-move), var(--dur-exit), 0s;
+  transition-timing-function: var(--ease-move), var(--ease-move), var(--ease-move), var(--ease-move), linear, linear;
+  transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, 0s, 0s;
+}
+.box[data-visible=false] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.stage[data-resizing] .box {
+  /* Dragging the window: every box follows it at once. */
+  transition: none;
+}
+.stage[data-ready] .box[data-visible=false] {
+  transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, 0s, var(--dur-exit);
+}
+
+/* Content layers. The new content arrives partway through the move; the old one only fades. */
+.layer {
+  min-width: 0;
+  container: layer / inline-size;
+}
+.stage[data-stage=stage] .layer {
+  /* A fixed rect on the stage, so faces can answer its height as well as its width. */
+  container-type: size;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--cw);
+  height: var(--ch);
+  overflow: hidden;
+}
+.stage[data-stage=stage] .layer[data-layer=current] {
+  animation: layerIn var(--dur-enter) cubic-bezier(.2, .7, .2, 1) calc(var(--enter-delay) + var(--delay, 0ms)) backwards;
+}
+/* The first appearance has nothing to travel: content only fades in, along the same wave. */
+.stage[data-stage=stage]:not([data-ready]) .layer[data-layer=current] {
+  animation-delay: calc(var(--delay, 0ms) * 2);
+}
+/* The old content stays at the size it was drawn at and dims slowly at first, so it never blinks
+   out; the new content, drawn over it, crossfades in before it has gone. */
+.layer[data-layer=leaving] {
+  pointer-events: none;
+  animation: layerOut var(--dur-exit) cubic-bezier(.4, 0, .8, .6) forwards;
+}
+.stage:not([data-stage=stage]) .layer[data-layer=leaving] {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .layer[data-layer=leaving] {
+    display: none;
+  }
+}
+@keyframes layerIn {
+  from { opacity: 0; transform: translateY(4px); }
+}
+@keyframes layerOut {
+  to { opacity: 0; }
+}
+
+/* List pager under an open list: a bar whose keys fill its height, flush to its sides. */
+.pager {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  height: 100%;
+  font: 700 var(--t-sm)/1 var(--display);
+  letter-spacing: .1em;
+}
+.pager > * {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--pad);
+  color: var(--muted);
+}
+.pager > span:not([aria-hidden]):not(.srOnly) {
+  opacity: .55;
+}
+.pager > span[aria-hidden] {
+  flex: 1;
+  justify-content: center;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+.pager a {
+  background: var(--well);
+  color: var(--ink);
+  text-decoration: none;
+  transition: var(--light-motion);
+}
+.pager a:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.pager a:focus-visible {
+  outline-offset: -4px;
+}
+
+/* ── The server's first markup (and pages without script): document order ── */
+.stage:not([data-stage=stage]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: var(--gap);
+}
+.stage:not([data-stage=stage]) .box {
+  position: relative;
+  flex: 1 1 100%;
+}
+.stage:not([data-stage=stage]) .box[data-visible=false] {
+  display: none;
+}
+.stage:not([data-stage=stage]) .box[data-plate=next] {
+  order: -1;
+}
+/* Small plates become a row of chips above the open plate (or below, by config). */
+.stage:not([data-stage=stage]) .box[data-mode=chip] {
+  flex: 0 0 auto;
+  order: 0;
+}
+.stage:not([data-stage=stage]) .box[data-mode=chip] .layer {
+  container-type: normal;
+}
+.stage[data-chips=bottom]:not([data-stage=stage]) .box[data-mode=chip] {
+  order: 9;
+}
+.stage:not([data-stage=stage]) .box[data-mode=hero] {
+  order: 1;
+}
+.stage:not([data-stage=stage]) .box[data-detail] {
+  order: 2;
+}
+.stage:not([data-stage=stage]) .pagerBox {
+  order: 3;
+}
+.stage[data-view=home]:not([data-stage=stage]) .box[data-plate]:not([data-plate=next]) {
+  flex: 1 1 calc(50% - var(--gap));
+}
+@media (max-width: 700px) {
+  .stage[data-view=home]:not([data-stage=stage]) .box[data-plate]:not([data-plate=next]) {
+    flex-basis: 100%;
+  }
+}
+
+/* The server cannot know the window. Where the stage will take over, its first markup waits
+   hidden for the script instead of flashing the document layout; without script it shows. */
+@media (scripting: enabled) {
+  .stage[data-stage=boot] {
+    visibility: hidden;
+    animation: bootReveal 0s linear 6s forwards;
+  }
+}
+@media (scripting: none) {
+  .stage[data-stage=boot] {
+    visibility: visible;
+    animation: none;
+  }
+}
+@keyframes bootReveal {
+  to { visibility: visible; }
+}
+
+/* A plate's spare-height bay is only a filler for document pages; the stage has no spare height. */
+.stage[data-stage=stage] :global([data-bay]) {
+  display: none;
+}
+
+/* ── Paged text ──────────────────────────────────────────────────────────── */
+.textPages {
+  --para-gap: 10px;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+.textFrame {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.stage[data-stage=stage] .textFrame {
+  /* A zero basis: the frame's height comes from the space around it, never from the text in it. */
+  flex-basis: 0;
+  overflow: hidden;
+}
+.textPage p,
+.textEmpty {
+  margin: 0 0 var(--para-gap);
+  color: var(--ink);
+  font-size: var(--text-body);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+.textEmpty {
+  color: var(--muted);
+}
+.textPage p:last-child {
+  margin-bottom: 0;
+}
+.textPage:lang(ko) {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.stage[data-stage=stage] .textPage {
+  animation: pageIn 220ms var(--ease-move) both;
+}
+.stage[data-stage=stage] .textPage[data-direction='-1'] {
+  animation-name: pageBack;
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateX(12px); }
+}
+@keyframes pageBack {
+  from { opacity: 0; transform: translateX(-12px); }
+}
+/* Page turns: a flush bar across the column (--bleed) in its well; the keys are a step deeper and
+   as tall as the bar. */
+.textPager {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+  min-height: 48px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  background: var(--well);
+  font: 700 var(--t-sm)/1 var(--display);
+  letter-spacing: .1em;
+}
+.textPager > span[aria-hidden] {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+.textPager button {
+  min-height: 44px;
+  padding: 0 max(14px, var(--bleed, 0px));
+  border: 0;
+  background: var(--well);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: inherit;
+  transition: var(--light-motion);
+}
+.textPager button:hover:not(:disabled) {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.textPager button:disabled {
+  cursor: default;
+  opacity: .4;
+}
+
+/* ── Fitted titles: the inner line carries the fitted size ────────────────── */
+.fitTitle {
+  display: block;
+  min-width: 0;
+}
+.fitTitle > span {
+  display: block;
+  letter-spacing: var(--title-ls, 0em);
+}
+
+/* A desktop window too short for the tilings: one card asks for a taller window. */
+.stage[data-short] > .box {
+  display: none;
+}
+.enlarge {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 18px;
+  min-height: calc(100svh - 2 * var(--frame-y, 10px));
+  padding: clamp(24px, 6vw, 96px);
+}
+.enlargeMark {
+  font: 400 clamp(40px, 6vw, 96px)/1 var(--brand);
+}
+.enlarge h1 {
+  font: 800 clamp(32px, 4vw, 64px)/.95 var(--display);
+  letter-spacing: .02em;
+  outline: none;
+}
+.enlarge p:not(.enlargeMark) {
+  max-width: 44ch;
+  font: 600 var(--t-lg)/1.45 var(--sans);
+}
+.enlarge button {
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-lg)/1 var(--display);
+  letter-spacing: .12em;
+  transition: var(--light-motion);
+}
+.enlarge button:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+
+@media (forced-colors: active) {
+  .pager a, .textPager button { border: 1px solid CanvasText; }
+}
+
+/* The place of a file whose records are not read yet: the state, flush across the top. */
+.pendingFile {
+  --bleed: var(--pad);
+  display: grid;
+  align-content: start;
+  height: 100%;
+  padding: 0 var(--pad);
+}
+
+/* ── Rings: the site's one motif, behind the view's focal plate ─────────────
+   Rings 18px apart flow outward from a centre that leans after the pointer (Rings.tsx sets
+   --rx/--ry), one spacing per --ring-period at an even pace; the plate's content is drawn over them. */
+.rings {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: color-mix(in srgb, var(--ink) 20%, transparent);
+  background: repeating-radial-gradient(circle at var(--rx) var(--ry),
+    transparent calc(var(--ring-phase) - 18px),
+    currentColor calc(var(--ring-phase) - 18px) calc(var(--ring-phase) - 16px),
+    transparent calc(var(--ring-phase) - 16px) var(--ring-phase));
+  -webkit-mask-image: radial-gradient(circle at var(--rx) var(--ry), #000 0 30%, transparent 70%);
+  mask-image: radial-gradient(circle at var(--rx) var(--ry), #000 0 30%, transparent 70%);
+}
+.rings[data-under] {
+  z-index: -1;
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .rings { animation: ringOut var(--ring-period) linear infinite; }
+}
+/* Defined here, not in globals: a CSS module renames the keyframes it names, so they must live beside
+   their use. --ring-phase itself is registered globally (@property) so it can be animated. */
+@keyframes ringOut {
+  from { --ring-phase: 0px; }
+  to { --ring-phase: 18px; }
+}
+@media (forced-colors: active) {
+  .rings { display: none; }
+}
+
+/* ── Scroll cue: an icon key at the foot of the window while sheets lie below ──
+   Two chevrons on a translucent square in the palette's cue colour (one no plate wears), letting the
+   plates show through. Hover fills it solid. */
+.scrollHint {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 40;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  background: color-mix(in srgb, var(--cue) 65%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--on-cue);
+  opacity: 0;
+  translate: -50% 12px;
+  visibility: hidden;
+  transition: opacity var(--dur-enter) var(--ease-move), translate var(--dur-enter) var(--ease-move), visibility 0s linear var(--dur-enter), var(--light-motion);
+}
+.scrollHint[data-shown] {
+  opacity: 1;
+  translate: -50% 0;
+  visibility: visible;
+  transition-delay: 0s;
+}
+.scrollHint:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cue);
+}
+.scrollHint:focus-visible {
+  outline-color: var(--cue);
+  outline-offset: 3px;
+}
+/* The chevrons point down and blink softly in turn, a lamp asking to be followed. */
+.scrollHint i {
+  width: 10px;
+  height: 10px;
+  margin-top: -6px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  rotate: 45deg;
+}
+.scrollHint i + i {
+  margin-top: -2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .scrollHint[data-shown] i {
+    animation: hintBlink 1.6s ease-in-out infinite;
+  }
+  .scrollHint[data-shown] i + i {
+    animation-delay: .2s;
+  }
+}
+@keyframes hintBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .2; }
+}
+@media (forced-colors: active) {
+  .scrollHint { border: 1px solid CanvasText; }
+}
+
+/* ── Boot screen: the first visit's wait, the wordmark over a lamp line ─────
+   Shown from the server's first markup, faded when the stage is ready. Without script it never
+   shows; if the script never takes over, it gives way after 6s with the document layout. */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  background: var(--field);
+  color: var(--ink);
+  transition: opacity 420ms var(--ease-move), visibility 0s linear 420ms;
+}
+.boot[data-done] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.bootMark {
+  color: var(--feature);
+  font: 400 clamp(44px, 9vw, 128px)/1 var(--brand);
+}
+.bootLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .24em;
+  text-transform: uppercase;
+}
+.bootLine i {
+  width: 9px;
+  height: 9px;
+  background: currentColor;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bootLine i {
+    animation: bootLamp 1s steps(1, end) infinite;
+  }
+}
+@keyframes bootLamp {
+  50% { opacity: .25; }
+}
+@media (scripting: enabled) {
+  .boot:not([data-done]) {
+    animation: bootGiveWay 0s linear 6s forwards;
+  }
+}
+@keyframes bootGiveWay {
+  to { visibility: hidden; opacity: 0; }
+}
+@media (scripting: none) {
+  .boot { display: none; }
+}
+
+/* The scroll cue is for a pointer and a wheel: a finger scrolls a page to see if it goes on. */
+@media (hover: none), (pointer: coarse) {
+  .scrollHint { display: none; }
+}

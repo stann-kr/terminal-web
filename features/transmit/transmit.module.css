@@ -1,0 +1,129 @@
+/* Length readout: a dark label cell and an outlined digit cell, then the gauge. */
+.counter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+}
+.counter > span {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-md)/1.2 var(--display);
+  letter-spacing: .1em;
+}
+.counter strong {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--well);
+  font: 400 var(--t-2xl)/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.counter small {
+  color: var(--muted);
+  font-size: var(--t-sm);
+}
+.gauge {
+  height: 18px;
+}
+.receipt {
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 10px max(12px, var(--bleed, 0px));
+  background: var(--fill);
+  color: var(--on-fill);
+  font-size: var(--text-ui);
+  font-weight: 600;
+}
+
+/* Query state line: steady when current, blinking while reading, alert on failure. */
+@keyframes readPulse {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: .25; }
+}
+
+/* Node activity: newest first, one node tag cell and its event per row; the newest row is marked. */
+.nodes {
+  display: grid;
+  gap: 4px;
+}
+.nodes li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+}
+.nodes b {
+  padding: 7px 12px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 800 var(--t-lg)/1.2 var(--display);
+  letter-spacing: .06em;
+}
+.nodes li:first-child b {
+  background: var(--mark);
+  color: var(--mark-ink);
+}
+.nodes span {
+  display: flex;
+  align-items: center;
+  padding: 7px 12px;
+  background: var(--well);
+  color: var(--accent);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .14em;
+}
+.nodeEmpty {
+  color: var(--muted);
+  font-size: var(--text-ui);
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.counter > span,
+.counter strong,
+.nodes b,
+.nodes span {
+  white-space: nowrap;
+}
+
+/* ── Sub-plates: node rows and the length readout run flush in turns of tone; the newest node
+   keeps its marked row. ── */
+.nodes,
+.counter {
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.nodes li {
+  gap: 0;
+}
+.nodes b,
+.nodes span,
+.counter > span,
+.counter strong {
+  background: none;
+  color: var(--ink);
+}
+.nodes li:nth-child(even) > *,
+.counter > * {
+  background: var(--well);
+}
+.nodes li:first-child > * {
+  background: var(--mark);
+  color: var(--mark-ink);
+}
+.nodes span,
+.counter > span {
+  color: var(--muted);
+}
+.nodes b,
+.counter > span {
+  padding-left: max(12px, var(--bleed, 0px));
+}
+.nodes span,
+.counter strong {
+  padding-right: max(12px, var(--bleed, 0px));
+}
+.gauge {
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}

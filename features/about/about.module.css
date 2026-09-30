@@ -1,0 +1,95 @@
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.node {
+  min-width: 0;
+}
+/* Channel directory: a solid index cell beside a tinted name cell. */
+.channels {
+  display: grid;
+  gap: 4px;
+}
+.channels a {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  grid-template-areas: "n name" "n host";
+  column-gap: 4px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.channels a > span:first-child {
+  grid-area: n;
+  display: grid;
+  place-items: center;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 800 var(--t-lg)/1 var(--display);
+}
+.channels strong {
+  grid-area: name;
+  padding: 8px 12px 0;
+  background: var(--well);
+  font: 800 var(--t-lg)/1.1 var(--display);
+  letter-spacing: .04em;
+}
+.host {
+  grid-area: host;
+  padding: 2px 12px 8px;
+  background: var(--well);
+  color: var(--muted);
+  font: 400 var(--t-xs)/1.3 var(--mono);
+}
+.channels a > * {
+  transition: var(--light-motion);
+}
+.channels a:focus-visible {
+  outline-offset: 2px;
+}
+@media (max-width: 1280px) {
+  .node { grid-column: 1 / -1; }
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.channels a > span:first-child,
+.host {
+  white-space: nowrap;
+}
+
+.channels a {
+  transition: var(--light-motion);
+}
+.channels a:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.channels a:hover > * {
+  background: none !important;
+  color: inherit !important;
+}
+
+/* ── Sub-plates: channel rows run flush in turns of tone; the number is printed in the accent. ── */
+.channels {
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.channels a {
+  column-gap: 0;
+  grid-template-columns: calc(max(10px, var(--bleed, 0px)) + 40px) minmax(0, 1fr);
+}
+.channels a > span:first-child,
+.channels strong,
+.host {
+  background: none;
+}
+.channels li:nth-child(odd) a > * {
+  background: var(--well);
+}
+.channels a > span:first-child {
+  justify-content: start;
+  padding-left: max(10px, var(--bleed, 0px));
+  color: var(--accent);
+}

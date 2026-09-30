@@ -1,0 +1,56 @@
+.channel {
+  min-width: 0;
+}
+.lead {
+  font: 700 var(--t-lg)/1.4 var(--sans);
+}
+/* Channel state: the real request lifecycle as one flush status line across the plate. */
+.signalMatrix {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  margin: 16px calc(var(--bleed, 0px) * -1) 14px;
+  padding: 8px max(12px, var(--bleed, 0px));
+  background: var(--well);
+  font: 700 var(--t-sm)/1 var(--display);
+  letter-spacing: .16em;
+}
+.signalMatrix i {
+  width: 9px;
+  height: 9px;
+  background: currentColor;
+  opacity: .35;
+}
+.signalMatrix:is([data-state=sending], [data-state=saved], [data-state=error]) i {
+  opacity: 1;
+}
+.signalMatrix[data-state=saved] {
+  background: var(--fill);
+  color: var(--on-fill);
+}
+.signalMatrix[data-state=error] {
+  background: var(--danger);
+  color: var(--plate, var(--field));
+}
+@keyframes signalLamp {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: .25; }
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .signalMatrix[data-state=sending] i {
+    animation: signalLamp .6s steps(1, end) infinite;
+  }
+}
+@media (max-width: 1280px) {
+  .channel { grid-column: 1 / -1; }
+}
+
+.deck {
+  margin-top: 12px;
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.signalMatrix {
+  white-space: nowrap;
+}

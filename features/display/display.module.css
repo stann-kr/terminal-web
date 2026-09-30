@@ -1,0 +1,93 @@
+/* Query lamp: a small square that fills while a real request is pending. */
+.activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font: 600 var(--t-xs)/1 var(--display);
+  letter-spacing: .2em;
+}
+.activity i {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  opacity: .35;
+}
+.activity[data-busy=true] {
+  color: var(--accent);
+}
+.activity[data-busy=true] i {
+  opacity: 1;
+}
+.value {
+  display: inline-flex;
+  color: inherit;
+}
+.window {
+  display: inline-block;
+  overflow: hidden;
+  white-space: pre;
+}
+.glyph {
+  display: inline-block;
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .glyph { animation: glyphRoll var(--dur-hover) var(--ease-move) backwards; }
+}
+/* A changed digit drops into its window (defined in this module, where its name is resolved). */
+@keyframes glyphRoll {
+  from { transform: translateY(-105%); }
+}
+.signalText {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.signalText i {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  background: currentColor;
+  opacity: .35;
+}
+.signalText[data-active=true] i {
+  opacity: 1;
+}
+
+/* Meter: thin equal segments on one baseline. */
+.meter {
+  --tone: var(--ink);
+  display: grid;
+  grid-template-columns: repeat(var(--segments), minmax(0, 1fr));
+  gap: 2px;
+  height: 16px;
+}
+.meter[data-tone=danger] { --tone: var(--danger); }
+.meter i {
+  background: var(--well);
+}
+.meter i[data-on] {
+  background: var(--tone);
+}
+@keyframes lampPulse {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: .25; }
+}
+@keyframes nextPulse {
+  from { background: var(--tone); }
+  to { background: transparent; }
+}
+@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
+  .activity[data-busy=true] i { animation: lampPulse .6s steps(1, end) infinite; }
+  .meter[data-busy] i[data-next] { animation: nextPulse .5s ease-out infinite alternate; }
+}
+@media (forced-colors: active) {
+  .activity i { background: CanvasText; }
+  .meter { display: none; }
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.activity,
+.signalText {
+  white-space: nowrap;
+}

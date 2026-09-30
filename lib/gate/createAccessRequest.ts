@@ -7,6 +7,7 @@ const MAX_ACCESS_CODE_LENGTH = 64;
 const MAX_EMAIL_LENGTH = 254;
 const MAX_GUEST_LIMIT = 10_000;
 const REQUEST_KEYS = [
+  'eventId',
   'accessCode',
   'invitedBy',
   'name',
@@ -17,6 +18,7 @@ const REQUEST_KEYS = [
 ] as const;
 
 export interface GateRequestInput {
+  eventId: string;
   accessCode: string;
   name: string;
   email: string;
@@ -113,7 +115,8 @@ export function findUpcomingGateEvent(
     .map((row) => parseUpcomingEventCandidate(row.id, row.data, now))
     .filter((candidate): candidate is UpcomingEventCandidate => candidate !== null)
     .sort(
-      (a, b) => getEventDateTime(a.lifecycle).getTime() - getEventDateTime(b.lifecycle).getTime(),
+      (a, b) => getEventDateTime(a.lifecycle).getTime() - getEventDateTime(b.lifecycle).getTime()
+        || (a.rowId < b.rowId ? -1 : a.rowId > b.rowId ? 1 : 0),
     )[0] ?? null;
 }
 
@@ -125,6 +128,8 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   if (!hasOnlyKeys(body, REQUEST_KEYS)) {
     return { ok: false, error: 'INVALID_INPUT' };
   }
+  const eventIdResult = parseGateEventId(body.eventId);
+  if (!eventIdResult.ok) return eventIdResult;
   if (
     !isString(body.name)
     || !isString(body.email)
@@ -179,6 +184,7 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   return {
     ok: true,
     input: {
+      eventId: eventIdResult.eventId,
       accessCode,
       name,
       email,
@@ -187,6 +193,17 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
       marketingConsent: body.marketingConsent ?? false,
     },
   };
+}
+
+/** A client event id binds the visible form to the server-selected event; it grants no access. */
+export function parseGateEventId(value: unknown):
+  | { ok: true; eventId: string }
+  | { ok: false; error: string } {
+  if (value === undefined || value === '') return { ok: false, error: 'EVENT_ID_REQUIRED' };
+  if (!isString(value) || value.length > 128 || !value.trim()) {
+    return { ok: false, error: 'INVALID_INPUT' };
+  }
+  return { ok: true, eventId: value.trim() };
 }
 
 export function inspectArtistAccessData(rawData: string): ArtistAccessInspection {

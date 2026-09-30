@@ -1,0 +1,159 @@
+/* The console is the stage alone: the frame pads it, nothing sits above or below. On the stage
+   (html[data-stage-mode=stage]) the page scrolls only sheet to sheet: it snaps, like turning pages. */
+.frame {
+  width: 100%;
+  /* The small viewport: steady while a mobile browser slides its toolbars in and out. */
+  min-height: 100svh;
+  padding: var(--frame-y) clamp(10px, 1.4vw, 24px);
+  background: var(--bg);
+}
+:global(html[data-stage-mode=stage]) {
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+:global(html[data-stage-mode=stage])::-webkit-scrollbar {
+  display: none;
+}
+:global(html[data-stage-mode=stage]:not([data-sheets='1'])) {
+  scroll-snap-type: y mandatory;
+}
+/* A finger scrolls freely: snapping fights a swipe (and a mobile browser's sliding toolbars). The
+   wheel keeps turning sheet by sheet. */
+@media (pointer: coarse) {
+  :global(html[data-stage-mode=stage]:not([data-sheets='1'])) {
+    scroll-snap-type: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :global(html[data-stage-mode=stage]) {
+    scroll-behavior: smooth;
+  }
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip {
+  position: fixed;
+  left: 16px;
+  top: -100px;
+  z-index: 30;
+  padding: 12px;
+  background: var(--hi);
+  color: var(--on-hi);
+}
+.skip:focus {
+  top: 10px;
+}
+.main {
+  min-width: 0;
+  outline: none;
+}
+
+/* Readouts that ride on the next-session plate. */
+.clock {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--accent);
+  font: 400 var(--t-md)/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.clockZone {
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .2em;
+}
+/* The language of a bilingual text, printed in its head: KO · EN as small caps, the one in use in
+   the plate's ink, the other muted; pressing lights it like any key. Each key keeps a 32px target. */
+.language {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+}
+.language button {
+  min-width: 36px;
+  min-height: 32px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+  transition: var(--light-motion);
+}
+.language button + button::before {
+  content: '·';
+  margin-right: 10px;
+  color: var(--muted);
+}
+.language button[aria-pressed=true] {
+  color: var(--ink);
+}
+.language button:not([aria-pressed=true]):hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.language button:focus-visible {
+  outline-offset: -4px;
+}
+@media (forced-colors: active) {
+  .language button { border: 1px solid CanvasText; }
+}
+
+/* ── Console pointer: an exact point and a trailing ring, blended so it reads on every plate. ── */
+.cursor {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 60;
+  pointer-events: none;
+  /* White under a difference blend inverts whatever it crosses, so it reads on any palette. */
+  color: #fff;
+  mix-blend-mode: difference;
+  transition: opacity var(--dur-hover) var(--ease-move);
+}
+.cursor[data-visible=false],
+.cursor[data-mode=text] {
+  opacity: 0;
+}
+.cursorDot,
+.cursorRing {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  will-change: translate;
+}
+.cursorDot {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background: currentColor;
+}
+.cursorRing {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border: 1.5px solid currentColor;
+  transition: scale var(--dur-hover) var(--ease-move), border-color var(--dur-hover) var(--ease-move), border-width var(--dur-hover) var(--ease-move);
+}
+.cursor[data-mode=control] .cursorRing {
+  scale: 1.6;
+  border-color: var(--pointer);
+  border-width: 1px;
+}
+.cursor[data-pressed] .cursorRing {
+  scale: .7;
+  transition-duration: 60ms;
+}
+.cursor[data-mode=control][data-pressed] .cursorRing {
+  scale: 1.2;
+}
+@media (forced-colors: active) {
+  .cursor { display: none; }
+}

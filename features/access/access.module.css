@@ -1,0 +1,51 @@
+/* Each step of the form opens on a band across the plate (the fieldset already runs flush). */
+.legend {
+  width: 100%;
+}
+/* The code field and its check key share one line; the key is as tall as the input. */
+.code {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+.code > button {
+  min-height: 44px;
+  padding-inline: 16px var(--bleed);
+}
+.codeMessage {
+  min-height: 1.4em;
+  padding: 6px var(--bleed) 0;
+  color: var(--ink);
+  font-size: var(--text-ui);
+}
+.inviter {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px var(--bleed);
+  background: var(--well);
+  color: var(--muted);
+  font-size: var(--text-label);
+  letter-spacing: .1em;
+}
+.inviter strong {
+  color: var(--ink);
+  font-size: var(--text-ui);
+  font-weight: 400;
+  letter-spacing: .04em;
+}
+.contacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 860px) {
+  .contacts { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 400px) {
+  .code { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.legend {
+  white-space: nowrap;
+}

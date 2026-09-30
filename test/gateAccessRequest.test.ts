@@ -17,6 +17,7 @@ import {
 import { GATE_SIGNAL_SUBSCRIPTION_INSERT_SQL } from '../lib/signal/d1SignalSubscriptionRepository';
 
 const validBody = {
+  eventId: 'event-1',
   accessCode: '  ARTIST-01  ',
   invitedBy: '  spoofed name  ',
   name: '  Guest Name  ',
@@ -31,6 +32,7 @@ describe('gate request runtime validation', () => {
     expect(parseGateRequestBody(validBody)).toEqual({
       ok: true,
       input: {
+        eventId: 'event-1',
         accessCode: 'ARTIST-01',
         name: 'Guest Name',
         email: 'guest@example.com',
@@ -46,9 +48,16 @@ describe('gate request runtime validation', () => {
     ['string false marketing consent', { ...validBody, marketingConsent: 'false' }],
     ['numeric email', { ...validBody, email: 123 }],
     ['object access code', { ...validBody, accessCode: { value: 'ARTIST-01' } }],
+    ['invalid event id', { ...validBody, eventId: 1 }],
+    ['oversized event id', { ...validBody, eventId: 'x'.repeat(129) }],
     ['unknown key', { ...validBody, role: 'admin' }],
   ])('rejects %s before database access', (_label, body) => {
     expect(parseGateRequestBody(body)).toEqual({ ok: false, error: 'INVALID_INPUT' });
+  });
+
+  it('requires the event id from older clients explicitly', () => {
+    const { eventId: _eventId, ...body } = validBody;
+    expect(parseGateRequestBody(body)).toEqual({ ok: false, error: 'EVENT_ID_REQUIRED' });
   });
 
   it('does not treat a false privacy boolean as consent', () => {

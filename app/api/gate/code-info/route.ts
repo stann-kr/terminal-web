@@ -6,6 +6,7 @@ import { hasOnlyKeys, isString } from "@/lib/api/validation";
 import { getDb } from "@/lib/db/client";
 import {
   findUpcomingGateEvent,
+  parseGateEventId,
   resolveArtistAccessCode,
 } from "@/lib/gate/createAccessRequest";
 import {
@@ -23,6 +24,7 @@ function json(body: { name: string | null } | { error: string }, status = 200) {
  * guestCode 자체는 노출하지 않으며, 코드 유효 여부도 명시하지 않음.
  *
  * @body code - 인증 코드
+ * @body eventId - 화면에 표시된 신청 대상 행사
  * @returns { name: string | null }; returns a no-store 503 error when verification is unavailable
  */
 export async function POST(request: Request) {
@@ -33,9 +35,12 @@ export async function POST(request: Request) {
       return parsed.response;
     }
 
-    if (!hasOnlyKeys(parsed.body, ["code"]) || !isString(parsed.body.code)) {
+    if (!hasOnlyKeys(parsed.body, ["code", "eventId"]) || !isString(parsed.body.code)) {
       return json({ error: "INVALID_INPUT" }, 400);
     }
+
+    const eventIdResult = parseGateEventId(parsed.body.eventId);
+    if (!eventIdResult.ok) return json({ error: eventIdResult.error }, 400);
 
     const code = parsed.body.code.trim();
 
@@ -57,7 +62,10 @@ export async function POST(request: Request) {
     const upcomingEvent = findUpcomingGateEvent(eventRows, now);
 
     if (!upcomingEvent) {
-      return json({ name: null });
+      return json({ error: "NO_UPCOMING_EVENT" }, 404);
+    }
+    if (upcomingEvent.rowId !== eventIdResult.eventId) {
+      return json({ error: "EVENT_MISMATCH" }, 409);
     }
 
     const artistRows = await listGateArtistRowsByEvent(db, upcomingEvent.rowId);

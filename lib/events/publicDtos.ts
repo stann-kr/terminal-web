@@ -1,4 +1,5 @@
 import { isJsonObject, isString } from '@/lib/api/validation';
+import { isValidEventDateTime } from './lifecycle';
 import type {
   Artist,
   ArtistDescription,
@@ -132,8 +133,9 @@ export function parsePublicEventRow(
   const posterUrl = data.posterUrl === undefined ? undefined : parseBoundedString(data.posterUrl, 2_048);
 
   if (
-    !session || !subtitle || !date || !/^\d{4}-\d{2}-\d{2}$/.test(date)
+    !session || !subtitle || !date
     || !time || !venue || !district || !coords || !capacity || !sound
+    || !isValidEventDateTime({ date, time })
     || !isString(data.status) || !EVENT_STATUSES.has(data.status as EventStatus)
     || invitationLines === null || description === null || posterUrl === null
   ) {

@@ -32,7 +32,7 @@ jobs:
           npm run smoke:http
       - run: npm run build:worker
       - name: Prepare local Worker D1
-        run: npx wrangler d1 migrations apply terminal-db-dev --local --env development
+        run: npx wrangler d1 migrations apply terminal-db --local --env development
       - name: Worker HTTP smoke
         run: |
           npm run cf:preview > /tmp/terminal-worker.log 2>&1 &

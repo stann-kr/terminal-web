@@ -2,13 +2,13 @@ import { desc, eq, sql } from 'drizzle-orm';
 import type { getDb } from '@/lib/db/client';
 import { transmitLogs } from '@/lib/db/schema';
 import {
+  TRANSMIT_PAGE_SIZE as PAGE_SIZE,
   toPublicTransmitLog,
   type PublicTransmitLog,
   type TransmitLogPage,
 } from './contract';
 import type { NewTransmitRecord } from './domain';
 
-const PAGE_SIZE = 5;
 const createdAtSortKey = sql<number>`
   CASE
     WHEN typeof(${transmitLogs.createdAt}) IN ('integer', 'real')

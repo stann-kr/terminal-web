@@ -1,0 +1,335 @@
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.eyebrow {
+  width: fit-content;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font: 700 var(--text-label)/1.3 var(--display);
+  letter-spacing: .16em;
+}
+
+/* ── Plate: a flat face; the station name sits on a heavy rule. ── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  container-type: inline-size;
+  padding: calc(var(--pad) * .7) var(--pad) var(--pad);
+}
+.panelHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: var(--rule) solid var(--accent);
+}
+.panelTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  min-width: 0;
+  font-weight: 400;
+}
+.panelLabel {
+  color: var(--accent);
+  font: 700 clamp(18px, 7.5cqi, 38px)/1 var(--display);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+.panelKo {
+  color: var(--muted);
+  font: 600 var(--t-md)/1.3 var(--sans);
+}
+.panelTitle:not([data-labelled]) .panelKo {
+  color: var(--ink);
+  font: 700 var(--t-lg)/1.15 var(--display);
+}
+.panelBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* A printed tag: small muted caps on the plate itself, never a floating box; neighbours are joined
+   by a dot. A solid tag (a state) is printed in the plate's ink. */
+.chip {
+  display: inline;
+  flex-shrink: 0;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.chip + .chip::before {
+  content: '·';
+  padding-inline: .55em;
+}
+.chip[data-solid] {
+  color: var(--ink);
+}
+
+/* Bay: spare height left quiet, closed by a hairline and a printed name. */
+.bay {
+  display: flex;
+  flex: 1 1 32px;
+  align-items: flex-end;
+  min-height: 32px;
+  margin-top: 16px;
+  border-bottom: 1px solid var(--faint);
+}
+.bay span {
+  padding-bottom: 6px;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .2em;
+}
+
+/* ── Keys: a tinted key, or a solid ink key for the one primary action. Hover lights either up
+   in the plate's highlight colour; nothing moves and no frame appears. ── */
+.action,
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 52px;
+  padding: 0 22px;
+  border: 0;
+  background: var(--well);
+  color: var(--ink);
+  font: 700 var(--t-lg)/1.2 var(--display);
+  letter-spacing: .1em;
+  text-align: left;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: var(--light-motion);
+}
+/* Every occurrence of TERMINAL is set in the brand face. */
+.brandWord {
+  font-family: var(--brand);
+  font-weight: 400;
+  letter-spacing: .02em;
+  text-transform: none;
+}
+
+/* Deck: a panel's keys as full-width bars across the plate, flush to its sides (--bleed). The one
+   primary key is solid; the others are tinted, a neighbouring tinted key one step deeper. Wide
+   plates put the bars side by side. */
+.deck {
+  display: grid;
+  justify-self: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.deck > * {
+  width: 100%;
+  min-height: 56px;
+  padding-inline: max(12px, var(--bleed, 0px));
+}
+.deck > :not(.primary):nth-child(even) {
+  background: linear-gradient(var(--well), var(--well)) var(--well);
+}
+.primary {
+  background: var(--fill);
+  color: var(--on-fill);
+}
+.action:hover,
+.button:hover:not(:disabled) {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+/* A pressed key flashes inverse, like a backlit switch taking the command. */
+.action:active,
+.button:active:not(:disabled) {
+  box-shadow: inset 0 0 0 100vmax var(--on-hi);
+  color: var(--hi);
+  transition: none;
+}
+.action:focus-visible,
+.button:focus-visible {
+  outline-offset: -5px;
+  outline-color: currentColor;
+}
+.button[aria-busy='true']::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+/* ── Facts: label/value lines flush across the plate (--bleed), in turns of tone. Each line carries
+   the plate's text inset itself, so a line keeps its margins however its cells stack. ── */
+.facts {
+  --inset: max(12px, var(--bleed, 0px));
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 16px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.facts > div {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  padding: 9px var(--inset);
+}
+.facts > div:nth-child(odd) {
+  background: var(--well);
+}
+.facts dt {
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .16em;
+}
+.facts dd {
+  min-width: 0;
+  color: var(--ink);
+  font: 700 var(--t-lg)/1.25 var(--display);
+  letter-spacing: .03em;
+  text-align: right;
+}
+
+/* ── Band: a section label as a solid strip across the plate (--bleed), its note on the right. ── */
+.band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 12px;
+  min-height: 36px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 6px max(12px, var(--bleed, 0px));
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-sm)/1.1 var(--display);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.band > :not(:first-child) {
+  color: var(--on-fill-muted);
+  font: 600 var(--t-xs)/1.2 var(--sans);
+  letter-spacing: .04em;
+  text-transform: none;
+}
+
+/* ── Notices: a tinted block, or the alert plate when a read failed. ── */
+/* A notice is a flush strip across the plate; its retry key is a bar along the notice's foot. */
+.notice {
+  --notice-inset: max(var(--pad), var(--bleed, 0px));
+  display: grid;
+  gap: 12px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 14px var(--notice-inset);
+  background: var(--well);
+  color: var(--ink);
+}
+.notice[data-surface] {
+  background: var(--plate);
+}
+.noticeKey {
+  margin: 2px calc(var(--notice-inset) * -1) -14px;
+  padding-inline: var(--notice-inset);
+}
+.noticeText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.noticeText .eyebrow {
+  margin-bottom: 0;
+}
+.notice h2 {
+  font: 700 var(--t-xl)/1.15 var(--display);
+  letter-spacing: .03em;
+}
+.noticeBody {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  font-size: var(--text-body);
+}
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+  color: var(--muted);
+  font: 700 var(--text-label)/1 var(--display);
+  letter-spacing: .16em;
+}
+.loading > span {
+  width: 48px;
+  height: 8px;
+  color: var(--line);
+  background: var(--rings);
+}
+
+/* ── Prose ───────────────────────────────────────────────────────────────── */
+.muted {
+  color: var(--muted);
+  font-size: var(--text-ui);
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+@media (forced-colors: active) {
+  .notice, .action, .button, .band, .facts > div { border: 1px solid CanvasText; }
+}
+
+/* Short labels, codes and times never break mid-phrase. */
+.panelLabel,
+.panelKo,
+.facts dt,
+.action,
+.button,
+.eyebrow,
+.bay span {
+  white-space: nowrap;
+}
+.panelHead {
+  flex-wrap: wrap;
+}
+
+/* Plates answer their own width: label/value rows stack once a plate gets narrow. */
+@container (max-width: 440px) {
+  .facts,
+  .facts > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .facts > div {
+    row-gap: 2px;
+  }
+  .facts dd {
+    text-align: left;
+  }
+}
+
+/* ── Sub-plates ────────────────────────────────────────────────────────────
+   Inside a plate, lists, bands and decks run flush to the plate's edges. A padded container
+   publishes its side padding as --bleed; they pull out by it and keep their text on the plate's
+   text line. The head rule runs edge to edge too, so a title is as wide as what it heads. */
+.panel {
+  --bleed: var(--pad);
+}
+.panelHead {
+  margin-inline: calc(var(--pad) * -1);
+  padding-inline: var(--pad);
+}

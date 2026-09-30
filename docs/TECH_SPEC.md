@@ -1,210 +1,36 @@
-# 기술 명세서 (Technical Specification)
+# 기술 구성
 
-본 문서는 프로젝트의 핵심 아키텍처, 커스텀 컴포넌트 설계, 운영 및 검증 계약을 기술한다.
+Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와 Drizzle/D1을 사용합니다. npm lockfile이 실제 의존성 버전을 고정합니다.
 
-## 1. 전역 아키텍처 및 렌더링 원칙
+## 소유 구조
 
-- **프레임워크:** Next.js 16.2.11 (App Router 기반), React 19
-- **런타임 및 개발 환경:** 공개 배포는 OpenNext 기반 Cloudflare Worker bundle을 사용한다. 로컬 개발은 npm 스크립트를 기본으로 하며 Docker 환경도 지원한다.
-- **UI/UX 미학(Aesthetics):** 심우주와 모노크롬 블루프린트 테마를 유지한다. Bloom 기반 WebGL ambient는 Home hero에서만 조건부로 로드하고, 나머지 route의 정보·폼은 정적 shell을 기본으로 한다.
-- **명명 규칙 및 코드 스타일:** 명확한 시맨틱 네이밍, 하드 코딩 지양. CSS 스타일링 시 Tailwind를 기본으로 하되, 복잡한 인라인 동적 속성은 `style` 객체로 관리함.
+- `app`: URL, metadata, server route 진입점, 오류 복구
+- `features/shell`: 상단 바(브랜드·주 메뉴 탭·조회 램프·KST 시계·콘텐츠 언어), 본문 영역과 route 전환 시 focus, 하단 보조 메뉴
+- `features/events`: 행사 조회·통합 카드 목록·상세·기록
+- `features/artists`: 인물 식별과 공개 출연 이력
+- `features/home`, `features/about`: 개요와 편집 콘텐츠
+- `features/access`, `features/signal`, `features/transmit`: 각 입력 상태와 요청
+- `features/display`: 조회 활동 램프·상태 표식·실제 수치 분할 막대(`Meter`)·공통 모션 정책(`data-display-paused`)
+- `features/ui`: 패널·사실 표·키·예비 칸(`Bay`) 같은 중립 primitive, HTTP 오류
+- `lib/events`, `lib/gate`, `lib/signal`, `lib/transmit`: 기존 서버 domain과 repository
 
-## 2. 타이포그래피 시스템
+스타일과 페이지별 전용 표현은 각 capability의 CSS Module이 소유하고, `app/globals.css`는 token·font·reset·`data-surface` 색 plate만 포함합니다. route 전환은 Shell이 유지되는 `main`으로 focus를 옮깁니다. 모션 감소·고대비·save-data·숨겨진 탭 조건에서 `useDisplayPolicy`가 Shell에 `data-display-paused`를 붙이고 전역 CSS가 애니메이션·전환을 제거합니다. 조회·전송 표식은 실제 query·요청 상태에 연결합니다. 글꼴은 `public/fonts/instrument`의 Barlow·Barlow Condensed·Share Tech Mono(OFL, Latin 서브셋)이며 한글은 시스템 산세리프로 표시합니다. STANN OS 공용 원본 token과 patch verifier는 별도로 유지합니다.
 
-### 폰트 사이즈 토큰 스케일
+## 공개 API
 
-| 토큰 | CSS 변수 | 값 | 용도 |
-|---|---|---|---|
-| `text-pico` | `--text-pico` | 8px | 홈 ASCII 장식 |
-| `text-nano` | `--text-nano` | 9px | 카운트다운 라벨, ASCII |
-| `text-micro` | `--text-micro` | 10px | 배지, 홈 서브타이틀 최소값 |
-| `text-caption` | `--text-caption` | 11px | LabelText·MetaText 모바일, ArtistRow 메타, DirectoryLink |
-| `text-small` | `--text-small` | 12px | body 모바일, label 데스크톱, 입력 모바일 |
-| `text-body` | `--text-body` | 14px | body 데스크톱, heading 모바일, 입력 데스크톱 |
-| `text-heading` | `--text-heading` | 16px | PageHeader 타이틀 모바일 |
-| `text-h2` | `--text-h2` | 20px | PageHeader 타이틀 데스크톱, HeadingText 모바일 |
-| `text-h1` | `--text-h1` | 24px | TitleText 모바일, HeadingText 데스크톱 |
-| `text-title` | `--text-title` | 30px | TitleText 데스크톱 |
-| `text-hero` | `--text-hero` | 48px | 홈 TERMINAL 모바일 |
-| `text-display` | `--text-display` | 96px | 홈 TERMINAL 데스크톱 |
-
-### TerminalText 컴포넌트 → 토큰 매핑
-
-| 컴포넌트 | 모바일 | 데스크톱(md+) |
+| Method | Path | 역할 |
 |---|---|---|
-| `TitleText` | text-h1 (24px) | text-title (30px) |
-| `HeadingText` | text-h2 (20px) | text-h1 (24px) |
-| `SubtitleText` | text-small (12px) | text-body (14px) |
-| `BodyText` | text-small (12px) | text-body (14px) |
-| `DataText` | text-small (12px) | text-body (14px) |
-| `LabelText` | text-caption (11px) | text-small (12px) |
-| `MetaText` | text-caption (11px) | text-small (12px) |
+| GET | /api/events | 행사 배열과 출연 레코드 |
+| GET | /api/artists?eventId=... | 행사별 출연 |
+| POST | /api/gate/code-info | 선택 행사 초대인 확인 |
+| POST | /api/gate/request | 게스트 신청 저장 |
+| POST | /api/signal | 소식 수신 연락처 저장 |
+| GET, POST | /api/transmit | 공개 로그 조회와 저장 |
 
-### FormField 컴포넌트 API (`components/ui/FormField.tsx`)
+브라우저는 same-origin API만 호출합니다. POST content type·payload·identity·중복/한도 경쟁을 서버에서 검증하며 no-store와 Idempotency-Key 경계를 유지합니다. 공개 event DTO에 초대 코드·한도는 포함하지 않습니다. 비공개 상태 인물 표시를 UI에서 제외하며, 기존 DTO의 상태별 이름 마스킹은 별도 서버 계약입니다.
 
-```tsx
-// 폼 필드 래퍼
-<FormField label="NAME:">
-  <input className={`${inputClassBase} ${inputAccentClass.secondary}`} />
-</FormField>
+## 로컬과 운영
 
-// accent 종류: secondary | tertiary | alert | warn | primary
-```
+Next dev/start 및 Docker는 3005 포트입니다. Wrangler의 `--local`로 생성한 DB는 해당 checkout `.wrangler/state`에 격리됩니다. 공유 운영 D1을 사용하는 development binding과 local simulation을 혼동하지 않습니다. 원격 migration·secret·배포는 별도 작업입니다.
 
-- `FieldError`는 필드의 `aria-describedby` 대상과 alert semantics를 제공한다.
-- `useFieldErrors`는 validation error의 첫 필드로 focus를 이동하며 Signal·Gate Request·Transmit가 같은 계약을 사용한다.
-- 제목이 있는 `TerminalPanel`은 기본적으로 labelled `section`과 `h2`를 렌더링하고, 중첩 panel은 `headingLevel={3}`을 사용한다.
-
----
-
-## 3. Page Transition 및 `DecodeText` 렌더링 (Cipher Decode 시스템)
-
-짧은 페이지 진입 전환 위에 터미널 특화형 텍스트 Cipher(난수 복호화) 애니메이션을 결합한다.
-
-### 3.1 통합 컴포넌트 `<DecodeText>` 및 `<TerminalText>` 분석
-
-- **위치:** `components/DecodeText.tsx`, `components/ui/TerminalText.tsx`
-- **핵심 역할:** 최종 문자열을 서버 HTML에 먼저 렌더링하고 안정적인 `aria-label`을 유지한 채 같은 DOM node의 시각 문자열에만 cipher를 적용한다.
-- **시맨틱 추상화 (`TerminalText.tsx`):**
-  - `TitleText`와 명시적으로 `cipher`를 켠 heading 외의 본문·라벨·메타·데이터는 plain semantic text로 렌더링한다.
-  - `DecodeText` 직접 사용은 사용자 motion 정책을 따르는 비필수 boot/sleep 화면으로 제한한다.
-  - 제공 컴포넌트: `TitleText` (히어로), `HeadingText` (섹션 제목), `SubtitleText` (부제), `BodyText` (본문), `LabelText` (시스템 라벨), `MetaText` (메타데이터), `DataText` (실시간 데이터).
-- **주요 동적 속성 및 토큰화 (`lib/animationTokens.ts`):**
-  - 각 시맨틱 컴포넌트는 `animationTokens.ts`에 정의된 프리셋을 참조하여 동작함.
-  - `useMotionPolicy`는 reduced-motion, save-data, document visibility를 live 구독한다. 정책이 motion을 허용하지 않으면 최종 문자열을 즉시 유지하고 timer/RAF/Canvas를 실행하지 않는다.
-- **레이아웃 보존 기술 (Layout Shift 방지):**
-  - 최종 문자열을 실제 DOM child로 먼저 렌더링해 브라우저 레이아웃과 접근성 트리가 같은 내용을 사용한다.
-  - 펼침 영역은 `AnimatedHeight`가 내부 콘텐츠의 실제 높이를 관찰하며, cipher는 최종 접근성 이름을 바꾸지 않는 시각적 향상으로만 실행한다.
-
-### 3.2 페이지 구조 (PageLayout & Transition)
-
-- **페이지 공통 래퍼:** `components/shell/PageLayout.tsx` 및 `components/shell/PageTransition.tsx`
-- **동작 원리:** route wrapper는 opacity 전환 없이 scroll 위치만 복원한다. `PageLayout`의 8px item reveal은 사용자 motion 설정을 따르며 의미 텍스트를 숨기지 않는다.
-- **landmark:** `PageLayout`이 유일한 `main#main-content`를 소유하고 전역 skip link의 목적지가 된다.
-
-## 4. 개발 가이드라인
-
-1. **신규 페이지 혹은 컴포넌트 개발 시 규칙:**
-   - 정적 텍스트는 `<TerminalText>` 계열을 사용하되 plain rendering을 기본값으로 한다. `DecodeText` 직접 사용과 body/form/error/status cipher는 금지한다.
-   - `framer-motion`의 `variants` 내 애니메이션을 사용할 때는 `transition.ease` 배열 타입 충돌 여부(`Type 'number[]' is not assignable to type 'Easing...'`)를 주의하고, 반드시 기본 제공 문자열 네이밍 에셋(`ease: 'easeOut'`)으로 완화하여 기재함.
-2. **TypeScript 무결성 확보 규칙:**
-   - hook, 브라우저 API, Framer Motion을 사용하는 컴포넌트만 client boundary로 선언한다.
-   - `@react-three/fiber`는 Home ambient에만 사용한다. `/home`, motion 허용, hero viewport 진입, WebGL 지원이 모두 참일 때 dynamic chunk를 로드하며 오류 시 semantic page를 그대로 유지한다.
-3. **환경 관리 가이드 (Docker):**
-   - 호스트 개발은 저장소 루트의 npm 스크립트를 사용한다. Docker 전용 환경에서 패키지를 추가할 때는 실행 중인 컨테이너의 `docker compose exec web npm install <패키지>`를 사용해 anonymous `node_modules` volume과의 불일치를 피한다.
-
-## 5. 통합 디자인 시스템 및 테마 관리
-
-프로젝트의 시각적 일관성과 유지보수성 확보를 위해 하드코딩된 색상 및 수치를 배제하고 전역 디자인 토큰 시스템으로 전환됨.
-
-### 5.1 Tailwind 테마 확장 (Design Tokens)
-
-- **위치:** `tailwind.config.js`, `app/globals.css`
-- **핵심 테마 변수:**
-  - `terminal-primary`: 시스템 기본 텍스트 색상 (밝은 미색/화이트 계열)
-  - `terminal-accent-*`: 강조색 토큰 (`primary`, `secondary`, `tertiary`, `alert`, `warn`)
-  - `terminal-bg-*`: 배경색 토큰 (`panel`, `panel-border`)
-  - `terminal-muted`, `terminal-subdued`: 보조 및 비활성 텍스트 테마
-- **커스텀 유틸리티:**
-  - `.text-shadow-glow-*`: 각 테마 강조색에 대응하는 텍스트 글로우 효과 유틸리티 제공.
-
-### 5.2 컴포넌트 표준화 원칙
-
-- 모든 페이지는 `<PageLayout>`을 최상위 랩퍼로 사용하며, 내부 요소는 `<motion.div variants={itemVariants}>`를 사용하여 스태거 애니메이션을 일관되게 적용함.
-- 공통 UI 요소(`ReturnLink`, `PageHeader`, `TerminalPanel`, `TerminalButton`)를 적극 활용하여 인라인 스타일 및 중복 마크업을 최소화함.
-
-## 6. 데이터 모델 및 DB 아키텍처 (Flexible JSON Schema)
-
-Cloudflare D1의 제약 사항과 개발 생산성을 고려하여, 핵심 비즈니스 로직이 담긴 테이블(`events`, `artists`)은 고정된 컬럼 대신 유연한 JSON 구조를 채택함.
-
-### 6.1 `events` 테이블 설계
-- **`id` (PK):** 이벤트 식별자 (예: `TRM-02`)
-- **`data` (JSON):** 이벤트의 모든 메타데이터를 포함하는 JSON 문자열.
-  - 주요 필드: `session`, `subtitle`, `date`, `time`, `venue`, `status`, `invitationLines` (다국어 지원 객체) 등.
-  - 인포 패널 필드: `description: { en: string; ko: string }` (소개글), `posterUrl: string` (R2 이미지 URL) — optional, 없으면 Gate `EventInfoPanel` 미렌더링.
-  - 장점: 새로운 속성 추가 시 DDL 마이그레이션 없이 애플리케이션 레벨의 타입 업데이트만으로 대응 가능.
-
-### 6.2 `artists` 테이블 설계
-- **`id` (PK):** 아티스트 식별자 (예: `02-A`)
-- **`event_id` (FK):** `events.id` 참조 (Cascade On Delete)
-- **`data` (JSON):** 아티스트 정보.
-  - 주요 필드: `name`, `origin`, `status`, `description` (다국어 지원 객체) 등.
-
-### 6.3 `access_requests` 및 `transmit_logs`
-- 이들은 트랜잭션 성격이 강하므로 전통적인 관계형 컬럼 구조를 유지하여 쿼리 성능과 데이터 무결성을 확보함.
-- Gate의 payload·event/access-code·request-window rule은 `lib/gate/createAccessRequest.ts`와 `requestPolicy.ts`, raw SQL과 atomic D1 batch는 `d1AccessRequestRepository.ts`, HTTP transport와 response mapping은 API route가 각각 소유한다.
-- Signal의 공통 입력 규칙·D1 구독 statement·생성 orchestration은 `lib/signal/`, Transmit의 공개 contract·입력/domain·D1 repository·client는 `lib/transmit/`이 소유하며 각 API route는 transport와 abuse/response mapping만 담당한다.
-- 게스트 신청은 기존 `(event_id, email)` 고유 인덱스와 D1 배치 안의 조건부 INSERT를 함께 사용해 중복 이메일·아티스트별 정원·선택적 마케팅 등록을 한 경계에서 판정한다.
-- Gate Request와 Signal의 신규·중복 성공은 모두 `200 { ok: true }`와 `no-store`를 반환해 등록 여부를 노출하지 않는다.
-- 전송 로그의 신규 입력과 공개 DTO는 디바이스 식별자를 수집하거나 노출하지 않는다. 기존 nullable 컬럼은 호환성을 위해 유지한다.
-- repository는 전환 기간의 integer/nullable `transmit_logs.created_at`을 읽을 수 있지만, 10번째 migration인 `0009_normalize_transmit_created_at.sql`은 지원되는 레거시 값을 ISO 문자열로 변환하고 물리 컬럼을 `TEXT NOT NULL`로 재구성한다. development와 production remote 적용은 서로 독립된 승인·검증 단계다.
-- 이벤트·아티스트 JSON은 public runtime decoder를 통과한 필드만 DTO로 반환하며 access code, guest limit과 저장 전용 필드는 노출하지 않는다.
-- 게스트 코드가 설정된 아티스트의 `guestLimit`은 bounded integer 필수값이다. 누락·오염 시 무제한으로 해석하지 않고 availability 오류로 닫는다.
-- Transmit POST는 16–128자의 `Idempotency-Key`를 요구하며 같은 key/payload 재시도는 기존 공개 DTO를 반환한다.
-
-## 7. 다국어(i18n) 아키텍처
-
-### 구조
-- `lib/i18n.ts` — ko/en 번역 쌍 전체 정의. 섹션별 객체로 분리 (common, home, gate, request, lineup, status, transmit, link, dirDesc, manifesto)
-- `lib/langContext.tsx` — `LangContext` + `LangProvider` + `useLang()` + `useT()`
-
-### useT() 훅 사용 패턴
-```tsx
-const t = useT();            // 현재 언어의 번역 객체 반환
-t.home.nextEntry             // 홈 페이지 텍스트
-t.common.signalUnstable      // 공통 에러 메시지
-t.dirDesc.gate               // 디렉토리 설명
-```
-
-### 신규 번역 추가 방법
-1. `lib/i18n.ts` 해당 섹션에 ko/en 키-값 쌍 동시 추가
-2. `Translations` 타입에 자동 반영 (타입 추론)
-3. 페이지에서 `const t = useT()` 후 `t.<섹션>.<키>` 로 접근
-
-### 언어 전환 동작
-- `localStorage` 기반으로 새로고침 후에도 언어 유지
-- `document.documentElement.lang` 속성 동기화
-
----
-
-## 8. 서버 상태 관리 (TanStack Query)
-
-### 설정
-- `providers/query-provider.tsx` — 앱 루트(`app/layout.tsx`)에 `<QueryProvider>` 래핑
-- `staleTime: 5분` — 캐시 신선도 유지, 재페칭 억제
-- `gcTime: 30분` — 컴포넌트 언마운트 후 메모리 유지 (스와이프 백 복귀 시 로딩 없이 즉시 반환)
-- `retry: 1` — 실패 시 1회 자동 재시도
-
-### Query Key 팩토리 패턴
-- `lib/events/client.ts` — `eventKeys.list()` → home·lineup·gate·status가 동일 키를 참조해 캐시 공유
-- `lib/transmit/client.ts` — `transmitKeys.list(page)` → 페이지 번호별 독립 캐시
-
-### 사용 패턴
-```tsx
-// 조회
-const { data: events = [], isLoading, isError } = useQuery({
-  queryKey: eventKeys.list(),
-  queryFn: fetchEvents,
-});
-
-// 뮤테이션 + 캐시 무효화
-const { mutate } = useMutation({
-  mutationFn: postTransmitLog,
-  onSuccess: () => queryClient.invalidateQueries({ queryKey: transmitKeys.all }),
-});
-```
-
-### 적용 대상 (API 호출 있는 페이지만)
-- `app/home/page.tsx`, `app/lineup/page.tsx`, `app/gate/page.tsx`, `app/status/page.tsx`, `app/transmit/page.tsx`
-- `app/link/page.tsx` — 정적 데이터이므로 미적용
-
----
-
-## 9. 운영 주의사항
-
-- **빌드 환경:** `package.json`의 build 스크립트가 `cross-env NODE_ENV=production next build`로 production 모드를 고정한다. 이 보장은 `_global-error`와 `_not-found` 프리렌더링에 필요하다.
-- **Docker 패키지 설치:** `docker-compose.yml`의 `node_modules`는 anonymous volume이다. Docker 환경의 패키지 변경은 실행 중인 컨테이너에서 수행하고 이미지 재빌드 여부를 함께 판단한다.
-- **공개 API 보호:** `PUBLIC_RATE_LIMITER`와 Turnstile Siteverify validator의 로컬 계약은 구현돼 있다. 실제 Cloudflare binding/secret과 client token flow가 연결되기 전에는 public-release ready로 판정하지 않는다.
-- **Migration history:** repository history는 `0000`부터 `0009`까지 10개다. `scripts/check-migration-history.mjs`는 연속·고유 SQL prefix, journal tag 1:1, snapshot 1:1과 `id`/`prevId` chain, lock의 exact path + SHA-256을 검증한다. 기존 SQL·snapshot은 append-only이며 새 migration은 명시적 safe `--name`을 받는 `npm run db:generate -- --name <name>`만 사용한다. wrapper는 임시 디렉터리에서 생성 결과를 검사해 journal + 다음 SQL + 다음 snapshot만 반영하고 lock을 원자적으로 갱신한다. raw `drizzle-kit generate`는 허용하지 않는다.
-- **검증 계층:** Vitest는 Node와 jsdom project를 분리한다. `scripts/http-smoke.mjs`는 route title/main/SSR text/cache/WebGL initial graph를, `scripts/verify-local-d1.mjs`는 빈 임시 D1에 10개 Wrangler migration, FK/index 컬럼, Gate·Signal 조건부 insert와 Transmit idempotency/ISO timestamp 정렬을 검증한다.
-- **CI와 배포:** `.github/workflows/validate.yml`은 secret 없이 install/audit/migration-history/test/lint/typecheck/build/Next·Worker smoke/D1/production-env dry-run을 실행한다. Cloudflare Workers Builds가 `dev`의 `terminal-2-dev`와 `main`의 `terminal-2`를 각각 자동 배포하며, Worker code deploy와 D1 migration·secret·binding·route 변경은 분리한다. development와 production remote migration은 각각 `--env development`와 `--env production`으로 list/apply/사후 검증하며 한 환경의 결과를 다른 환경의 증거로 사용하지 않는다.
+`npm run build`는 Next 산출물을 만들고 token verifier를 실행합니다. Worker 패키징은 `npm run build:worker:development` / `npm run build:worker:production`입니다. 로컬 테스트·build가 운영 배포 성공을 의미하지 않습니다.

@@ -1,0 +1,49 @@
+/* Countdown: a band naming the mode over four readouts flush across the plate (--bleed), in turns
+   of tone; the unit sits over a heavy foot bar. */
+.countdown {
+  min-width: 0;
+}
+.countdownUnits {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  font-variant-numeric: tabular-nums;
+}
+.countdownUnits > div {
+  display: flex;
+  flex-direction: column-reverse;
+}
+.countdownUnits > div:nth-child(odd) {
+  background: var(--well);
+}
+.countdownUnits dt {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 10px 0;
+  font: 700 var(--t-sm)/1 var(--display);
+  white-space: nowrap;
+}
+.countdownUnits dt::after {
+  content: '';
+  height: 6px;
+  margin-inline: -10px;
+  background: var(--line);
+}
+.countdownUnits dd {
+  padding: 10px 10px 2px;
+  font: 400 clamp(28px, 8cqi, 76px)/1 var(--mono);
+  white-space: nowrap;
+}
+.countdownUnits > div:first-child :is(dt, dd) {
+  padding-left: max(10px, var(--bleed, 0px));
+}
+.countdownUnits > div:first-child dt::after {
+  margin-left: calc(max(10px, var(--bleed, 0px)) * -1);
+}
+.countdownUnits > div:last-child :is(dt, dd) {
+  padding-right: max(10px, var(--bleed, 0px));
+}
+.countdownUnits > div:last-child dt::after {
+  margin-right: calc(max(10px, var(--bleed, 0px)) * -1);
+}

@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
-initOpenNextCloudflareForDev();
+// Local dev and previews read the live D1 (wrangler.toml `remote = true`). CI (GitHub Actions, Workers
+// Builds) has no interactive Cloudflare login, so builds there use the local D1 simulation instead.
+initOpenNextCloudflareForDev({ remoteBindings: !process.env.CI && !process.env.WORKERS_CI });
 
 const securityHeaders = [
   {
@@ -15,7 +17,8 @@ const securityHeaders = [
       "img-src 'self' data: blob: https:",
       "media-src 'self' data: blob:",
       "font-src 'self' data: https://cdnjs.cloudflare.com",
-      "script-src 'self' 'unsafe-inline'",
+      // React/Turbopack development modules need eval; production stays strict.
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com",
       "connect-src 'self'",
       "worker-src 'self' blob:",
@@ -32,6 +35,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  allowedDevOrigins: ['127.0.0.1'],
   poweredByHeader: false,
   images: {
     unoptimized: true,

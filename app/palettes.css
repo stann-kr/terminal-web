@@ -1,0 +1,240 @@
+/*
+ * Palettes. Every colour on the site is set here and nowhere else: components read only the role
+ * tokens that globals.css derives from the active palette (`<html data-palette>`, chosen in
+ * features/shell/palette.ts). To wear a new palette, add a block with the same names and switch
+ * the id there; `data-palette` on any element re-colours just that part of the page.
+ *
+ * Roles (what a plate is, not what colour it is):
+ *   field    the workspace behind the plates      panel    the standard plate
+ *   inset    a recessed plate: bays, rows, cards  paper    the lightest plate: forms, records
+ *   feature  the featured session, STANN LUMO     mark     upcoming, highlighted
+ *   alert    live, the subscription call, errors  calm     introduction and notes
+ *   fresh    writing and saved results
+ * Per role: plate · ink · muted · accent (codes, numbers) · fill / on-fill (solid cells) ·
+ * hi / on-hi (hover) · danger. `on-fill-muted` is optional (mixed from on-fill and fill when absent).
+ * Beside the roles: `pointer` (the console pointer over controls) and `cue` / `on-cue` (the scroll cue,
+ * a colour no plate wears so it never sinks into one; its icon needs 3:1).
+ * Every text pair must read at 4.5:1; test/designTokens.test.ts checks every palette here.
+ */
+
+/* Lunar Ceramic — light ceramic greys with primary blue and four muted hues */
+[data-palette='lunar-ceramic'] {
+  color-scheme: light;
+  /* Source colours. */
+  --c-background: #eaeae4;
+  --c-surface: #d6dad8;
+  --c-detail: #829198;
+  --c-text: #24343d;
+  --c-primary: #426c79;
+  --c-amber: #b87945;
+  --c-rose: #925c63;
+  --c-lilac: #797b9a;
+  --c-sage: #6d806d;
+  --c-amber-tint: #e4d5c3;
+  --c-rose-tint: #e4d4d5;
+  --c-lilac-tint: #dcdce6;
+  --c-sage-tint: #d8dfd4;
+  /* Derived: the lightest and the recessed ceramic, and hues mixed toward text to read at 4.5:1. */
+  --c-porcelain: #f7f7f3;
+  --c-recess: #c5cbcb;
+  --c-amber-deep: #926743;
+  --c-lilac-deep: #6a6e89;
+  --c-sage-deep: #617465;
+
+  --field: var(--c-background);
+  --pointer: var(--c-primary);
+  --cue: var(--c-amber);
+  --on-cue: var(--c-porcelain);
+
+  --panel: var(--c-surface);
+  --panel-ink: var(--c-text);
+  --panel-muted: #4f5c62;
+  --panel-accent: #3d636f;
+  --panel-fill: var(--c-text);
+  --panel-on-fill: var(--c-porcelain);
+  --panel-hi: var(--c-primary);
+  --panel-on-hi: var(--c-porcelain);
+  --panel-danger: #7a535b;
+
+  --inset: var(--c-recess);
+  --inset-ink: var(--c-text);
+  --inset-muted: #445259;
+  --inset-accent: #385864;
+  --inset-fill: var(--c-text);
+  --inset-on-fill: var(--c-porcelain);
+  --inset-hi: var(--c-primary);
+  --inset-on-hi: var(--c-porcelain);
+  --inset-danger: #674c54;
+
+  --paper: var(--c-porcelain);
+  --paper-ink: var(--c-text);
+  --paper-muted: #5f6b70;
+  --paper-accent: var(--c-primary);
+  --paper-fill: var(--c-text);
+  --paper-on-fill: var(--c-porcelain);
+  --paper-hi: var(--c-primary);
+  --paper-on-hi: var(--c-porcelain);
+  --paper-danger: var(--c-rose);
+
+  --feature: var(--c-primary);
+  --feature-ink: var(--c-porcelain);
+  --feature-muted: var(--c-porcelain);
+  --feature-accent: var(--c-porcelain);
+  --feature-fill: var(--c-text);
+  --feature-on-fill: var(--c-porcelain);
+  --feature-hi: var(--c-porcelain);
+  --feature-on-hi: var(--c-text);
+  --feature-danger: var(--c-porcelain);
+
+  --mark: var(--c-amber-tint);
+  --mark-ink: var(--c-text);
+  --mark-muted: #525b5d;
+  --mark-accent: #715841;
+  --mark-fill: var(--c-amber-deep);
+  --mark-on-fill: var(--c-porcelain);
+  --mark-on-fill-muted: var(--c-porcelain);
+  --mark-hi: var(--c-amber-deep);
+  --mark-on-hi: var(--c-porcelain);
+  --mark-danger: #78525a;
+
+  --alert: var(--c-rose);
+  --alert-ink: var(--c-porcelain);
+  --alert-muted: var(--c-porcelain);
+  --alert-accent: var(--c-porcelain);
+  --alert-fill: var(--c-text);
+  --alert-on-fill: var(--c-porcelain);
+  --alert-hi: var(--c-porcelain);
+  --alert-on-hi: var(--c-text);
+  --alert-danger: var(--c-porcelain);
+
+  --calm: var(--c-lilac-tint);
+  --calm-ink: var(--c-text);
+  --calm-muted: #505c66;
+  --calm-accent: #585f76;
+  --calm-fill: var(--c-lilac-deep);
+  --calm-on-fill: var(--c-porcelain);
+  --calm-on-fill-muted: var(--c-porcelain);
+  --calm-hi: var(--c-lilac-deep);
+  --calm-on-hi: var(--c-porcelain);
+  --calm-danger: #7e555c;
+
+  --fresh: var(--c-sage-tint);
+  --fresh-ink: var(--c-text);
+  --fresh-muted: #4f5d61;
+  --fresh-accent: #52645b;
+  --fresh-fill: var(--c-sage-deep);
+  --fresh-on-fill: var(--c-porcelain);
+  --fresh-on-fill-muted: var(--c-porcelain);
+  --fresh-hi: var(--c-sage-deep);
+  --fresh-on-hi: var(--c-porcelain);
+  --fresh-danger: #7e555c;
+}
+
+/* Terminal Night — the first palette: deep navy with cream, gold, orange and red plates */
+[data-palette='terminal-night'] {
+  color-scheme: dark;
+  /* Source colours. */
+  --c-cream: #fce5cd;
+  --c-gold: #fcbf49;
+  --c-orange: #f77f00;
+  --c-red: #d62828;
+  --c-navy: #003049;
+  --c-field: #001a29;
+  --c-deep: #00121d;
+  --c-sand: #c9b8a6;
+  --c-slate: #3d5566;
+  --c-white: #fff8f0;
+
+  --field: var(--c-field);
+  --pointer: var(--c-gold);
+  --cue: #ff9a8a;
+  --on-cue: var(--c-navy);
+
+  --panel: var(--c-navy);
+  --panel-ink: var(--c-cream);
+  --panel-muted: var(--c-sand);
+  --panel-accent: var(--c-gold);
+  --panel-fill: var(--c-cream);
+  --panel-on-fill: var(--c-navy);
+  --panel-on-fill-muted: var(--c-slate);
+  --panel-hi: var(--c-gold);
+  --panel-on-hi: var(--c-navy);
+  --panel-danger: #ff9a8a;
+
+  --inset: var(--c-deep);
+  --inset-ink: var(--c-cream);
+  --inset-muted: var(--c-sand);
+  --inset-accent: var(--c-gold);
+  --inset-fill: var(--c-cream);
+  --inset-on-fill: var(--c-navy);
+  --inset-on-fill-muted: var(--c-slate);
+  --inset-hi: var(--c-gold);
+  --inset-on-hi: var(--c-navy);
+  --inset-danger: #ff9a8a;
+
+  --paper: var(--c-cream);
+  --paper-ink: var(--c-navy);
+  --paper-muted: var(--c-slate);
+  --paper-accent: #b01e1e;
+  --paper-fill: var(--c-navy);
+  --paper-on-fill: var(--c-cream);
+  --paper-on-fill-muted: var(--c-sand);
+  --paper-hi: var(--c-red);
+  --paper-on-hi: var(--c-white);
+  --paper-danger: #9b1111;
+
+  --feature: var(--c-orange);
+  --feature-ink: var(--c-field);
+  --feature-muted: var(--c-field);
+  --feature-accent: var(--c-field);
+  --feature-fill: var(--c-field);
+  --feature-on-fill: var(--c-cream);
+  --feature-on-fill-muted: var(--c-gold);
+  --feature-hi: var(--c-cream);
+  --feature-on-hi: var(--c-navy);
+  --feature-danger: #3a0505;
+
+  --mark: var(--c-gold);
+  --mark-ink: var(--c-navy);
+  --mark-muted: var(--c-slate);
+  --mark-accent: var(--c-navy);
+  --mark-fill: var(--c-navy);
+  --mark-on-fill: var(--c-cream);
+  --mark-on-fill-muted: var(--c-gold);
+  --mark-hi: var(--c-red);
+  --mark-on-hi: var(--c-white);
+  --mark-danger: #7a0c0c;
+
+  --alert: var(--c-red);
+  --alert-ink: var(--c-white);
+  --alert-muted: var(--c-white);
+  --alert-accent: var(--c-white);
+  --alert-fill: var(--c-field);
+  --alert-on-fill: var(--c-cream);
+  --alert-on-fill-muted: var(--c-gold);
+  --alert-hi: var(--c-cream);
+  --alert-on-hi: var(--c-navy);
+  --alert-danger: var(--c-white);
+
+  --calm: var(--c-gold);
+  --calm-ink: var(--c-navy);
+  --calm-muted: var(--c-slate);
+  --calm-accent: var(--c-navy);
+  --calm-fill: var(--c-navy);
+  --calm-on-fill: var(--c-cream);
+  --calm-on-fill-muted: var(--c-gold);
+  --calm-hi: var(--c-red);
+  --calm-on-hi: var(--c-white);
+  --calm-danger: #7a0c0c;
+
+  --fresh: var(--c-gold);
+  --fresh-ink: var(--c-navy);
+  --fresh-muted: var(--c-slate);
+  --fresh-accent: var(--c-navy);
+  --fresh-fill: var(--c-navy);
+  --fresh-on-fill: var(--c-cream);
+  --fresh-on-fill-muted: var(--c-gold);
+  --fresh-hi: var(--c-red);
+  --fresh-on-hi: var(--c-white);
+  --fresh-danger: #7a0c0c;
+}
