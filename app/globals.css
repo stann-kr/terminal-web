@@ -1,10 +1,11 @@
 /* Barlow / Barlow Condensed (Jeremy Tribby, OFL) and Share Tech Mono (Carrois, OFL): public/fonts/instrument/OFL-*.txt */
+/* The wordmark and the display face wait for their own glyphs (block) rather than flash a fallback; all faces are preloaded (app/layout.tsx). */
 @font-face { font-family: 'Barlow'; src: url('/fonts/instrument/Barlow-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Barlow'; src: url('/fonts/instrument/Barlow-Medium.woff2') format('woff2'); font-weight: 500 700; font-display: swap; }
-@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: swap; }
-@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
-@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: swap; }
-@font-face { font-family: 'ProcrastinatingPixie'; src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype'); font-weight: 400 800; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: block; }
+@font-face { font-family: 'ProcrastinatingPixie'; src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype'); font-weight: 400 800; font-display: block; }
 @font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
 /*
  * Hypnotic console: plates on a workspace field, a few loud solid plates among them. Concentric rings

@@ -1,18 +1,15 @@
 'use client';
 import { Loading, StateNotice } from '@/features/ui/Ui';
 import { useTransmit } from './useTransmit';
+import { isNodeName, nodeNameOf } from './nodeIdentity';
 import styles from './transmit.module.css';
 
-/** A stable four-character node tag derived from a log id; it never exposes the handle. */
-function nodeTag(id: string) {
-  let hash = 2166136261;
-  for (const char of id) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
-  return `NODE-${hash.toString(16).toUpperCase().padStart(8, '0').slice(-4)}`;
-}
+/** The node that left a record: its own node name, or one derived from the log id for a chosen nickname. */
+const nodeTag = (log: { id: string; handle: string }) => (isNodeName(log.handle) ? log.handle : nodeNameOf(log.id));
 
 /**
  * Recent public-log activity as node records, newest first: which node left a record, without
- * the time, the message or the public handle, so the home screen never surfaces free text from visitors.
+ * the time, the message or a chosen nickname, so the home screen never surfaces free text from visitors.
  */
 export function NodeActivity({ limit = 6, quiet = false }: { limit?: number; quiet?: boolean }) {
   const query = useTransmit(1);
@@ -30,7 +27,7 @@ export function NodeActivity({ limit = 6, quiet = false }: { limit?: number; qui
     <ol className={styles.nodes}>
       {logs.map((log) => (
         <li key={log.id}>
-          <b>{nodeTag(log.id)}</b>
+          <b>{nodeTag(log)}</b>
           <span>LOGGED</span>
         </li>
       ))}

@@ -5,7 +5,8 @@ import styles from './stage.module.css';
 /**
  * What a first visit sees while the console gets ready (web fonts, the window measured and tiled,
  * the content language, the first read of the events). It is part of the server's first markup, so
- * it shows at once; it fades when the stage is ready, and never shows without script.
+ * the field covers the stage at once; its words show only if the wait passes 0.6s. It fades when the
+ * stage is ready, and never shows without script.
  */
 export function BootScreen({ done }: { done: boolean }) {
   return (
