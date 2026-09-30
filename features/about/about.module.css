@@ -67,18 +67,3 @@
   box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
 }
-
-/* ── Sub-plates: channel rows run flush across their plate. ── */
-.channels {
-  gap: 0;
-  margin-inline: calc(var(--bleed, 0px) * -1);
-}
-.channels li + li a > * {
-  border-top: 1px solid var(--faint);
-}
-.channels a > :first-child {
-  padding-left: max(10px, var(--bleed, 0px));
-}
-.channels a > :last-child {
-  padding-right: max(10px, var(--bleed, 0px));
-}

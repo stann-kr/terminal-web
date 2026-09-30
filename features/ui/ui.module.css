@@ -314,36 +314,3 @@
     text-align: left;
   }
 }
-
-/* ── Sub-plates ───────────────────────────────────────────────────────────
-   Inside a plate, cells run flush to the plate's edges and meet without gaps; a hairline tells
-   them apart. A padded container publishes its side padding as --bleed, and a flush list pulls
-   out by it, keeping its text on the plate's text line. */
-.panel {
-  --bleed: var(--pad);
-  padding: 0 var(--pad) var(--pad);
-}
-.panelHead {
-  margin: 0 calc(var(--pad) * -1);
-  padding: 12px var(--pad) 8px;
-}
-.panelBody > * + * {
-  margin-top: 12px;
-}
-.facts {
-  gap: 0;
-  margin-inline: calc(var(--bleed, 0px) * -1);
-}
-.facts > div + div > * {
-  border-top: 1px solid var(--faint);
-}
-.facts dt {
-  padding: 8px 12px 8px max(10px, var(--bleed, 0px));
-}
-.facts dd {
-  padding: 8px max(10px, var(--bleed, 0px)) 8px 12px;
-}
-.panelBody > .facts:first-child,
-.panelBody > :first-child {
-  margin-top: 0;
-}

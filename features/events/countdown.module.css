@@ -53,23 +53,3 @@
 .countdownUnits dt {
   white-space: nowrap;
 }
-
-/* ── Sub-plates: the four readouts meet flush across their plate. ── */
-.countdownUnits {
-  gap: 0;
-  max-width: none;
-  margin-inline: calc(var(--bleed, 0px) * -1);
-}
-.countdownUnits > div + div {
-  box-shadow: inset 1px 0 0 var(--faint);
-}
-.countdownUnits > div:first-child dt,
-.countdownUnits > div:first-child dd {
-  padding-left: max(10px, var(--bleed, 0px));
-}
-.countdownMode {
-  border-bottom: 0;
-}
-.countdownUnits > div:first-child dt::after {
-  margin-left: calc(max(10px, var(--bleed, 0px)) * -1);
-}

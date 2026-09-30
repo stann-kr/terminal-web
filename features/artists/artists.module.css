@@ -147,25 +147,3 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-
-/* ── Sub-plates: records and shared lineups run flush across their plate. ── */
-.timeline,
-.sharedCells {
-  gap: 0;
-  margin-inline: calc(var(--bleed, 0px) * -1);
-}
-.timeline li + li > * {
-  border-top: 1px solid var(--faint);
-}
-.timeline li > :first-child {
-  padding-left: max(10px, var(--bleed, 0px));
-}
-.timeline li > :last-child {
-  padding-right: max(10px, var(--bleed, 0px));
-}
-.sharedCells li {
-  box-shadow: inset -1px -1px 0 var(--faint);
-}
-.column {
-  gap: var(--gap);
-}
