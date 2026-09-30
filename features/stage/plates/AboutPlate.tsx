@@ -1,5 +1,5 @@
 'use client';
-import { aboutCopy, NodeFacts, OfficialChannels } from '@/features/about/About';
+import { aboutCopy, aboutTagline, NodeFacts, OfficialChannels } from '@/features/about/About';
 import { useLanguage } from '@/features/shell/Providers';
 import { BrandText, Panel } from '@/features/ui/Ui';
 import { TextPages } from '../TextPages';
@@ -21,7 +21,7 @@ export function AboutPlate({ mode }: PlateProps) {
           </span>
           <span className={styles.bandTags} aria-hidden="true"><Tags items={['SEOUL', 'KST']} /></span>
         </span>
-        <span className={styles.aboutLine} lang={language}>{aboutCopy[language][0]}</span>
+        <span className={styles.aboutLine} lang="en">{aboutTagline}</span>
       </CardLink>
     );
   }

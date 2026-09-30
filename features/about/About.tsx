@@ -1,6 +1,8 @@
 'use client';
 import { Bay, Facts, Panel } from '@/features/ui/Ui';
 import styles from './about.module.css';
+/** The home About plate's one line; the same in every language. */
+export const aboutTagline = 'A Voyage to the Unknown Sector.';
 export const aboutCopy = {
   ko: [
     'TERMINAL은 서울 기반의 테크노 플랫폼입니다.',
