@@ -13,6 +13,7 @@ import {
   listStoredArtistRows,
   listStoredArtistRowsByEvent,
   listStoredEventRows,
+  listPublicEvents,
 } from '../lib/events/d1EventReadRepository';
 import {
   listGateArtistRowsByEvent,
@@ -28,6 +29,43 @@ function createAllQuery(rows: unknown[]) {
 }
 
 describe('Events D1 read repository', () => {
+  it('shares the validated public projection with SSR without leaking stored access fields', async () => {
+    const eventData = {
+      session: 'PUBLIC SESSION', subtitle: 'TEST', date: '2020-01-01', time: '23:00 KST',
+      venue: 'VENUE', district: 'SEOUL', coords: '0,0', capacity: '100', sound: 'SYSTEM', status: 'UPCOMING',
+      internalNote: 'private event note',
+    };
+    const artistData = {
+      name: 'PUBLIC ARTIST', origin: 'KR', dock: '1', time: '23:00', status: 'CONFIRMED',
+      guestCode: 'private access code', guestLimit: 99,
+    };
+    const eventRows = [
+      { id: 'valid', data: JSON.stringify(eventData) },
+      { id: 'invalid-artist', data: JSON.stringify(eventData) },
+      { id: 'invalid-event', data: '{}' },
+      { id: '__proto__', data: JSON.stringify(eventData) },
+    ];
+    const artistRows = [
+      { id: 'public-artist', eventId: 'valid', data: JSON.stringify(artistData) },
+      { id: 'bad-artist', eventId: 'invalid-artist', data: '{}' },
+      { id: 'opaque-key-artist', eventId: '__proto__', data: JSON.stringify(artistData) },
+    ];
+    const database = {
+      select: () => ({ from: (table: unknown) => ({ all: async () => table === events ? eventRows : artistRows }) }),
+    };
+    const result = await listPublicEvents(database as never);
+    expect(result.map(event => event.id)).toEqual(['valid', '__proto__']);
+    expect(result[0]).toMatchObject({ status: 'ARCHIVED', artists: [{ id: 'public-artist', name: 'PUBLIC ARTIST' }] });
+    expect(result[1].artists[0].id).toBe('opaque-key-artist');
+    expect(JSON.stringify(result)).not.toMatch(/private|guestCode|guestLimit|internalNote/);
+  });
+
+  it('propagates database failure to the HTTP or SSR caller without fabricating an empty directory', async () => {
+    const failure = new Error('unavailable');
+    const database = { select: () => ({ from: () => ({ all: async () => { throw failure; } }) }) };
+    await expect(listPublicEvents(database as never)).rejects.toBe(failure);
+  });
+
   it('selects only stored event identifiers and JSON data', async () => {
     const rows = [{ id: 'event-1', data: '{"status":"UPCOMING"}' }];
     const query = createAllQuery(rows);

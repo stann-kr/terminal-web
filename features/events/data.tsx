@@ -16,7 +16,8 @@ export function useEvents() {
     queryFn: ({ signal }) =>
       requestJson<TerminalEvent[]>('/api/events', { signal }),
   });
-  const [now, setNow] = useState(() => new Date());
+  // The seeded timestamp is identical in the first HTML and hydration render.
+  const [now, setNow] = useState(() => new Date(query.dataUpdatedAt || Date.now()));
   useEffect(() => {
     const update = () => setNow(new Date());
     const boundaries = getEventBoundaryTimes(
