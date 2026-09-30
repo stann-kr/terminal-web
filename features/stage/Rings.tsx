@@ -2,13 +2,15 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import styles from './stage.module.css';
 
+/** Circles in flight at once (matches --ring-count in stage.module.css). */
+const RING_COUNT = 5;
 /** Share of the way from the rings' home to the pointer that their centre travels. */
 const FOLLOW = 0.35;
 /** Share of the remaining distance covered each frame: a slow, damped drift. */
 const EASE = 0.04;
 
 /**
- * Concentric rings behind a plate's content, drifting outward slowly. Their centre sits at `at`
+ * Concentric rings behind a plate's content, leaving the centre one after another and widening. Their centre sits at `at`
  * (fractions of the plate) and leans after the pointer wherever it is on the page, catching up
  * slowly. Still for reduced motion, touch-only pointers and forced colours.
  *
@@ -62,5 +64,11 @@ export function Rings({ at, under = false }: { at: { x: number; y: number }; und
     };
   }, [at.x, at.y]);
   const home = { '--rx': `${at.x * 100}%`, '--ry': `${at.y * 100}%` } as CSSProperties;
-  return <i ref={ref} className={styles.rings} style={home} data-under={under || undefined} aria-hidden="true" />;
+  return (
+    <i ref={ref} className={styles.rings} style={home} data-under={under || undefined} aria-hidden="true">
+      {Array.from({ length: RING_COUNT }, (_, index) => (
+        <b key={index} style={{ '--i': index } as CSSProperties} />
+      ))}
+    </i>
+  );
 }

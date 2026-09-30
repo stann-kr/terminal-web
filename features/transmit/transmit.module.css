@@ -87,7 +87,7 @@
   white-space: nowrap;
 }
 
-/* ── Sub-plates (v2): node rows and the length readout run flush in turns of tone; the newest node
+/* ── Sub-plates: node rows and the length readout run flush in turns of tone; the newest node
    keeps its marked row. ── */
 .nodes,
 .counter {

@@ -102,9 +102,9 @@ const sameHeads = (a: Heads, b: Heads) => HEADED.every(id => a[id]?.mode === b[i
 /**
  * The stage: six plates, a back card, and one element per event and artist, all living here for
  * the whole visit. The address decides the state, the state picks the view's tiling, and every
- * element travels to its new rect with its content redrawn for the size it gets. When the window
- * is too small, or content would not fit, it becomes an ordinary scrolling page (flow mode) with
- * the same elements in document order.
+ * element travels to its new rect with its content redrawn for the size it gets. Content that
+ * does not fit spreads the view over sheets (a narrow window gets one per column); the server's
+ * first markup, and a page without script, lay the same elements out in document order (flow).
  */
 export function Stage({ state: address }: { state: StageState }) {
   const router = useRouter();

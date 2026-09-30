@@ -227,7 +227,7 @@
   text-transform: none;
 }
 
-/* ── Notices: a tinted block, or a red plate when a read failed; retry sits at the right. ── */
+/* ── Notices: a tinted block, or the alert plate when a read failed. ── */
 /* A notice is a flush strip across the plate; its retry key is a bar along the notice's foot. */
 .notice {
   --notice-inset: max(var(--pad), var(--bleed, 0px));

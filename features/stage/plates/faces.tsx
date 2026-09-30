@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { BrandText } from '@/features/ui/Ui';
+import { BrandText, type Surface } from '@/features/ui/Ui';
 import { FitTitle } from '../FitTitle';
 import styles from './plates.module.css';
 
@@ -12,9 +12,9 @@ import styles from './plates.module.css';
  */
 
 /** A whole face that is a single link: chips, the back card, summary plates with nothing inside to press. */
-export function CardLink({ href, className = '', label, carrier, children }: { href: string; className?: string; label?: string; carrier?: string; children: ReactNode }) {
+export function CardLink({ href, className = '', label, carrier, surface, children }: { href: string; className?: string; label?: string; carrier?: string; surface?: Surface; children: ReactNode }) {
   return (
-    <Link href={href} className={`${styles.card} ${className}`} aria-label={label} data-carrier={carrier} scroll={false}>
+    <Link href={href} className={`${styles.card} ${className}`} aria-label={label} data-carrier={carrier} data-surface={surface} scroll={false}>
       {children}
     </Link>
   );
@@ -89,11 +89,12 @@ export function FocusHead({ label, title, tags, children }: { label: string; tit
 
 /**
  * A plate's data state at summary and chip sizes: one flush line (loading, empty, or a failed read
- * with its retry key), so a short plate is never handed a notice taller than itself.
+ * with its retry key), so a short plate is never handed a notice taller than itself. It is a polite
+ * status: the open plate or file states the failure as the alert, so it is announced once.
  */
 export function PlateStatus({ state, text, retry }: { state: 'loading' | 'empty' | 'error'; text: string; retry?: () => void }) {
   return (
-    <div className={styles.status} data-state={state} role={state === 'error' ? 'alert' : 'status'}>
+    <div className={styles.status} data-state={state} role="status">
       <span>{text}</span>
       {state === 'error' && retry && (
         <button type="button" onClick={retry}>

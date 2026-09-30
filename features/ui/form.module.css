@@ -169,7 +169,7 @@
   white-space: nowrap;
 }
 
-/* ── Sub-plates (v2): fields stack flush across the form plate. A field is its label line on the
+/* ── Sub-plates: fields stack flush across the form plate. A field is its label line on the
    plate's tone over its input in the well; the next field's label line is the only separation. ── */
 .terminalForm {
   --bleed: var(--pad);

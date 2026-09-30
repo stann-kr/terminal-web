@@ -71,7 +71,7 @@
   color: inherit !important;
 }
 
-/* ── Sub-plates (v2): channel rows run flush in turns of tone; the number is printed in the accent. ── */
+/* ── Sub-plates: channel rows run flush in turns of tone; the number is printed in the accent. ── */
 .channels {
   gap: 0;
   margin-inline: calc(var(--bleed, 0px) * -1);

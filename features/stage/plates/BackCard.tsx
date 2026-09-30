@@ -32,7 +32,8 @@ function describe(state: StageState, data: StageData): [string, string] {
 
 /**
  * The way back: a card naming the view it returns to (Escape does the same). When that view is not
- * the home, a second card under it goes straight home, however far the visit has wandered.
+ * the home, a second card under it goes straight home, however far the visit has wandered; it wears
+ * the home's own colour (the featured plate's), so the two keys never read as one.
  */
 export function BackCard({ href, target, data }: { href: string; target: StageState; data: StageData }) {
   const [name, title] = describe(target, data);
@@ -50,7 +51,7 @@ export function BackCard({ href, target, data }: { href: string; target: StageSt
         </FitTitle>
       </CardLink>
       {home && (
-        <CardLink href="/" className={styles.homeKey} label="홈으로">
+        <CardLink href="/" className={styles.homeKey} label="홈으로" surface="feature">
           <span aria-hidden="true">HOME</span>
         </CardLink>
       )}

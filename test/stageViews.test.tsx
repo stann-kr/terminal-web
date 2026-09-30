@@ -402,7 +402,7 @@ describe('directory and roster contracts', () => {
     await waitFor(() => expect(within(file()!).getByRole('alert')).toHaveTextContent('아티스트 기록을 불러오지 못했습니다'));
     expect(within(file()!).getByRole('button', { name: '다시 불러오기' })).toBeInTheDocument();
     // The small plates state the failure in one line and never claim zero records.
-    expect(within(plate(container, 'next')).getByRole('alert')).toHaveTextContent('행사 기록을 불러오지 못했습니다');
+    expect(within(plate(container, 'next')).getByRole('status')).toHaveTextContent('행사 기록을 불러오지 못했습니다');
     expect(container).not.toHaveTextContent(/000 (FILES|REC)/);
     vi.unstubAllGlobals();
   });

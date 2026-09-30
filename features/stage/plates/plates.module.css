@@ -295,11 +295,6 @@
     flex: 1 1 auto;
   }
 }
-.chipMeta {
-  font: 400 var(--t-xs)/1 var(--mono);
-  letter-spacing: .06em;
-  white-space: nowrap;
-}
 :global([data-stage]:not([data-stage=stage])) .chip {
   flex-direction: row;
   align-items: center;
@@ -1175,10 +1170,10 @@
 
 
 @media (forced-colors: active) {
-  .card, .bandLink { border: 1px solid CanvasText; }
+  .card { border: 1px solid CanvasText; }
 }
 
-/* ── Sub-plates (v2) inside faces and files ────────────────────────────────
+/* ── Sub-plates inside faces and files ─────────────────────────────────────
    The panels of an open plate and the columns of a file meet flush, edge to edge; neighbouring
    surfaces differ (an inset panel beside a standard one), so no line is needed. Lists inside pull out to
    the edges by --bleed and part by turns of tone. */

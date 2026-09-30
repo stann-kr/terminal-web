@@ -382,25 +382,44 @@
 }
 
 /* ── Rings: the site's one motif, behind the view's focal plate ─────────────
-   Rings drift outward slowly from a centre that leans after the pointer (Rings.tsx sets --rx/--ry);
-   the plate's content is drawn over them. */
+   Circles leave the centre one after another, every --ring-period, and widen until they cover the
+   plate while they fade; the centre leans after the pointer (Rings.tsx sets --rx/--ry). Scaling is
+   composited, so the spread stays smooth however slow it is. The plate's content is drawn over them. */
 .rings {
+  --ring-count: 5;
   position: absolute;
   inset: 0;
+  overflow: hidden;
+  container-type: size;
   pointer-events: none;
-  color: color-mix(in srgb, var(--ink) 20%, transparent);
-  background: repeating-radial-gradient(circle at var(--rx) var(--ry),
-    transparent calc(var(--ring-phase) - 18px),
-    currentColor calc(var(--ring-phase) - 18px) calc(var(--ring-phase) - 16px),
-    transparent calc(var(--ring-phase) - 16px) var(--ring-phase));
-  -webkit-mask-image: radial-gradient(circle at var(--rx) var(--ry), #000 0 30%, transparent 70%);
-  mask-image: radial-gradient(circle at var(--rx) var(--ry), #000 0 30%, transparent 70%);
+  color: color-mix(in srgb, var(--ink) 26%, transparent);
 }
 .rings[data-under] {
   z-index: -1;
 }
+.rings > b {
+  position: absolute;
+  left: var(--rx);
+  top: var(--ry);
+  width: 240cqmax;
+  aspect-ratio: 1;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+  translate: -50% -50%;
+  /* Still (reduced motion): the circles rest at widening steps. */
+  scale: calc(.08 + var(--i) * .1);
+  opacity: calc(.9 - var(--i) * .16);
+}
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .rings { animation: ringOut var(--ring-period) linear infinite; }
+  .rings > b {
+    animation: ringWave calc(var(--ring-period) * var(--ring-count)) cubic-bezier(.3, .15, .45, 1) infinite;
+    animation-delay: calc(var(--i) * var(--ring-period) * -1);
+  }
+}
+@keyframes ringWave {
+  0% { scale: 0; opacity: 0; }
+  10% { opacity: 1; }
+  100% { scale: 1; opacity: 0; }
 }
 @media (forced-colors: active) {
   .rings { display: none; }
