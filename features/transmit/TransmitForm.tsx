@@ -14,7 +14,7 @@ export function TransmitForm({
   onPosted: () => void;
   onSaved?: () => void;
 }) {
-  const { draft, edit, pending, error, receipt, submit } = useTransmitPost({
+  const { draft, edit, node, pending, error, receipt, submit } = useTransmitPost({
     onPosted,
     onSaved,
   });
@@ -41,16 +41,6 @@ export function TransmitForm({
         </div>
       )}
       <div className={formStyles.fields}>
-      <Field
-        id="transmit-handle"
-        label="공개 닉네임"
-        hint="24자 이내 · 공백은 _로 표시됩니다."
-        required
-        maxLength={96}
-        autoComplete="nickname"
-        value={draft.handle}
-        onChange={(event) => edit({ handle: event.target.value })}
-      />
       <div className={formStyles.field}>
         <div className={formStyles.fieldHead}>
           <label htmlFor="transmit-message">
@@ -66,6 +56,16 @@ export function TransmitForm({
           onChange={(event) => edit({ message: event.target.value })}
         />
       </div>
+      <Field
+        id="transmit-handle"
+        label="공개 닉네임 (선택)"
+        hint={`비우면 노드 이름${node ? `(${node})` : ''}으로 기록 · 24자 이내 · 공백은 _로 표시됩니다.`}
+        placeholder={node}
+        maxLength={96}
+        autoComplete="nickname"
+        value={draft.handle}
+        onChange={(event) => edit({ handle: event.target.value })}
+      />
       <button
         aria-busy={pending}
         disabled={pending}

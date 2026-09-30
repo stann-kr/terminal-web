@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { PublicTransmitLog } from '@/lib/transmit/contract';
 import { ApiError, postJson } from '@/features/ui/http';
+import { getNodeName } from './nodeIdentity';
 
 export type TransmitCallbacks = { onPosted: () => void; onSaved?: () => void };
 
@@ -11,8 +12,11 @@ export function useTransmitPost({ onPosted, onSaved }: TransmitCallbacks) {
   const attempt = useRef<{ fingerprint: string; key: string } | null>(null),
     submitting = useRef(false);
   const mounted = useRef(true);
+  // The visitor's node name, read after mount (storage is not there on the server): the handle when none is typed.
+  const [node, setNode] = useState('');
   useEffect(() => {
     mounted.current = true;
+    setNode(getNodeName());
     return () => {
       mounted.current = false;
     };
@@ -30,7 +34,7 @@ export function useTransmitPost({ onPosted, onSaved }: TransmitCallbacks) {
     if (submitting.current) return;
     const submitted = { ...draftRef.current };
     const normalized = {
-      handle: submitted.handle.trim().replace(/\s+/g, '_').toUpperCase(),
+      handle: (submitted.handle.trim() || getNodeName()).replace(/\s+/g, '_').toUpperCase(),
       message: submitted.message.trim(),
     };
     if (
@@ -96,5 +100,5 @@ export function useTransmitPost({ onPosted, onSaved }: TransmitCallbacks) {
       if (mounted.current) setPending(false);
     }
   }
-  return { draft, edit, pending, error, receipt, submit };
+  return { draft, edit, node, pending, error, receipt, submit };
 }

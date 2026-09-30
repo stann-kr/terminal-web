@@ -297,8 +297,13 @@ describe('home plates', () => {
 
   it('shows node activity without times, visitor handles or messages', async () => {
     const { container, client } = shell();
-    act(() => client.setQueryData(['transmit', 1], { logs: [{ id: 'log-1', ts: '2026.05.09 / 00:10', handle: 'SECRET_HANDLE', message: 'free text', createdAt: '2026-05-08T15:10:00.000Z' }], total: 1, page: 1, totalPages: 1 }));
-    await waitFor(() => expect(plate(container, 'log')).toHaveTextContent(/NODE-[0-9A-F]{4}/));
+    act(() => client.setQueryData(['transmit', 1], { logs: [
+      { id: 'log-2', ts: '2026.05.09 / 00:20', handle: 'NODE-K7Q2M', message: 'node text', createdAt: '2026-05-08T15:20:00.000Z' },
+      { id: 'log-1', ts: '2026.05.09 / 00:10', handle: 'SECRET_HANDLE', message: 'free text', createdAt: '2026-05-08T15:10:00.000Z' },
+    ], total: 2, page: 1, totalPages: 1 }));
+    await waitFor(() => expect(plate(container, 'log')).toHaveTextContent('NODE-K7Q2M'));
+    const tags = [...plate(container, 'log').querySelectorAll('li b')].map(tag => tag.textContent);
+    expect(tags[1]).toMatch(/^NODE-[A-HJ-KM-NP-Z2-9]{5}$/);
     expect(container).not.toHaveTextContent('05.09');
     expect(container).not.toHaveTextContent('SECRET_HANDLE');
     expect(container).not.toHaveTextContent('free text');
