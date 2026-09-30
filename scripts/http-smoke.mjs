@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 const baseUrl=process.env.SMOKE_BASE_URL ?? 'http://127.0.0.1:3005';
 const includeApi=process.env.SMOKE_API==='1';
+// The server is started in the background just before this runs: wait until it answers.
+for(let attempt=0;;attempt+=1) {
+  try { if((await fetch(`${baseUrl}/`)).ok) break; } catch {}
+  if(attempt>=60) throw new Error(`HTTP smoke: ${baseUrl} did not answer within 60s`);
+  await new Promise(resolve=>setTimeout(resolve,1000));
+}
 const routes=['/','/events','/artists','/transmit','/signal','/about','/events/TRM-01','/events/TRM-01/request','/artists/stann-lumo'];
 for(const route of routes) {
   const response=await fetch(`${baseUrl}${route}`);
