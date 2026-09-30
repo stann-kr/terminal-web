@@ -175,12 +175,6 @@
   color: var(--ink);
 }
 
-/* Rings flow outward: one spacing per `--ring-period`. */
-@keyframes ringOut {
-  from { --ring-phase: 0px; }
-  to { --ring-phase: 18px; }
-}
-
 * { box-sizing: border-box; }
 html { background: var(--bg); color: var(--ink); scrollbar-color: var(--line) var(--bg); }
 body { margin: 0; font: var(--text-ui)/1.55 var(--sans); overflow-wrap: break-word; word-break: keep-all; -webkit-font-smoothing: antialiased; }
@@ -206,11 +200,6 @@ summary { min-height: 40px; padding-block: 8px; color: var(--ink); font: 700 var
 details[open] > summary { margin-bottom: 6px; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }
-
-/* Readouts roll: a changed digit drops into its window. */
-@keyframes glyphRoll {
-  from { transform: translateY(-105%); }
-}
 
 /* The console draws its own pointer (Shell); the system caret returns over text fields. */
 html[data-cursor=console],

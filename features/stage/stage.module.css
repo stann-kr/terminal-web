@@ -402,6 +402,12 @@
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .rings { animation: ringOut var(--ring-period) linear infinite; }
 }
+/* Defined here, not in globals: a CSS module renames the keyframes it names, so they must live beside
+   their use. --ring-phase itself is registered globally (@property) so it can be animated. */
+@keyframes ringOut {
+  from { --ring-phase: 0px; }
+  to { --ring-phase: 18px; }
+}
 @media (forced-colors: active) {
   .rings { display: none; }
 }

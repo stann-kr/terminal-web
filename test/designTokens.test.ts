@@ -46,6 +46,28 @@ async function readPalettes() {
   return blocks;
 }
 
+describe('css module contract', () => {
+  it('names only keyframes the module defines itself (a module renames the animations it names)', async () => {
+    const globals = await readFile('app/globals.css', 'utf8');
+    const global = [...globals.matchAll(/@keyframes\s+([\w-]+)/g)].map(match => match[1]);
+    const offenders: string[] = [];
+    const walk = async (dir: string) => {
+      for (const entry of await readdir(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) await walk(path);
+        else if (path.endsWith('.module.css')) {
+          const css = (await readFile(path, 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
+          const own = new Set([...css.matchAll(/@keyframes\s+([\w-]+)/g)].map(match => match[1]));
+          const named = [...css.matchAll(/animation(?:-name)?\s*:\s*([^;]+);/g)].flatMap(match => match[1].match(/[A-Za-z][\w-]*/g) ?? []);
+          for (const name of named) if (global.includes(name) && !own.has(name)) offenders.push(`${path}: ${name}`);
+        }
+      }
+    };
+    await walk('features');
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe('palette contract', () => {
   it('defines every palette the site can wear, and wears one of them', async () => {
     const blocks = await readPalettes();

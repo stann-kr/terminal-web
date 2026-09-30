@@ -34,6 +34,10 @@
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .glyph { animation: glyphRoll var(--dur-hover) var(--ease-move) backwards; }
 }
+/* A changed digit drops into its window (defined in this module, where its name is resolved). */
+@keyframes glyphRoll {
+  from { transform: translateY(-105%); }
+}
 .signalText {
   display: inline-flex;
   align-items: center;
