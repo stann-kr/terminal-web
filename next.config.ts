@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
-initOpenNextCloudflareForDev({ remoteBindings: true });
+// Local dev and previews read the live D1 (wrangler.toml `remote = true`). CI (GitHub Actions, Workers
+// Builds) has no interactive Cloudflare login, so builds there use the local D1 simulation instead.
+initOpenNextCloudflareForDev({ remoteBindings: !process.env.CI && !process.env.WORKERS_CI });
 
 const securityHeaders = [
   {
