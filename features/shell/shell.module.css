@@ -17,6 +17,13 @@
 :global(html[data-stage-mode=stage]:not([data-sheets='1'])) {
   scroll-snap-type: y mandatory;
 }
+/* A finger scrolls freely: snapping fights a swipe (and a mobile browser's sliding toolbars). The
+   wheel keeps turning sheet by sheet. */
+@media (pointer: coarse) {
+  :global(html[data-stage-mode=stage]:not([data-sheets='1'])) {
+    scroll-snap-type: none;
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
   :global(html[data-stage-mode=stage]) {
     scroll-behavior: smooth;

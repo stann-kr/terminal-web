@@ -523,7 +523,7 @@ export function Stage({ state: address }: { state: StageState }) {
           </Box>
         )}
       </div>
-      <ScrollHint active={onStage && sheetCount > 1 && !tooShort} />
+      <ScrollHint key={key} active={onStage && sheetCount > 1 && !tooShort} />
     </StageModeContext.Provider>
   );
 }

@@ -12,6 +12,8 @@
  *   fresh    writing and saved results
  * Per role: plate · ink · muted · accent (codes, numbers) · fill / on-fill (solid cells) ·
  * hi / on-hi (hover) · danger. `on-fill-muted` is optional (mixed from on-fill and fill when absent).
+ * Beside the roles: `pointer` (the console pointer over controls) and `cue` / `on-cue` (the scroll cue,
+ * a colour no plate wears so it never sinks into one; its icon needs 3:1).
  * Every text pair must read at 4.5:1; test/designTokens.test.ts checks every palette here.
  */
 
@@ -41,6 +43,8 @@
 
   --field: var(--c-background);
   --pointer: var(--c-primary);
+  --cue: var(--c-amber);
+  --on-cue: var(--c-porcelain);
 
   --panel: var(--c-surface);
   --panel-ink: var(--c-text);
@@ -143,6 +147,8 @@
 
   --field: var(--c-field);
   --pointer: var(--c-gold);
+  --cue: #ff9a8a;
+  --on-cue: var(--c-navy);
 
   --panel: var(--c-navy);
   --panel-ink: var(--c-cream);

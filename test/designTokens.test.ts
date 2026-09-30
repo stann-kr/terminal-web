@@ -61,6 +61,8 @@ describe('palette contract', () => {
         return hex(value!);
       };
       expect(color('field'), `${id}: --field`).toBeDefined();
+      // The scroll cue is an icon: graphics need 3:1.
+      expect(contrast(color('on-cue'), color('cue')), `${id}: on-cue`).toBeGreaterThanOrEqual(3);
       for (const role of ROLES) {
         const plate = color(role);
         const fill = color(`${role}-fill`);
