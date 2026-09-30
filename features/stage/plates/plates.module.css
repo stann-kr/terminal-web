@@ -33,16 +33,18 @@
   text-decoration: none;
   transition: var(--light-motion);
 }
-.card:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
-  --ink: var(--on-hi);
-  --muted: var(--on-hi);
-  --accent: var(--on-hi);
-  --line: var(--on-hi);
-  --well: color-mix(in srgb, var(--on-hi) 12%, transparent);
-  --fill: var(--on-hi);
-  --on-fill: var(--hi);
+@media (hover: hover) {
+  .card:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+    --ink: var(--on-hi);
+    --muted: var(--on-hi);
+    --accent: var(--on-hi);
+    --line: var(--on-hi);
+    --well: color-mix(in srgb, var(--on-hi) 12%, transparent);
+    --fill: var(--on-hi);
+    --on-fill: var(--hi);
+  }
 }
 .card:active {
   box-shadow: inset 0 0 0 100vmax var(--on-hi);
@@ -58,16 +60,18 @@
 }
 /* While the boxes are still travelling after a change of view, a box sliding under a resting pointer
    does not light up; pointing lights things again once they have landed. */
-:global([data-moving]) .card:hover {
-  box-shadow: none;
-  color: inherit;
-  --ink: inherit;
-  --muted: inherit;
-  --accent: inherit;
-  --line: inherit;
-  --well: inherit;
-  --fill: inherit;
-  --on-fill: inherit;
+@media (hover: hover) {
+  :global([data-moving]) .card:hover {
+    box-shadow: none;
+    color: inherit;
+    --ink: inherit;
+    --muted: inherit;
+    --accent: inherit;
+    --line: inherit;
+    --well: inherit;
+    --fill: inherit;
+    --on-fill: inherit;
+  }
 }
 
 /* ── Shared print ────────────────────────────────────────────────────────── */
@@ -166,8 +170,10 @@
 .plateCard {
   padding: 0 var(--pad) var(--pad);
 }
-.card:hover .band {
-  border-bottom-color: currentColor;
+@media (hover: hover) {
+  .card:hover .band {
+    border-bottom-color: currentColor;
+  }
 }
 .bandTitle {
   display: flex;
@@ -373,8 +379,10 @@
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .24em;
 }
-.back:hover .backLabel {
-  color: inherit;
+@media (hover: hover) {
+  .back:hover .backLabel {
+    color: inherit;
+  }
 }
 .backName {
   --title-ls: .06em;
@@ -531,8 +539,10 @@
   box-shadow: inset 4px 0 0 var(--accent);
   background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
-.indexLine[aria-current=page]:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+@media (hover: hover) {
+  .indexLine[aria-current=page]:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  }
 }
 .eventRow,
 .eventCell,
@@ -973,9 +983,11 @@
   letter-spacing: inherit;
   transition: var(--light-motion);
 }
-.logPager button:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .logPager button:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 .feedRule {
   display: flex;
@@ -1285,9 +1297,11 @@
   text-transform: uppercase;
   transition: var(--light-motion);
 }
-.status button:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--alert-ink);
-  color: var(--alert);
+@media (hover: hover) {
+  .status button:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--alert-ink);
+    color: var(--alert);
+  }
 }
 .status button:focus-visible {
   outline-color: currentColor;

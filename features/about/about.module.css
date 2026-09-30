@@ -62,13 +62,17 @@
 .channels a {
   transition: var(--light-motion);
 }
-.channels a:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .channels a:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
-.channels a:hover > * {
-  background: none !important;
-  color: inherit !important;
+@media (hover: hover) {
+  .channels a:hover > * {
+    background: none !important;
+    color: inherit !important;
+  }
 }
 
 /* ── Sub-plates: channel rows run flush in turns of tone; the number is printed in the accent. ── */

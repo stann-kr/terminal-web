@@ -7,7 +7,7 @@ import {
   profileForAppearance,
   artistHref,
 } from '@/features/artists/model';
-import { accessAvailability, eventHref, publicArtists } from './model';
+import { accessAvailability, eventHref, publicArtists, venueMapHref } from './model';
 import styles from './events.module.css';
 
 export function EventFacts({
@@ -68,6 +68,8 @@ export function EventActions({
   now: Date;
 }) {
   const access = accessAvailability(event, events, now);
+  const ahead = event.status !== 'ARCHIVED';
+  const map = ahead ? venueMapHref(event) : null;
   return (
     <>
     <div className={styles.accessProtocol} data-open={access.canRequest}>
@@ -90,6 +92,8 @@ export function EventActions({
           게스트 신청
         </Action>
       )}
+      {map && <Action external href={map}>지도에서 보기</Action>}
+      {ahead && <Action download href={`${eventHref(event.id)}/event.ics`}>캘린더에 추가</Action>}
       <Action href="/signal">다음 행사 소식 신청</Action>
     </ActionDeck>
     </>

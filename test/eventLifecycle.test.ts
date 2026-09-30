@@ -12,6 +12,8 @@ import {
   selectEvent,
 } from '../lib/events/lifecycle';
 import type { EventStatus, TerminalEvent } from '../lib/events/types';
+import { dayMark, venueMapHref } from '../features/events/model';
+import { eventCalendar } from '../features/events/calendar';
 
 function event(id: string, date: string, time: string, status: EventStatus): TerminalEvent {
   return {
@@ -139,5 +141,46 @@ describe('event lifecycle', () => {
     } finally {
       vi.unstubAllEnvs();
     }
+  });
+});
+
+describe('session marks and hand-offs', () => {
+  it('counts D-day in KST calendar days, not hours left', () => {
+    const night = event('A', '2026-11-28', '23:00 KST', 'UPCOMING');
+    // Same day, 01:00 KST: the session is tonight.
+    expect(dayMark(night, new Date('2026-11-27T16:00:00Z'))).toBe('D-DAY');
+    // 01:00 KST the day before: one calendar day, though 46 hours remain.
+    expect(dayMark(night, new Date('2026-11-26T16:00:00Z'))).toBe('D-1');
+    // 23:30 KST the day before: still D-1, not D-DAY.
+    expect(dayMark(night, new Date('2026-11-27T14:30:00Z'))).toBe('D-1');
+    expect(dayMark({ ...night, status: 'LIVE' }, new Date())).toBe('LIVE');
+    expect(dayMark(event('B', '2026-02-30', '23:00', 'UPCOMING'), new Date())).toBe('TBA');
+  });
+
+  it('pins the venue on a map only from real coordinates', () => {
+    expect(venueMapHref({ venue: 'FAUST SEOUL', coords: '37.5335° N, 126.9958° E' }))
+      .toBe('https://map.kakao.com/link/map/FAUST%20SEOUL,37.5335,126.9958');
+    expect(venueMapHref({ venue: 'X', coords: '33.8° S, 151.2° W' })).toBe('https://map.kakao.com/link/map/X,-33.8,-151.2');
+    expect(venueMapHref({ venue: 'X', coords: 'test' })).toBeNull();
+    expect(venueMapHref({ venue: 'X', coords: '' })).toBeNull();
+  });
+
+  it('writes a start-only iCalendar entry with escaped text', () => {
+    const ics = eventCalendar(
+      { ...event('TRM-03', '2026-11-28', '23:00 KST', 'UPCOMING'), session: 'LUMO; NIGHT', subtitle: 'A\\B', venue: 'FAUST SEOUL', district: 'YONGSAN-GU, ITAEWON' },
+      'https://terminal.stann.kr',
+      new Date('2026-10-01T00:00:00Z'),
+    )!;
+    const lines = ics.split('\r\n');
+    expect(lines).toContain('DTSTART:20261128T140000Z');
+    expect(lines).toContain('SUMMARY:TERMINAL LUMO\\; NIGHT');
+    expect(lines).toContain('LOCATION:FAUST SEOUL\\, YONGSAN-GU\\, ITAEWON');
+    expect(lines).toContain('URL:https://terminal.stann.kr/events/TRM-03');
+    expect(ics).toContain('DESCRIPTION:A\\\\B\\nhttps://terminal.stann.kr/events/TRM-03');
+    expect(ics).not.toMatch(/DTEND|DURATION/);
+    expect(lines.every((line) => new TextEncoder().encode(line).length <= 75)).toBe(true);
+    expect(eventCalendar(event('B', '2026-02-30', '23:00', 'UPCOMING'), 'https://x')).toBeNull();
+    expect(eventCalendar({ ...event('C', '2026-11-28', '23:00', 'UPCOMING'), session: 'TERMINAL [03]' }, 'https://x'))
+      .toContain('SUMMARY:TERMINAL [03]\r\n');
   });
 });

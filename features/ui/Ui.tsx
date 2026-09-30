@@ -82,16 +82,33 @@ export function Action({
   children,
   primary = false,
   carrier,
+  external = false,
+  download = false,
 }: {
   href: string;
   children: ReactNode;
   primary?: boolean;
   /** Marks a link that opens a detail (`event:ID`, `artist:KEY`), so the stage grows it from here. */
   carrier?: string;
+  /** Another site, opened in a new tab. */
+  external?: boolean;
+  /** A file to save (a calendar entry), not a page. */
+  download?: boolean;
 }) {
+  const className = `${styles.action} ${primary ? styles.primary : ''}`;
+  if (external || download)
+    return (
+      <a
+        className={className}
+        href={href}
+        {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : { download: true })}
+      >
+        {brand(children)}
+      </a>
+    );
   return (
     <Link
-      className={`${styles.action} ${primary ? styles.primary : ''}`}
+      className={className}
       href={href}
       data-carrier={carrier}
       scroll={carrier ? false : undefined}
@@ -100,7 +117,6 @@ export function Action({
     </Link>
   );
 }
-/** A panel's keys as full-width bars across the plate: the one primary key solid, the rest tinted. */
 export function ActionDeck({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <div className={`${styles.deck} ${className}`}>{children}</div>;
 }

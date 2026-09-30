@@ -81,12 +81,16 @@
   letter-spacing: .16em;
 }
 /* Hover sweeps the whole line in from the side the pointer entered. */
-.stageSlots li:has(a:hover) {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .stageSlots li:has(a:hover) {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
-.stageSlots li:has(a:hover) * {
-  color: inherit !important;
+@media (hover: hover) {
+  .stageSlots li:has(a:hover) * {
+    color: inherit !important;
+  }
 }
 .stageSlots li:has(a:focus-visible) {
   outline: 2px solid var(--focus);
@@ -126,9 +130,11 @@
 .lineup a {
   transition: var(--light-motion);
 }
-.lineup a:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .lineup a:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 .lineup small {
   display: block;

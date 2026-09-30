@@ -1,6 +1,6 @@
 'use client';
 import { ui } from '@/features/ui/Ui';
-import { Field, FormError, formStyles } from '@/features/ui/Form';
+import { Field, FormError, formStyles, literalInput } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
 import { LiveValue } from '@/features/display/Display';
 import { Meter } from '@/features/display/Meter';
@@ -62,6 +62,7 @@ export function TransmitForm({
         hint={`비우면 노드 이름${node ? `(${node})` : ''}으로 기록 · 24자 이내 · 공백은 _로 표시됩니다.`}
         placeholder={node}
         maxLength={96}
+        {...literalInput}
         autoComplete="nickname"
         value={draft.handle}
         onChange={(event) => edit({ handle: event.target.value })}

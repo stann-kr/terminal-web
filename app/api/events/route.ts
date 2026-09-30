@@ -5,9 +5,9 @@ import {
   listStoredArtistRows,
   listStoredEventRows,
 } from '@/lib/events/d1EventReadRepository';
-import { parsePublicArtistRow, parsePublicEventRow } from '@/lib/events/publicDtos';
+import { toPublicEvents } from '@/lib/events/publicEvents';
 import { getDb } from '@/lib/db/client';
-import { getEventDateTime, withEffectiveEventStatus } from '@/lib/events/lifecycle';
+import { getEventDateTime } from '@/lib/events/lifecycle';
 import type { EventStatus } from '@/lib/events/types';
 
 const EVENT_STATUSES = new Set<EventStatus>(['UPCOMING', 'LIVE', 'ARCHIVED']);
@@ -27,28 +27,7 @@ export async function GET(request: Request) {
       listStoredArtistRows(db),
     ]);
 
-    const publicArtists = artistRows.map((row) => ({
-      eventId: row.eventId,
-      artist: parsePublicArtistRow(row),
-    }));
-    const invalidArtistEventIds = new Set(
-      publicArtists.filter(({ artist }) => artist === null).map(({ eventId }) => eventId),
-    );
-    const artistsByEventId = publicArtists.reduce<Record<string, NonNullable<(typeof publicArtists)[number]['artist']>[]>>(
-      (grouped, { eventId, artist }) => {
-        if (artist) (grouped[eventId] ??= []).push(artist);
-        return grouped;
-      },
-      {},
-    );
-
-    const now = new Date();
-    const result = eventRows
-      .flatMap((row) => {
-        if (invalidArtistEventIds.has(row.id)) return [];
-        const event = parsePublicEventRow(row, artistsByEventId[row.id] ?? []);
-        return event ? [withEffectiveEventStatus(event, now)] : [];
-      })
+    const result = toPublicEvents(eventRows, artistRows, new Date())
       .filter((event) => statusFilter === undefined || event.status === statusFilter);
 
     if (statusFilter === 'UPCOMING') {

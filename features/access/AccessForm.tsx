@@ -1,12 +1,15 @@
 'use client';
+import { useEffect, useRef } from 'react';
+import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref } from '@/features/events/model';
-import { Action, ActionDeck, StateNotice, ui } from '@/features/ui/Ui';
+import { Action, ActionDeck, Facts, StateNotice, ui } from '@/features/ui/Ui';
 import {
   Consent,
   Field,
   FormError,
   FormSuccess,
   formStyles,
+  literalInput,
 } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
 import { useAccessRequest } from './useAccessRequest';
@@ -14,9 +17,11 @@ import styles from './access.module.css';
 
 export function AccessForm({
   eventId,
+  event,
   availability = { canRequest: true, message: '' },
 }: {
   eventId: string;
+  event?: TerminalEvent;
   availability?: { canRequest: boolean; message: string };
 }) {
   const {
@@ -36,6 +41,11 @@ export function AccessForm({
     errorCode,
     hasDraft,
   } = useAccessRequest(eventId, availability);
+  // A checked code unlocks step 02; the guest carries on typing there.
+  const nameField = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (verified) nameField.current?.focus();
+  }, [verified]);
   const closed = (
     <StateNotice title="현재 신청할 수 없습니다">
       <p>{availability.message}</p>
@@ -50,7 +60,20 @@ export function AccessForm({
       <FormSuccess>
         <p className={ui.eyebrow}>REQUEST SAVED</p>
         <h2>게스트 신청을 저장했습니다</h2>
-        <Action href={eventHref(eventId)}>행사로 돌아가기</Action>
+        <Facts
+          rows={[
+            ...(event ? [['행사', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
+            ...(verified ? [['초대인', verified.name] as [string, string]] : []),
+            ['이름', fields.name.trim()],
+            ['이메일', fields.email.trim()],
+            ['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`],
+            ['소식 수신', fields.marketingConsent ? '동의' : '동의 안 함'],
+          ]}
+        />
+        <ActionDeck>
+          <Action primary href={eventHref(eventId)}>행사로 돌아가기</Action>
+          {!fields.marketingConsent && <Action href="/signal">다음 행사 소식 신청</Action>}
+        </ActionDeck>
       </FormSuccess>
     );
   if (!availability.canRequest && !hasDraft && !pending) return closed;
@@ -71,7 +94,15 @@ export function AccessForm({
             maxLength={64}
             value={code}
             autoComplete="off"
+            {...literalInput}
+            enterKeyHint="go"
             onChange={(event) => changeCode(event.target.value)}
+            onKeyDown={(event) => {
+              // Enter checks the code; the form cannot be sent before that.
+              if (event.key !== 'Enter' || event.nativeEvent.isComposing || verified) return;
+              event.preventDefault();
+              void verifyCode();
+            }}
           />
           <button
             aria-busy={checking}
@@ -97,7 +128,11 @@ export function AccessForm({
         disabled={!verified || pending || !availability.canRequest}
       >
         <legend className={`${ui.band} ${styles.legend}`}>02 / 연락처와 동의</legend>
+        {!verified && availability.canRequest && (
+          <p className={styles.locked}>초대 코드를 확인하면 입력할 수 있습니다.</p>
+        )}
         <Field
+          ref={nameField}
           id="guest-name"
           label="이름"
           required
@@ -133,6 +168,8 @@ export function AccessForm({
             required
             maxLength={31}
             pattern="@?[A-Za-z0-9_.]{1,30}"
+            {...literalInput}
+            placeholder="@handle"
             value={fields.instagram}
             error={
               errorCode === 'INVALID_INSTAGRAM_FORMAT'

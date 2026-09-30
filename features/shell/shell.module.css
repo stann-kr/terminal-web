@@ -95,9 +95,11 @@
 .language button[aria-pressed=true] {
   color: var(--ink);
 }
-.language button:not([aria-pressed=true]):hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .language button:not([aria-pressed=true]):hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 .language button:focus-visible {
   outline-offset: -4px;

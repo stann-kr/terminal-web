@@ -128,19 +128,27 @@
 }
 
 /* Hover sweeps a card or a line in from the side the pointer entered. */
-.sharedCells li:has(a:hover) {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .sharedCells li:has(a:hover) {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
-.sharedCells li:has(a:hover) small {
-  color: inherit;
+@media (hover: hover) {
+  .sharedCells li:has(a:hover) small {
+    color: inherit;
+  }
 }
-.timeline li:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .timeline li:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
-.timeline li:hover * {
-  color: inherit !important;
+@media (hover: hover) {
+  .timeline li:hover * {
+    color: inherit !important;
+  }
 }
 .timeline li:has(a:focus-visible) {
   outline: 2px solid var(--focus);

@@ -61,11 +61,14 @@ export function validateSignalSubscriptionInput(body: unknown): SignalSubscripti
     fieldErrors.email = 'INVALID_EMAIL_FORMAT';
   }
 
-  if (!instagram) fieldErrors.instagram = 'ALL_FIELDS_REQUIRED';
-  else if (
-    cleanInstagram.length === 0
-    || cleanInstagram.length > MAX_INSTAGRAM_LENGTH
-    || !INSTAGRAM_PATTERN.test(cleanInstagram)
+  // The channel mails by address; an Instagram handle is optional and stored empty when left out.
+  if (
+    instagram
+    && (
+      cleanInstagram.length === 0
+      || cleanInstagram.length > MAX_INSTAGRAM_LENGTH
+      || !INSTAGRAM_PATTERN.test(cleanInstagram)
+    )
   ) {
     fieldErrors.instagram = 'INVALID_INSTAGRAM_FORMAT';
   }
@@ -73,7 +76,7 @@ export function validateSignalSubscriptionInput(body: unknown): SignalSubscripti
   if (!body.consent) fieldErrors.consent = 'CONSENT_REQUIRED';
 
   if (Object.keys(fieldErrors).length > 0) {
-    const error = !email || !instagram
+    const error = !email
       ? 'ALL_FIELDS_REQUIRED'
       : !body.consent
         ? 'CONSENT_REQUIRED'

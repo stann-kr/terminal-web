@@ -57,6 +57,19 @@ describe('Signal subscription input policy', () => {
     });
   });
 
+  it('takes an email alone; the Instagram handle is optional', () => {
+    expect(validateSignalSubscriptionInput({ email: 'Guest@Example.com', instagram: '  ', consent: true })).toEqual({
+      ok: true,
+      input: { email: 'guest@example.com', instagram: '', consent: true },
+      fieldErrors: {},
+    });
+    expect(validateSignalSubscriptionInput({ email: '', instagram: '@guest', consent: true })).toMatchObject({
+      ok: false,
+      error: 'ALL_FIELDS_REQUIRED',
+      fieldErrors: { email: 'ALL_FIELDS_REQUIRED' },
+    });
+  });
+
   it('applies the same public field bounds before any I/O', () => {
     expect(validateSignalSubscriptionInput({
       email: `${'a'.repeat(250)}@x.io`,

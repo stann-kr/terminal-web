@@ -1,5 +1,5 @@
 import type { Artist, TerminalEvent } from '@/lib/events/types';
-import { getArchivedOrElapsedEvents, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, withEffectiveEventStatus } from '@/lib/events/lifecycle';
+import { getArchivedOrElapsedEvents, getEventDateTime, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, withEffectiveEventStatus } from '@/lib/events/lifecycle';
 import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
 
 export const isPublicArtist = (artist: Artist) => artist.status === 'CONFIRMED' || artist.status === 'ARCHIVED';
@@ -34,3 +34,25 @@ export function accessAvailability(event: TerminalEvent, events: TerminalEvent[]
   return { canRequest: window.isActive, message: window.isActive ? '게스트 신청을 접수하고 있습니다.' : `행사 시작 30일 전부터 신청할 수 있습니다. ${window.opensInDays ?? 0}일 후 열립니다.` };
 }
 export function pageNumber(value: string | null, max = 1000) { return value && /^[1-9]\d*$/.test(value) && Number(value) <= max ? Number(value) : 1; }
+
+const KST_OFFSET_MS = 9 * 3_600_000;
+const kstDay = (time: number) => Math.floor((time + KST_OFFSET_MS) / 86_400_000);
+/** `D-12` by KST calendar days (a session tonight is `D-DAY`), or the state once it has started. */
+export function dayMark(event: TerminalEvent, now: Date) {
+  if (event.status === 'LIVE') return 'LIVE';
+  if (event.status === 'ARCHIVED') return 'ARCHIVE';
+  const start = getEventDateTime(event).getTime();
+  if (!Number.isFinite(start)) return 'TBA';
+  const days = kstDay(start) - kstDay(now.getTime());
+  return days <= 0 ? 'D-DAY' : `D-${days}`;
+}
+
+/** `37.5335° N, 126.9958° E` → a Kakao Map pin with the venue name, or `null` when there are no coordinates. */
+export function venueMapHref(event: Pick<TerminalEvent, 'venue' | 'coords'>) {
+  const match = /^\s*(\d{1,2}(?:\.\d+)?)°\s*([NS])\s*,\s*(\d{1,3}(?:\.\d+)?)°\s*([EW])\s*$/i.exec(event.coords);
+  if (!match) return null;
+  const lat = Number(match[1]) * (match[2].toUpperCase() === 'S' ? -1 : 1);
+  const lng = Number(match[3]) * (match[4].toUpperCase() === 'W' ? -1 : 1);
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return `https://map.kakao.com/link/map/${encodeURIComponent(event.venue.replace(/,/g, ' '))},${lat},${lng}`;
+}
