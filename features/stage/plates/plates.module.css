@@ -1180,3 +1180,66 @@
 .logList li > * {
   padding-inline: max(10px, var(--bleed, 0px));
 }
+
+
+/* ── Data states at summary sizes ──────────────────────────────────────────
+   One flush line across the plate: tinted while reading or empty, the alert plate when a read
+   failed, its retry key a step deeper at the right and as tall as the line. */
+.status {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+  justify-content: space-between;
+  min-height: 44px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  background: var(--well);
+  color: var(--ink);
+  font: 700 var(--t-sm)/1.25 var(--display);
+  letter-spacing: .04em;
+}
+.status > span {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 8px max(12px, var(--bleed, 0px));
+}
+.status[data-state=error] {
+  background: var(--alert);
+  color: var(--alert-ink);
+}
+.status button {
+  flex: none;
+  padding: 0 max(12px, var(--bleed, 0px));
+  border: 0;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  color: inherit;
+  font: inherit;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  transition: var(--light-motion);
+}
+.status button:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--alert-ink);
+  color: var(--alert);
+}
+.status button:focus-visible {
+  outline-color: currentColor;
+  outline-offset: -4px;
+}
+/* A summary plate that cannot be one link (its data failed): its head band is the link, edge to
+   edge, and the state line sits under it. */
+.face > .plateCard {
+  flex: none;
+  margin-inline: calc(var(--pad) * -1);
+  padding-bottom: 0;
+}
+:global([data-stage=stage]) .face > .plateCard {
+  height: auto;
+}
+/* The next-session plate publishes its inset like other plates, so notices in it run flush. */
+.next {
+  --bleed: var(--pad);
+}
+@media (forced-colors: active) {
+  .status, .status button { border: 1px solid CanvasText; }
+}

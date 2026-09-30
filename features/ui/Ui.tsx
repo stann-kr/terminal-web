@@ -139,7 +139,7 @@ export function StateNotice({
         {children && <div className={styles.noticeBody}>{children}</div>}
       </div>
       {retry && (
-        <button type="button" className={`${styles.button} ${styles.primary}`} onClick={retry}>
+        <button type="button" className={`${styles.button} ${styles.primary} ${styles.noticeKey}`} onClick={retry}>
           다시 불러오기
         </button>
       )}

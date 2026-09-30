@@ -371,3 +371,12 @@
 @media (forced-colors: active) {
   .pager a, .textPager button { border: 1px solid CanvasText; }
 }
+
+/* The place of a file whose records are not read yet: the state, flush across the top. */
+.pendingFile {
+  --bleed: var(--pad);
+  display: grid;
+  align-content: start;
+  height: 100%;
+  padding: 0 var(--pad);
+}

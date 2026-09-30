@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import type { Surface } from '@/features/ui/Ui';
+import { Loading, StateNotice, type Surface } from '@/features/ui/Ui';
 import { stageConfig } from './config';
 import { stageSizeFor, useStageData, useViewport } from './data';
 import { Box } from './Box';
@@ -489,6 +489,32 @@ export function Stage({ state: address }: { state: StageState }) {
             </DetailBox>
           );
         })}
+        {/* A file whose records are not read yet (or failed) still has its place: it states why. */}
+        {layout.open && layout.detail && !data.events && (
+          <Box
+            rect={onStage ? layout.detail : null}
+            visible
+            contentKey={`pending:${query.isError ? 'error' : 'loading'}`}
+            className={styles.detail}
+            surface="panel"
+            view={key}
+            data={{ detail: 'pending', mode: 'open' }}
+          >
+            <div className={styles.pendingFile}>
+              {query.isError ? (
+                <StateNotice
+                  error
+                  title={layout.open.kind === 'event' ? '행사 기록을 불러오지 못했습니다' : '아티스트 기록을 불러오지 못했습니다'}
+                  retry={() => void query.refetch()}
+                >
+                  잠시 후 다시 불러오거나 다른 판으로 이동해 주세요.
+                </StateNotice>
+              ) : (
+                <Loading />
+              )}
+            </div>
+          </Box>
+        )}
       </div>
     </StageModeContext.Provider>
   );

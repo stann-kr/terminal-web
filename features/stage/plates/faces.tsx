@@ -87,6 +87,23 @@ export function FocusHead({ label, title, tags, children }: { label: string; tit
   );
 }
 
+/**
+ * A plate's data state at summary and chip sizes: one flush line (loading, empty, or a failed read
+ * with its retry key), so a short plate is never handed a notice taller than itself.
+ */
+export function PlateStatus({ state, text, retry }: { state: 'loading' | 'empty' | 'error'; text: string; retry?: () => void }) {
+  return (
+    <div className={styles.status} data-state={state} role={state === 'error' ? 'alert' : 'status'}>
+      <span>{text}</span>
+      {state === 'error' && retry && (
+        <button type="button" onClick={retry}>
+          다시 불러오기
+        </button>
+      )}
+    </div>
+  );
+}
+
 /** Small printed tags for heads. */
 export function Tags({ items }: { items: (string | false | null | undefined)[] }) {
   return (

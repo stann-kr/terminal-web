@@ -228,22 +228,25 @@
 }
 
 /* ── Notices: a tinted block, or a red plate when a read failed; retry sits at the right. ── */
+/* A notice is a flush strip across the plate; its retry key is a bar along the notice's foot. */
 .notice {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 24px;
+  --notice-inset: max(var(--pad), var(--bleed, 0px));
+  display: grid;
+  gap: 12px;
   margin-inline: calc(var(--bleed, 0px) * -1);
-  padding: 14px max(var(--pad), var(--bleed, 0px));
+  padding: 14px var(--notice-inset);
   background: var(--well);
   color: var(--ink);
 }
 .notice[data-surface] {
   background: var(--plate);
 }
+.noticeKey {
+  margin: 2px calc(var(--notice-inset) * -1) -14px;
+  padding-inline: var(--notice-inset);
+}
 .noticeText {
   display: grid;
-  flex: 1 1 280px;
   gap: 6px;
   min-width: 0;
 }

@@ -11,6 +11,7 @@ import { Action, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/feat
 import { stageConfig } from '../config';
 import { FitStack } from '../FitStack';
 import { FitTitle } from '../FitTitle';
+import { PlateStatus } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
@@ -49,11 +50,15 @@ function BrandBar({ compact = false }: { compact?: boolean }) {
  */
 export function NextPlate({ mode, data, query }: PlateProps) {
   const event = data.next;
+  // A short plate (chip, tile, index) states its data in one line; a notice would not fit it.
+  const short = mode !== 'hero' && mode !== 'panel';
   const body = () => {
     if (!data.events) {
+      if (short) return <PlateStatus state={query.isError ? 'error' : 'loading'} text={query.isError ? '행사 기록을 불러오지 못했습니다' : '행사 기록을 불러오는 중'} retry={() => void query.refetch()} />;
       return query.isError ? <StateNotice error title="행사 기록을 불러오지 못했습니다" retry={() => void query.refetch()} /> : <Loading />;
     }
     if (!event) {
+      if (short) return <PlateStatus state="empty" text="공개된 행사가 아직 없습니다" />;
       return (
         <StateNotice title="공개된 행사가 아직 없습니다">
           <div className={styles.keys}>

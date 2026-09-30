@@ -389,6 +389,22 @@ describe('directory and roster contracts', () => {
     expect(container).not.toHaveTextContent('공개된 행사가 아직 없습니다');
     vi.unstubAllGlobals();
   });
+
+  it('keeps a failed file in its place with a retry, and prints no zero counts meanwhile', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 500 })));
+    navigation.pathname = '/artists/nobody';
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    clients.push(client);
+    const { container } = render(<QueryClientProvider client={client}><Shell>{null}</Shell></QueryClientProvider>);
+    const file = () => container.querySelector<HTMLElement>('[data-detail=pending]');
+    await waitFor(() => expect(file()).not.toBeNull());
+    await waitFor(() => expect(within(file()!).getByRole('alert')).toHaveTextContent('아티스트 기록을 불러오지 못했습니다'));
+    expect(within(file()!).getByRole('button', { name: '다시 불러오기' })).toBeInTheDocument();
+    // The small plates state the failure in one line and never claim zero records.
+    expect(within(plate(container, 'next')).getByRole('alert')).toHaveTextContent('행사 기록을 불러오지 못했습니다');
+    expect(container).not.toHaveTextContent(/000 (FILES|REC)/);
+    vi.unstubAllGlobals();
+  });
 });
 
 describe('event countdown', () => {

@@ -59,9 +59,16 @@
   white-space: nowrap;
 }
 
-.channels a:hover > *:not(.srOnly) {
+.channels a {
+  transition: var(--light-motion);
+}
+.channels a:hover {
   box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
+}
+.channels a:hover > * {
+  background: none !important;
+  color: inherit !important;
 }
 
 /* ── Sub-plates (v2): channel rows run flush in turns of tone; the number is printed in the accent. ── */

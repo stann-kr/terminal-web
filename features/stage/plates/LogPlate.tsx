@@ -19,8 +19,9 @@ const logHref = (page: number) => `/transmit${page > 1 ? `?page=${page}` : ''}`;
 
 /** The visitor log: node activity on the home, the write form and the public log when open. */
 export function LogPlate({ mode, state, size }: PlateProps) {
-  const total = useTransmit(1).data?.total;
-  const meta = total === undefined ? 'READ' : `${pad(total)} REC`;
+  const summary = useTransmit(1);
+  const total = summary.data?.total;
+  const meta = total !== undefined ? `${pad(total)} REC` : summary.isError ? 'ERROR' : 'READ';
   if (mode === 'chip' || mode === 'index') return <ChipFace href="/transmit" name="LOG" title="방문자 로그" meta={meta} />;
   if (mode !== 'hero') {
     // As many node rows as the plate has room for, below its band. The plate is one link.
@@ -35,7 +36,7 @@ export function LogPlate({ mode, state, size }: PlateProps) {
           <span className={styles.bandTags}><Tags items={['NODE ACTIVITY']} /></span>
         </span>
         <span className={styles.cardBody} aria-hidden="true">
-          <NodeActivity limit={limit} />
+          <NodeActivity limit={limit} quiet />
         </span>
       </CardLink>
     );
