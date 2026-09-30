@@ -5,7 +5,7 @@ import { artistHref, type ArtistProfile } from '@/features/artists/model';
 import { SignalText } from '@/features/display/Display';
 import { paragraphs } from '@/features/events/model';
 import { useLanguage } from '@/features/shell/Providers';
-import type { Surface } from '@/features/ui/Ui';
+import { ui, type Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import { FitTitle } from '../FitTitle';
 import type { StageState } from '../state';
@@ -84,9 +84,11 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
   return (
     <article className={styles.artistFile} aria-labelledby={`artist-${profile.key}`}>
       <div className={styles.fileMain} data-fit="">
-        <p className={styles.fileOrigin} aria-hidden="true">ORIGIN / {profile.origin || '—'}</p>
+        <p className={`${ui.band} ${styles.fileOrigin}`} aria-hidden="true">
+          <span>ORIGIN / {profile.origin || '—'}</span>
+          <span>{profile.origin || 'XX'}-{serial(profile.key)}</span>
+        </p>
         <FitTitle as="h1" id={`artist-${profile.key}`} heading={current} text={profile.name} maxLines={3} minPx={28} className={styles.fileName} />
-        <p className={styles.fileCode} aria-hidden="true">{profile.origin || 'XX'}-{serial(profile.key)}</p>
       </div>
       <div className={styles.fileRecords} data-fit="">
         {data.events && <ArtistChronology profile={profile} events={data.events} />}

@@ -122,14 +122,12 @@
   to { opacity: 0; }
 }
 
-/* List pager under an open list. */
+/* List pager under an open list: a bar whose keys fill its height, flush to its sides. */
 .pager {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  gap: 6px;
   height: 100%;
-  padding-inline: var(--pad);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .1em;
 }
@@ -137,7 +135,7 @@
   display: flex;
   align-items: center;
   min-height: 44px;
-  padding-inline: 16px;
+  padding-inline: var(--pad);
   color: var(--muted);
 }
 .pager > span:not([aria-hidden]):not(.srOnly) {
@@ -282,24 +280,29 @@
 @keyframes pageBack {
   from { opacity: 0; transform: translateX(-12px); }
 }
+/* Page turns: a flush bar across the column (--bleed) in its well; the keys are a step deeper and
+   as tall as the bar. */
 .textPager {
   display: flex;
   flex: none;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
+  align-items: stretch;
+  min-height: 48px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  background: var(--well);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .1em;
 }
 .textPager > span[aria-hidden] {
+  display: flex;
   flex: 1;
+  align-items: center;
+  justify-content: center;
   color: var(--accent);
   font-family: var(--mono);
-  text-align: center;
 }
 .textPager button {
   min-height: 44px;
-  padding: 0 14px;
+  padding: 0 max(14px, var(--bleed, 0px));
   border: 0;
   background: var(--well);
   color: var(--ink);

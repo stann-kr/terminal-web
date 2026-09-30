@@ -7,7 +7,7 @@ import { AccessRequest } from '@/features/access/Access';
 import { EventActions, EventFacts, Lineup } from '@/features/events/EventRecord';
 import { eventHref, paragraphs, publicArtists, statusLabel } from '@/features/events/model';
 import { useLanguage } from '@/features/shell/Providers';
-import { BrandText, Chip, StateNotice, type Surface } from '@/features/ui/Ui';
+import { BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import { FitTitle } from '../FitTitle';
 import type { ItemMode } from '../layout';
@@ -113,9 +113,9 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
   return (
     <article className={styles.session} data-request={request || undefined} aria-labelledby={`session-${event.id}`}>
       <div className={styles.sessionMain} data-fit="">
-        <p className={styles.sessionState} aria-hidden="true">
+        <p className={`${ui.band} ${styles.sessionState}`} aria-hidden="true">
           <span data-event-state={event.status}>{statusLabel(event.status)}</span>
-          <Chip>{event.id}</Chip>
+          <span>{event.id}</span>
         </p>
         <FitTitle as="h1" id={`session-${event.id}`} heading={current} text={event.session} maxLines={3} minPx={28} className={styles.sessionTitle}>
           <BrandText text={event.session} />

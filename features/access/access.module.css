@@ -1,20 +1,20 @@
+/* Each step of the form opens on a band across the plate (the fieldset already runs flush). */
 .legend {
   width: 100%;
-  margin-bottom: 6px;
-  padding: 7px 12px;
-  background: var(--fill);
-  color: var(--on-fill);
-  font: 600 var(--t-sm)/1.2 var(--display);
-  letter-spacing: .12em;
 }
+/* The code field and its check key share one line; the key is as tall as the input. */
 .code {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
   align-items: end;
+}
+.code > button {
+  min-height: 44px;
+  padding-inline: 16px var(--bleed);
 }
 .codeMessage {
   min-height: 1.4em;
+  padding: 6px var(--bleed) 0;
   color: var(--ink);
   font-size: var(--text-ui);
 }
@@ -22,8 +22,7 @@
   display: flex;
   align-items: baseline;
   gap: 14px;
-  padding: 10px 12px;
-  border-left: 6px solid var(--line);
+  padding: 10px var(--bleed);
   background: var(--well);
   color: var(--muted);
   font-size: var(--text-label);
@@ -38,7 +37,6 @@
 .contacts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
 }
 @media (max-width: 860px) {
   .contacts { grid-template-columns: minmax(0, 1fr); }

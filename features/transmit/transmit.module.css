@@ -30,7 +30,8 @@
   height: 18px;
 }
 .receipt {
-  padding: 8px 12px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 10px max(12px, var(--bleed, 0px));
   background: var(--fill);
   color: var(--on-fill);
   font-size: var(--text-ui);

@@ -209,7 +209,12 @@
   padding-inline: var(--bleed);
 }
 .fields > button {
-  justify-content: center;
   min-height: 56px;
   margin-top: 12px;
+  padding-inline: var(--bleed);
+}
+/* A form's error and receipt lines run flush across the plate like its fields. */
+.error {
+  margin-inline: calc(var(--bleed) * -1);
+  padding-inline: max(12px, var(--bleed));
 }

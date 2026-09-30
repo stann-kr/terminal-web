@@ -40,6 +40,7 @@ export function TransmitForm({
           기록을 저장했습니다. {receipt.handle} · {receipt.ts} KST
         </div>
       )}
+      <div className={formStyles.fields}>
       <Field
         id="transmit-handle"
         label="공개 닉네임"
@@ -51,9 +52,11 @@ export function TransmitForm({
         onChange={(event) => edit({ handle: event.target.value })}
       />
       <div className={formStyles.field}>
-        <label htmlFor="transmit-message">
-          메시지 <span>필수</span>
-        </label>
+        <div className={formStyles.fieldHead}>
+          <label htmlFor="transmit-message">
+            메시지 <span>필수</span>
+          </label>
+        </div>
         <textarea
           id="transmit-message"
           required
@@ -70,6 +73,7 @@ export function TransmitForm({
       >
         {pending ? '전송 중…' : '기록 전송'}
       </button>
+      </div>
     </form>
   );
 }

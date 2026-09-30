@@ -206,37 +206,36 @@
   gap: 10px;
 }
 
+/* An open list's summary: its counts as flush cells across the plate (--bleed), in turns of tone,
+   each a small label over its readout; the plate's tags follow on the text line. */
 .summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
+  display: grid;
+  gap: 8px;
 }
 .counts {
-  display: flex;
-  gap: 4px;
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  margin-inline: calc(var(--bleed, 0px) * -1);
 }
 .counts > div {
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 8px max(12px, var(--bleed, 0px));
+}
+.counts > div:nth-child(odd) {
+  background: var(--well);
 }
 .counts dt {
-  display: flex;
-  align-items: center;
-  padding: 4px 10px;
-  background: var(--fill);
-  color: var(--on-fill);
-  font: 700 var(--t-sm)/1.1 var(--display);
-  letter-spacing: .06em;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .16em;
   white-space: nowrap;
 }
 .counts dd {
-  display: flex;
-  align-items: center;
-  padding: 4px 12px;
-  background: var(--well);
   color: var(--accent);
-  font: 400 var(--t-lg)/1 var(--mono);
+  font: 400 var(--t-xl)/1 var(--mono);
 }
 .summaryTags {
   display: flex;
@@ -248,7 +247,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 12px;
-  padding: 8px 12px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 10px max(12px, var(--bleed, 0px));
   background: var(--red);
   color: #fff8f0;
   font: 600 var(--t-sm)/1.35 var(--sans);
@@ -418,8 +418,13 @@
   font: 800 var(--t-lg)/1.1 var(--display);
   text-transform: uppercase;
 }
+/* A cell's or row's state is a column at its right edge, as tall as the card. */
 .cellState {
-  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  margin: -6px calc(var(--pad) * -1) -6px 0;
+  padding: 0 var(--pad);
   background: var(--well);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .1em;
@@ -608,8 +613,8 @@
   font-size: var(--t-lg);
 }
 .noUpcoming {
-  width: fit-content;
-  padding: 2px 8px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 6px max(12px, var(--bleed, 0px));
   background: var(--well);
   font: 700 var(--t-xs)/1.4 var(--display);
   letter-spacing: .14em;
@@ -730,7 +735,11 @@
   font: 700 var(--t-md)/1.2 var(--display);
 }
 .rowState {
-  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  margin: -8px calc(var(--pad) * -1) -8px 0;
+  padding: 0 var(--pad);
   background: var(--well);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .12em;
@@ -877,20 +886,22 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* The pager: a flush bar across the plate (--bleed) in its well; the keys are a step deeper. */
 .logPager {
   display: flex;
   flex: none;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  gap: 6px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  background: var(--well);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .1em;
 }
 .logPager > * {
   display: flex;
   align-items: center;
-  min-height: 44px;
-  padding-inline: 14px;
+  min-height: 48px;
+  padding-inline: max(14px, var(--bleed, 0px));
   border: 0;
   color: var(--muted);
 }
@@ -902,6 +913,7 @@
 }
 .logPager button {
   background: var(--well);
+  cursor: pointer;
   color: var(--ink);
   font: inherit;
   letter-spacing: inherit;
@@ -916,6 +928,7 @@
   flex: none;
   align-items: center;
   gap: 10px;
+  min-height: 24px;
   color: var(--muted);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .18em;
@@ -955,15 +968,10 @@
 :global([data-stage=stage]) .sessionMain {
   overflow: hidden;
 }
-.sessionState {
-  display: flex;
-  gap: 4px;
-}
-.sessionState > span:first-child {
-  padding: 4px 14px 4px 8px;
-  background: var(--fill);
-  color: var(--on-fill);
-  font: 700 var(--t-sm)/1.1 var(--sans);
+/* The file's head band: its state, and its code on the right. */
+.sessionState > span:last-child {
+  font-family: var(--mono);
+  letter-spacing: .04em;
 }
 .sessionTitle {
   margin-top: 12px;
@@ -1060,18 +1068,12 @@
 .fileMain {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: 12px;
   min-width: 0;
   min-height: 0;
   padding: 8px calc(var(--pad) - var(--gap)) calc(var(--pad) - var(--gap));
 }
-.fileOrigin,
-.fileCode {
-  font: 700 var(--t-sm)/1 var(--display);
-  letter-spacing: .16em;
-}
-.fileCode {
+.fileOrigin > span:last-child {
   font-family: var(--mono);
   letter-spacing: .04em;
 }
@@ -1134,7 +1136,19 @@
 }
 .sessionMain,
 .fileMain {
-  padding: 12px var(--pad) var(--pad);
+  padding: 0 var(--pad) var(--pad);
+}
+/* Panels in a row carry their own inset; the row itself publishes none, so a column wrapper in it
+   does not reach into its neighbours. */
+.panelRow,
+.logGrid {
+  --bleed: 0px;
+}
+/* Padded summary cards publish their inset too, so their lists run flush like an open plate's. */
+.summaryCard,
+.signalCard,
+.plateCard {
+  --bleed: var(--pad);
 }
 .lineupCells,
 .logList {

@@ -233,7 +233,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px 24px;
-  padding: 14px var(--pad);
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 14px max(var(--pad), var(--bleed, 0px));
   background: var(--well);
   color: var(--ink);
 }

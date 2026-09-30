@@ -4,13 +4,14 @@
 .lead {
   font: 700 var(--t-lg)/1.4 var(--sans);
 }
-/* Channel state: the real request lifecycle as one printed status cell. */
+/* Channel state: the real request lifecycle as one flush status line across the plate. */
 .signalMatrix {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-block: 16px 14px;
-  padding: 8px 12px;
+  min-height: 40px;
+  margin: 16px calc(var(--bleed, 0px) * -1) 14px;
+  padding: 8px max(12px, var(--bleed, 0px));
   background: var(--well);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .16em;

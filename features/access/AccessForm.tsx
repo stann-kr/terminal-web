@@ -62,7 +62,7 @@ export function AccessForm({
         className={formStyles.fields}
         disabled={pending || !availability.canRequest}
       >
-        <legend className={styles.legend}>01 / 초대 코드 확인</legend>
+        <legend className={`${ui.band} ${styles.legend}`}>01 / 초대 코드 확인</legend>
         <div className={styles.code}>
           <Field
             id="access-code"
@@ -96,7 +96,7 @@ export function AccessForm({
         className={formStyles.fields}
         disabled={!verified || pending || !availability.canRequest}
       >
-        <legend className={styles.legend}>02 / 연락처와 동의</legend>
+        <legend className={`${ui.band} ${styles.legend}`}>02 / 연락처와 동의</legend>
         <Field
           id="guest-name"
           label="이름"
