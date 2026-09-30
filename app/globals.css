@@ -14,6 +14,11 @@
  *   --ink / --muted: text   --line / --faint: rules   --fill / --on-fill: solid cells   --accent: numbers
  *   --well: a tinted cell   --hi / --on-hi: hover     --danger: errors                   --focus: focus ring
  */
+@property --ring-phase {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
 :root {
   --bg: var(--field);
 
@@ -48,7 +53,7 @@
   --enter-delay: 200ms;
   --dur-exit: 260ms;
   --stagger: 30ms;
-  /* Ambient rings: one circle leaves the centre every period and lives five periods, unrelated to any beat. */
+  /* Ambient rings: they flow outward by one 18px spacing each period, unrelated to any beat. */
   --ring-period: 2.4s;
   --dur-hover: 200ms;
   --ease-hover: ease-out;
@@ -168,6 +173,12 @@
 [data-surface] {
   background-color: var(--plate);
   color: var(--ink);
+}
+
+/* Rings flow outward: one spacing per `--ring-period`. */
+@keyframes ringOut {
+  from { --ring-phase: 0px; }
+  to { --ring-phase: 18px; }
 }
 
 * { box-sizing: border-box; }
