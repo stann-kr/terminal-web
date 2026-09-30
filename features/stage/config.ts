@@ -20,8 +20,11 @@ const BACK: LayoutLeaf = { slot: 'back' };
 export interface StageConfig {
   /** One tiling per view. Every view places all six plates; details add the detail, others the back card. */
   layouts: Record<ViewName, LayoutNode>;
-  /** Concentric rings behind the next-session plate (an ambient drift, not a beat). */
-  rings: boolean;
+  /**
+   * Each view's focal plate carries the concentric rings (an ambient drift that leans after the
+   * pointer): where they sit (`plate`, or the open `detail`) and their home centre as fractions of it.
+   */
+  rings: Partial<Record<ViewName, { plate: PlateId | 'detail'; at: { x: number; y: number } }>>;
   /** Where the plate chips sit in flow (scrolling) mode. */
   flowChips: 'top' | 'bottom';
   /** Frame padding around the stage, px. */
@@ -83,7 +86,16 @@ export const stageConfig: StageConfig = {
       [36, col([15, BACK], [27, p('next', 'tile')], [38, p('artists', 'panel')], [20, row([1, p('events', 'chip')], [1, p('log', 'chip')], [1, p('signal', 'chip')])])],
     ),
   },
-  rings: true,
+  rings: {
+    home: { plate: 'next', at: { x: 0.86, y: 0.3 } },
+    events: { plate: 'next', at: { x: 0.8, y: 0.35 } },
+    artists: { plate: 'next', at: { x: 0.8, y: 0.35 } },
+    session: { plate: 'detail', at: { x: 0.16, y: 0.3 } },
+    artist: { plate: 'detail', at: { x: 0.14, y: 0.35 } },
+    log: { plate: 'signal', at: { x: 0.82, y: 0.3 } },
+    signal: { plate: 'next', at: { x: 0.8, y: 0.3 } },
+    about: { plate: 'next', at: { x: 0.8, y: 0.4 } },
+  },
   flowChips: 'top',
   frameY: 10,
   minDesktop: { w: 1024, h: 600 },

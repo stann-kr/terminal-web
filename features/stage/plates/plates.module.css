@@ -276,6 +276,23 @@
   opacity: .9;
   font: 600 var(--t-sm)/1.2 var(--sans);
 }
+/* A low chip sets its name and line side by side, the name sized by the chip's height. */
+@container layer (max-height: 84px) {
+  .chip {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding-block: 6px;
+  }
+  .chipName {
+    flex: none;
+    font-size: clamp(16px, 36cqh, 30px);
+  }
+  .chipLine {
+    flex: 1 1 auto;
+  }
+}
 .chipMeta {
   font: 400 var(--t-xs)/1 var(--mono);
   letter-spacing: .06em;
@@ -370,7 +387,10 @@
   color: var(--muted);
   font: 600 var(--t-sm)/1.2 var(--sans);
 }
-/* A short back card puts HOME beside BACK, so neither has to give up a line. */
+/* The back card answers its own height and shape, never cutting a line:
+   tall — BACK, the name, the title stacked; short — HOME beside BACK, BACK · ESC on the left and
+   the name over the title on the right; low or long — one line, the name set as large as the card's
+   height allows. */
 @container layer (max-height: 150px) {
   .backStack[data-home] {
     grid-template-rows: minmax(0, 1fr);
@@ -378,6 +398,58 @@
   }
   .homeKey {
     padding-inline: 14px;
+  }
+}
+@container layer (max-height: 120px) {
+  .back {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-content: center;
+    gap: 2px 18px;
+    padding-block: 8px;
+  }
+  .backHead {
+    grid-row: 1 / span 2;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 6px;
+  }
+  .backName {
+    font-size: clamp(var(--t-md), 34cqh, 40px);
+  }
+}
+@container layer (max-height: 76px) {
+  .back {
+    grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr);
+    align-items: baseline;
+    align-content: center;
+    padding-block: 6px;
+  }
+  .backHead {
+    grid-row: auto;
+    flex-direction: row;
+    align-self: center;
+  }
+  .backName {
+    font-size: clamp(var(--t-sm), 40cqh, 32px);
+  }
+}
+@container layer (max-height: 150px) and (min-aspect-ratio: 6 / 1) {
+  .back {
+    display: grid;
+    grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr);
+    align-items: baseline;
+    align-content: center;
+    gap: 2px 20px;
+  }
+  .backHead {
+    grid-row: auto;
+    flex-direction: row;
+    align-self: center;
+  }
+  .backName {
+    font-size: clamp(var(--t-lg), 36cqh, 44px);
   }
 }
 
@@ -407,6 +479,10 @@
   gap: 2px;
   min-height: 44px;
   padding: 6px 12px;
+}
+/* A roster cell stacks name and meta in a 52px line (panelCellH): its padding gives way first. */
+.artistCell {
+  padding-block: 4px;
 }
 .cellCode {
   color: var(--accent);
@@ -479,26 +555,6 @@
   padding: 0 var(--pad) var(--pad);
   overflow: hidden;
   isolation: isolate;
-}
-.next > :not(.rings) {
-  position: relative;
-}
-/* Rings drift outward behind the session: ambient, slow, not tied to any tempo. */
-.rings {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  color: color-mix(in srgb, var(--ink) 22%, transparent);
-  background: repeating-radial-gradient(circle at 86% 30%,
-    transparent calc(var(--ring-phase) - 18px),
-    currentColor calc(var(--ring-phase) - 18px) calc(var(--ring-phase) - 16px),
-    transparent calc(var(--ring-phase) - 16px) var(--ring-phase));
-  -webkit-mask-image: radial-gradient(circle at 86% 30%, #000 0 40%, transparent 72%);
-  mask-image: radial-gradient(circle at 86% 30%, #000 0 40%, transparent 72%);
-  pointer-events: none;
-}
-@media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  .rings { animation: ringOut var(--ring-period) linear infinite; }
 }
 /* The wordmark and readouts, printed on the plate in its own ink: a name, not a control. */
 .brandBar {
@@ -1103,7 +1159,6 @@
 
 @media (forced-colors: active) {
   .tag, .card, .bandLink { border: 1px solid CanvasText; }
-  .rings { display: none; }
 }
 
 /* ── Sub-plates (v2) inside faces and files ────────────────────────────────
@@ -1242,4 +1297,32 @@
 }
 @media (forced-colors: active) {
   .status, .status button { border: 1px solid CanvasText; }
+}
+
+/* A low next-session chip puts the wordmark bar and the session line side by side. */
+@container layer (max-height: 96px) {
+  .next[data-density=chip] {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .next[data-density=chip] .brandBar {
+    flex: none;
+    gap: 12px;
+    padding-block: 0;
+  }
+  .next[data-density=chip] .nextChip {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 0;
+  }
+}
+/* The home subscription card: its big name follows the card's height as well as the window's
+   width, and the decorative tags give way on a low card. */
+.signalHead {
+  font-size: clamp(28px, min(3.4vw, 30cqh), 72px);
+}
+@container layer (max-height: 170px) {
+  .signalCard .bandTags {
+    display: none;
+  }
 }

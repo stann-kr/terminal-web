@@ -45,7 +45,7 @@ export function BackCard({ href, target, data }: { href: string; target: StageSt
           <span className={styles.tag}>ESC</span>
         </span>
         <FitTitle as="span" text={name} maxLines={1} minPx={12} className={styles.backName}>{name}</FitTitle>
-        <FitTitle as="span" text={title} maxLines={2} minPx={12} className={styles.backTitle}>
+        <FitTitle as="span" text={title} maxLines={1} minPx={12} className={styles.backTitle}>
           <BrandText text={title} />
         </FitTitle>
       </CardLink>

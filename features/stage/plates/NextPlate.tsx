@@ -8,7 +8,6 @@ import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { Action, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
-import { stageConfig } from '../config';
 import { FitStack } from '../FitStack';
 import { FitTitle } from '../FitTitle';
 import { PlateStatus } from './faces';
@@ -72,7 +71,6 @@ export function NextPlate({ mode, data, query }: PlateProps) {
   };
   return (
     <section className={styles.next} aria-label="대표 행사" data-density={mode} data-origin="">
-      {stageConfig.rings && (mode === 'hero' || mode === 'panel') && <i className={styles.rings} aria-hidden="true" />}
       <BrandBar compact={mode === 'chip'} />
       {body()}
     </section>

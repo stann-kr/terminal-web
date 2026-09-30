@@ -54,7 +54,7 @@
   --dur-exit: 260ms;
   --stagger: 30ms;
   /* Ambient ring drift: one ring outward every few seconds, unrelated to any beat. */
-  --ring-period: 3.2s;
+  --ring-period: 4.8s;
   --dur-hover: 200ms;
   --ease-hover: ease-out;
   /* Hover light-up: the fill sweeps in, the label flips once the fill is part way across. */

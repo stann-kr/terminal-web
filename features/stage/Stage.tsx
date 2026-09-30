@@ -7,6 +7,8 @@ import { Loading, StateNotice, type Surface } from '@/features/ui/Ui';
 import { stageConfig } from './config';
 import { stageSizeFor, useStageData, useViewport } from './data';
 import { Box } from './Box';
+import { Rings } from './Rings';
+import { ScrollHint } from './ScrollHint';
 import { NO_SPILL, computeFlowLayout, computeLayout, stageMetrics, type PlacedItem, type PlateMode, type Rect, type Spill, type StageLayout } from './layout';
 import {
   PLATE_ORDER,
@@ -165,6 +167,7 @@ export function Stage({ state: address }: { state: StageState }) {
   const gap = viewport ? stageMetrics(viewport.w).gap : 0;
   const primary: PlateId | 'detail' | null = layout.detail ? 'detail' : PLATE_ORDER.find(id => layout.plates[id].mode === 'hero') ?? null;
   const sheetCount = layout.sheets.length;
+  const ring = layout.view ? stageConfig.rings[layout.view] : undefined;
 
   useLayoutEffect(() => {
     const html = document.documentElement;
@@ -445,9 +448,12 @@ export function Stage({ state: address }: { state: StageState }) {
               )}
             </>
           );
+          // The view's focal plate carries the rings, once it is on the stage with room to show them.
+          const decor = onStage && ring?.plate === id && placed.mode !== 'chip' && placed.mode !== 'hidden' ? <Rings at={ring.at} /> : null;
           return (
             <Box
               key={id}
+              decor={decor}
               rect={rect(placed.rect)}
               visible={placed.mode !== 'hidden'}
               contentKey={placed.mode}
@@ -484,6 +490,7 @@ export function Stage({ state: address }: { state: StageState }) {
               delay={open ? 0 : wave(target)}
               view={key}
               surface={event ? sessionSurface(event) : artistSurface(profile!, true)}
+              decor={onStage && open && ring?.plate === 'detail' ? <Rings at={ring.at} /> : null}
             >
               {event ? <SessionFile event={event} state={state} data={data} /> : <ArtistFile profile={profile!} state={state} data={data} />}
             </DetailBox>
@@ -516,6 +523,7 @@ export function Stage({ state: address }: { state: StageState }) {
           </Box>
         )}
       </div>
+      <ScrollHint active={onStage && sheetCount > 1 && !tooShort} />
     </StageModeContext.Provider>
   );
 }
@@ -552,7 +560,7 @@ function SubPlate({ itemKey, placed, onStage, delay, view, surface, children }: 
  * An open file (a session or an artist). It grows out of what was pressed and, when closed, shrinks
  * back into its line and fades; a little later it lets its heavy content go.
  */
-function DetailBox({ kind, id, open, rect, origin, delay, view, surface, children }: {
+function DetailBox({ kind, id, open, rect, origin, delay, view, surface, decor, children }: {
   kind: CarrierKind;
   id: string;
   open: boolean;
@@ -561,6 +569,7 @@ function DetailBox({ kind, id, open, rect, origin, delay, view, surface, childre
   delay: number;
   view: string;
   surface: Surface;
+  decor?: ReactNode;
   children: ReactNode;
 }) {
   const [resting, setResting] = useState(false);
@@ -581,6 +590,7 @@ function DetailBox({ kind, id, open, rect, origin, delay, view, surface, childre
       origin={origin}
       view={view}
       data={{ detail: `${kind}:${id}`, mode: open ? 'open' : 'closed' }}
+      decor={decor}
     >
       {resting ? null : children}
     </Box>

@@ -81,6 +81,8 @@ export interface BoxProps {
    * ride along when the plate moves and only re-tile inside it. They are never swapped out.
    */
   overlay?: ReactNode;
+  /** Decoration drawn under the content (the rings), kept across content swaps. */
+  decor?: ReactNode;
   as?: 'div' | 'section' | 'nav';
   label?: string;
   data?: Record<string, string | undefined>;
@@ -96,7 +98,7 @@ const place = (rect: Rect) => ({ transform: `translate(${rect.x}px, ${rect.y}px)
 /** Share of width or height a box must change by, on a change of view, to redraw its content. */
 const RESHAPE = 0.12;
 
-export function Box({ rect, visible, contentKey, children, className = '', surface, delay = 0, order = 0, origin, as: Tag = 'div', label, data, view, overlay }: BoxProps) {
+export function Box({ rect, visible, contentKey, children, className = '', surface, delay = 0, order = 0, origin, as: Tag = 'div', label, data, view, overlay, decor }: BoxProps) {
   const ref = useRef<HTMLElement>(null);
   const [shape, setShape] = useState({ view, w: rect?.w ?? 0, h: rect?.h ?? 0, generation: 0 });
   if (rect && view !== shape.view) {
@@ -135,6 +137,7 @@ export function Box({ rect, visible, contentKey, children, className = '', surfa
       aria-label={label}
       {...Object.fromEntries(Object.entries(data ?? {}).map(([key, value]) => [`data-${key}`, value]))}
     >
+      {decor}
       <Swap id={`${contentKey}:${shape.generation}`} w={rect?.w} h={rect?.h}>{children}</Swap>
       {overlay}
     </Tag>
