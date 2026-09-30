@@ -5,7 +5,7 @@ import { eventHref, statusLabel } from '@/features/events/model';
 import { LiveValue } from '@/features/display/Display';
 import { Action, BrandText, Loading, StateNotice } from '@/features/ui/Ui';
 import { useStageMode } from '../usePaging';
-import { ChipFace, FocusHead, HeadLink, Tags } from './faces';
+import { ChipFace, FocusHead, PlateCard, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
@@ -24,21 +24,18 @@ export function EventsPlate({ mode, state, data, query }: PlateProps) {
   const failure = !data.events && (query.isError ? <StateNotice error title="행사 기록을 불러오지 못했습니다" retry={() => void query.refetch()} /> : <Loading />);
 
   if (mode === 'chip') return <ChipFace href="/events" name="EVENTS" title="이벤트" meta={`${pad(count)} REC`} />;
-  if (mode === 'index') {
+  // A summary or an index is one link as a whole; its cells or lines are the sessions' own cards
+  // floating above it. Before the stage is laid out (server, no script) the cells are drawn here.
+  if (mode !== 'hero') {
+    const card = mode === 'index'
+      ? <PlateCard href="/events" label="Events" title="이벤트 목록" tags={<Tags items={[`${pad(count)} REC`]} />} />
+      : <PlateCard href="/events" label="Events" title="이벤트" tags={<Tags items={[`${pad(count)} SESSIONS`, `${pad(archived)} PAST`]} />} />;
+    if (stageMode === 'stage' && data.events) return card;
     return (
       <div className={styles.face}>
-        <HeadLink href="/events" label="Events" title="이벤트 목록" tags={<Tags items={[`${pad(count)} REC`]} />} heading="p" />
+        {card}
         {failure}
-      </div>
-    );
-  }
-  if (mode === 'panel' || mode === 'tile') {
-    return (
-      <div className={styles.face}>
-        <HeadLink href="/events" label="Events" title="이벤트" tags={<Tags items={[`${pad(count)} SESSIONS`, `${pad(archived)} PAST`]} />} />
-        {failure}
-        {/* Before the stage is laid out (server, no script) the cells are drawn here instead. */}
-        {stageMode !== 'stage' && count > 0 && (
+        {count > 0 && (
           <ul className={styles.inlineCells}>
             {events.slice(0, 4).map(event => (
               <li key={event.id}>

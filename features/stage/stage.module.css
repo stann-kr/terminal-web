@@ -91,7 +91,11 @@
   overflow: hidden;
 }
 .stage[data-stage=stage] .layer[data-layer=current] {
-  animation: layerIn var(--dur-enter) var(--ease-move) calc(var(--enter-delay) + var(--order, 0) * var(--stagger)) backwards;
+  animation: layerIn var(--dur-enter) cubic-bezier(.2, .7, .2, 1) calc(var(--enter-delay) + var(--delay, 0ms)) backwards;
+}
+/* The first appearance has nothing to travel: content only fades in, along the same wave. */
+.stage[data-stage=stage]:not([data-ready]) .layer[data-layer=current] {
+  animation-delay: calc(var(--delay, 0ms) * 2);
 }
 .layer[data-layer=leaving] {
   pointer-events: none;
@@ -101,7 +105,7 @@
   display: none;
 }
 @keyframes layerIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(4px); }
 }
 @keyframes layerOut {
   to { opacity: 0; }

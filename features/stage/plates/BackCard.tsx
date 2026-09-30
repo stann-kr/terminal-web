@@ -29,17 +29,28 @@ function describe(state: StageState, data: StageData): [string, string] {
   }
 }
 
-/** The way back: a card naming the view it returns to. Escape does the same. */
+/**
+ * The way back: a card naming the view it returns to (Escape does the same). When that view is not
+ * the home, a second card under it goes straight home, however far the visit has wandered.
+ */
 export function BackCard({ href, target, data }: { href: string; target: StageState; data: StageData }) {
   const [name, title] = describe(target, data);
+  const home = target.view !== 'home';
   return (
-    <CardLink href={href} className={styles.back} label={`이전 화면으로: ${title}`}>
-      <span className={styles.backHead} aria-hidden="true">
-        <span className={styles.backLabel}>BACK</span>
-        <span className={styles.tag}>ESC</span>
-      </span>
-      <span className={styles.backName} aria-hidden="true">{name}</span>
-      <span className={styles.backTitle} aria-hidden="true"><BrandText text={title} /></span>
-    </CardLink>
+    <div className={styles.backStack} data-home={home || undefined}>
+      <CardLink href={href} className={styles.back} label={`이전 화면으로: ${title}`}>
+        <span className={styles.backHead} aria-hidden="true">
+          <span className={styles.backLabel}>BACK</span>
+          <span className={styles.tag}>ESC</span>
+        </span>
+        <span className={styles.backName} aria-hidden="true">{name}</span>
+        <span className={styles.backTitle} aria-hidden="true"><BrandText text={title} /></span>
+      </CardLink>
+      {home && (
+        <CardLink href="/" className={styles.homeKey} label="홈으로">
+          <span aria-hidden="true">HOME</span>
+        </CardLink>
+      )}
+    </div>
   );
 }

@@ -13,7 +13,7 @@
 :global([data-stage=stage]) :is(.face, .next, .card) {
   height: 100%;
 }
-:global([data-stage=stage]) :is(.nextBlock, .nextChip) {
+:global([data-stage=stage]) :is(.nextBlock, .nextChip, .homeKey) {
   height: auto;
 }
 
@@ -51,6 +51,19 @@
 .card:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: -4px;
+}
+/* While the boxes are still travelling after a change of view, a box sliding under a resting pointer
+   does not light up; pointing lights things again once they have landed. */
+:global([data-moving]) .card:hover {
+  box-shadow: none;
+  color: inherit;
+  --ink: inherit;
+  --muted: inherit;
+  --accent: inherit;
+  --line: inherit;
+  --well: inherit;
+  --fill: inherit;
+  --on-fill: inherit;
 }
 
 /* ── Shared print ────────────────────────────────────────────────────────── */
@@ -148,32 +161,12 @@
   color: var(--ink);
   text-decoration: none;
 }
-.bandWrap {
-  margin: 0;
-  font-weight: 400;
+/* A summary plate that is one link: the band on top, the plate's carriers float over the rest. */
+.plateCard {
+  padding: 0 var(--pad) var(--pad);
 }
-/* A band that is the plate's link lights up by itself: the band is the whole target. */
-.bandLink {
-  transition: var(--light-motion);
-}
-.bandLink:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
-  --ink: var(--on-hi);
-  --accent: var(--on-hi);
-  --well: rgb(0 0 0 / .1);
-  border-bottom-color: var(--on-hi);
-}
-.bandLink:active {
-  box-shadow: inset 0 0 0 100vmax var(--on-hi);
-  color: var(--hi);
-  --ink: var(--hi);
-  --accent: var(--hi);
-  transition: none;
-}
-.bandLink:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: -4px;
+.card:hover .band {
+  border-bottom-color: currentColor;
 }
 .bandTitle {
   display: flex;
@@ -340,6 +333,25 @@
 }
 
 /* ── Back card ───────────────────────────────────────────────────────────── */
+/* BACK over HOME: two cards, each lit and pressed as a whole. */
+.backStack {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 4px;
+  height: 100%;
+}
+.backStack[data-home] {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+.homeKey {
+  flex-direction: row;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 16px;
+  border-left: 4px solid var(--gold);
+  font: 700 var(--t-sm)/1 var(--display);
+  letter-spacing: .24em;
+}
 .back {
   justify-content: space-between;
   gap: 6px;
@@ -512,9 +524,28 @@
   .brandSystem > :not([role=group]) { display: none; }
 }
 .nextBlock {
-  gap: 6px;
+  flex: 1 1 auto;
+  gap: 10px;
+  min-height: 0;
   margin-inline: calc(var(--pad) * -1);
-  padding: 12px var(--pad) 14px;
+  margin-bottom: calc(var(--pad) * -1);
+  padding: 12px var(--pad) var(--pad);
+}
+.nextBlock :global(section[role=timer]) {
+  margin-top: 4px;
+}
+.nextCta {
+  align-self: end;
+  justify-self: start;
+  padding: 10px 16px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-md)/1 var(--display);
+  letter-spacing: .16em;
+}
+.nextSchedule,
+.nextLineup {
+  display: block;
 }
 .nextHead {
   display: flex;
@@ -617,9 +648,6 @@
   color: var(--ink);
 }
 
-.nextKeys {
-  margin-top: auto;
-}
 /* A short plate keeps the session, clock, schedule and keys; the lineup (also in the session
    file), then the subtitle, then the schedule's heading step aside. */
 @container layer (max-height: 700px) {

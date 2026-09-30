@@ -76,13 +76,14 @@
   --gap: clamp(8px, .7vw, 12px);
   --pad: clamp(16px, 1.5vw, 28px);
   --ease: cubic-bezier(.2, .8, .2, 1);
-  /* Stage motion, tuned by feel rather than a tempo: a quick start and a long natural settle that
-     a new target can pick up mid-flight. */
-  --dur-move: 520ms;
-  --ease-move: cubic-bezier(.22, 1, .36, 1);
-  --dur-enter: 260ms;
-  --enter-delay: 140ms;
-  --dur-exit: 120ms;
+  /* Stage motion, tuned by feel rather than a tempo: a soft start and a long, calm settle that a
+     new target can pick up mid-flight. Content leaves first, boxes travel as colour, and the new
+     content arrives once they have nearly landed. */
+  --dur-move: 620ms;
+  --ease-move: cubic-bezier(.33, 0, .12, 1);
+  --dur-enter: 280ms;
+  --enter-delay: 380ms;
+  --dur-exit: 90ms;
   --stagger: 30ms;
   /* Ambient ring drift: one ring outward every few seconds, unrelated to any beat. */
   --ring-period: 3.2s;

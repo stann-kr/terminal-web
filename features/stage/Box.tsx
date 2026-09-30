@@ -64,6 +64,13 @@ export interface BoxProps {
   order?: number;
   /** When set (a new token), the box first jumps to `rect` here, then travels to its place. */
   origin?: { token: number; rect: Rect } | null;
+  /**
+   * The view this layout belongs to. When the view changes and the box changes size a lot, its
+   * content fades out and is drawn afresh after the move, so a moving box carries no text across
+   * the screen. Within one view (a window resize, a spill) content is never redrawn this way, so
+   * nothing typed is lost.
+   */
+  view?: string;
   as?: 'div' | 'section' | 'nav';
   label?: string;
   data?: Record<string, string | undefined>;
@@ -76,8 +83,16 @@ const place = (rect: Rect) => ({ transform: `translate(${rect.x}px, ${rect.y}px)
  * is the same DOM node travelling. Its content is drawn at the arrival size (a window opening onto
  * it, not text re-wrapping every frame).
  */
-export function Box({ rect, visible, contentKey, children, className = '', surface, delay = 0, order = 0, origin, as: Tag = 'div', label, data }: BoxProps) {
+/** Share of width or height a box must change by, on a change of view, to redraw its content. */
+const RESHAPE = 0.12;
+
+export function Box({ rect, visible, contentKey, children, className = '', surface, delay = 0, order = 0, origin, as: Tag = 'div', label, data, view }: BoxProps) {
   const ref = useRef<HTMLElement>(null);
+  const [shape, setShape] = useState({ view, w: rect?.w ?? 0, h: rect?.h ?? 0, generation: 0 });
+  if (rect && view !== shape.view) {
+    const reshaped = Math.abs(rect.w - shape.w) > shape.w * RESHAPE || Math.abs(rect.h - shape.h) > shape.h * RESHAPE;
+    setShape({ view, w: rect.w, h: rect.h, generation: shape.generation + (reshaped && shape.w > 0 ? 1 : 0) });
+  }
   const style = rect
     ? ({ ...place(rect), '--cw': `${rect.w}px`, '--ch': `${rect.h}px`, '--delay': `${delay}ms`, '--order': order } as CSSProperties)
     : ({ '--order': order } as CSSProperties);
@@ -110,7 +125,7 @@ export function Box({ rect, visible, contentKey, children, className = '', surfa
       aria-label={label}
       {...Object.fromEntries(Object.entries(data ?? {}).map(([key, value]) => [`data-${key}`, value]))}
     >
-      <Swap id={contentKey}>{children}</Swap>
+      <Swap id={`${contentKey}:${shape.generation}`}>{children}</Swap>
     </Tag>
   );
 }

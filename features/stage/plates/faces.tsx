@@ -4,10 +4,10 @@ import { BrandText } from '@/features/ui/Ui';
 import styles from './plates.module.css';
 
 /**
- * The faces a plate wears. One rule for pointing: a face with nothing else to press inside is one
- * link, and the whole face lights up; a face that holds other controls or carriers has a head band
- * that is the link, and only that band lights up. What lights up is exactly what is pressed.
- * Every face link is a real link (middle click, new tab and copied address work).
+ * The faces a plate wears. One pointing rule everywhere: the plate you are looking at (the hero)
+ * is read and its items (rows, cards, forms) are pressed; every other plate is one link as a whole,
+ * and every item is its own card. Whatever is pressed lights up as a whole, in the plate's
+ * highlight colour. Every link is a real link (middle click, new tab and copied address work).
  */
 
 /** A whole face that is a single link: chips, the back card, summary plates with nothing inside to press. */
@@ -50,17 +50,17 @@ function BandBody({ label, title, tags }: { label: string; title: string; tags?:
 }
 
 /**
- * A head band that is the plate's link (summary plates and indexes, whose carriers sit below it).
- * `data-head` marks where the carriers may start.
+ * A summary plate that is one link as a whole. Its band marks where the plate's carriers may
+ * start (`data-head`); the carriers float above it as cards of their own.
  */
-export function HeadLink({ href, label, title, tags, heading = 'h2' }: { href: string; label: string; title: string; tags?: ReactNode; heading?: 'h2' | 'p' }) {
-  const Tag = heading;
+export function PlateCard({ href, label, title, tags, children }: { href: string; label: string; title: string; tags?: ReactNode; children?: ReactNode }) {
   return (
-    <Tag className={styles.bandWrap} data-head="">
-      <Link href={href} className={`${styles.band} ${styles.bandLink}`} scroll={false}>
+    <CardLink href={href} className={styles.plateCard}>
+      <span className={styles.band} data-head="">
         <BandBody label={label} title={title} tags={tags} />
-      </Link>
-    </Tag>
+      </span>
+      {children}
+    </CardLink>
   );
 }
 

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import type { Surface } from '@/features/ui/Ui';
 import { stageConfig } from './config';
@@ -29,13 +29,17 @@ import { EventItem, eventSurface, type ItemShape } from './plates/EventItem';
 import { ArtistItem, artistSurface } from './plates/ArtistItem';
 import styles from './stage.module.css';
 
-/** Plates that shrink leave one after another, this far apart (ms). */
-const SHRINK_STAGGER = 30;
+/** The widest delay of the arrival wave: the box farthest from where you pressed leaves this late (ms). */
+const WAVE_MS = 110;
+/** Carriers of one plate follow each other this far apart, up to a limit (ms). */
+const ITEM_STAGGER = 16;
+const ITEM_STAGGER_MAX = 160;
+/** How long after a change of view the boxes are still travelling (pointer light-up rests meanwhile). */
+const MOVING_MS = 900;
 /** How long a folded detail keeps its full content before it rests as a light row (ms). */
 const DETAIL_REST_MS = 700;
 /** Plates whose heads the carriers sit under; their real head heights feed the layout. */
 const HEADED: PlateId[] = ['events', 'artists'];
-const SIZE_RANK: Record<PlateMode, number> = { hidden: 0, chip: 1, index: 2, tile: 3, panel: 4, hero: 5 };
 
 type SpillState = { key: string; w: number; h: number; spill: Spill };
 type Origin = { item: string; token: number; rect: Rect };
@@ -111,7 +115,8 @@ export function Stage({ state: address }: { state: StageState }) {
   const [trail, setTrail] = useState<StageState[]>([state]);
   if (stateKey(trail[trail.length - 1]) !== key) {
     const earlier = trail[trail.length - 2];
-    setTrail(earlier && stateKey(earlier) === key ? trail.slice(0, -1) : [...trail.slice(-8), state]);
+    // Home is the root: arriving there starts the trail over.
+    setTrail(state.view === 'home' ? [state] : earlier && stateKey(earlier) === key ? trail.slice(0, -1) : [...trail.slice(-8), state]);
   }
   const current = stateKey(trail[trail.length - 1]) === key ? trail : [...trail, state];
   const parent = stageParentHref(state);
@@ -254,6 +259,13 @@ export function Stage({ state: address }: { state: StageState }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
+  const recordPoint = (event: PointerEvent<HTMLDivElement>) => {
+    const element = root.current;
+    if (!element || !onStage) return;
+    const stage = element.getBoundingClientRect();
+    setPoint({ x: event.clientX - stage.left, y: event.clientY - stage.top });
+  };
+
   const recordOrigin = (event: MouseEvent<HTMLDivElement>) => {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     const link = (event.target as Element).closest<HTMLElement>('a[data-carrier]');
@@ -303,11 +315,24 @@ export function Stage({ state: address }: { state: StageState }) {
     return () => document.removeEventListener('keydown', keydown);
   }, [router]);
 
-  // Plates that get smaller move a beat after the ones that grow, one after another.
-  const plateModes = Object.fromEntries(PLATE_ORDER.map(id => [id, layout.plates[id].mode])) as Record<PlateId, PlateMode>;
-  const [shapes, setShapes] = useState<{ now: Record<PlateId, PlateMode>; before: Record<PlateId, PlateMode> }>({ now: plateModes, before: plateModes });
-  if (PLATE_ORDER.some(id => shapes.now[id] !== plateModes[id])) setShapes({ now: plateModes, before: shapes.now });
-  const shrinking = PLATE_ORDER.filter(id => SIZE_RANK[plateModes[id]] < SIZE_RANK[shapes.before[id]]);
+  // The arrival wave: boxes set out in order of distance from where you pressed (or from the view's
+  // main plate), so a change reads as spreading from one point rather than everything at once.
+  const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
+  const primaryRect = primary === 'detail' ? layout.detail : primary ? layout.plates[primary].rect : null;
+  const from = point ?? (primaryRect ? { x: primaryRect.x + primaryRect.w / 2, y: primaryRect.y + primaryRect.h / 2 } : null);
+  const reach = size ? Math.hypot(size.w, size.h) : 1;
+  const wave = (target: Rect) => (from ? Math.round(Math.min(1, Math.hypot(target.x + target.w / 2 - from.x, target.y + target.h / 2 - from.y) / reach) * WAVE_MS) : 0);
+
+  // While the boxes travel, pointing lights nothing up: a box sliding under a still pointer does not flash.
+  const [moving, setMoving] = useState(false);
+  const firstKey = useRef(key);
+  useLayoutEffect(() => {
+    if (firstKey.current === key) return;
+    firstKey.current = key;
+    setMoving(true);
+    const timer = window.setTimeout(() => setMoving(false), MOVING_MS);
+    return () => window.clearTimeout(timer);
+  }, [key]);
 
   // ── Render ──────────────────────────────────────────────────────────────────────────────
   const last = layout.sheets[sheetCount - 1];
@@ -325,10 +350,12 @@ export function Stage({ state: address }: { state: StageState }) {
         data-view={layout.view ?? 'none'}
         data-ready={(onStage && ready) || undefined}
         data-resizing={viewport?.resizing || undefined}
+        data-moving={moving || undefined}
         data-chips={stageConfig.flowChips}
         hidden={state.view === 'none'}
         style={vars}
         onClickCapture={recordOrigin}
+        onPointerDownCapture={recordPoint}
       >
         {state.view === 'home' && (
           <h1 className={styles.srOnly} tabIndex={-1} data-stage-title="">TERMINAL 홈</h1>
@@ -351,13 +378,14 @@ export function Stage({ state: address }: { state: StageState }) {
           contentKey={backHref ?? 'none'}
           className={styles.backBox}
           surface="deep"
+          delay={layout.back ? wave(layout.back) : 0}
+          view={key}
           data={{ back: '' }}
         >
           {backHref && previous ? <BackCard href={backHref} target={previous} data={data} /> : null}
         </Box>
         {PLATE_ORDER.map(id => {
           const placed = layout.plates[id];
-          const order = shrinking.indexOf(id);
           return (
             <Box
               key={id}
@@ -366,7 +394,8 @@ export function Stage({ state: address }: { state: StageState }) {
               contentKey={placed.mode}
               className={styles.plate}
               surface={plateSurface(id, placed.mode, data)}
-              delay={order < 0 ? 0 : (order + 1) * SHRINK_STAGGER}
+              delay={wave(placed.rect)}
+              view={key}
               data={{ plate: id, mode: placed.mode }}
             >
               <PlateContent id={id} mode={placed.mode} state={state} data={data} query={query} size={onStage ? placed.rect : null} />
@@ -377,7 +406,7 @@ export function Stage({ state: address }: { state: StageState }) {
           const itemKey = carrierKey('event', event.id);
           const placed = layout.items[itemKey];
           return placed && (
-            <CarrierBox key={itemKey} itemKey={itemKey} placed={placed} rect={rect(placed.rect)} origin={origin} surface={shape => eventSurface(event, shape)}>
+            <CarrierBox key={itemKey} itemKey={itemKey} placed={placed} rect={rect(placed.rect)} origin={origin} delay={wave(placed.rect) + Math.min(ITEM_STAGGER_MAX, placed.order * ITEM_STAGGER)} view={key} surface={shape => eventSurface(event, shape)}>
               {shape => <EventItem event={event} shape={shape} state={state} data={data} />}
             </CarrierBox>
           );
@@ -386,7 +415,7 @@ export function Stage({ state: address }: { state: StageState }) {
           const itemKey = carrierKey('artist', profile.key);
           const placed = layout.items[itemKey];
           return placed && (
-            <CarrierBox key={itemKey} itemKey={itemKey} placed={placed} rect={rect(placed.rect)} origin={origin} surface={shape => artistSurface(profile, shape)}>
+            <CarrierBox key={itemKey} itemKey={itemKey} placed={placed} rect={rect(placed.rect)} origin={origin} delay={wave(placed.rect) + Math.min(ITEM_STAGGER_MAX, placed.order * ITEM_STAGGER)} view={key} surface={shape => artistSurface(profile, shape)}>
               {shape => <ArtistItem profile={profile} shape={shape} state={state} data={data} />}
             </CarrierBox>
           );
@@ -410,11 +439,13 @@ export function Stage({ state: address }: { state: StageState }) {
  * A carrier's box. Folded, it keeps the shape it last had while it fades, and a folded detail
  * drops its heavy content once it is out of sight.
  */
-function CarrierBox({ itemKey, placed, rect, origin, surface, children }: {
+function CarrierBox({ itemKey, placed, rect, origin, delay, view, surface, children }: {
   itemKey: string;
   placed: PlacedItem;
   rect: Rect | null;
   origin: Origin | null;
+  delay: number;
+  view: string;
   surface: (shape: ItemShape) => Surface;
   children: (shape: ItemShape) => ReactNode;
 }) {
@@ -432,7 +463,8 @@ function CarrierBox({ itemKey, placed, rect, origin, surface, children }: {
       contentKey={shape}
       className={styles.item}
       surface={surface(shape)}
-      order={placed.order}
+      delay={delay}
+      view={view}
       origin={origin?.item === itemKey ? origin : null}
       data={{ item: itemKey, mode: placed.mode, shape }}
     >

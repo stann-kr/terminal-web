@@ -68,16 +68,37 @@ describe('stage shell', () => {
     expect(within(plate(container, 'next')).getAllByText('TERMINAL').length).toBeGreaterThan(0);
   });
 
-  it('gives every view but the home a back card to the view before it', () => {
+  it('gives every view but the home a back card to the view before it, and a home key once away from it', () => {
     const { container, go } = shell([past, upcoming]);
     const back = () => container.querySelector<HTMLElement>('[data-back]')!;
     expect(back()).toHaveAttribute('data-visible', 'false');
     go('/events');
     expect(within(back()).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
+    expect(within(back()).queryByRole('link', { name: '홈으로' })).not.toBeInTheDocument();
+    go('/events/OLD');
+    go('/artists/appearance:OLD:PUBLIC');
+    expect(within(back()).getByRole('link', { name: '이전 화면으로: Past event' })).toHaveAttribute('href', '/events/OLD');
+    expect(within(back()).getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/');
     go('/events/OLD');
     expect(within(back()).getByRole('link', { name: '이전 화면으로: 이벤트' })).toHaveAttribute('href', '/events');
-    go('/events');
+    // Home is the root: from there the trail starts over.
+    go('/');
+    go('/signal');
     expect(within(back()).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
+  });
+
+  it('makes every plate but the open one a single link, with its cells as cards of their own', () => {
+    const { container, go } = shell([past, upcoming]);
+    const face = (id: string) => plate(container, id).querySelector(':scope > [data-layer=current] > *');
+    expect(face('events')).toHaveAttribute('href', '/events');
+    expect(face('artists')).toHaveAttribute('href', '/artists');
+    expect(face('log')).toHaveAttribute('href', '/transmit');
+    expect(within(plate(container, 'next')).getByRole('link', { name: /다음 행사 TERMINAL \[03\] 상세 보기/ })).toHaveAttribute('href', '/events/TRM-03');
+    expect(within(item(container, 'event:TRM-03')).getByRole('link')).toHaveAttribute('href', '/events/TRM-03');
+    go('/events');
+    expect(face('events')?.tagName).not.toBe('A');
+    expect(face('next')?.tagName).not.toBe('A');
+    expect(within(plate(container, 'next')).getByRole('link', { name: /상세 보기/ })).toHaveAttribute('href', '/events/TRM-03');
   });
 
   it('keeps layout children and typed drafts mounted across views', () => {

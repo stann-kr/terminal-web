@@ -89,25 +89,29 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
     );
   }
   const artists = publicArtists(event);
+  // Everything under the wordmark is one link: it lights up whole and opens the session.
   return (
-    <>
-      {/* The session block is the link: it lights up whole, and it is all that opens the session. */}
-      <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextBlock}`} data-carrier={carrier} scroll={false}>
-        <span className={styles.nextHead} aria-hidden="true">
-          <span className={styles.nextLabel}>{label}</span>
-          <span className={styles.bandTags}>
-            <Chip solid>{statusLabel(event.status)}</Chip>
-            <Chip>{event.id}</Chip>
-            {mode !== 'hero' && <Chip>{dayMark(event, now)}</Chip>}
-          </span>
+    <Link
+      href={eventHref(event.id)}
+      className={`${styles.card} ${styles.nextBlock}`}
+      data-carrier={carrier}
+      aria-label={`${label === 'Last session' ? '지난 행사' : '다음 행사'} ${event.session} 상세 보기`}
+      scroll={false}
+    >
+      <span className={styles.nextHead} aria-hidden="true">
+        <span className={styles.nextLabel}>{label}</span>
+        <span className={styles.bandTags}>
+          <Chip solid>{statusLabel(event.status)}</Chip>
+          <Chip>{event.id}</Chip>
+          {mode !== 'hero' && <Chip>{dayMark(event, now)}</Chip>}
         </span>
-        <FitTitle as="h2" text={event.session} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
-          <BrandText text={event.session} />
-        </FitTitle>
-        {mode !== 'tile' && event.subtitle && <span className={styles.nextSubtitle}>{event.subtitle}</span>}
-        {mode === 'tile' && <span className={styles.nextWhen}>{event.date} · {event.venue}</span>}
-      </Link>
-      {event.status === 'ARCHIVED' && mode === 'hero' && <p className={styles.noUpcoming}>다음 행사 미정</p>}
+      </span>
+      {event.status === 'ARCHIVED' && mode === 'hero' && <span className={styles.noUpcoming}>다음 행사 미정</span>}
+      <FitTitle as="h2" text={event.session} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
+        <BrandText text={event.session} />
+      </FitTitle>
+      {mode !== 'tile' && event.subtitle && <span className={styles.nextSubtitle}>{event.subtitle}</span>}
+      {mode === 'tile' && <span className={styles.nextWhen}>{event.date} · {event.venue}</span>}
       {mode !== 'tile' && <EventCountdown event={event} />}
       {mode === 'panel' && (
         <Facts
@@ -118,9 +122,9 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
         />
       )}
       {mode === 'hero' && (
-        <div className={styles.nextGrid}>
-          <div className={styles.nextSchedule}>
-            <p className={styles.sub} aria-hidden="true">Schedule</p>
+        <span className={styles.nextGrid}>
+          <span className={styles.nextSchedule}>
+            <span className={styles.sub} aria-hidden="true">Schedule</span>
             <Facts
               rows={[
                 ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
@@ -128,9 +132,9 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
                 ['지역', event.district],
               ]}
             />
-          </div>
-          <div className={styles.nextLineup}>
-            <p className={styles.sub} aria-hidden="true">Lineup</p>
+          </span>
+          <span className={styles.nextLineup}>
+            <span className={styles.sub} aria-hidden="true">Lineup</span>
             <ul className={styles.lineupCells}>
               {artists.length
                 ? artists.map(artist => (
@@ -146,15 +150,10 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
                     </li>
                   ))}
             </ul>
-          </div>
-        </div>
+          </span>
+          <span className={styles.nextCta} aria-hidden="true">OPEN SESSION FILE</span>
+        </span>
       )}
-      {mode === 'hero' && (
-        <div className={`${styles.keys} ${styles.nextKeys}`}>
-          <Action primary href={eventHref(event.id)} carrier={carrier}>행사 상세 보기</Action>
-          <Action href="/signal">소식 신청</Action>
-        </div>
-      )}
-    </>
+    </Link>
   );
 }

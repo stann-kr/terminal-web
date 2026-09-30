@@ -4,7 +4,7 @@ import { artistHref } from '@/features/artists/model';
 import { LiveValue } from '@/features/display/Display';
 import { Loading, StateNotice } from '@/features/ui/Ui';
 import { useStageMode } from '../usePaging';
-import { ChipFace, FocusHead, HeadLink, Tags } from './faces';
+import { ChipFace, FocusHead, PlateCard, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
@@ -21,20 +21,16 @@ export function ArtistsPlate({ mode, state, data, query }: PlateProps) {
   const failure = !data.events && (query.isError ? <StateNotice error title="아티스트 기록을 불러오지 못했습니다" retry={() => void query.refetch()} /> : <Loading />);
 
   if (mode === 'chip') return <ChipFace href="/artists" name="ARTISTS" title="아티스트" meta={`${pad(count)} FILES`} />;
-  if (mode === 'index') {
+  if (mode !== 'hero') {
+    const card = mode === 'index'
+      ? <PlateCard href="/artists" label="Artists" title="전체 아티스트" tags={<Tags items={[`${pad(count)} FILES`]} />} />
+      : <PlateCard href="/artists" label="Artists" title="아티스트" tags={<Tags items={[`${pad(count)} FILES`]} />} />;
+    if (stageMode === 'stage' && data.events) return card;
     return (
       <div className={styles.face}>
-        <HeadLink href="/artists" label="Artists" title="전체 아티스트" tags={<Tags items={[`${pad(count)} FILES`]} />} heading="p" />
+        {card}
         {failure}
-      </div>
-    );
-  }
-  if (mode === 'panel' || mode === 'tile') {
-    return (
-      <div className={styles.face}>
-        <HeadLink href="/artists" label="Artists" title="아티스트" tags={<Tags items={[`${pad(count)} FILES`]} />} />
-        {failure}
-        {stageMode !== 'stage' && count > 0 && (
+        {count > 0 && (
           <ul className={`${styles.inlineCells} ${styles.inlineRoster}`}>
             {profiles.slice(0, 10).map(profile => (
               <li key={profile.key}>
