@@ -205,6 +205,16 @@ describe('stage layout', () => {
     expect(layout.sheets[0].h).toBe(narrow.h);
   });
 
+  it('sizes a narrow home’s summary plates by what they hold', () => {
+    const narrow = { w: 370, h: 824 };
+    const m = stageMetrics(390);
+    const layout = computeLayout(stageStateFromUrl('/'), narrow, { viewportW: 390, items: { event: { order: EVENTS }, artist: { order: ARTISTS.slice(0, 3) } } });
+    // Three artists in two columns: the head and two rows of cells, not a fixed tall plate.
+    expect(Math.round(layout.plates.artists.rect.h)).toBe(m.head.panel + 2 * m.panelCellH);
+    expect(Math.round(layout.plates.signal.rect.h)).toBe(m.natural.signal);
+    expect(Math.round(layout.plates.log.rect.h)).toBe(m.natural.log);
+  });
+
   it('is deterministic for the same inputs', () => {
     const state = stageStateFromUrl('/artists/lucii');
     expect(computeLayout(state, STAGES[1].stage, { items: items() })).toEqual(computeLayout(state, STAGES[1].stage, { items: items() }));
