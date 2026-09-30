@@ -31,7 +31,7 @@
 }
 .signalMatrix[data-state=error] {
   background: var(--danger);
-  color: var(--plate, var(--navy));
+  color: var(--plate, var(--field));
 }
 @keyframes signalLamp {
   0%, 49% { opacity: 1; }

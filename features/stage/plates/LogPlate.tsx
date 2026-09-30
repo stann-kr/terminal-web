@@ -52,7 +52,7 @@ function LogFocus({ page }: { page: number }) {
     <div className={styles.face}>
       <FocusHead label="Log" title="방문자 로그" tags={<Tags items={[query.data ? `${pad(query.data.total)} RECORDS` : 'READ', latest ? `LAST ${latest.ts} KST` : null]} />} />
       <div className={styles.logGrid}>
-        <Panel title="기록 남기기" label="Write log" surface="gold" className={styles.logWrite}>
+        <Panel title="기록 남기기" label="Write log" surface="fresh" className={styles.logWrite}>
           <div className={styles.fitColumn} data-fit="">
             <TransmitForm
               onSaved={() => {
@@ -64,7 +64,7 @@ function LogFocus({ page }: { page: number }) {
             />
           </div>
         </Panel>
-        <Panel title="공개 로그" label="Public log" code={query.data ? `${query.data.total} RECORDS` : 'READ'} surface="navy" className={styles.logPublic}>
+        <Panel title="공개 로그" label="Public log" code={query.data ? `${query.data.total} RECORDS` : 'READ'} surface="panel" className={styles.logPublic}>
           <LogPages page={page} query={query} />
         </Panel>
       </div>

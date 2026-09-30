@@ -40,7 +40,7 @@
 }
 /* Sub-plates sit flush; every other one is a shade lighter, so neighbours part by tone, not by a line. */
 .item[data-zebra] > .layer {
-  background: rgb(252 229 205 / .05);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
 }
 .detail {
   z-index: 3;
@@ -144,7 +144,7 @@
 .pager > span[aria-hidden] {
   flex: 1;
   justify-content: center;
-  color: var(--gold);
+  color: var(--accent);
   font-family: var(--mono);
 }
 .pager a {

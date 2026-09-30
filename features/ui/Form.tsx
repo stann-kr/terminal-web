@@ -17,7 +17,7 @@ export function FormPanel({
   children: ReactNode;
 }) {
   return (
-    <section className={styles.terminalForm} data-surface="cream">
+    <section className={styles.terminalForm} data-surface="paper">
       <header className={styles.formHeading}>
         <p className={styles.formCode} aria-hidden="true">
           {code}
@@ -123,7 +123,7 @@ export function FormSuccess({ children }: { children: ReactNode }) {
     ref.current?.focus();
   }, []);
   return (
-    <section ref={ref} role="status" tabIndex={-1} className={styles.success} data-surface="gold">
+    <section ref={ref} role="status" tabIndex={-1} className={styles.success} data-surface="fresh">
       {children}
     </section>
   );

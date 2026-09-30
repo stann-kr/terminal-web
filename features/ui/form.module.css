@@ -107,7 +107,7 @@
   flex: none;
   width: 8px;
   height: 8px;
-  background: var(--red);
+  background: var(--danger);
 }
 .consent {
   display: flex;
@@ -133,7 +133,7 @@
 .error {
   padding: 10px 12px;
   background: var(--danger);
-  color: var(--plate, var(--navy));
+  color: var(--plate, var(--field));
   font-size: var(--text-ui);
   font-weight: 600;
 }

@@ -44,7 +44,7 @@
   50%, 100% { opacity: .25; }
 }
 
-/* Node activity: newest first, one node tag cell and its event per row; the newest row is gold. */
+/* Node activity: newest first, one node tag cell and its event per row; the newest row is marked. */
 .nodes {
   display: grid;
   gap: 4px;
@@ -62,8 +62,8 @@
   letter-spacing: .06em;
 }
 .nodes li:first-child b {
-  background: var(--gold);
-  color: var(--navy);
+  background: var(--mark);
+  color: var(--mark-ink);
 }
 .nodes span {
   display: flex;
@@ -88,7 +88,7 @@
 }
 
 /* ── Sub-plates (v2): node rows and the length readout run flush in turns of tone; the newest node
-   keeps its gold row. ── */
+   keeps its marked row. ── */
 .nodes,
 .counter {
   gap: 0;
@@ -109,8 +109,8 @@
   background: var(--well);
 }
 .nodes li:first-child > * {
-  background: var(--gold);
-  color: var(--navy);
+  background: var(--mark);
+  color: var(--mark-ink);
 }
 .nodes span,
 .counter > span {

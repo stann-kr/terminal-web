@@ -22,11 +22,11 @@ function serial(key: string) {
   return String(sum % 10000).padStart(4, '0');
 }
 
-/** STANN LUMO is the signal (orange), an artist with a coming set is gold, the rest are records. */
+/** STANN LUMO is the featured plate, an artist with a coming set is marked, the rest are records. */
 export function artistSurface(profile: ArtistProfile, open = false): Surface {
-  if (featured(profile)) return 'orange';
-  if (upcoming(profile)) return 'gold';
-  return open ? 'cream' : 'deep';
+  if (featured(profile)) return 'feature';
+  if (upcoming(profile)) return 'mark';
+  return open ? 'paper' : 'inset';
 }
 
 /** An artist's sub-plate inside the roster plate: a roster cell, a file card in the grid, or an index line. */
@@ -93,7 +93,7 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
       <div className={styles.fileRecords} data-fit="">
         {data.events && <ArtistChronology profile={profile} events={data.events} />}
       </div>
-      <section className={styles.fileBio} data-surface="deep" aria-label="소개">
+      <section className={styles.fileBio} data-surface="inset" aria-label="소개">
         <p className={styles.columnHead}><b aria-hidden="true">Biography</b><span>소개</span><small aria-hidden="true">{language.toUpperCase()}</small></p>
         <TextPages paragraphs={paragraphs(biography?.artist.description, language)} language={language} label="아티스트 소개" empty="소개는 공개되는 대로 이곳에 표시됩니다." />
       </section>

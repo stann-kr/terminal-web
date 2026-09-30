@@ -7,7 +7,7 @@ const TEXT = 'input:not([type=checkbox]), textarea, [contenteditable=true]';
 
 /**
  * The console's own pointer: a point that sits exactly on the pointer and a ring that trails it
- * on a damped follow. Over a control the ring opens and turns gold; pressing closes it; over a
+ * on a damped follow. Over a control the ring opens in the pointer colour; pressing closes it; over a
  * text field the system caret takes over. Fine pointers only; decorative for assistive tech.
  */
 export function ConsoleCursor() {

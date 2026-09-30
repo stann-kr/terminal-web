@@ -20,7 +20,8 @@ function brand(children: ReactNode) {
 export function PageHeading({ title }: { title: string }) {
   return <h1 className={styles.srOnly}>{title}</h1>;
 }
-export type Surface = 'navy' | 'deep' | 'cream' | 'gold' | 'orange' | 'red';
+/** A plate's role; its colours come from the active palette (app/palettes.css). */
+export type Surface = 'panel' | 'inset' | 'paper' | 'feature' | 'mark' | 'alert' | 'calm' | 'fresh';
 
 /**
  * A console plate: a big printed English station name over a heavy rule, the Korean title beside it,
@@ -31,7 +32,7 @@ export function Panel({
   label,
   code,
   children,
-  surface = 'navy',
+  surface = 'panel',
   heading = true,
   className = '',
 }: {
@@ -129,7 +130,7 @@ export function StateNotice({
   return (
     <div
       className={styles.notice}
-      data-surface={error ? 'red' : undefined}
+      data-surface={error ? 'alert' : undefined}
       role={error ? 'alert' : 'status'}
     >
       <div className={styles.noticeText}>

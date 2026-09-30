@@ -35,8 +35,8 @@
   top: -100px;
   z-index: 30;
   padding: 12px;
-  background: var(--gold);
-  color: var(--navy);
+  background: var(--hi);
+  color: var(--on-hi);
 }
 .skip:focus {
   top: 10px;
@@ -51,7 +51,7 @@
   display: flex;
   align-items: baseline;
   gap: 7px;
-  color: var(--gold);
+  color: var(--accent);
   font: 400 var(--t-md)/1 var(--mono);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -102,7 +102,8 @@
   inset: 0 auto auto 0;
   z-index: 60;
   pointer-events: none;
-  color: var(--cream);
+  /* White under a difference blend inverts whatever it crosses, so it reads on any palette. */
+  color: #fff;
   mix-blend-mode: difference;
   transition: opacity var(--dur-hover) var(--ease-move);
 }
@@ -133,7 +134,7 @@
 }
 .cursor[data-mode=control] .cursorRing {
   scale: 1.6;
-  border-color: var(--gold);
+  border-color: var(--pointer);
   border-width: 1px;
 }
 .cursor[data-pressed] .cursorRing {

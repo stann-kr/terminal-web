@@ -7,10 +7,12 @@
 @font-face { font-family: 'ProcrastinatingPixie'; src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype'); font-weight: 400 800; font-display: swap; }
 @font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
 /*
- * Hypnotic console: a deep navy field, navy panels, and a few loud solid plates in cream, gold,
- * orange and red. Concentric rings are the signature motif. `data-surface` sets a plate and its
- * role tokens, so every component reads the same names on every plate:
+ * Hypnotic console: plates on a workspace field, a few loud solid plates among them. Concentric rings
+ * are the signature motif. Colours come only from the active palette (app/palettes.css); here each
+ * plate role becomes the tokens every component reads, so every component reads the same names on
+ * every plate:
  *   --ink / --muted: text   --line / --faint: rules   --fill / --on-fill: solid cells   --accent: numbers
+ *   --well: a tinted cell   --hi / --on-hi: hover     --danger: errors                   --focus: focus ring
  */
 @property --ring-phase {
   syntax: '<length>';
@@ -18,41 +20,7 @@
   initial-value: 0px;
 }
 :root {
-  color-scheme: dark;
-  /* Role channels also read by the contrast test. */
-  --color-bg-base: 0 26 41;
-  --color-bg-panel: 0 48 73;
-  --color-text-primary: 252 229 205;
-  --color-text-subdued: 201 184 166;
-  --color-text-muted: 201 184 166;
-  --color-accent-primary: 252 191 73;
-  --color-accent-tertiary: 247 127 0;
-  --color-accent-alert: 255 154 138;
-
-  --cream: #fce5cd;
-  --gold: #fcbf49;
-  --orange: #f77f00;
-  --red: #d62828;
-  --navy: #003049;
-  --field: rgb(var(--color-bg-base));
-  --deep: #00121d;
-
   --bg: var(--field);
-  --ink: rgb(var(--color-text-primary));
-  --muted: rgb(var(--color-text-muted));
-  --accent: var(--gold);
-  --line: rgb(252 229 205 / .38);
-  --faint: rgb(252 229 205 / .14);
-  --fill: var(--cream);
-  --on-fill: var(--navy);
-  --on-fill-muted: #3d5566;
-  /* A tinted cell in place of an outline: cells are told apart by tone, never by a frame. */
-  --well: rgb(252 229 205 / .08);
-  /* Hover lights a control up in this colour. */
-  --hi: var(--gold);
-  --on-hi: var(--navy);
-  --danger: rgb(var(--color-accent-alert));
-  --focus: var(--gold);
 
   --display: 'Barlow Condensed', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   --sans: 'Barlow', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
@@ -95,93 +63,116 @@
   --rings: repeating-radial-gradient(circle at 100% 100%, currentColor 0 1.5px, transparent 1.5px 12px);
 }
 
+/* Plate roles. Each role sets every token again, so a plate nested in another reads its own ink. The
+   page itself reads as a standard plate on the field. */
+:root,
+[data-surface=panel] {
+  --plate: var(--panel);
+  --ink: var(--panel-ink);
+  --muted: var(--panel-muted);
+  --accent: var(--panel-accent);
+  --fill: var(--panel-fill);
+  --on-fill: var(--panel-on-fill);
+  --on-fill-muted: var(--panel-on-fill-muted, color-mix(in srgb, var(--panel-on-fill) 72%, var(--panel-fill)));
+  --hi: var(--panel-hi);
+  --on-hi: var(--panel-on-hi);
+  --danger: var(--panel-danger);
+}
+[data-surface=inset] {
+  --plate: var(--inset);
+  --ink: var(--inset-ink);
+  --muted: var(--inset-muted);
+  --accent: var(--inset-accent);
+  --fill: var(--inset-fill);
+  --on-fill: var(--inset-on-fill);
+  --on-fill-muted: var(--inset-on-fill-muted, color-mix(in srgb, var(--inset-on-fill) 72%, var(--inset-fill)));
+  --hi: var(--inset-hi);
+  --on-hi: var(--inset-on-hi);
+  --danger: var(--inset-danger);
+}
+[data-surface=paper] {
+  --plate: var(--paper);
+  --ink: var(--paper-ink);
+  --muted: var(--paper-muted);
+  --accent: var(--paper-accent);
+  --fill: var(--paper-fill);
+  --on-fill: var(--paper-on-fill);
+  --on-fill-muted: var(--paper-on-fill-muted, color-mix(in srgb, var(--paper-on-fill) 72%, var(--paper-fill)));
+  --hi: var(--paper-hi);
+  --on-hi: var(--paper-on-hi);
+  --danger: var(--paper-danger);
+}
+[data-surface=feature] {
+  --plate: var(--feature);
+  --ink: var(--feature-ink);
+  --muted: var(--feature-muted);
+  --accent: var(--feature-accent);
+  --fill: var(--feature-fill);
+  --on-fill: var(--feature-on-fill);
+  --on-fill-muted: var(--feature-on-fill-muted, color-mix(in srgb, var(--feature-on-fill) 72%, var(--feature-fill)));
+  --hi: var(--feature-hi);
+  --on-hi: var(--feature-on-hi);
+  --danger: var(--feature-danger);
+}
+[data-surface=mark] {
+  --plate: var(--mark);
+  --ink: var(--mark-ink);
+  --muted: var(--mark-muted);
+  --accent: var(--mark-accent);
+  --fill: var(--mark-fill);
+  --on-fill: var(--mark-on-fill);
+  --on-fill-muted: var(--mark-on-fill-muted, color-mix(in srgb, var(--mark-on-fill) 72%, var(--mark-fill)));
+  --hi: var(--mark-hi);
+  --on-hi: var(--mark-on-hi);
+  --danger: var(--mark-danger);
+}
+[data-surface=alert] {
+  --plate: var(--alert);
+  --ink: var(--alert-ink);
+  --muted: var(--alert-muted);
+  --accent: var(--alert-accent);
+  --fill: var(--alert-fill);
+  --on-fill: var(--alert-on-fill);
+  --on-fill-muted: var(--alert-on-fill-muted, color-mix(in srgb, var(--alert-on-fill) 72%, var(--alert-fill)));
+  --hi: var(--alert-hi);
+  --on-hi: var(--alert-on-hi);
+  --danger: var(--alert-danger);
+}
+[data-surface=calm] {
+  --plate: var(--calm);
+  --ink: var(--calm-ink);
+  --muted: var(--calm-muted);
+  --accent: var(--calm-accent);
+  --fill: var(--calm-fill);
+  --on-fill: var(--calm-on-fill);
+  --on-fill-muted: var(--calm-on-fill-muted, color-mix(in srgb, var(--calm-on-fill) 72%, var(--calm-fill)));
+  --hi: var(--calm-hi);
+  --on-hi: var(--calm-on-hi);
+  --danger: var(--calm-danger);
+}
+[data-surface=fresh] {
+  --plate: var(--fresh);
+  --ink: var(--fresh-ink);
+  --muted: var(--fresh-muted);
+  --accent: var(--fresh-accent);
+  --fill: var(--fresh-fill);
+  --on-fill: var(--fresh-on-fill);
+  --on-fill-muted: var(--fresh-on-fill-muted, color-mix(in srgb, var(--fresh-on-fill) 72%, var(--fresh-fill)));
+  --hi: var(--fresh-hi);
+  --on-hi: var(--fresh-on-hi);
+  --danger: var(--fresh-danger);
+}
+/* Rules, tinted cells and focus follow the plate's own ink. */
+:root,
+[data-surface] {
+  --line: color-mix(in srgb, var(--ink) 38%, transparent);
+  --faint: color-mix(in srgb, var(--ink) 14%, transparent);
+  --well: color-mix(in srgb, var(--ink) 8%, transparent);
+  --focus: var(--ink);
+}
 [data-surface] {
   background-color: var(--plate);
   color: var(--ink);
-}
-/* Dark plates set their whole ink again, so a navy panel inside a cream, gold or orange plate reads
-   cream on navy instead of inheriting the light plate's dark ink. */
-[data-surface=navy],
-[data-surface=deep] {
-  --ink: rgb(var(--color-text-primary));
-  --muted: rgb(var(--color-text-muted));
-  --accent: var(--gold);
-  --line: rgb(252 229 205 / .38);
-  --faint: rgb(252 229 205 / .14);
-  --fill: var(--cream);
-  --on-fill: var(--navy);
-  --on-fill-muted: #3d5566;
-  --well: rgb(252 229 205 / .08);
-  --hi: var(--gold);
-  --on-hi: var(--navy);
-  --danger: rgb(var(--color-accent-alert));
-  --focus: var(--gold);
-}
-[data-surface=navy] { --plate: var(--navy); }
-[data-surface=deep] { --plate: var(--deep); }
-[data-surface=cream] {
-  --plate: var(--cream);
-  --ink: var(--navy);
-  --muted: #3d5566;
-  --accent: var(--red);
-  --line: var(--navy);
-  --faint: rgb(0 48 73 / .22);
-  --fill: var(--navy);
-  --on-fill: var(--cream);
-  --on-fill-muted: #c9b8a6;
-  --well: rgb(0 48 73 / .08);
-  --hi: var(--red);
-  --on-hi: #fff8f0;
-  --danger: #9b1111;
-  --focus: var(--navy);
-}
-[data-surface=gold] {
-  --plate: var(--gold);
-  --ink: var(--navy);
-  --muted: #3d5566;
-  --accent: var(--navy);
-  --line: var(--navy);
-  --faint: rgb(0 48 73 / .25);
-  --fill: var(--navy);
-  --on-fill: var(--cream);
-  --on-fill-muted: var(--gold);
-  --well: rgb(0 48 73 / .1);
-  --hi: var(--red);
-  --on-hi: #fff8f0;
-  --danger: #7a0c0c;
-  --focus: var(--navy);
-}
-[data-surface=orange] {
-  --plate: var(--orange);
-  --ink: #001a29;
-  --muted: #001a29;
-  --accent: #001a29;
-  --line: #001a29;
-  --faint: rgb(0 26 41 / .3);
-  --fill: #001a29;
-  --on-fill: var(--cream);
-  --on-fill-muted: var(--gold);
-  --well: rgb(0 26 41 / .12);
-  --hi: var(--cream);
-  --on-hi: var(--navy);
-  --danger: #3a0505;
-  --focus: #001a29;
-}
-[data-surface=red] {
-  --plate: var(--red);
-  --ink: #fff8f0;
-  --muted: #fff8f0;
-  --accent: var(--gold);
-  --line: #fff8f0;
-  --faint: rgb(255 248 240 / .35);
-  --fill: #001a29;
-  --on-fill: var(--cream);
-  --on-fill-muted: var(--gold);
-  --well: rgb(0 0 0 / .16);
-  --hi: var(--cream);
-  --on-hi: var(--navy);
-  --danger: #fff8f0;
-  --focus: #fff8f0;
 }
 
 * { box-sizing: border-box; }
@@ -194,7 +185,7 @@ button, summary { cursor: pointer; }
 button:disabled { cursor: wait; opacity: .6; }
 :focus { outline: none; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-::selection { background: var(--gold); color: var(--navy); }
+::selection { background: var(--hi); color: var(--on-hi); }
 h1,h2,h3,p,dl,dd,ul,ol { margin: 0; }
 ul,ol { padding: 0; list-style: none; }
 img { max-width: 100%; height: auto; }

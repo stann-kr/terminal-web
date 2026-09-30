@@ -370,7 +370,7 @@ export function Stage({ state: address }: { state: StageState }) {
         onPointerDownCapture={recordPoint}
       >
         {tooShort && viewport && (
-          <section className={styles.enlarge} data-surface="orange" aria-labelledby="enlarge-title">
+          <section className={styles.enlarge} data-surface="feature" aria-labelledby="enlarge-title">
             <p className={styles.enlargeMark} aria-hidden="true">TERMINAL</p>
             <h1 id="enlarge-title" tabIndex={-1} data-stage-title="">창을 조금 더 키워 주세요</h1>
             <p>
@@ -390,7 +390,7 @@ export function Stage({ state: address }: { state: StageState }) {
           visible={!!layout.back && !!backHref}
           contentKey={backHref ?? 'none'}
           className={styles.backBox}
-          surface="deep"
+          surface="inset"
           delay={layout.back ? wave(layout.back) : 0}
           view={key}
           data={{ back: '' }}
@@ -410,7 +410,7 @@ export function Stage({ state: address }: { state: StageState }) {
                     const itemKey = carrierKey('event', event.id);
                     const item = layout.items[itemKey];
                     return item && (
-                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={() => 'deep'}>
+                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={() => 'inset'}>
                         {shape => <EventItem event={event} shape={shape} current={item.current} />}
                       </SubPlate>
                     );
@@ -419,7 +419,7 @@ export function Stage({ state: address }: { state: StageState }) {
                     const itemKey = carrierKey('artist', profile.key);
                     const item = layout.items[itemKey];
                     return item && (
-                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' ? artistSurface(profile) : 'deep')}>
+                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' ? artistSurface(profile) : 'inset')}>
                         {shape => <ArtistItem profile={profile} shape={shape} current={item.current} />}
                       </SubPlate>
                     );

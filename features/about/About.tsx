@@ -19,7 +19,7 @@ export const channels = [
 ] as const;
 export function NodeFacts() {
   return (
-    <Panel title="노드 정보" label="Node" surface="gold" className={styles.node}>
+    <Panel title="노드 정보" label="Node" surface="calm" className={styles.node}>
       <Facts
         rows={[
           ['도시', 'SEOUL'],
@@ -35,7 +35,7 @@ export function NodeFacts() {
 
 export function OfficialChannels() {
   return (
-    <Panel title="공식 채널" label="Channels" surface="navy">
+    <Panel title="공식 채널" label="Channels" surface="panel">
       <ul className={styles.channels}>
         {channels.map(([label, href], index) => (
           <li key={href}>

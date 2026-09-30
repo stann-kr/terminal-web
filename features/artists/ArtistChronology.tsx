@@ -32,7 +32,7 @@ export function ArtistChronology({
   }
   return (
     <div className={styles.column}>
-      <Panel title="출연 기록" label="Records" surface="navy" className={styles.chronology}>
+      <Panel title="출연 기록" label="Records" surface="panel" className={styles.chronology}>
         <ol className={styles.timeline}>
           {profile.appearances.map(({ event, artist }) => (
             <li key={`${event.id}:${artist.id}`} data-origin="">
@@ -51,7 +51,7 @@ export function ArtistChronology({
         </ol>
       </Panel>
       {shared.size > 0 && (
-        <Panel title="같은 세션 출연진" label="Shared lineup" surface="deep" className={styles.shared}>
+        <Panel title="같은 세션 출연진" label="Shared lineup" surface="inset" className={styles.shared}>
           <ul className={styles.sharedCells}>
             {[...shared.entries()].map(([key, other]) => (
               <SharedCell key={key}>

@@ -59,11 +59,7 @@
   white-space: nowrap;
 }
 
-.channels a:hover > span:first-child {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
-  color: var(--navy);
-}
-.channels a:hover :is(strong, .host) {
+.channels a:hover > *:not(.srOnly) {
   box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
 }

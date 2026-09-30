@@ -31,7 +31,7 @@ export function SignalBody({ wrap = node => node }: { wrap?: (node: ReactNode) =
 }
 function SignalChannel({ request }: { request: ReturnType<typeof useSignalSubscription> }) {
   return (
-    <Panel title="채널 정보" label="Channel" surface="navy" className={styles.channel}>
+    <Panel title="채널 정보" label="Channel" surface="panel" className={styles.channel}>
       <Facts
         rows={[
           ['채널', 'CH 01'],
@@ -52,7 +52,7 @@ function SignalInformation({
 }) {
   const { pending, done, error } = request;
   return (
-    <Panel title="수신 안내" label="Signal" code="CH 01" surface="red">
+    <Panel title="수신 안내" label="Signal" code="CH 01" surface="alert">
       <p className={styles.lead}>TERMINAL의 새로운 행사와 소식을 안내합니다.</p>
       <p
         className={styles.signalMatrix}

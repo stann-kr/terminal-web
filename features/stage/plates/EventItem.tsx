@@ -20,7 +20,7 @@ export type ItemShape = Exclude<ItemMode, 'folded'>;
 
 /** A session reads in its state colour as an open file; as a cell, row or line it is a dark record. */
 export function sessionSurface(event: TerminalEvent): Surface {
-  return event.status === 'ARCHIVED' ? 'cream' : event.status === 'LIVE' ? 'red' : 'orange';
+  return event.status === 'ARCHIVED' ? 'paper' : event.status === 'LIVE' ? 'alert' : 'feature';
 }
 
 /** A session's sub-plate inside the directory plate: a summary cell, a directory row, or an index line. */
@@ -124,7 +124,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
         <EventFacts event={event} modular />
         {event.posterUrl && <Poster src={event.posterUrl} alt={`${event.session} 행사 포스터 — 새 탭에서 확대`} />}
       </div>
-      <section className={styles.sessionOrder} data-surface="navy" aria-label="공연표">
+      <section className={styles.sessionOrder} data-surface="panel" aria-label="공연표">
         <p className={styles.columnHead}><b aria-hidden="true">Running order</b><span>공연표</span></p>
         <div className={styles.fitColumn} data-fit="">
           {hasOrder && data.events ? (
@@ -136,7 +136,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
       </section>
       <div className={styles.sessionSide}>
         {!request && (
-          <section className={styles.sessionBriefing} data-surface="deep" aria-label="행사 소개">
+          <section className={styles.sessionBriefing} data-surface="inset" aria-label="행사 소개">
             <p className={styles.columnHead}><b aria-hidden="true">Briefing</b><span>행사 소개</span><small aria-hidden="true">{language.toUpperCase()}</small></p>
             <TextPages
               paragraphs={invitation.length ? [...briefing, '초대 안내', ...invitation] : briefing}
@@ -146,7 +146,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
             />
           </section>
         )}
-        <section className={styles.sessionAccess} data-surface="cream" aria-label="참여 안내" data-origin="">
+        <section className={styles.sessionAccess} data-surface="paper" aria-label="참여 안내" data-origin="">
           {request ? (
             <>
               <p className={styles.columnHead}>
