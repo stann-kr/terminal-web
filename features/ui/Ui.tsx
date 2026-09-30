@@ -95,17 +95,9 @@ export function Action({
     </Link>
   );
 }
-/**
- * The control deck of a panel: its actions on their own card, stacked under or beside the content
- * card so the page reads in layers. `label` is a printed station name; decorative.
- */
-export function ActionDeck({ children, label = 'CONTROL', className = '' }: { children: ReactNode; label?: string; className?: string }) {
-  return (
-    <div className={`${styles.deck} ${className}`}>
-      <p className={styles.deckLabel} aria-hidden="true">{label}</p>
-      <div className={styles.deckKeys}>{children}</div>
-    </div>
-  );
+/** A panel's keys as full-width bars across the plate: the one primary key solid, the rest tinted. */
+export function ActionDeck({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return <div className={`${styles.deck} ${className}`}>{children}</div>;
 }
 export function Facts({
   rows,

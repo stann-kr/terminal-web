@@ -71,7 +71,7 @@ function SignalInformation({
               : 'CHANNEL STANDBY'}
       </p>
       <Bay label="CHANNEL 01 / STANDBY" />
-      <ActionDeck label="INFO" className={styles.deck}>
+      <ActionDeck className={styles.deck}>
         <Action href="/about">소개 / 공식 채널</Action>
       </ActionDeck>
     </Panel>

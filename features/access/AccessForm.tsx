@@ -39,7 +39,7 @@ export function AccessForm({
   const closed = (
     <StateNotice title="현재 신청할 수 없습니다">
       <p>{availability.message}</p>
-      <ActionDeck label="ACCESS">
+      <ActionDeck>
         <Action href="/events">접수 대상 확인</Action>
         <Action href="/signal">소식 신청</Action>
       </ActionDeck>

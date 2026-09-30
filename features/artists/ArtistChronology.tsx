@@ -43,7 +43,7 @@ export function ArtistChronology({
                 <p>{event.venue}</p>
               </div>
               <p className={styles.slot}>
-                <span>STAGE {artist.dock || 'TBA'}</span>
+                <span>DOCK {artist.dock || 'TBA'}</span>
                 <b>{artist.time || 'TBA'}</b>
               </p>
             </li>

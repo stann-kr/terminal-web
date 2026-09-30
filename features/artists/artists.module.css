@@ -8,34 +8,35 @@
 .column > :first-child {
   flex: 1;
 }
-/* The artist's name, large, on the file plate. */
+/* Appearances: flush lines across the plate (--bleed) of date · session · dock and time, in turns of
+   tone. Each line carries the plate's text inset itself, so its margins hold however it stacks; the
+   session link covers the whole line. */
 .timeline {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr) max-content;
-  gap: 4px;
+  column-gap: 16px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
 }
-/* A record row is one card: date cell, session cell, slot cell; the session link covers it all. */
 .timeline li {
   position: relative;
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
-}
-.timeline li > * {
+  align-items: center;
+  row-gap: 4px;
+  padding: 10px max(12px, var(--bleed, 0px));
   transition: var(--light-motion);
 }
+.timeline li:nth-child(odd) {
+  background: var(--well);
+}
 .timeline time {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  background: var(--fill);
-  color: var(--on-fill);
+  color: var(--accent);
   font: 400 var(--t-md)/1.2 var(--mono);
   font-variant-numeric: tabular-nums;
 }
 .recordBody {
-  padding: 8px 12px;
-  background: var(--well);
+  min-width: 0;
 }
 .timeline a {
   display: flex;
@@ -57,13 +58,11 @@
 }
 .slot {
   display: grid;
-  align-content: center;
+  justify-items: end;
   gap: 4px;
-  padding: 8px 12px;
-  background: var(--well);
 }
 .slot span {
-  color: var(--accent) !important;
+  color: var(--accent);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .16em;
 }
@@ -80,19 +79,22 @@
 .shared {
   flex: 0 0 auto;
 }
+/* Shared lineups: flush cells across the plate (--bleed), in turns of tone. */
 .sharedCells {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 4px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
 }
 .sharedCells li {
   position: relative;
   display: grid;
   gap: 4px;
-  padding: 8px 10px;
-  background: var(--fill);
-  color: var(--on-fill);
+  padding: 8px max(10px, var(--bleed, 0px));
+  color: var(--ink);
   transition: var(--light-motion);
+}
+.sharedCells li:nth-child(odd) {
+  background: var(--well);
 }
 .sharedCells a,
 .sharedCells span {
@@ -106,12 +108,14 @@
   inset: 0;
 }
 .sharedCells small {
-  color: var(--on-fill-muted);
+  color: var(--muted);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .12em;
 }
 @container (max-width: 560px) {
-  .timeline { grid-template-columns: minmax(0, 1fr); }
+  .timeline,
+  .timeline li { grid-template-columns: minmax(0, 1fr); }
+  .slot { justify-items: start; }
 }
 
 /* Short labels, codes and times never break mid-phrase. */
@@ -123,53 +127,23 @@
   white-space: nowrap;
 }
 
-/* Hover sweeps a card up from the side the pointer entered: cream cells turn gold, coloured cells
-   turn cream; record rows light gold. */
+/* Hover sweeps a card or a line in from the side the pointer entered. */
 .sharedCells li:has(a:hover) {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--gold);
-  color: var(--navy);
-}
-.sharedCells li:has(a:hover) small {
-  color: #3d5566;
-}
-.timeline li:hover > :not(time) {
   box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
 }
-.timeline li:hover > :not(time) * {
-  color: inherit !important;
+.sharedCells li:has(a:hover) small {
+  color: inherit;
 }
-.timeline li:hover time {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cream);
-  color: var(--navy);
+.timeline li:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+.timeline li:hover * {
+  color: inherit !important;
 }
 .timeline li:has(a:focus-visible) {
   outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 
-/* ── Sub-plates (v2): appearances and shared lineups stack flush in turns of tone. ── */
-.timeline,
-.sharedCells {
-  gap: 0;
-  margin-inline: calc(var(--bleed, 0px) * -1);
-}
-.timeline li > *,
-.timeline time,
-.sharedCells li {
-  background: none;
-}
-.timeline li:nth-child(odd) > *,
-.sharedCells li:nth-child(odd) {
-  background: var(--well);
-}
-.timeline time {
-  padding-left: max(10px, var(--bleed, 0px));
-  color: var(--accent);
-}
-.timeline li > :last-child {
-  padding-right: max(10px, var(--bleed, 0px));
-}
-.sharedCells li {
-  padding-inline: max(10px, var(--bleed, 0px));
-}

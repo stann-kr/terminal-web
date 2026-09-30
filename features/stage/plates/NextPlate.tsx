@@ -7,7 +7,7 @@ import { eventHref, publicArtists, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
-import { Action, BrandText, Chip, Facts, Loading, StateNotice } from '@/features/ui/Ui';
+import { Action, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
 import { stageConfig } from '../config';
 import { FitStack } from '../FitStack';
 import { FitTitle } from '../FitTitle';
@@ -126,7 +126,7 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
           </span>
         )}
         {mode !== 'tile' && (
-          <span className={styles.part} data-priority="1">
+          <span className={`${styles.part} ${styles.partFlush}`} data-priority="1">
             <EventCountdown event={event} />
           </span>
         )}
@@ -134,14 +134,14 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
           {mode === 'tile' ? <span className={styles.nextWhen}>{event.date} · {event.venue}</span> : <Facts rows={schedule} />}
         </span>
         {mode === 'hero' && (
-          <span className={styles.part} data-priority="4">
-            <span className={styles.sub} aria-hidden="true">Lineup</span>
+          <span className={`${styles.part} ${styles.partFlush}`} data-priority="4">
+            <span className={ui.band} aria-hidden="true"><span>Lineup</span></span>
             <ul className={styles.lineupCells}>
               {artists.length
                 ? artists.map(artist => (
                     <li key={artist.id}>
                       <b>{artist.name}</b>
-                      <small aria-hidden="true">{artist.dock ? `STAGE ${artist.dock}` : 'STAGE TBA'}</small>
+                      <small aria-hidden="true">{artist.dock ? `DOCK ${artist.dock}` : 'DOCK TBA'}</small>
                     </li>
                   ))
                 : Array.from({ length: 4 }, (_, index) => (

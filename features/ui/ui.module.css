@@ -126,40 +126,22 @@
   text-transform: none;
 }
 
-/* Deck: a panel's actions on their own dark card, stacked under the content card. */
+/* Deck: a panel's keys as full-width bars across the plate, flush to its sides (--bleed). The one
+   primary key is solid; the others are tinted, a neighbouring tinted key one step deeper. Wide
+   plates put the bars side by side. */
 .deck {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px 10px 14px;
-  border-left: 4px solid var(--orange);
-  background: var(--deep);
-  color: var(--cream);
-  --ink: var(--cream);
-  --line: rgb(252 229 205 / .45);
-  --well: rgb(252 229 205 / .08);
-  --fill: var(--gold);
-  --on-fill: var(--navy);
-  --hi: var(--cream);
-  --on-hi: var(--navy);
-  --focus: var(--gold);
+  display: grid;
+  justify-self: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  margin-inline: calc(var(--bleed, 0px) * -1);
 }
-.deckLabel {
-  padding-right: 14px;
-  border-right: 1px solid rgb(252 229 205 / .2);
-  color: var(--gold);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .22em;
+.deck > * {
+  width: 100%;
+  min-height: 56px;
+  padding-inline: max(12px, var(--bleed, 0px));
 }
-.deckKeys {
-  display: flex;
-  flex: 1 1 240px;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.deckKeys > * {
-  flex: 1 1 auto;
+.deck > :not(.primary):nth-child(even) {
+  background: linear-gradient(var(--well), var(--well)) var(--well);
 }
 .primary {
   background: var(--fill);
@@ -189,36 +171,60 @@
   background: currentColor;
 }
 
-/* ── Facts: a solid label cell beside a tinted value cell (STR ALPHA · 122). ── */
+/* ── Facts: label/value lines flush across the plate (--bleed), in turns of tone. Each line carries
+   the plate's text inset itself, so a line keeps its margins however its cells stack. ── */
 .facts {
+  --inset: max(12px, var(--bleed, 0px));
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  gap: 4px;
+  column-gap: 16px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
 }
 .facts > div {
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
+  align-items: baseline;
+  padding: 9px var(--inset);
+}
+.facts > div:nth-child(odd) {
+  background: var(--well);
 }
 .facts dt {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  background: var(--fill);
-  color: var(--on-fill);
-  font: 700 var(--t-md)/1.2 var(--display);
-  letter-spacing: .06em;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .16em;
 }
 .facts dd {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 6px 10px;
-  background: var(--well);
+  min-width: 0;
   color: var(--ink);
   font: 700 var(--t-lg)/1.25 var(--display);
   letter-spacing: .03em;
   text-align: right;
+}
+
+/* ── Band: a section label as a solid strip across the plate (--bleed), its note on the right. ── */
+.band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 12px;
+  min-height: 36px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 6px max(12px, var(--bleed, 0px));
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-sm)/1.1 var(--display);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.band > :not(:first-child) {
+  color: var(--on-fill-muted);
+  font: 600 var(--t-xs)/1.2 var(--sans);
+  letter-spacing: .04em;
+  text-transform: none;
 }
 
 /* ── Notices: a tinted block, or a red plate when a read failed; retry sits at the right. ── */
@@ -281,8 +287,7 @@
   margin-top: 14px;
 }
 @media (forced-colors: active) {
-  .notice, .action, .button, .chip, .facts dd { border: 1px solid CanvasText; }
-  .facts dt { border: 1px solid CanvasText; }
+  .notice, .action, .button, .chip, .band, .facts > div { border: 1px solid CanvasText; }
 }
 
 /* Short labels, codes and times never break mid-phrase. */
@@ -292,8 +297,7 @@
 .action,
 .button,
 .eyebrow,
-.bay span,
-.deckLabel {
+.bay span {
   white-space: nowrap;
 }
 .panelHead {
@@ -307,44 +311,21 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .facts > div {
-    gap: 0;
+    row-gap: 2px;
   }
   .facts dd {
-    justify-content: flex-start;
     text-align: left;
   }
 }
 
-/* ── Sub-plates (v2) ───────────────────────────────────────────────────────
-   Inside a plate, a list of cells is a stack of sub-plates: flush to the plate's edges, no gaps, no
-   lines. Neighbours are told apart only by tone: the plate itself, then its well, in turn. A padded
-   container publishes its side padding as --bleed; the list pulls out by it and keeps its text on
-   the plate's text line (--inset). */
+/* ── Sub-plates ────────────────────────────────────────────────────────────
+   Inside a plate, lists, bands and decks run flush to the plate's edges. A padded container
+   publishes its side padding as --bleed; they pull out by it and keep their text on the plate's
+   text line. The head rule runs edge to edge too, so a title is as wide as what it heads. */
 .panel {
   --bleed: var(--pad);
 }
-.facts {
-  --inset: max(12px, var(--bleed, 0px));
-  gap: 0;
-  margin-inline: calc(var(--bleed, 0px) * -1);
-}
-.facts > div {
-  align-items: baseline;
-}
-.facts > div:nth-child(odd) > * {
-  background: var(--well);
-}
-.facts dt,
-.facts dd {
-  background: none;
-}
-.facts dt {
-  padding: 11px 12px 11px var(--inset);
-  color: var(--muted);
-  font: 700 var(--t-xs)/1.2 var(--display);
-  letter-spacing: .16em;
-}
-.facts dd {
-  padding: 9px var(--inset) 9px 12px;
-  color: var(--ink);
+.panelHead {
+  margin-inline: calc(var(--pad) * -1);
+  padding-inline: var(--pad);
 }

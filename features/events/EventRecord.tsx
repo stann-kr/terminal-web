@@ -38,8 +38,8 @@ export function EventFacts({
     return (
       <div className={styles.factModules}>
         {groups.map((group) => (
-          <div key={group.label} className={styles.factModule}>
-            <p lang="en">
+          <div key={group.label}>
+            <p className={ui.band} lang="en">
               {group.label}
             </p>
             <Facts rows={group.rows.map(([label, value]) => [label, value])} />
@@ -73,7 +73,7 @@ export function EventActions({
     <div className={styles.accessProtocol} data-open={access.canRequest}>
       <p
         data-open={access.canRequest}
-        className={styles.protocolLabel}
+        className={`${ui.band} ${styles.protocolLabel}`}
         lang="en"
       >
         {access.canRequest
@@ -84,7 +84,7 @@ export function EventActions({
       </p>
       <p className={ui.muted}>{access.message}</p>
     </div>
-    <ActionDeck label="ACCESS" className={styles.accessDeck}>
+    <ActionDeck className={styles.accessDeck}>
       {access.canRequest && (
         <Action primary href={`${eventHref(event.id)}/request`} carrier={`event:${event.id}`}>
           게스트 신청
@@ -124,16 +124,15 @@ export function Lineup({
   return (
     <>
       {stages ? (
-        <div className={styles.stageBoard}>
+        <div>
           {[...new Set(visible.map((artist) => artist.dock || 'TBA'))].map(
             (dock) => (
               <section
-                className={styles.stage}
                 key={dock}
                 aria-label={`무대 ${dock}`}
               >
-                <h3>
-                  <span>STAGE {dock}</span>
+                <h3 className={ui.band}>
+                  <span>DOCK {dock}</span>
                   <span>공개 공연표</span>
                 </h3>
                 <ul className={styles.stageSlots}>

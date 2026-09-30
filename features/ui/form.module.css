@@ -174,6 +174,10 @@
 .terminalForm {
   --bleed: var(--pad);
 }
+.formHeading {
+  margin-inline: calc(var(--bleed) * -1);
+  padding-inline: var(--bleed);
+}
 .fields {
   gap: 0;
   margin-inline: calc(var(--bleed) * -1);

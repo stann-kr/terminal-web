@@ -1,32 +1,19 @@
-/* Countdown: four tinted tiles, big digits, the unit over a heavy foot bar. */
+/* Countdown: a band naming the mode over four readouts flush across the plate (--bleed), in turns
+   of tone; the unit sits over a heavy foot bar. */
 .countdown {
   min-width: 0;
-  margin-top: 22px;
-}
-.countdownMode {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
-  margin-bottom: 6px;
-  padding-bottom: 3px;
-  border-bottom: 1px solid var(--faint);
-  font: 600 var(--t-xs)/1.2 var(--sans);
-}
-.countdownMode > :first-child {
-  font: 700 var(--t-md)/1.1 var(--display);
-  letter-spacing: .06em;
 }
 .countdownUnits {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
-  max-width: 820px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
   font-variant-numeric: tabular-nums;
 }
 .countdownUnits > div {
   display: flex;
   flex-direction: column-reverse;
+}
+.countdownUnits > div:nth-child(odd) {
   background: var(--well);
 }
 .countdownUnits dt {
@@ -35,6 +22,7 @@
   gap: 4px;
   padding: 4px 10px 0;
   font: 700 var(--t-sm)/1 var(--display);
+  white-space: nowrap;
 }
 .countdownUnits dt::after {
   content: '';
@@ -43,28 +31,9 @@
   background: var(--line);
 }
 .countdownUnits dd {
-  white-space: nowrap;
   padding: 10px 10px 2px;
   font: 400 clamp(28px, 8cqi, 76px)/1 var(--mono);
-}
-
-/* Unit names and the mode line never break mid-phrase. */
-.countdownMode > *,
-.countdownUnits dt {
   white-space: nowrap;
-}
-
-/* ── Sub-plates (v2): the four readouts meet flush across the plate, in turns of tone. ── */
-.countdownUnits {
-  gap: 0;
-  max-width: none;
-  margin-inline: calc(var(--bleed, 0px) * -1);
-}
-.countdownUnits > div {
-  background: none;
-}
-.countdownUnits > div:nth-child(odd) {
-  background: var(--well);
 }
 .countdownUnits > div:first-child :is(dt, dd) {
   padding-left: max(10px, var(--bleed, 0px));
@@ -72,6 +41,9 @@
 .countdownUnits > div:first-child dt::after {
   margin-left: calc(max(10px, var(--bleed, 0px)) * -1);
 }
-.countdownMode {
-  border-bottom: 0;
+.countdownUnits > div:last-child :is(dt, dd) {
+  padding-right: max(10px, var(--bleed, 0px));
+}
+.countdownUnits > div:last-child dt::after {
+  margin-right: calc(max(10px, var(--bleed, 0px)) * -1);
 }
