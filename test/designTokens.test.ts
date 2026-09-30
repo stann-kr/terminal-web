@@ -31,4 +31,12 @@ describe('terminal content color contract', () => {
     }
     expect(contrast(token('color-bg-base'), token('color-accent-primary'))).toBeGreaterThanOrEqual(4.5);
   });
+
+  it('gives dark plates their own light ink, so a navy panel inside a light plate stays readable', async () => {
+    const css = await readFile('app/globals.css', 'utf8');
+    const dark = css.match(/\[data-surface=navy\],\s*\[data-surface=deep\]\s*\{([^}]*)\}/);
+    expect(dark, 'navy/deep ink block').not.toBeNull();
+    expect(dark![1]).toMatch(/--ink:\s*rgb\(var\(--color-text-primary\)\)/);
+    expect(dark![1]).toMatch(/--fill:\s*var\(--cream\)/);
+  });
 });

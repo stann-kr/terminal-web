@@ -99,6 +99,24 @@
   background-color: var(--plate);
   color: var(--ink);
 }
+/* Dark plates set their whole ink again, so a navy panel inside a cream, gold or orange plate reads
+   cream on navy instead of inheriting the light plate's dark ink. */
+[data-surface=navy],
+[data-surface=deep] {
+  --ink: rgb(var(--color-text-primary));
+  --muted: rgb(var(--color-text-muted));
+  --accent: var(--gold);
+  --line: rgb(252 229 205 / .38);
+  --faint: rgb(252 229 205 / .14);
+  --fill: var(--cream);
+  --on-fill: var(--navy);
+  --on-fill-muted: #3d5566;
+  --well: rgb(252 229 205 / .08);
+  --hi: var(--gold);
+  --on-hi: var(--navy);
+  --danger: rgb(var(--color-accent-alert));
+  --focus: var(--gold);
+}
 [data-surface=navy] { --plate: var(--navy); }
 [data-surface=deep] { --plate: var(--deep); }
 [data-surface=cream] {

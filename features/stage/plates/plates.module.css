@@ -10,8 +10,12 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-:global([data-stage=stage]) :is(.face, .next, .card) {
+:global([data-stage=stage]) :is(.face, .next, .card, .session, .artistFile) {
   height: 100%;
+}
+/* A file on the stage is exactly as tall as its plate; its columns share that height. */
+:global([data-stage=stage]) :is(.session, .artistFile) {
+  grid-template-rows: minmax(0, 1fr);
 }
 :global([data-stage=stage]) :is(.nextBlock, .nextChip, .homeKey) {
   height: auto;
@@ -1059,6 +1063,14 @@
 @container layer (max-width: 700px) {
   .session { grid-template-columns: minmax(0, 1fr); }
 }
+/* On the stage every row of a file has a height set by the plate, never by its content: paged text
+   measures the space it is given, so a row sized by that text would chase its own pages. */
+@container layer (max-width: 1080px) {
+  :global([data-stage=stage]) .session { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@container layer (max-width: 700px) {
+  :global([data-stage=stage]) .session { grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); }
+}
 
 /* ── Artist file ─────────────────────────────────────────────────────────── */
 .artistFile {
@@ -1101,18 +1113,14 @@
 :global([data-stage=stage]) .fileRecords {
   overflow: hidden;
 }
-.fileSource {
-  flex: none;
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: var(--t-sm);
-}
 @container layer (max-width: 1000px) {
   .artistFile { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .fileBio { grid-column: 1 / -1; }
+  :global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
 }
 @container layer (max-width: 700px) {
   .artistFile { grid-template-columns: minmax(0, 1fr); }
+  :global([data-stage=stage]) .artistFile { grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr); }
 }
 
 

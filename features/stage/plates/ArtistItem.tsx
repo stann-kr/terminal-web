@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { ArtistChronology } from '@/features/artists/ArtistChronology';
 import { artistHref, type ArtistProfile } from '@/features/artists/model';
 import { SignalText } from '@/features/display/Display';
-import { eventHref, paragraphs } from '@/features/events/model';
+import { paragraphs } from '@/features/events/model';
 import { useLanguage } from '@/features/shell/Providers';
-import { BrandText, type Surface } from '@/features/ui/Ui';
+import type { Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import { FitTitle } from '../FitTitle';
 import type { StageState } from '../state';
@@ -94,14 +94,6 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
       <section className={styles.fileBio} data-surface="navy" aria-label="소개">
         <p className={styles.columnHead}><b aria-hidden="true">Biography</b><span>소개</span><small aria-hidden="true">{language.toUpperCase()}</small></p>
         <TextPages paragraphs={paragraphs(biography?.artist.description, language)} language={language} label="아티스트 소개" empty="소개는 공개되는 대로 이곳에 표시됩니다." />
-        {biography && (
-          <p className={styles.fileSource}>
-            출처:{' '}
-            <Link href={eventHref(biography.event.id)} data-carrier={`event:${biography.event.id}`} scroll={false}>
-              <BrandText text={biography.event.session} /> / {biography.event.date}
-            </Link>
-          </p>
-        )}
       </section>
     </article>
   );

@@ -240,6 +240,8 @@
   min-height: 0;
 }
 .stage[data-stage=stage] .textFrame {
+  /* A zero basis: the frame's height comes from the space around it, never from the text in it. */
+  flex-basis: 0;
   overflow: hidden;
 }
 .textPage p,
