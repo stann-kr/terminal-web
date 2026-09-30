@@ -1,16 +1,18 @@
 'use client';
 import { SignalBody } from '@/features/signal/Signal';
 import { Chip } from '@/features/ui/Ui';
+import { Rings } from '../Rings';
 import { CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
 /** The subscription plate: a loud red call on the home, the channel and its form when open. */
-export function SignalPlate({ mode }: PlateProps) {
+export function SignalPlate({ mode, rings }: PlateProps) {
   if (mode === 'chip' || mode === 'index') return <ChipFace href="/signal" name="SIGNAL" title="소식 신청" meta="CH 01" />;
   if (mode !== 'hero') {
     return (
       <CardLink href="/signal" className={styles.signalCard}>
+        {rings && <Rings at={rings} under />}
         <span className={styles.signalHead} aria-hidden="true">SIGNAL</span>
         <span className={styles.signalText}>다음 행사 소식 받기</span>
         <span className={styles.bandTags} aria-hidden="true">

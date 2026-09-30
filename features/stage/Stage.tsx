@@ -449,12 +449,11 @@ export function Stage({ state: address }: { state: StageState }) {
               )}
             </>
           );
-          // The view's focal plate carries the rings, once it is on the stage with room to show them.
-          const decor = onStage && ring?.plate === id && placed.mode !== 'chip' && placed.mode !== 'hidden' ? <Rings at={ring.at} /> : null;
+          // The view's focal plate carries the rings (inside its card), once on the stage with room for them.
+          const rings = onStage && ring?.plate === id && placed.mode !== 'chip' && placed.mode !== 'hidden' ? ring.at : undefined;
           return (
             <Box
               key={id}
-              decor={decor}
               rect={rect(placed.rect)}
               visible={placed.mode !== 'hidden'}
               contentKey={placed.mode}
@@ -465,7 +464,7 @@ export function Stage({ state: address }: { state: StageState }) {
               data={{ plate: id, mode: placed.mode }}
               overlay={subPlates}
             >
-              <PlateContent id={id} mode={placed.mode} state={state} data={data} query={query} size={onStage ? placed.rect : null} />
+              <PlateContent id={id} mode={placed.mode} state={state} data={data} query={query} size={onStage ? placed.rect : null} rings={rings} />
             </Box>
           );
         })}

@@ -10,6 +10,7 @@ import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { Action, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
 import { FitStack } from '../FitStack';
 import { FitTitle } from '../FitTitle';
+import { Rings } from '../Rings';
 import { PlateStatus } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
@@ -47,7 +48,7 @@ function BrandBar({ compact = false }: { compact?: boolean }) {
  * The next-session plate. It has no open state of its own: its session block opens that session,
  * and the session's element sets out from this plate.
  */
-export function NextPlate({ mode, data, query }: PlateProps) {
+export function NextPlate({ mode, data, query, rings }: PlateProps) {
   const event = data.next;
   // A short plate (chip, tile, index) states its data in one line; a notice would not fit it.
   const short = mode !== 'hero' && mode !== 'panel';
@@ -67,7 +68,7 @@ export function NextPlate({ mode, data, query }: PlateProps) {
         </StateNotice>
       );
     }
-    return <NextSession event={event} mode={mode} now={data.now} />;
+    return <NextSession event={event} mode={mode} now={data.now} rings={rings} />;
   };
   return (
     <section className={styles.next} aria-label="대표 행사" data-density={mode} data-origin="">
@@ -77,7 +78,7 @@ export function NextPlate({ mode, data, query }: PlateProps) {
   );
 }
 
-function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlateProps['mode']; now: Date }) {
+function NextSession({ event, mode, now, rings }: { event: TerminalEvent; mode: PlateProps['mode']; now: Date; rings?: PlateProps['rings'] }) {
   const carrier = `event:${event.id}`;
   const label = event.status === 'ARCHIVED' ? 'Last session' : 'Next session';
   if (mode === 'chip' || mode === 'index') {
@@ -108,6 +109,7 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
       aria-label={`${label === 'Last session' ? '지난 행사' : '다음 행사'} ${event.session} 상세 보기`}
       scroll={false}
     >
+      {rings && <Rings at={rings} under />}
       <FitStack as="span" className={styles.parts}>
         <span className={styles.part} data-priority="0">
           <span className={styles.nextHead} aria-hidden="true">

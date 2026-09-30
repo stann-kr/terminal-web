@@ -11,8 +11,11 @@ const EASE = 0.04;
  * Concentric rings behind a plate's content, drifting outward slowly. Their centre sits at `at`
  * (fractions of the plate) and leans after the pointer wherever it is on the page, catching up
  * slowly. Still for reduced motion, touch-only pointers and forced colours.
+ *
+ * `under`: drawn inside a card (which isolates), between the card's hover fill and its print, so the
+ * rings stay while the card is lit and take its lit ink.
  */
-export function Rings({ at }: { at: { x: number; y: number } }) {
+export function Rings({ at, under = false }: { at: { x: number; y: number }; under?: boolean }) {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     const element = ref.current;
@@ -59,5 +62,5 @@ export function Rings({ at }: { at: { x: number; y: number } }) {
     };
   }, [at.x, at.y]);
   const home = { '--rx': `${at.x * 100}%`, '--ry': `${at.y * 100}%` } as CSSProperties;
-  return <i ref={ref} className={styles.rings} style={home} aria-hidden="true" />;
+  return <i ref={ref} className={styles.rings} style={home} data-under={under || undefined} aria-hidden="true" />;
 }

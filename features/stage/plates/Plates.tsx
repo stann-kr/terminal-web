@@ -18,6 +18,8 @@ export interface PlateProps {
   query: ReturnType<typeof useEvents>;
   /** The plate's arrival rect on the stage; null before the stage is laid out. */
   size: Rect | null;
+  /** Set when this plate is the view's focal plate: where its rings sit (fractions of its card). */
+  rings?: { x: number; y: number };
 }
 
 const PLATES: Record<PlateId, (props: PlateProps) => React.ReactNode> = {

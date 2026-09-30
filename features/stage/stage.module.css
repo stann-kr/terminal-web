@@ -396,6 +396,9 @@
   -webkit-mask-image: radial-gradient(circle at var(--rx) var(--ry), #000 0 30%, transparent 70%);
   mask-image: radial-gradient(circle at var(--rx) var(--ry), #000 0 30%, transparent 70%);
 }
+.rings[data-under] {
+  z-index: -1;
+}
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .rings { animation: ringOut var(--ring-period) linear infinite; }
 }

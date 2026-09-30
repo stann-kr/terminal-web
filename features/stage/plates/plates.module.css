@@ -1343,3 +1343,9 @@
     display: none;
   }
 }
+
+/* Cards that carry the rings isolate, so the rings sit over their hover fill and under their print. */
+.nextBlock,
+.signalCard {
+  isolation: isolate;
+}
