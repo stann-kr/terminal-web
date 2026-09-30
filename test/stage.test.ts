@@ -194,6 +194,15 @@ describe('stage layout', () => {
     expect(layout.sheets.length).toBeGreaterThan(1);
     expect(layout.sheetOf.events).toBe(0);
     expect(PLATE_ORDER.every(id => layout.plates[id].rect.w === narrow.w)).toBe(true);
+    // Secondary sheets are as tall as their plates, not a whole window: chips stay chip-sized, and
+    // the back card keeps its own height over the open plate.
+    const m = stageMetrics(390);
+    const chips = layout.sheets[layout.sheetOf.log!];
+    expect(layout.sheetOf.signal).toBe(layout.sheetOf.log);
+    expect(chips.h).toBeLessThan(narrow.h);
+    expect(Math.round(layout.plates.log.rect.h)).toBe(m.natural.chip);
+    expect(Math.round(layout.back!.h)).toBe(m.natural.back);
+    expect(layout.sheets[0].h).toBe(narrow.h);
   });
 
   it('is deterministic for the same inputs', () => {

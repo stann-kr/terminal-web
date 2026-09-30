@@ -49,6 +49,11 @@ export interface StageMetrics {
   panelCells: Record<CarrierKind, { max: number; columns: number }>;
   /** Distance a list row travels while paging in or out. */
   pageShift: number;
+  /**
+   * On a narrow stage, how tall a plate of each density (and the back card) is on a sheet that is
+   * not the view's main one: such a sheet is only as tall as its plates, not a whole window.
+   */
+  natural: Record<'chip' | 'tile' | 'panel' | 'index' | 'back', number>;
 }
 
 const clamp = (min: number, value: number, max: number) => Math.min(max, Math.max(min, value));
@@ -70,6 +75,7 @@ export function stageMetrics(viewportW: number): StageMetrics {
     indexRowH: 44,
     panelCells: { event: { max: 4, columns: 1 }, artist: { max: 10, columns: 2 } },
     pageShift: 12,
+    natural: { chip: 72, tile: 220, panel: 360, index: 320, back: 88 },
   };
 }
 
@@ -265,26 +271,40 @@ export const NARROW_W = 900;
  * tiling's columns each become a sheet, the main one first. Spilled plates follow on sheets of
  * their own.
  */
-function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill): LayoutNode[] {
+/** A sheet's tiling; `h` is set for a narrow stage's secondary sheet, as tall as its plates. */
+type SheetTree = { tree: LayoutNode; h?: number };
+
+function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill, m: StageMetrics): SheetTree[] {
   const primary = primaryOf(tree);
   const moved = new Set<LeafKey>(spill.moved.filter(id => id !== primary));
-  const own = [...moved].map(key => wrap(leavesOf(tree).find(leaf => leafKey(leaf) === key)!)).filter(Boolean);
+  const own = [...moved].map(key => ({ tree: wrap(leavesOf(tree).find(leaf => leafKey(leaf) === key)!) }));
   const rest = prune(tree, key => moved.has(key));
   if (!rest) return own;
   const hasBack = leavesOf(rest).some(leaf => leafKey(leaf) === 'back');
   const primaryLeaf = leavesOf(rest).find(leaf => leafKey(leaf) === primary);
   const alone = (node: LayoutLeaf): LayoutNode => (hasBack ? { dir: 'col', parts: [[10, { slot: 'back' }], [90, node]] } : wrap(node));
   if (stage.w < NARROW_W) {
-    // Each top-level part becomes a sheet (stacked), the one with the main leaf first.
+    // Each top-level part becomes a sheet (stacked), the one with the main leaf first. The main sheet
+    // is a window tall under a back card of its natural height; the others are as tall as their
+    // plates at their natural heights, so a column of chips is not stretched over a whole window.
+    const naturalOf = (leaf: LayoutLeaf) =>
+      'slot' in leaf ? (leaf.slot === 'back' ? m.natural.back : stage.h) : leaf.density === 'hero' ? stage.h : m.natural[leaf.density];
+    const natural = (node: LayoutNode): SheetTree => {
+      const leaves = leavesOf(node);
+      const heights = leaves.map(naturalOf);
+      return { tree: { dir: 'col', parts: leaves.map((leaf, index) => [heights[index], leaf]) }, h: heights.reduce((sum, h) => sum + h, 0) + m.gap * (leaves.length - 1) };
+    };
+    const main = (node: LayoutLeaf): SheetTree =>
+      hasBack ? { tree: { dir: 'col', parts: [[m.natural.back, { slot: 'back' }], [stage.h - m.natural.back - m.gap, node]] } } : { tree: wrap(node) };
     const others = prune(rest, key => key === primary || key === 'back');
-    const parts = others && others.dir === 'row' ? others.parts.map(([, child]) => (isLeaf(child) ? wrap(child) : stacked(child))) : others ? [stacked(others)] : [];
-    return [...(primaryLeaf ? [alone(primaryLeaf)] : []), ...parts, ...own];
+    const parts = others && others.dir === 'row' ? others.parts.map(([, child]) => natural(isLeaf(child) ? wrap(child) : stacked(child))) : others ? [natural(stacked(others))] : [];
+    return [...(primaryLeaf ? [main(primaryLeaf)] : []), ...parts, ...own];
   }
   if (spill.alone && primaryLeaf) {
     const others = prune(rest, key => key === primary || key === 'back');
-    return [alone(primaryLeaf), ...(others ? [others] : []), ...own];
+    return [{ tree: alone(primaryLeaf) }, ...(others ? [{ tree: others }] : []), ...own];
   }
-  return [rest, ...own];
+  return [{ tree: rest }, ...own];
 }
 
 const inside = (rect: Rect, w: number) => rect.x >= 0 && rect.y >= 0 && rect.x + rect.w <= w;
@@ -305,11 +325,11 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
   let detail: Rect | null = null;
   let back: Rect | null = null;
   let y = 0;
-  sheetTrees(config.layouts[view ?? 'home'], stage, spill).forEach((tree, index) => {
+  sheetTrees(config.layouts[view ?? 'home'], stage, spill, m).forEach(({ tree, h: natural }, index) => {
     // A sheet with a single leaf grows by what that leaf still needs.
     const only = leavesOf(tree).filter(leaf => leafKey(leaf) !== 'back');
     const grow = only.length === 1 ? spill.grow[leafKey(only[0]) as PlateId | 'detail'] ?? 0 : 0;
-    const h = stage.h + grow;
+    const h = (natural ?? stage.h) + grow;
     sheets.push({ y, h });
     for (const [leaf, rect] of tile(tree, { x: 0, y, w: stage.w, h }, m.gap)) {
       sheetOf[leafKey(leaf)] = index;
