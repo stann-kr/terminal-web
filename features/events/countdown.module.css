@@ -53,3 +53,25 @@
 .countdownUnits dt {
   white-space: nowrap;
 }
+
+/* ── Sub-plates (v2): the four readouts meet flush across the plate, in turns of tone. ── */
+.countdownUnits {
+  gap: 0;
+  max-width: none;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.countdownUnits > div {
+  background: none;
+}
+.countdownUnits > div:nth-child(odd) {
+  background: var(--well);
+}
+.countdownUnits > div:first-child :is(dt, dd) {
+  padding-left: max(10px, var(--bleed, 0px));
+}
+.countdownUnits > div:first-child dt::after {
+  margin-left: calc(max(10px, var(--bleed, 0px)) * -1);
+}
+.countdownMode {
+  border-bottom: 0;
+}

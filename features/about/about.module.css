@@ -67,3 +67,26 @@
   box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
 }
+
+/* ── Sub-plates (v2): channel rows run flush in turns of tone; the number is printed in the accent. ── */
+.channels {
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.channels a {
+  column-gap: 0;
+  grid-template-columns: calc(max(10px, var(--bleed, 0px)) + 40px) minmax(0, 1fr);
+}
+.channels a > span:first-child,
+.channels strong,
+.host {
+  background: none;
+}
+.channels li:nth-child(odd) a > * {
+  background: var(--well);
+}
+.channels a > span:first-child {
+  justify-content: start;
+  padding-left: max(10px, var(--bleed, 0px));
+  color: var(--accent);
+}

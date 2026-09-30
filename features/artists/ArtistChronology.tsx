@@ -51,7 +51,7 @@ export function ArtistChronology({
         </ol>
       </Panel>
       {shared.size > 0 && (
-        <Panel title="같은 세션 출연진" label="Shared lineup" surface="navy" className={styles.shared}>
+        <Panel title="같은 세션 출연진" label="Shared lineup" surface="deep" className={styles.shared}>
           <ul className={styles.sharedCells}>
             {[...shared.entries()].map(([key, other]) => (
               <SharedCell key={key}>

@@ -29,7 +29,7 @@ export function AboutPlate({ mode }: PlateProps) {
     <div className={styles.face}>
       <FocusHead label="About" title="TERMINAL 소개" tags={<Tags items={['SEOUL', 'TECHNO']} />} />
       <div className={styles.panelRow} data-columns="3">
-        <Panel title="TERMINAL 소개" label="About" code="SEOUL" surface="navy" className={styles.fitPanel}>
+        <Panel title="TERMINAL 소개" label="About" code="SEOUL" surface="deep" className={styles.fitPanel}>
           <p className={styles.statement} aria-hidden="true">TERMINAL</p>
           <TextPages paragraphs={aboutCopy[language]} language={language} label="TERMINAL 소개" />
         </Panel>

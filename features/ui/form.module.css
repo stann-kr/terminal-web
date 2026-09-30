@@ -168,3 +168,44 @@
 .field label > span {
   white-space: nowrap;
 }
+
+/* ── Sub-plates (v2): fields stack flush across the form plate. A field is its label line on the
+   plate's tone over its input in the well; the next field's label line is the only separation. ── */
+.terminalForm {
+  --bleed: var(--pad);
+}
+.fields {
+  gap: 0;
+  margin-inline: calc(var(--bleed) * -1);
+}
+.fieldHead {
+  padding: 12px var(--bleed) 6px;
+  background: none;
+  color: var(--ink);
+}
+.field label {
+  font-size: var(--t-sm);
+  letter-spacing: .12em;
+}
+.field label > span {
+  color: var(--muted);
+}
+.field :is(input, textarea) {
+  padding-inline: var(--bleed);
+}
+.fieldError {
+  color: var(--danger);
+}
+.hint {
+  margin: 0;
+  padding: 6px var(--bleed) 0;
+}
+.consent {
+  margin-top: 12px;
+  padding-inline: var(--bleed);
+}
+.fields > button {
+  justify-content: center;
+  min-height: 56px;
+  margin-top: 12px;
+}

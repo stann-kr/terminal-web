@@ -85,3 +85,44 @@
 .nodes span {
   white-space: nowrap;
 }
+
+/* ── Sub-plates (v2): node rows and the length readout run flush in turns of tone; the newest node
+   keeps its gold row. ── */
+.nodes,
+.counter {
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.nodes li {
+  gap: 0;
+}
+.nodes b,
+.nodes span,
+.counter > span,
+.counter strong {
+  background: none;
+  color: var(--ink);
+}
+.nodes li:nth-child(even) > *,
+.counter > * {
+  background: var(--well);
+}
+.nodes li:first-child > * {
+  background: var(--gold);
+  color: var(--navy);
+}
+.nodes span,
+.counter > span {
+  color: var(--muted);
+}
+.nodes b,
+.counter > span {
+  padding-left: max(12px, var(--bleed, 0px));
+}
+.nodes span,
+.counter strong {
+  padding-right: max(12px, var(--bleed, 0px));
+}
+.gauge {
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}

@@ -549,14 +549,14 @@
   overflow: hidden;
 }
 .part {
+  --bleed: var(--pad);
   display: grid;
   flex: none;
   gap: 8px;
   padding: 12px var(--pad);
-  border-top: 1px solid var(--faint);
 }
-.part:first-child {
-  border-top: 0;
+.part:has(> dl:only-child) {
+  padding-block: 0;
 }
 .partEnd {
   margin-top: auto;
@@ -1111,4 +1111,67 @@
 @media (forced-colors: active) {
   .tag, .card, .bandLink { border: 1px solid CanvasText; }
   .rings { display: none; }
+}
+
+/* ── Sub-plates (v2) inside faces and files ────────────────────────────────
+   The panels of an open plate and the columns of a file meet flush, edge to edge; neighbouring
+   surfaces differ (a deep panel beside a navy one), so no line is needed. Lists inside pull out to
+   the edges by --bleed and part by turns of tone. */
+.face,
+.sessionMain,
+.sessionOrder,
+.sessionBriefing,
+.sessionAccess,
+.fileMain,
+.fileBio {
+  --bleed: var(--pad);
+}
+.panelRow,
+.logGrid {
+  gap: 0;
+  margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
+}
+.session,
+.artistFile,
+.sessionSide,
+.fileRecords {
+  gap: 0;
+  padding: 0;
+}
+.sessionMain,
+.fileMain {
+  padding: 12px var(--pad) var(--pad);
+}
+.lineupCells,
+.logList {
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.lineupCells li {
+  padding-inline: max(10px, var(--bleed, 0px));
+  background: none;
+  color: var(--ink);
+}
+.lineupCells li:nth-child(odd) {
+  background: var(--well);
+}
+.lineupCells small {
+  color: var(--muted);
+}
+.logList li:nth-child(odd) {
+  background: var(--well);
+}
+.logList header {
+  background: none;
+  color: var(--ink);
+}
+.logList time {
+  border-right: 0;
+  color: var(--accent);
+}
+.logList p {
+  background: none;
+}
+.logList li > * {
+  padding-inline: max(10px, var(--bleed, 0px));
 }

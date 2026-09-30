@@ -136,7 +136,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
       </section>
       <div className={styles.sessionSide}>
         {!request && (
-          <section className={styles.sessionBriefing} data-surface="navy" aria-label="행사 소개">
+          <section className={styles.sessionBriefing} data-surface="deep" aria-label="행사 소개">
             <p className={styles.columnHead}><b aria-hidden="true">Briefing</b><span>행사 소개</span><small aria-hidden="true">{language.toUpperCase()}</small></p>
             <TextPages
               paragraphs={invitation.length ? [...briefing, '초대 안내', ...invitation] : briefing}

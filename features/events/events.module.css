@@ -224,3 +224,37 @@
 .stageSlots li:has(a:hover) .slotCode span {
   color: #3d5566;
 }
+
+/* ── Sub-plates (v2): the running order is a flush stack of slots in turns of tone; the slot code
+   is printed in the accent instead of sitting in a filled box. ── */
+.stageSlots {
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.stageSlots li > *,
+.stageSlots li > .slotCode {
+  background: none;
+}
+.stageSlots li:nth-child(odd) > * {
+  background: var(--well);
+}
+.stageSlots li > .slotCode {
+  padding-left: max(10px, var(--bleed, 0px));
+  color: var(--accent);
+}
+.stageSlots li > .slotCode span {
+  color: var(--muted);
+}
+.stageSlots li > :last-child {
+  padding-right: max(10px, var(--bleed, 0px));
+}
+.stage h3 {
+  margin: 0 calc(var(--bleed, 0px) * -1) 0;
+  border-bottom: 0;
+}
+.stage h3 > span:first-child {
+  padding-left: max(10px, var(--bleed, 0px));
+}
+.stage h3 > span:last-child {
+  padding-right: max(10px, var(--bleed, 0px));
+}

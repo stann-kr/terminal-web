@@ -314,3 +314,37 @@
     text-align: left;
   }
 }
+
+/* ── Sub-plates (v2) ───────────────────────────────────────────────────────
+   Inside a plate, a list of cells is a stack of sub-plates: flush to the plate's edges, no gaps, no
+   lines. Neighbours are told apart only by tone: the plate itself, then its well, in turn. A padded
+   container publishes its side padding as --bleed; the list pulls out by it and keeps its text on
+   the plate's text line (--inset). */
+.panel {
+  --bleed: var(--pad);
+}
+.facts {
+  --inset: max(12px, var(--bleed, 0px));
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+}
+.facts > div {
+  align-items: baseline;
+}
+.facts > div:nth-child(odd) > * {
+  background: var(--well);
+}
+.facts dt,
+.facts dd {
+  background: none;
+}
+.facts dt {
+  padding: 11px 12px 11px var(--inset);
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .16em;
+}
+.facts dd {
+  padding: 9px var(--inset) 9px 12px;
+  color: var(--ink);
+}

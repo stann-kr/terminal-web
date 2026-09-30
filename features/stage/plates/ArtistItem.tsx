@@ -91,7 +91,7 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
       <div className={styles.fileRecords} data-fit="">
         {data.events && <ArtistChronology profile={profile} events={data.events} />}
       </div>
-      <section className={styles.fileBio} data-surface="navy" aria-label="소개">
+      <section className={styles.fileBio} data-surface="deep" aria-label="소개">
         <p className={styles.columnHead}><b aria-hidden="true">Biography</b><span>소개</span><small aria-hidden="true">{language.toUpperCase()}</small></p>
         <TextPages paragraphs={paragraphs(biography?.artist.description, language)} language={language} label="아티스트 소개" empty="소개는 공개되는 대로 이곳에 표시됩니다." />
       </section>
