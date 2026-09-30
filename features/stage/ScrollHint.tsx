@@ -45,7 +45,7 @@ export function ScrollHint({ active }: { active: boolean }) {
         window.scrollBy({ top: window.innerHeight, behavior: still ? 'auto' : 'smooth' });
       }}
     >
-      <span aria-hidden="true">Scroll</span>
+      <i aria-hidden="true" />
       <i aria-hidden="true" />
     </button>
   );

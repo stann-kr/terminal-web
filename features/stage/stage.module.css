@@ -403,23 +403,24 @@
   .rings { display: none; }
 }
 
-/* ── Scroll cue: a solid key at the foot of the window while sheets lie below ── */
+/* ── Scroll cue: an icon key at the foot of the window while sheets lie below ──
+   Two chevrons on a translucent square that lets the plates show through. */
 .scrollHint {
   position: fixed;
   left: 50%;
   bottom: 18px;
   z-index: 40;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
-  padding: 0 18px 0 20px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
   border: 0;
-  background: var(--fill);
+  background: color-mix(in srgb, var(--fill) 80%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   color: var(--on-fill);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .24em;
-  text-transform: uppercase;
   opacity: 0;
   translate: -50% 12px;
   visibility: hidden;
@@ -439,23 +440,29 @@
   outline-color: var(--fill);
   outline-offset: 3px;
 }
-/* The chevron points down and blinks softly, a lamp asking to be followed. */
+/* The chevrons point down and blink softly in turn, a lamp asking to be followed. */
 .scrollHint i {
-  width: 9px;
-  height: 9px;
-  margin-top: -5px;
+  width: 10px;
+  height: 10px;
+  margin-top: -6px;
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   rotate: 45deg;
+}
+.scrollHint i + i {
+  margin-top: -2px;
 }
 @media (prefers-reduced-motion: no-preference) {
   .scrollHint[data-shown] i {
     animation: hintBlink 1.6s ease-in-out infinite;
   }
+  .scrollHint[data-shown] i + i {
+    animation-delay: .2s;
+  }
 }
 @keyframes hintBlink {
-  0%, 100% { opacity: 1; translate: 0 0; }
-  50% { opacity: .25; translate: 0 3px; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: .2; }
 }
 @media (forced-colors: active) {
   .scrollHint { border: 1px solid CanvasText; }
