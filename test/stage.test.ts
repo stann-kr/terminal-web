@@ -201,6 +201,10 @@ describe('stage layout', () => {
     expect(layout.sheetOf.signal).toBe(layout.sheetOf.log);
     expect(chips.h).toBeLessThan(narrow.h);
     expect(Math.round(layout.plates.log.rect.h)).toBe(m.natural.chip);
+    // In a session the next-session chip keeps room for its wordmark bar over the session line.
+    const session = computeLayout(stageStateFromUrl('/events/TRM-05'), narrow, { viewportW: 390, items: items() });
+    expect(session.plates.next.mode).toBe('chip');
+    expect(Math.round(session.plates.next.rect.h)).toBe(m.natural.nextChip);
     expect(Math.round(layout.back!.h)).toBe(m.natural.back);
     expect(layout.sheets[0].h).toBe(narrow.h);
   });
