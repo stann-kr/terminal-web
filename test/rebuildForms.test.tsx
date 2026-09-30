@@ -87,7 +87,7 @@ describe('transmit UI',()=>{
     const fetch=vi.fn().mockResolvedValue(json(log,201));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();const first=render(<TransmitForm onPosted={vi.fn()}/>);
     await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));await waitFor(()=>expect(fetch).toHaveBeenCalledOnce());
-    const {handle}=JSON.parse(fetch.mock.calls[0][1].body);expect(handle).toMatch(/^NODE-[A-HJ-KM-NP-Z2-9]{5}$/);
+    const {handle}=JSON.parse(fetch.mock.calls[0][1].body);expect(handle).toMatch(/^NODE-[A-HJ-NP-Z2-9]{5}$/);
     first.unmount();render(<TransmitForm onPosted={vi.fn()}/>);
     expect(screen.getByLabelText(/공개 닉네임/)).toHaveAttribute('placeholder',handle);
   });

@@ -1,5 +1,5 @@
 const NODE_KEY = 'terminal_node_id';
-/** Letters and digits without the look-alikes O/0, I/1 and L. */
+/** Letters and digits without the look-alikes O/0 and I/1 (the alphabet names were first issued in). */
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const NODE_PATTERN = /^NODE-[A-Z0-9]{5,6}$/;
 

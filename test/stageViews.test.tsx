@@ -303,7 +303,7 @@ describe('home plates', () => {
     ], total: 2, page: 1, totalPages: 1 }));
     await waitFor(() => expect(plate(container, 'log')).toHaveTextContent('NODE-K7Q2M'));
     const tags = [...plate(container, 'log').querySelectorAll('li b')].map(tag => tag.textContent);
-    expect(tags[1]).toMatch(/^NODE-[A-HJ-KM-NP-Z2-9]{5}$/);
+    expect(tags[1]).toMatch(/^NODE-[A-HJ-NP-Z2-9]{5}$/);
     expect(container).not.toHaveTextContent('05.09');
     expect(container).not.toHaveTextContent('SECRET_HANDLE');
     expect(container).not.toHaveTextContent('free text');
