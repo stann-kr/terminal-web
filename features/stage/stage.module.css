@@ -79,7 +79,7 @@
   transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, 0s, var(--dur-exit);
 }
 
-/* Content layers. The new content arrives just after the move starts; the old one only fades. */
+/* Content layers. The new content arrives partway through the move; the old one only fades. */
 .layer {
   min-width: 0;
   container: layer / inline-size;
@@ -101,12 +101,19 @@
 .stage[data-stage=stage]:not([data-ready]) .layer[data-layer=current] {
   animation-delay: calc(var(--delay, 0ms) * 2);
 }
+/* The old content stays at the size it was drawn at and dims slowly at first, so it never blinks
+   out; the new content, drawn over it, crossfades in before it has gone. */
 .layer[data-layer=leaving] {
   pointer-events: none;
-  animation: layerOut var(--dur-exit) linear forwards;
+  animation: layerOut var(--dur-exit) cubic-bezier(.4, 0, .8, .6) forwards;
 }
 .stage:not([data-stage=stage]) .layer[data-layer=leaving] {
   display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .layer[data-layer=leaving] {
+    display: none;
+  }
 }
 @keyframes layerIn {
   from { opacity: 0; transform: translateY(4px); }

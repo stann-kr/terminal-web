@@ -3,25 +3,29 @@ import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode }
 import type { Rect } from './layout';
 import styles from './stage.module.css';
 
-type Layer = { key: string; node: ReactNode };
+/** A content layer and the box size it was last drawn at. */
+type Layer = { key: string; node: ReactNode; w?: number; h?: number };
 
-const EXIT_MS = 120;
+/** Outlasts the exit fade (`--dur-exit`), so a leaving layer is only removed once it is invisible. */
+const EXIT_MS = 300;
 
 /**
- * Content that changes shape: when `id` changes, the old content fades out on top while the new
- * content fades in. Layers are keyed, so the outgoing content is the same live instance (never
- * remounted) showing what it last showed, and it is inert while it leaves.
+ * Content that changes shape: when `id` changes, the old content fades out underneath while the new
+ * content fades in over it, the two overlapping so the box is never an empty block. Layers are
+ * keyed, so the outgoing content is the same live instance (never remounted) showing what it last
+ * showed, and it is inert while it leaves. It keeps the size it was drawn at, so it never re-wraps:
+ * the box's window closes or opens over it as it travels.
  */
-function Swap({ id, children }: { id: string; children: ReactNode }) {
+function Swap({ id, w, h, children }: { id: string; w?: number; h?: number; children: ReactNode }) {
   // The last rendered content and the layers on their way out, both derived during render so a
   // swap paints in the same frame as the change that caused it.
-  const [shown, setShown] = useState<Layer>({ key: id, node: children });
+  const [shown, setShown] = useState<Layer>({ key: id, node: children, w, h });
   const [leaving, setLeaving] = useState<Layer[]>([]);
   if (shown.key !== id) {
     setLeaving(list => [...list.filter(layer => layer.key !== id && layer.key !== shown.key), shown]);
-    setShown({ key: id, node: children });
-  } else if (shown.node !== children) {
-    setShown({ key: id, node: children });
+    setShown({ key: id, node: children, w, h });
+  } else if (shown.node !== children || shown.w !== w || shown.h !== h) {
+    setShown({ key: id, node: children, w, h });
   }
   useLayoutEffect(() => {
     if (!leaving.length) return;
@@ -42,6 +46,7 @@ function Swap({ id, children }: { id: string; children: ReactNode }) {
           inert={layer.out || undefined}
           aria-hidden={layer.out || undefined}
           data-fit={layer.out ? undefined : ''}
+          style={layer.out && layer.w ? { width: `${layer.w}px`, height: `${layer.h}px` } : undefined}
         >
           {layer.node}
         </div>
@@ -130,7 +135,7 @@ export function Box({ rect, visible, contentKey, children, className = '', surfa
       aria-label={label}
       {...Object.fromEntries(Object.entries(data ?? {}).map(([key, value]) => [`data-${key}`, value]))}
     >
-      <Swap id={`${contentKey}:${shape.generation}`}>{children}</Swap>
+      <Swap id={`${contentKey}:${shape.generation}`} w={rect?.w} h={rect?.h}>{children}</Swap>
       {overlay}
     </Tag>
   );
