@@ -220,7 +220,7 @@ describe('stage views', () => {
     const rows = [...container.querySelectorAll<HTMLElement>('[data-item^="event:"]')].filter(shown);
     expect(rows[0]).toHaveAttribute('data-item', `event:EVENT ${String(perPage).padStart(2, '0')}`);
     const pager = screen.getByRole('navigation', { name: '목록 쪽 이동' });
-    expect(within(pager).getByRole('link', { name: '이전 쪽' })).toHaveAttribute('href', '/events');
+    expect(within(pager).getByRole('link', { name: '이전' })).toHaveAttribute('href', '/events');
     expect(screen.queryByRole('textbox', { name: /검색/ })).not.toBeInTheDocument();
   });
 
@@ -342,7 +342,7 @@ describe('directory and roster contracts', () => {
     go('/artists', 'page=2');
     const cells = [...container.querySelectorAll<HTMLElement>('[data-item^="artist:"]')].filter(shown);
     expect(within(cells[0]).getByRole('heading', { name: `ARTIST ${String(perPage).padStart(2, '0')}` })).toBeInTheDocument();
-    expect(within(screen.getByRole('navigation', { name: '목록 쪽 이동' })).getByRole('link', { name: '이전 쪽' })).toHaveAttribute('href', '/artists');
+    expect(within(screen.getByRole('navigation', { name: '목록 쪽 이동' })).getByRole('link', { name: '이전' })).toHaveAttribute('href', '/artists');
   });
 
   it('orders upcoming sessions by start time and moves one to the past at its start boundary', () => {
@@ -425,6 +425,19 @@ describe('event countdown', () => {
     expect(within(screen.getByRole('timer')).getByText('초').nextElementSibling).toHaveTextContent('06');
     rerender(<EventCountdown event={{ date: '2026-11-28', time: 'TBA' }} />);
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+  });
+});
+
+describe('stage scroll', () => {
+  it('keeps the scroll when a list page turns, and starts a new scene at its top', () => {
+    const { go } = shell();
+    go('/artists');
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    go('/artists', 'page=2');
+    go('/transmit');
+    go('/transmit', 'page=2');
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    scrollTo.mockRestore();
   });
 });
 

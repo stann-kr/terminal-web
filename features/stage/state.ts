@@ -122,6 +122,17 @@ export function stateKey(state: StageState): string {
   }
 }
 
+/**
+ * The scene a state belongs to: the state without its list page or the session's request form.
+ * Turning a page or opening the form inside a session is the same scene, so the page keeps its
+ * scroll; a new scene starts at its top.
+ */
+export function sceneKey(state: StageState): string {
+  if (state.view === 'plate') return `plate:${state.plate}${state.missing ? `:missing:${state.missing.id}` : ''}`;
+  if (state.view === 'session') return `session:${state.eventId}`;
+  return stateKey(state);
+}
+
 /** One level up (detail → parent plate → home): where the back card leads when there is no earlier view. */
 export function stageParentHref(state: StageState): string | null {
   if (state.view === 'session') return state.request ? `/events/${encodeURIComponent(state.eventId)}` : '/events';

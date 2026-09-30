@@ -19,7 +19,7 @@ import {
   stageParentHref,
   stageStateFromUrl,
   stateHref,
-  stateKey,
+  sceneKey, stateKey,
   type CarrierKind,
   type PlateId,
   type StageState,
@@ -184,10 +184,11 @@ export function Stage({ state: address }: { state: StageState }) {
       delete document.documentElement.dataset.sheets;
     };
   }, [sheetCount]);
-  // A new view starts at its first sheet.
+  // A new scene starts at its first sheet; turning a list or log page keeps where the reader is.
+  const scene = sceneKey(state);
   useLayoutEffect(() => {
     window.scrollTo({ top: 0 });
-  }, [key]);
+  }, [scene]);
 
   // Heads are measured at the arrival size right after each change, before the frame paints.
   useLayoutEffect(() => {
@@ -439,10 +440,10 @@ export function Stage({ state: address }: { state: StageState }) {
                   data={{ pager: pager.kind }}
                 >
                   <div className={styles.pager}>
-                    {pager.page > 1 ? <Link href={listHref(pager.kind, pager.page - 1)} scroll={false}>이전 쪽</Link> : <span>이전 쪽</span>}
+                    {pager.page > 1 ? <Link href={listHref(pager.kind, pager.page - 1)} scroll={false}>이전</Link> : <span>이전</span>}
                     <span aria-hidden="true">{pageReadout(pager.page, pager.pages)}</span>
                     <span className={styles.srOnly} aria-live="polite">{pageAnnouncement(pager.page, pager.pages)}</span>
-                    {pager.page < pager.pages ? <Link href={listHref(pager.kind, pager.page + 1)} scroll={false}>다음 쪽</Link> : <span>다음 쪽</span>}
+                    {pager.page < pager.pages ? <Link href={listHref(pager.kind, pager.page + 1)} scroll={false}>다음</Link> : <span>다음</span>}
                   </div>
                 </Box>
               )}
@@ -523,7 +524,7 @@ export function Stage({ state: address }: { state: StageState }) {
           </Box>
         )}
       </div>
-      <ScrollHint key={key} active={onStage && sheetCount > 1 && !tooShort} />
+      <ScrollHint key={scene} active={onStage && sheetCount > 1 && !tooShort} />
     </StageModeContext.Provider>
   );
 }
