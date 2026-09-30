@@ -29,6 +29,7 @@ function shell(events: TerminalEvent[] = [past]) {
   return { ...result, client, go };
 }
 const item = (container: HTMLElement, key: string) => container.querySelector<HTMLElement>(`[data-item="${key}"]`)!;
+const detail = (container: HTMLElement, key: string) => container.querySelector<HTMLElement>(`[data-detail="${key}"]`)!;
 const plate = (container: HTMLElement, id: string) => container.querySelector<HTMLElement>(`[data-plate="${id}"]`)!;
 const shown = (element: HTMLElement) => element.getAttribute('data-visible') === 'true';
 
@@ -110,6 +111,21 @@ describe('stage shell', () => {
     expect(draft).toHaveValue('typed');
   });
 
+  it('asks a short desktop window to grow, and lets the visitor go on anyway', () => {
+    viewport(1440, 520);
+    const { container } = shell();
+    expect(screen.getByRole('heading', { level: 1, name: '창을 조금 더 키워 주세요' })).toBeInTheDocument();
+    expect(container.querySelector('#stage')).toHaveAttribute('data-short');
+    fireEvent.click(screen.getByRole('button', { name: '이대로 보기' }));
+    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주세요' })).not.toBeInTheDocument();
+    expect(container.querySelector('#stage')).not.toHaveAttribute('data-short');
+    cleanup();
+    // A narrow (phone) window is never asked: it gets sheets.
+    viewport(390, 520);
+    shell();
+    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주세요' })).not.toBeInTheDocument();
+  });
+
   it('never switches to a scrolling page: a narrow window gets sheets to snap between', () => {
     const { container } = shell();
     expect(container.querySelector('#stage')).toHaveAttribute('data-stage', 'stage');
@@ -124,23 +140,28 @@ describe('stage shell', () => {
 });
 
 describe('stage views', () => {
-  it('moves the same row element into the session file, focuses its title, and back', async () => {
+  it('keeps the row as a sub-plate of the directory and opens the session as a plate of its own', async () => {
     const { container, go } = shell([past, upcoming]);
     go('/events');
     const row = item(container, 'event:OLD');
     expect(row).toHaveAttribute('data-mode', 'row');
+    // Sub-plates live inside their plate: they ride along with it.
+    expect(plate(container, 'events').contains(row)).toBe(true);
     expect(within(row).getByRole('link', { name: /Past event/ })).toHaveAttribute('href', '/events/OLD');
     go('/events/OLD');
     expect(item(container, 'event:OLD')).toBe(row);
-    expect(row).toHaveAttribute('data-mode', 'detail');
-    const title = await within(row).findByRole('heading', { level: 1, name: 'Past event' });
+    expect(row).toHaveAttribute('data-mode', 'index');
+    expect(within(row).getByRole('link')).toHaveAttribute('aria-current', 'page');
+    const file = detail(container, 'event:OLD');
+    expect(file).toHaveAttribute('data-mode', 'open');
+    const title = await within(file).findByRole('heading', { level: 1, name: 'Past event' });
     await waitFor(() => expect(title).toHaveFocus());
     expect(plate(container, 'events')).toHaveAttribute('data-mode', 'index');
-    // The other sessions stay on hand as index lines beside the open file.
-    expect(item(container, 'event:TRM-03')).toHaveAttribute('data-mode', 'index');
     go('/events');
     expect(item(container, 'event:OLD')).toBe(row);
     expect(row).toHaveAttribute('data-mode', 'row');
+    expect(detail(container, 'event:OLD')).toHaveAttribute('data-mode', 'closed');
+    expect(detail(container, 'event:OLD')).toHaveAttribute('data-visible', 'false');
   });
 
   it('goes back on Escape like the back card, but not while typing', () => {
@@ -156,20 +177,20 @@ describe('stage views', () => {
   it('groups the public running order by stage without private names, and closes past requests', () => {
     const { container, go } = shell([{ ...past, artists: [...past.artists, artist('SECOND', 'SECOND ARTIST', { dock: '2', time: '02:00–03:00' })] }]);
     go('/events/OLD');
-    const detail = item(container, 'event:OLD');
-    expect(within(within(detail).getByRole('region', { name: '무대 1' })).getByRole('link', { name: /VISIBLE ARTIST/ })).toHaveAttribute('href', '/artists/appearance%3AOLD%3APUBLIC');
-    expect(within(detail).getByRole('region', { name: '무대 2' })).toHaveTextContent('02:00–03:00');
+    const file = detail(container, 'event:OLD');
+    expect(within(within(file).getByRole('region', { name: '무대 1' })).getByRole('link', { name: /VISIBLE ARTIST/ })).toHaveAttribute('href', '/artists/appearance%3AOLD%3APUBLIC');
+    expect(within(file).getByRole('region', { name: '무대 2' })).toHaveTextContent('02:00–03:00');
     expect(container).not.toHaveTextContent('PRIVATE NAME');
-    expect(within(detail).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
+    expect(within(file).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
   });
 
   it('opens the guest form inside the session file on /request', () => {
     const { container, go } = shell([past, upcoming]);
     go('/events/TRM-03/request');
-    const detail = item(container, 'event:TRM-03');
-    expect(within(detail).getByRole('heading', { name: '게스트 신청서' })).toBeInTheDocument();
-    expect(within(detail).getByRole('link', { name: '신청 닫기' })).toHaveAttribute('href', '/events/TRM-03');
-    expect(within(detail).queryByRole('group', { name: '행사 소개' })).not.toBeInTheDocument();
+    const file = detail(container, 'event:TRM-03');
+    expect(within(file).getByRole('heading', { name: '게스트 신청서' })).toBeInTheDocument();
+    expect(within(file).getByRole('link', { name: '신청 닫기' })).toHaveAttribute('href', '/events/TRM-03');
+    expect(within(file).queryByRole('group', { name: '행사 소개' })).not.toBeInTheDocument();
   });
 
   it('shows an unknown session as an error inside the open directory', () => {
@@ -222,7 +243,7 @@ describe('stage views', () => {
   it('keeps the artist biography and source events without attendance or recency summaries', () => {
     const { container, go } = shell([{ ...past, artists: [{ ...past.artists[0], description: 'Artist biography' }] }]);
     go('/artists/appearance:OLD:PUBLIC');
-    const file = item(container, 'artist:appearance:OLD:PUBLIC');
+    const file = detail(container, 'artist:appearance:OLD:PUBLIC');
     expect(within(file).getByRole('heading', { level: 1, name: 'VISIBLE ARTIST' })).toBeInTheDocument();
     expect(within(file).getAllByRole('link', { name: /Past event/ })[0]).toHaveAttribute('href', '/events/OLD');
     expect(within(file).getByText('Artist biography')).toBeInTheDocument();

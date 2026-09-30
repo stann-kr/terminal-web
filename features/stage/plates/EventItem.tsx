@@ -15,17 +15,16 @@ import type { StageState } from '../state';
 import { TextPages } from '../TextPages';
 import styles from './plates.module.css';
 
-/** The shapes a session's element takes; `folded` keeps whichever shape it last had. */
+/** The shapes a session's sub-plate takes; `folded` keeps whichever shape it last had. */
 export type ItemShape = Exclude<ItemMode, 'folded'>;
 
-/** A session reads in its state colour as a detail; as a cell or row it is a dark record. */
-export function eventSurface(event: TerminalEvent, shape: ItemShape): Surface {
-  if (shape === 'detail') return event.status === 'ARCHIVED' ? 'cream' : event.status === 'LIVE' ? 'red' : 'orange';
-  return 'deep';
+/** A session reads in its state colour as an open file; as a cell, row or line it is a dark record. */
+export function sessionSurface(event: TerminalEvent): Surface {
+  return event.status === 'ARCHIVED' ? 'cream' : event.status === 'LIVE' ? 'red' : 'orange';
 }
 
-/** A session's one element on the stage: a home cell, a directory row, or its full session file. */
-export function EventItem({ event, shape, state, data }: { event: TerminalEvent; shape: ItemShape; state: StageState; data: StageData }) {
+/** A session's sub-plate inside the directory plate: a summary cell, a directory row, or an index line. */
+export function EventItem({ event, shape, current = false }: { event: TerminalEvent; shape: ItemShape; current?: boolean }) {
   const carrier = `event:${event.id}`;
   if (shape === 'cell') {
     return (
@@ -38,7 +37,7 @@ export function EventItem({ event, shape, state, data }: { event: TerminalEvent;
   }
   if (shape === 'index') {
     return (
-      <Link href={eventHref(event.id)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} scroll={false}>
+      <Link href={eventHref(event.id)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} aria-current={current ? 'page' : undefined} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
         <span className={styles.cellName}><BrandText text={event.session} /></span>
       </Link>
@@ -72,7 +71,7 @@ export function EventItem({ event, shape, state, data }: { event: TerminalEvent;
       </Link>
     );
   }
-  return <SessionFile event={event} state={state} data={data} />;
+  return null;
 }
 
 /**
@@ -100,7 +99,7 @@ function Poster({ src, alt }: { src: string; alt: string }) {
  * The session file a row grows into: overview, running order, and the briefing over the access
  * panel. On `/request` the access panel opens into the guest form and the briefing folds away.
  */
-function SessionFile({ event, state, data }: { event: TerminalEvent; state: StageState; data: StageData }) {
+export function SessionFile({ event, state, data }: { event: TerminalEvent; state: StageState; data: StageData }) {
   const { language } = useLanguage();
   const current = state.view === 'session' && state.eventId === event.id;
   const request = current && state.view === 'session' && state.request;

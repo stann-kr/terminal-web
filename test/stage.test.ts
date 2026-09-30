@@ -115,12 +115,9 @@ describe('stage layout', () => {
         const shown = shownItems(layout);
         shown.forEach(([, a], i) => shown.slice(i + 1).forEach(([, b]) => expect(overlaps(a.rect, b.rect), label).toBe(false)));
         for (const [key, item] of shown) {
-          if (item.mode === 'detail') {
-            expect(item.rect, `${label} ${key}`).toEqual(layout.detail);
-            continue;
-          }
           const owner = key.startsWith('event:') ? layout.plates.events : layout.plates.artists;
           expect(contains(owner.rect, item.rect), `${label} ${key}`).toBe(true);
+          expect(item.rel, `${label} ${key}`).toEqual({ x: item.rect.x - owner.rect.x, y: item.rect.y - owner.rect.y, w: item.rect.w, h: item.rect.h });
           if (layout.list && item.mode === 'row') expect(item.rect.y + item.rect.h, `${label} ${key}`).toBeLessThanOrEqual(layout.list.pager.y);
         }
       }
@@ -139,15 +136,19 @@ describe('stage layout', () => {
     expect(home.plates.next.rect.h).toBe(stage.h);
   });
 
-  it('opens a detail beside an index of its siblings, leaving the line it grew from empty', () => {
+  it('opens a detail as a plate of its own beside an index that keeps the open line, marked current', () => {
     const layout = computeLayout(stageStateFromUrl('/events/TRM-05'), STAGES[0].stage, { viewportW: 1440, items: items() });
     expect(layout.plates.events.mode).toBe('index');
-    expect(layout.items['event:TRM-05']).toMatchObject({ mode: 'detail', visible: true, rect: layout.detail });
-    expect(layout.indexOpen).not.toBeNull();
-    expect(contains(layout.plates.events.rect, layout.indexOpen!)).toBe(true);
+    expect(layout.open).toEqual({ kind: 'event', id: 'TRM-05' });
+    expect(layout.detail).not.toBeNull();
+    expect(overlaps(layout.detail!, layout.plates.events.rect)).toBe(false);
+    expect(layout.items['event:TRM-05']).toMatchObject({ mode: 'index', visible: true, current: true });
     const lines = shownItems(layout).filter(([, item]) => item.mode === 'index').map(([key]) => key);
-    expect(lines).toContain('event:TRM-06');
-    expect(lines).toContain('event:TRM-04');
+    expect(lines).toEqual(expect.arrayContaining(['event:TRM-06', 'event:TRM-05', 'event:TRM-04']));
+    // Sub-plates are flush: each line starts where the one above ends, from edge to edge.
+    const [first, second] = lines.map(key => layout.items[key].rect);
+    expect(second.y).toBe(first.y + first.h);
+    expect(first.w).toBe(layout.plates.events.rect.w);
   });
 
   it('starts carriers under the measured head of their plate', () => {
@@ -205,7 +206,7 @@ describe('stage layout', () => {
     expect(list.plates.events.mode).toBe('hero');
     expect(list.list).toMatchObject({ perPage: 4, page: 2, pages: 3 });
     expect(shownItems(list).map(([key]) => key)).toEqual(['event:TRM-05', 'event:TRM-04', 'event:TRM-03', 'event:TRM-02']);
-    expect(computeFlowLayout(stageStateFromUrl('/artists/lucii'), { items: items() }).items['artist:lucii']).toMatchObject({ mode: 'detail', visible: true });
+    expect(computeFlowLayout(stageStateFromUrl('/artists/lucii'), { items: items() }).open).toEqual({ kind: 'artist', id: 'lucii' });
   });
 
   it('keeps every configured view complete: six plates once each, a detail only on details', () => {

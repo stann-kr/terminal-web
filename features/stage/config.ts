@@ -26,6 +26,11 @@ export interface StageConfig {
   flowChips: 'top' | 'bottom';
   /** Frame padding around the stage, px. */
   frameY: number;
+  /**
+   * A desktop window (at least `w` wide) needs at least `h` of height for the tilings; below it the
+   * stage asks for a taller window instead (with a way to go on anyway). Narrow windows use sheets.
+   */
+  minDesktop: { w: number; h: number };
 }
 
 /**
@@ -81,4 +86,5 @@ export const stageConfig: StageConfig = {
   rings: true,
   flowChips: 'top',
   frameY: 10,
+  minDesktop: { w: 1024, h: 600 },
 };

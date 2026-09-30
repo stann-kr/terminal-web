@@ -459,13 +459,28 @@
 .indexLine .cellName {
   font-size: var(--t-md);
 }
+/* The line of the open file stays in the index, marked with a gold bar. */
+.indexLine[aria-current=page] {
+  box-shadow: inset 4px 0 0 var(--gold);
+  background: rgb(252 229 205 / .06);
+}
+.indexLine[aria-current=page]:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+}
+.eventRow,
+.eventCell,
+.artistCell,
+.indexLine,
+.artistCard {
+  padding-inline: var(--pad);
+}
 
 /* ── Next session: the console's own plate ───────────────────────────────── */
 .next {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--gap);
+  gap: 0;
   min-width: 0;
   padding: 0 var(--pad) var(--pad);
   overflow: hidden;
@@ -525,11 +540,33 @@
 }
 .nextBlock {
   flex: 1 1 auto;
-  gap: 10px;
   min-height: 0;
   margin-inline: calc(var(--pad) * -1);
   margin-bottom: calc(var(--pad) * -1);
-  padding: 12px var(--pad) var(--pad);
+}
+/* The next session's sub-plates: flush, full width, told apart by a hairline. The stack folds the
+   least important ones away when the plate is short (FitStack), so nothing is ever cut. */
+.parts {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+:global([data-stage=stage]) .parts {
+  overflow: hidden;
+}
+.part {
+  display: grid;
+  flex: none;
+  gap: 8px;
+  padding: 12px var(--pad);
+  border-top: 1px solid var(--faint);
+}
+.part:first-child {
+  border-top: 0;
+}
+.partEnd {
+  margin-top: auto;
 }
 .nextBlock :global(section[role=timer]) {
   margin-top: 4px;
@@ -543,10 +580,7 @@
   font: 700 var(--t-md)/1 var(--display);
   letter-spacing: .16em;
 }
-.nextSchedule,
-.nextLineup {
-  display: block;
-}
+
 .nextHead {
   display: flex;
   flex-wrap: wrap;
@@ -585,11 +619,6 @@
   background: var(--well);
   font: 700 var(--t-xs)/1.4 var(--display);
   letter-spacing: .14em;
-}
-.nextGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: 14px;
 }
 .nextChip {
   flex: 1 1 auto;
@@ -646,19 +675,6 @@
 .lineupCells li[data-empty] {
   background: var(--well);
   color: var(--ink);
-}
-
-/* A short plate keeps the session, clock, schedule and keys; the lineup (also in the session
-   file), then the subtitle, then the schedule's heading step aside. */
-@container layer (max-height: 700px) {
-  .next[data-density=hero] .nextLineup { display: none; }
-}
-@container layer (max-height: 560px) {
-  .next[data-density=hero] .nextSubtitle { display: none; }
-}
-@container layer (max-height: 460px) {
-  .next .nextSchedule .sub { display: none; }
-  .next[data-density=panel] :global(section[role=timer]) { display: none; }
 }
 
 

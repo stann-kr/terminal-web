@@ -9,6 +9,7 @@ import { Clock } from '@/features/shell/Clock';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { Action, BrandText, Chip, Facts, Loading, StateNotice } from '@/features/ui/Ui';
 import { stageConfig } from '../config';
+import { FitStack } from '../FitStack';
 import { FitTitle } from '../FitTitle';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
@@ -89,7 +90,13 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
     );
   }
   const artists = publicArtists(event);
-  // Everything under the wordmark is one link: it lights up whole and opens the session.
+  const schedule: [string, string][] = [
+    ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
+    ['장소', event.venue],
+    ...(mode === 'hero' ? [['지역', event.district] as [string, string]] : []),
+  ];
+  // Everything under the wordmark is one link, built of flush sub-plates. When the plate is short
+  // the least important sub-plates fold away (priority: higher folds first); nothing is clipped.
   return (
     <Link
       href={eventHref(event.id)}
@@ -98,42 +105,36 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
       aria-label={`${label === 'Last session' ? '지난 행사' : '다음 행사'} ${event.session} 상세 보기`}
       scroll={false}
     >
-      <span className={styles.nextHead} aria-hidden="true">
-        <span className={styles.nextLabel}>{label}</span>
-        <span className={styles.bandTags}>
-          <Chip solid>{statusLabel(event.status)}</Chip>
-          <Chip>{event.id}</Chip>
-          {mode !== 'hero' && <Chip>{dayMark(event, now)}</Chip>}
-        </span>
-      </span>
-      {event.status === 'ARCHIVED' && mode === 'hero' && <span className={styles.noUpcoming}>다음 행사 미정</span>}
-      <FitTitle as="h2" text={event.session} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
-        <BrandText text={event.session} />
-      </FitTitle>
-      {mode !== 'tile' && event.subtitle && <span className={styles.nextSubtitle}>{event.subtitle}</span>}
-      {mode === 'tile' && <span className={styles.nextWhen}>{event.date} · {event.venue}</span>}
-      {mode !== 'tile' && <EventCountdown event={event} />}
-      {mode === 'panel' && (
-        <Facts
-          rows={[
-            ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
-            ['장소', event.venue],
-          ]}
-        />
-      )}
-      {mode === 'hero' && (
-        <span className={styles.nextGrid}>
-          <span className={styles.nextSchedule}>
-            <span className={styles.sub} aria-hidden="true">Schedule</span>
-            <Facts
-              rows={[
-                ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
-                ['장소', event.venue],
-                ['지역', event.district],
-              ]}
-            />
+      <FitStack as="span" className={styles.parts}>
+        <span className={styles.part} data-priority="0">
+          <span className={styles.nextHead} aria-hidden="true">
+            <span className={styles.nextLabel}>{label}</span>
+            <span className={styles.bandTags}>
+              <Chip solid>{statusLabel(event.status)}</Chip>
+              <Chip>{event.id}</Chip>
+              <Chip>{dayMark(event, now)}</Chip>
+            </span>
           </span>
-          <span className={styles.nextLineup}>
+          {event.status === 'ARCHIVED' && mode === 'hero' && <span className={styles.noUpcoming}>다음 행사 미정</span>}
+          <FitTitle as="h2" text={event.session} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
+            <BrandText text={event.session} />
+          </FitTitle>
+        </span>
+        {mode !== 'tile' && event.subtitle && (
+          <span className={styles.part} data-priority="5">
+            <span className={styles.nextSubtitle}>{event.subtitle}</span>
+          </span>
+        )}
+        {mode !== 'tile' && (
+          <span className={styles.part} data-priority="1">
+            <EventCountdown event={event} />
+          </span>
+        )}
+        <span className={styles.part} data-priority={mode === 'tile' ? '1' : '2'}>
+          {mode === 'tile' ? <span className={styles.nextWhen}>{event.date} · {event.venue}</span> : <Facts rows={schedule} />}
+        </span>
+        {mode === 'hero' && (
+          <span className={styles.part} data-priority="4">
             <span className={styles.sub} aria-hidden="true">Lineup</span>
             <ul className={styles.lineupCells}>
               {artists.length
@@ -151,9 +152,13 @@ function NextSession({ event, mode, now }: { event: TerminalEvent; mode: PlatePr
                   ))}
             </ul>
           </span>
-          <span className={styles.nextCta} aria-hidden="true">OPEN SESSION FILE</span>
-        </span>
-      )}
+        )}
+        {mode === 'hero' && (
+          <span className={`${styles.part} ${styles.partEnd}`} data-priority="3">
+            <span className={styles.nextCta} aria-hidden="true">OPEN SESSION FILE</span>
+          </span>
+        )}
+      </FitStack>
     </Link>
   );
 }

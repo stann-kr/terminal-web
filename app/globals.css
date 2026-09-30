@@ -210,3 +210,8 @@ html[data-cursor=console] * {
 html[data-cursor=console] :is(input:not([type=checkbox]), textarea, [contenteditable=true]) {
   cursor: text;
 }
+
+/* A sub-plate folded away by its stack (FitStack) is gone, whatever its display. */
+[data-priority][hidden] {
+  display: none !important;
+}

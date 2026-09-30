@@ -37,8 +37,10 @@
 }
 .item {
   z-index: 2;
+  /* Sub-plates sit flush; a hairline on their right and bottom edge tells them apart. */
+  box-shadow: inset -1px -1px 0 var(--faint);
 }
-.item[data-mode=detail] {
+.detail {
   z-index: 3;
 }
 .pagerBox,
@@ -111,23 +113,6 @@
   to { opacity: 0; }
 }
 
-/* In an index, the empty line the open detail grew out of: its place to go back to. */
-.openSlot {
-  z-index: 2;
-  position: absolute;
-  left: 0;
-  top: 0;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  background: rgb(252 229 205 / .06);
-}
-.openSlot b {
-  color: var(--gold);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .22em;
-}
-
 /* List pager under an open list. */
 .pager {
   display: flex;
@@ -135,6 +120,8 @@
   justify-content: space-between;
   gap: 6px;
   height: 100%;
+  padding-inline: var(--pad);
+  border-top: 1px solid var(--faint);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .1em;
 }
@@ -199,7 +186,7 @@
 .stage:not([data-stage=stage]) .box[data-mode=hero] {
   order: 1;
 }
-.stage:not([data-stage=stage]) .box[data-item] {
+.stage:not([data-stage=stage]) .box[data-detail] {
   order: 2;
 }
 .stage:not([data-stage=stage]) .pagerBox {
@@ -329,7 +316,45 @@
   letter-spacing: var(--title-ls, 0em);
 }
 
+/* A desktop window too short for the tilings: one card asks for a taller window. */
+.stage[data-short] > .box {
+  display: none;
+}
+.enlarge {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 18px;
+  min-height: calc(100dvh - 2 * var(--frame-y, 10px));
+  padding: clamp(24px, 6vw, 96px);
+}
+.enlargeMark {
+  font: 400 clamp(40px, 6vw, 96px)/1 var(--brand);
+}
+.enlarge h1 {
+  font: 800 clamp(32px, 4vw, 64px)/.95 var(--display);
+  letter-spacing: .02em;
+  outline: none;
+}
+.enlarge p:not(.enlargeMark) {
+  max-width: 44ch;
+  font: 600 var(--t-lg)/1.45 var(--sans);
+}
+.enlarge button {
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-lg)/1 var(--display);
+  letter-spacing: .12em;
+  transition: var(--light-motion);
+}
+.enlarge button:hover {
+  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  color: var(--on-hi);
+}
+
 @media (forced-colors: active) {
-  .openSlot { border: 1px dashed CanvasText; }
   .pager a, .textPager button { border: 1px solid CanvasText; }
 }

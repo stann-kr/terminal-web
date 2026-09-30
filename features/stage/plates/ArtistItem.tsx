@@ -23,14 +23,14 @@ function serial(key: string) {
 }
 
 /** STANN LUMO is the signal (orange), an artist with a coming set is gold, the rest are records. */
-export function artistSurface(profile: ArtistProfile, shape: ItemShape): Surface {
+export function artistSurface(profile: ArtistProfile, open = false): Surface {
   if (featured(profile)) return 'orange';
   if (upcoming(profile)) return 'gold';
-  return shape === 'detail' ? 'cream' : 'deep';
+  return open ? 'cream' : 'deep';
 }
 
-/** An artist's one element on the stage: a roster cell, a file card in the grid, or the open file. */
-export function ArtistItem({ profile, shape, state, data }: { profile: ArtistProfile; shape: ItemShape; state: StageState; data: StageData }) {
+/** An artist's sub-plate inside the roster plate: a roster cell, a file card in the grid, or an index line. */
+export function ArtistItem({ profile, shape, current = false }: { profile: ArtistProfile; shape: ItemShape; current?: boolean }) {
   const carrier = `artist:${profile.key}`;
   const records = String(profile.appearances.length).padStart(2, '0');
   if (shape === 'cell') {
@@ -43,7 +43,7 @@ export function ArtistItem({ profile, shape, state, data }: { profile: ArtistPro
   }
   if (shape === 'index') {
     return (
-      <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} scroll={false}>
+      <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} aria-current={current ? 'page' : undefined} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{profile.origin || '—'}</span>
         <span className={styles.cellName}>{profile.name}</span>
       </Link>
@@ -73,11 +73,11 @@ export function ArtistItem({ profile, shape, state, data }: { profile: ArtistPro
       </Link>
     );
   }
-  return <ArtistFile profile={profile} state={state} data={data} />;
+  return null;
 }
 
 /** The artist file a cell grows into: identity, appearances and shared lineups, then the biography. */
-function ArtistFile({ profile, state, data }: { profile: ArtistProfile; state: StageState; data: StageData }) {
+export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; state: StageState; data: StageData }) {
   const { language } = useLanguage();
   const current = state.view === 'artist' && state.artistKey === profile.key;
   const biography = profile.appearances.find(row => paragraphs(row.artist.description, language).length);

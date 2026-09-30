@@ -4,8 +4,11 @@ import { PLATE_ORDER, carrierKey, type CarrierKind, type PlateId, type StageStat
 export type Rect = { x: number; y: number; w: number; h: number };
 export type Size = { w: number; h: number };
 export type PlateMode = Density | 'hidden';
-/** A carrier is a cell of a summary plate, a row of an open list, a line of an index, the open detail, or folded away. */
-export type ItemMode = 'cell' | 'row' | 'index' | 'detail' | 'folded';
+/**
+ * A carrier is a sub-plate of its owner plate: a cell of a summary, a row (or card) of the open list,
+ * a line of an index, or folded away. The open detail is a plate of its own that grows out of it.
+ */
+export type ItemMode = 'cell' | 'row' | 'index' | 'folded';
 
 /** The plate each kind of carrier belongs to. */
 export const ITEM_OWNER: Record<CarrierKind, PlateId> = { event: 'events', artist: 'artists' };
@@ -54,7 +57,8 @@ export function stageMetrics(viewportW: number): StageMetrics {
     head: { hero: 120, panel: 96, index: 72 },
     pagerH: 56,
     rowH: viewportW < 1280 ? 80 : 92,
-    rowGap: 6,
+    // Sub-plates sit flush against each other and the plate's edges; plates keep their gap.
+    rowGap: 0,
     cellMinW: 200,
     cellH: 128,
     panelCellH: 52,
@@ -97,11 +101,16 @@ export interface LayoutInput {
 }
 
 export interface PlacedItem {
+  /** On the stage. */
   rect: Rect;
+  /** Inside its owner plate: sub-plates ride with the plate and only re-tile within it. */
+  rel: Rect;
   mode: ItemMode;
   visible: boolean;
   /** Position among the shown items of its kind, for staggered arrival. */
   order: number;
+  /** The line of the detail that is open (an index keeps it, marked current). */
+  current?: boolean;
 }
 
 export interface ListInfo {
@@ -125,8 +134,8 @@ export interface StageLayout {
   items: Record<string, PlacedItem>;
   /** Paging of the open list, when a list is open. */
   list: (ListInfo & { kind: CarrierKind; pager: Rect }) | null;
-  /** In an index, the empty line the open detail grew out of. */
-  indexOpen: Rect | null;
+  /** The detail that is open, if any, and which carrier it belongs to. */
+  open: { kind: CarrierKind; id: string } | null;
   /** False when a shown element would leave the stage: the stage mode must fall back to flow. */
   fits: boolean;
 }
@@ -174,45 +183,44 @@ export function listRowsPerPage(areaH: number, head: number, m: StageMetrics): n
   return Math.max(1, Math.floor((areaH - head - m.pagerH + m.rowGap) / (m.rowH + m.rowGap)));
 }
 
-/** Slot rects of one list page: full-width rows for events, a grid of cells for artists. */
+/** Slot rects of one list page, flush from edge to edge: rows for events, a grid of cards for artists. */
 function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics): Rect[] {
   const top = area.y + head;
   if (kind === 'event') {
     return Array.from({ length: listRowsPerPage(area.h, head, m) }, (_, index) => {
       const y = top + index * (m.rowH + m.rowGap);
-      return edges(area.x + m.pad, y, area.x + area.w - m.pad, y + m.rowH);
+      return edges(area.x, y, area.x + area.w, y + m.rowH);
     });
   }
-  const innerW = area.w - 2 * m.pad;
-  const cols = Math.max(1, Math.floor((innerW + m.gap) / (m.cellMinW + m.gap)));
-  const rows = Math.max(1, Math.floor((area.h - head - m.pagerH + m.gap) / (m.cellH + m.gap)));
-  const columns = split(area.x + m.pad, innerW, Array.from({ length: cols }, () => 1), m.gap);
+  const cols = Math.max(1, Math.floor(area.w / m.cellMinW));
+  const rows = Math.max(1, Math.floor((area.h - head - m.pagerH) / m.cellH));
+  const columns = split(area.x, area.w, Array.from({ length: cols }, () => 1), 0);
   return Array.from({ length: cols * rows }, (_, index) => {
     const [x0, x1] = columns[index % cols];
-    const y = top + Math.floor(index / cols) * (m.cellH + m.gap);
+    const y = top + Math.floor(index / cols) * m.cellH;
     return edges(x0, y, x1, y + m.cellH);
   });
 }
 
-/** Cells under a summary plate's head, as many as fit up to the kind's max. */
+/** Cells under a summary plate's head, flush, as many as fit up to the kind's max. */
 function panelSlots(kind: CarrierKind, plate: Rect, head: number, m: StageMetrics): Rect[] {
   const { max, columns } = m.panelCells[kind];
-  const rows = Math.max(0, Math.floor((plate.h - head - m.pad + m.gap) / (m.panelCellH + m.gap)));
+  const rows = Math.max(0, Math.floor((plate.h - head) / m.panelCellH));
   const count = Math.min(max, rows * columns);
-  const cols = split(plate.x + m.pad, plate.w - 2 * m.pad, Array.from({ length: columns }, () => 1), m.gap);
+  const cols = split(plate.x, plate.w, Array.from({ length: columns }, () => 1), 0);
   return Array.from({ length: count }, (_, index) => {
     const [x0, x1] = cols[index % columns];
-    const y = plate.y + head + Math.floor(index / columns) * (m.panelCellH + m.gap);
+    const y = plate.y + head + Math.floor(index / columns) * m.panelCellH;
     return edges(x0, y, x1, y + m.panelCellH);
   });
 }
 
-/** Lines of an index under its head. */
+/** Lines of an index under its head, flush. */
 function indexSlots(plate: Rect, head: number, m: StageMetrics): Rect[] {
-  const count = Math.max(0, Math.floor((plate.h - head - m.pad + m.rowGap) / (m.indexRowH + m.rowGap)));
+  const count = Math.max(0, Math.floor((plate.h - head) / m.indexRowH));
   return Array.from({ length: count }, (_, index) => {
-    const y = plate.y + head + index * (m.indexRowH + m.rowGap);
-    return edges(plate.x + m.pad / 2, y, plate.x + plate.w - m.pad / 2, y + m.indexRowH);
+    const y = plate.y + head + index * m.indexRowH;
+    return edges(plate.x, y, plate.x + plate.w, y + m.indexRowH);
   });
 }
 
@@ -312,7 +320,6 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
 
   const items: Record<string, PlacedItem> = {};
   let list: StageLayout['list'] = null;
-  let indexOpen: Rect | null = null;
   const openId = (kind: CarrierKind) =>
     state.view === 'session' && kind === 'event' ? state.eventId : state.view === 'artist' && kind === 'artist' ? state.artistKey : null;
 
@@ -322,8 +329,9 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
     const ownerId = ITEM_OWNER[kind];
     const owner = plates[ownerId];
     const open = openId(kind);
-    const place = (id: string, placed: Omit<PlacedItem, 'order'>, order = 0) => {
-      items[carrierKey(kind, id)] = { ...placed, order };
+    const place = (id: string, placed: Omit<PlacedItem, 'order' | 'rel'>, order = 0) => {
+      const { rect } = placed;
+      items[carrierKey(kind, id)] = { ...placed, order, rel: { x: rect.x - owner.rect.x, y: rect.y - owner.rect.y, w: rect.w, h: rect.h } };
     };
     const folded = (id: string) => place(id, { rect: owner.rect, mode: 'folded', visible: false });
 
@@ -334,7 +342,7 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
       const pages = Math.max(1, Math.ceil(source.order.length / perPage));
       const page = Math.min(Math.max(1, source.page ?? 1), pages);
       const pagerTop = owner.rect.y + owner.rect.h - m.pagerH;
-      list = { kind, perPage, pages, page, pager: edges(owner.rect.x + m.pad, pagerTop, owner.rect.x + owner.rect.w - m.pad, owner.rect.y + owner.rect.h) };
+      list = { kind, perPage, pages, page, pager: edges(owner.rect.x, pagerTop, owner.rect.x + owner.rect.w, owner.rect.y + owner.rect.h) };
       source.order.forEach((id, index) => {
         const onPage = Math.floor(index / perPage) + 1;
         const slot = slots[index % perPage];
@@ -346,8 +354,7 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
       const head = input.heads?.[ownerId] ?? m.head.panel;
       const slots = panelSlots(kind, owner.rect, head, m);
       source.order.forEach((id, index) => {
-        if (id === open && detail) place(id, { rect: detail, mode: 'detail', visible: true });
-        else if (index < slots.length) place(id, { rect: slots[index], mode: 'cell', visible: true }, index);
+        if (index < slots.length) place(id, { rect: slots[index], mode: 'cell', visible: true }, index);
         else folded(id);
       });
     } else if (owner.mode === 'index') {
@@ -358,14 +365,11 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
       const start = Math.max(0, Math.min(at - Math.floor(slots.length / 2), source.order.length - slots.length));
       source.order.forEach((id, index) => {
         const slot = slots[index - start];
-        if (id === open && detail) {
-          place(id, { rect: detail, mode: 'detail', visible: true });
-          if (slot) indexOpen = slot;
-        } else if (slot) place(id, { rect: slot, mode: 'index', visible: true }, index - start);
+        if (slot) place(id, { rect: slot, mode: 'index', visible: true, current: id === open }, index - start);
         else folded(id);
       });
     } else {
-      source.order.forEach(id => (id === open && detail ? place(id, { rect: detail, mode: 'detail', visible: true }) : folded(id)));
+      source.order.forEach(folded);
     }
   }
 
@@ -377,7 +381,9 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
   const fits = shown.every(rect => inside(rect, stage.w) && rect.w > 0 && rect.h > 0)
     && (!list || Object.values(items).every(item => item.mode !== 'row' || item.rect.y + item.rect.h <= list!.pager.y));
 
-  return { view, sheets, sheetOf, plates, detail, back: view && view !== 'home' ? back : null, items, list, indexOpen, fits };
+  const openKind: CarrierKind | null = state.view === 'session' ? 'event' : state.view === 'artist' ? 'artist' : null;
+  const open = openKind && detail ? { kind: openKind, id: openId(openKind)! } : null;
+  return { view, sheets, sheetOf, plates, detail, back: view && view !== 'home' ? back : null, items, list, open, fits };
 }
 
 /** Page sizes in flow mode, where lists are not cut to a height: the long-standing 4 and 12. */
@@ -405,22 +411,21 @@ export function computeFlowLayout(state: StageState, input: Pick<LayoutInput, 'i
     if (!source) continue;
     const owner = plates[ITEM_OWNER[kind]];
     const open = state.view === 'session' && kind === 'event' ? state.eventId : state.view === 'artist' && kind === 'artist' ? state.artistKey : null;
-    const folded = (id: string) => (items[carrierKey(kind, id)] = { rect: NO_RECT, mode: 'folded', visible: false, order: 0 });
+    const folded = (id: string) => (items[carrierKey(kind, id)] = { rect: NO_RECT, rel: NO_RECT, mode: 'folded', visible: false, order: 0 });
     if (owner.mode === 'hero') {
       const perPage = FLOW_PAGE_SIZE[kind];
       const pages = Math.max(1, Math.ceil(source.order.length / perPage));
       const page = Math.min(Math.max(1, source.page ?? 1), pages);
       list = { kind, perPage, pages, page, pager: NO_RECT };
       source.order.forEach((id, index) => {
-        if (Math.floor(index / perPage) + 1 === page) items[carrierKey(kind, id)] = { rect: NO_RECT, mode: 'row', visible: true, order: index % perPage };
+        if (Math.floor(index / perPage) + 1 === page) items[carrierKey(kind, id)] = { rect: NO_RECT, rel: NO_RECT, mode: 'row', visible: true, order: index % perPage };
         else folded(id);
       });
     } else {
-      source.order.forEach(id => {
-        if (id === open) items[carrierKey(kind, id)] = { rect: NO_RECT, mode: 'detail', visible: true, order: 0 };
-        else folded(id);
-      });
+      source.order.forEach(folded);
     }
   }
-  return { view, sheets: [], sheetOf: {}, plates, detail: null, back: view && view !== 'home' ? NO_RECT : null, items, list, indexOpen: null, fits: true };
+  const openKind: CarrierKind | null = state.view === 'session' ? 'event' : state.view === 'artist' ? 'artist' : null;
+  const openFlow = openKind ? { kind: openKind, id: state.view === 'session' ? state.eventId : state.view === 'artist' ? state.artistKey : '' } : null;
+  return { view, sheets: [], sheetOf: {}, plates, detail: null, back: view && view !== 'home' ? NO_RECT : null, items, list, open: openFlow, fits: true };
 }

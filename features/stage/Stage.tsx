@@ -25,8 +25,8 @@ import {
 import { StageModeContext, pageAnnouncement, pageKey, pageReadout, useWheelPaging, type StageRenderMode } from './usePaging';
 import { PlateContent, plateSurface } from './plates/Plates';
 import { BackCard } from './plates/BackCard';
-import { EventItem, eventSurface, type ItemShape } from './plates/EventItem';
-import { ArtistItem, artistSurface } from './plates/ArtistItem';
+import { EventItem, SessionFile, sessionSurface, type ItemShape } from './plates/EventItem';
+import { ArtistFile, ArtistItem, artistSurface } from './plates/ArtistItem';
 import styles from './stage.module.css';
 
 /** The widest delay of the arrival wave: the box farthest from where you pressed leaves this late (ms). */
@@ -62,11 +62,12 @@ function viewTitle(root: HTMLElement): HTMLElement | null {
  */
 function spillOf(root: HTMLElement): { leaf: PlateId | 'detail'; short: number; node: HTMLElement } | null {
   for (const node of root.querySelectorAll<HTMLElement>('[data-fit]')) {
-    if (node.closest('[inert]')) continue;
+    // Sub-plates have fixed shapes chosen by the layout; what is inside them is not the plate's spill.
+    if (node.closest('[inert]') || node.closest('[data-item]')) continue;
     const short = node.scrollHeight - node.clientHeight;
     if (short <= 1) continue;
     const plate = node.closest<HTMLElement>('[data-plate]')?.dataset.plate as PlateId | undefined;
-    const detail = node.closest<HTMLElement>('[data-item][data-mode=detail]');
+    const detail = node.closest<HTMLElement>('[data-detail][data-mode=open]');
     if (plate) return { leaf: plate, short, node };
     if (detail) return { leaf: 'detail', short, node };
   }
@@ -158,6 +159,9 @@ export function Stage({ state: address }: { state: StageState }) {
   const mode: StageRenderMode = viewport && fontsReady ? 'stage' : 'boot';
   const layout: StageLayout = staged ?? computeFlowLayout(state, { items });
   const onStage = !!staged;
+  // The last file opened of each kind stays mounted, so closing it can shrink it back into its line.
+  const [details, setDetails] = useState<Record<CarrierKind, string | null>>({ event: null, artist: null });
+  if (layout.open && details[layout.open.kind] !== layout.open.id) setDetails({ ...details, [layout.open.kind]: layout.open.id });
   const gap = viewport ? stageMetrics(viewport.w).gap : 0;
   const primary: PlateId | 'detail' | null = layout.detail ? 'detail' : PLATE_ORDER.find(id => layout.plates[id].mode === 'hero') ?? null;
   const sheetCount = layout.sheets.length;
@@ -250,8 +254,11 @@ export function Stage({ state: address }: { state: StageState }) {
   useLayoutEffect(() => {
     if (settledKey.current === key) return;
     settledKey.current = key;
+    // A detail grows out of where it was opened: the pressed row or plate, else its own index line.
     const carrier = stageOrigin.take(state);
-    if (carrier?.rect) setOrigin({ item: carrierKey(carrier.kind, carrier.id), token: performance.now(), rect: carrier.rect });
+    const opened = layout.open ? layout.items[carrierKey(layout.open.kind, layout.open.id)] : null;
+    const from = carrier?.rect ?? (opened?.visible ? opened.rect : null);
+    if (layout.open && from) setOrigin({ item: `detail:${layout.open.kind}`, token: performance.now(), rect: from });
     // Focus follows the view: its title, or the stage when the title is not there yet.
     const element = root.current;
     if (element) (viewTitle(element) ?? element).focus({ preventScroll: true });
@@ -272,10 +279,8 @@ export function Stage({ state: address }: { state: StageState }) {
     const mark = parseCarrierMark(link?.dataset.carrier);
     const element = root.current;
     if (!link || !mark || !element) return;
-    const itemKey = carrierKey(mark.kind, mark.id);
-    const own = [...element.querySelectorAll<HTMLElement>('[data-item]')].some(box => box.dataset.item === itemKey && box.contains(link));
-    if (own || !onStage) return stageOrigin.record({ ...mark, rect: null });
-    const from = (link.closest<HTMLElement>('[data-origin]') ?? link).getBoundingClientRect();
+    if (!onStage) return stageOrigin.record({ ...mark, rect: null });
+    const from = (link.closest<HTMLElement>('[data-item], [data-origin]') ?? link).getBoundingClientRect();
     const stage = element.getBoundingClientRect();
     stageOrigin.record({ ...mark, rect: { x: from.left - stage.left, y: from.top - stage.top, w: from.width, h: from.height } });
   };
@@ -315,6 +320,8 @@ export function Stage({ state: address }: { state: StageState }) {
     return () => document.removeEventListener('keydown', keydown);
   }, [router]);
 
+  const [goOn, setGoOn] = useState(false);
+
   // The arrival wave: boxes set out in order of distance from where you pressed (or from the view's
   // main plate), so a change reads as spreading from one point rather than everything at once.
   const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
@@ -336,6 +343,10 @@ export function Stage({ state: address }: { state: StageState }) {
 
   // ── Render ──────────────────────────────────────────────────────────────────────────────
   const last = layout.sheets[sheetCount - 1];
+  // A desktop window too short for the tilings asks to be taller (unless the visitor goes on anyway).
+  const { minDesktop } = stageConfig;
+  const tooShort = !!viewport && viewport.w >= minDesktop.w && viewport.h < minDesktop.h && !goOn;
+
   const vars = (size && onStage ? { '--stage-w': `${size.w}px`, '--stage-h': `${last ? last.y + last.h : size.h}px` } : {}) as CSSProperties;
   const rect = (value: Rect) => (onStage ? value : null);
 
@@ -351,27 +362,29 @@ export function Stage({ state: address }: { state: StageState }) {
         data-ready={(onStage && ready) || undefined}
         data-resizing={viewport?.resizing || undefined}
         data-moving={moving || undefined}
+        data-short={tooShort || undefined}
         data-chips={stageConfig.flowChips}
         hidden={state.view === 'none'}
         style={vars}
         onClickCapture={recordOrigin}
         onPointerDownCapture={recordPoint}
       >
-        {state.view === 'home' && (
+        {tooShort && viewport && (
+          <section className={styles.enlarge} data-surface="orange" aria-labelledby="enlarge-title">
+            <p className={styles.enlargeMark} aria-hidden="true">TERMINAL</p>
+            <h1 id="enlarge-title" tabIndex={-1} data-stage-title="">창을 조금 더 키워 주세요</h1>
+            <p>
+              이 화면은 높이 {minDesktop.h}px 이상인 창에 맞춰 판을 배치합니다. 지금 창은 {viewport.w}×{viewport.h}px입니다.
+            </p>
+            <button type="button" onClick={() => setGoOn(true)}>이대로 보기</button>
+          </section>
+        )}
+        {state.view === 'home' && !tooShort && (
           <h1 className={styles.srOnly} tabIndex={-1} data-stage-title="">TERMINAL 홈</h1>
         )}
         {onStage && sheetCount > 1 && layout.sheets.map((sheet, index) => (
           <span key={index} className={styles.sheet} aria-hidden="true" style={{ top: sheet.y, height: sheet.h }} />
         ))}
-        {onStage && layout.indexOpen && (
-          <span
-            className={styles.openSlot}
-            aria-hidden="true"
-            style={{ transform: `translate(${layout.indexOpen.x}px, ${layout.indexOpen.y}px)`, width: layout.indexOpen.w, height: layout.indexOpen.h }}
-          >
-            <b>OPEN</b>
-          </span>
-        )}
         <Box
           rect={onStage && size ? layout.back ?? { x: 0, y: 0, w: Math.round(size.w * 0.2), h: 110 } : null}
           visible={!!layout.back && !!backHref}
@@ -386,6 +399,52 @@ export function Stage({ state: address }: { state: StageState }) {
         </Box>
         {PLATE_ORDER.map(id => {
           const placed = layout.plates[id];
+          const delay = wave(placed.rect);
+          const kind: CarrierKind | null = id === 'events' ? 'event' : id === 'artists' ? 'artist' : null;
+          const pager = list && kind === list.kind && list.pages > 1 ? list : null;
+          // Sub-plates (cells, rows, index lines, the pager) live inside their plate.
+          const subPlates = kind && (
+            <>
+              {kind === 'event'
+                ? data.ordered.map(event => {
+                    const itemKey = carrierKey('event', event.id);
+                    const item = layout.items[itemKey];
+                    return item && (
+                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={() => 'deep'}>
+                        {shape => <EventItem event={event} shape={shape} current={item.current} />}
+                      </SubPlate>
+                    );
+                  })
+                : data.profiles.map(profile => {
+                    const itemKey = carrierKey('artist', profile.key);
+                    const item = layout.items[itemKey];
+                    return item && (
+                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' ? artistSurface(profile) : 'deep')}>
+                        {shape => <ArtistItem profile={profile} shape={shape} current={item.current} />}
+                      </SubPlate>
+                    );
+                  })}
+              {pager && (
+                <Box
+                  as="nav"
+                  rect={onStage ? { ...pager.pager, x: pager.pager.x - placed.rect.x, y: pager.pager.y - placed.rect.y } : null}
+                  visible
+                  contentKey="pager"
+                  className={styles.pagerBox}
+                  label="목록 쪽 이동"
+                  delay={delay}
+                  data={{ pager: pager.kind }}
+                >
+                  <div className={styles.pager}>
+                    {pager.page > 1 ? <Link href={listHref(pager.kind, pager.page - 1)} scroll={false}>이전 쪽</Link> : <span>이전 쪽</span>}
+                    <span aria-hidden="true">{pageReadout(pager.page, pager.pages)}</span>
+                    <span className={styles.srOnly} aria-live="polite">{pageAnnouncement(pager.page, pager.pages)}</span>
+                    {pager.page < pager.pages ? <Link href={listHref(pager.kind, pager.page + 1)} scroll={false}>다음 쪽</Link> : <span>다음 쪽</span>}
+                  </div>
+                </Box>
+              )}
+            </>
+          );
           return (
             <Box
               key={id}
@@ -394,56 +453,52 @@ export function Stage({ state: address }: { state: StageState }) {
               contentKey={placed.mode}
               className={styles.plate}
               surface={plateSurface(id, placed.mode, data)}
-              delay={wave(placed.rect)}
+              delay={delay}
               view={key}
               data={{ plate: id, mode: placed.mode }}
+              overlay={subPlates}
             >
               <PlateContent id={id} mode={placed.mode} state={state} data={data} query={query} size={onStage ? placed.rect : null} />
             </Box>
           );
         })}
-        {data.ordered.map(event => {
-          const itemKey = carrierKey('event', event.id);
-          const placed = layout.items[itemKey];
-          return placed && (
-            <CarrierBox key={itemKey} itemKey={itemKey} placed={placed} rect={rect(placed.rect)} origin={origin} delay={wave(placed.rect) + Math.min(ITEM_STAGGER_MAX, placed.order * ITEM_STAGGER)} view={key} surface={shape => eventSurface(event, shape)}>
-              {shape => <EventItem event={event} shape={shape} state={state} data={data} />}
-            </CarrierBox>
+        {(['event', 'artist'] as const).map(kind => {
+          const id = details[kind];
+          if (!id) return null;
+          const open = layout.open?.kind === kind && layout.open.id === id;
+          const item = layout.items[carrierKey(kind, id)];
+          const owner = layout.plates[kind === 'event' ? 'events' : 'artists'];
+          // Closed, the file shrinks back into its line (or its plate) and fades.
+          const target = open && layout.detail ? layout.detail : item?.visible ? item.rect : owner.rect;
+          const event = kind === 'event' ? data.ordered.find(entry => entry.id === id) : undefined;
+          const profile = kind === 'artist' ? data.profiles.find(entry => entry.key === id) : undefined;
+          if (!event && !profile) return null;
+          return (
+            <DetailBox
+              key={kind}
+              kind={kind}
+              id={id}
+              open={open}
+              rect={onStage ? target : null}
+              origin={origin?.item === `detail:${kind}` ? origin : null}
+              delay={open ? 0 : wave(target)}
+              view={key}
+              surface={event ? sessionSurface(event) : artistSurface(profile!, true)}
+            >
+              {event ? <SessionFile event={event} state={state} data={data} /> : <ArtistFile profile={profile!} state={state} data={data} />}
+            </DetailBox>
           );
         })}
-        {data.profiles.map(profile => {
-          const itemKey = carrierKey('artist', profile.key);
-          const placed = layout.items[itemKey];
-          return placed && (
-            <CarrierBox key={itemKey} itemKey={itemKey} placed={placed} rect={rect(placed.rect)} origin={origin} delay={wave(placed.rect) + Math.min(ITEM_STAGGER_MAX, placed.order * ITEM_STAGGER)} view={key} surface={shape => artistSurface(profile, shape)}>
-              {shape => <ArtistItem profile={profile} shape={shape} state={state} data={data} />}
-            </CarrierBox>
-          );
-        })}
-        {list && list.pages > 1 && (
-          <Box as="nav" rect={rect(list.pager)} visible contentKey="pager" className={styles.pagerBox} label="목록 쪽 이동" data={{ pager: list.kind }}>
-            <div className={styles.pager}>
-              {list.page > 1 ? <Link href={listHref(list.kind, list.page - 1)} scroll={false}>이전 쪽</Link> : <span>이전 쪽</span>}
-              <span aria-hidden="true">{pageReadout(list.page, list.pages)}</span>
-              <span className={styles.srOnly} aria-live="polite">{pageAnnouncement(list.page, list.pages)}</span>
-              {list.page < list.pages ? <Link href={listHref(list.kind, list.page + 1)} scroll={false}>다음 쪽</Link> : <span>다음 쪽</span>}
-            </div>
-          </Box>
-        )}
       </div>
     </StageModeContext.Provider>
   );
 }
 
-/**
- * A carrier's box. Folded, it keeps the shape it last had while it fades, and a folded detail
- * drops its heavy content once it is out of sight.
- */
-function CarrierBox({ itemKey, placed, rect, origin, delay, view, surface, children }: {
+/** A sub-plate inside its owner plate. Folded, it keeps the shape it last had while it fades. */
+function SubPlate({ itemKey, placed, onStage, delay, view, surface, children }: {
   itemKey: string;
   placed: PlacedItem;
-  rect: Rect | null;
-  origin: Origin | null;
+  onStage: boolean;
   delay: number;
   view: string;
   surface: (shape: ItemShape) => Surface;
@@ -451,24 +506,57 @@ function CarrierBox({ itemKey, placed, rect, origin, delay, view, surface, child
 }) {
   const [shape, setShape] = useState<ItemShape>(placed.mode === 'folded' ? 'row' : placed.mode);
   if (placed.mode !== 'folded' && placed.mode !== shape) setShape(placed.mode);
-  useEffect(() => {
-    if (placed.mode !== 'folded' || shape !== 'detail') return;
-    const timer = window.setTimeout(() => setShape('row'), DETAIL_REST_MS);
-    return () => window.clearTimeout(timer);
-  }, [placed.mode, shape]);
   return (
     <Box
-      rect={rect}
+      rect={onStage ? placed.rel : null}
       visible={placed.visible}
       contentKey={shape}
       className={styles.item}
       surface={surface(shape)}
       delay={delay}
       view={view}
-      origin={origin?.item === itemKey ? origin : null}
-      data={{ item: itemKey, mode: placed.mode, shape }}
+      data={{ item: itemKey, mode: placed.mode, shape, current: placed.current ? '' : undefined }}
     >
       {children(shape)}
+    </Box>
+  );
+}
+
+/**
+ * An open file (a session or an artist). It grows out of what was pressed and, when closed, shrinks
+ * back into its line and fades; a little later it lets its heavy content go.
+ */
+function DetailBox({ kind, id, open, rect, origin, delay, view, surface, children }: {
+  kind: CarrierKind;
+  id: string;
+  open: boolean;
+  rect: Rect | null;
+  origin: Origin | null;
+  delay: number;
+  view: string;
+  surface: Surface;
+  children: ReactNode;
+}) {
+  const [resting, setResting] = useState(false);
+  if (open && resting) setResting(false);
+  useEffect(() => {
+    if (open) return;
+    const timer = window.setTimeout(() => setResting(true), DETAIL_REST_MS);
+    return () => window.clearTimeout(timer);
+  }, [open]);
+  return (
+    <Box
+      rect={rect}
+      visible={open}
+      contentKey={id}
+      className={styles.detail}
+      surface={surface}
+      delay={delay}
+      origin={origin}
+      view={view}
+      data={{ detail: `${kind}:${id}`, mode: open ? 'open' : 'closed' }}
+    >
+      {resting ? null : children}
     </Box>
   );
 }
