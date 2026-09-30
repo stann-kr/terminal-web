@@ -71,17 +71,18 @@
 }
 
 /* ── Shared print ────────────────────────────────────────────────────────── */
+/* A printed tag, as ui's: small muted caps on the plate, neighbours joined by a dot. */
 .tag {
-  display: inline-flex;
-  align-items: center;
-  min-height: 22px;
-  padding: 2px 8px;
-  background: var(--well);
-  color: var(--ink);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .1em;
+  display: inline;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .14em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+.tag + .tag::before {
+  content: '·';
+  padding-inline: .55em;
 }
 .keys {
   display: flex;
@@ -197,7 +198,8 @@
 .bandTags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  align-items: baseline;
+  row-gap: 2px;
 }
 .focusHead {
   display: flex;
@@ -237,10 +239,10 @@
   color: var(--accent);
   font: 400 var(--t-xl)/1 var(--mono);
 }
-.summaryTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+/* An open list's tags (years, venues, origins): one line flush across the plate under its counts. */
+.summary > .bandTags {
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 2px max(12px, var(--bleed, 0px)) 4px;
 }
 .missing {
   display: flex;
@@ -1173,7 +1175,7 @@
 
 
 @media (forced-colors: active) {
-  .tag, .card, .bandLink { border: 1px solid CanvasText; }
+  .card, .bandLink { border: 1px solid CanvasText; }
 }
 
 /* ── Sub-plates (v2) inside faces and files ────────────────────────────────

@@ -63,23 +63,23 @@
   min-width: 0;
 }
 
-/* Sub-section label: bold condensed caps with a hairline under it. */
+/* A printed tag: small muted caps on the plate itself, never a floating box; neighbours are joined
+   by a dot. A solid tag (a state) is printed in the plate's ink. */
 .chip {
-  display: inline-flex;
-  align-items: center;
+  display: inline;
   flex-shrink: 0;
-  min-height: 22px;
-  padding: 2px 8px;
-  background: var(--well);
-  color: var(--ink);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .1em;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .14em;
   text-transform: uppercase;
   white-space: nowrap;
 }
+.chip + .chip::before {
+  content: '·';
+  padding-inline: .55em;
+}
 .chip[data-solid] {
-  background: var(--fill);
-  color: var(--on-fill);
+  color: var(--ink);
 }
 
 /* Bay: spare height left quiet, closed by a hairline and a printed name. */
@@ -291,7 +291,7 @@
   margin-top: 14px;
 }
 @media (forced-colors: active) {
-  .notice, .action, .button, .chip, .band, .facts > div { border: 1px solid CanvasText; }
+  .notice, .action, .button, .band, .facts > div { border: 1px solid CanvasText; }
 }
 
 /* Short labels, codes and times never break mid-phrase. */
