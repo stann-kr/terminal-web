@@ -61,7 +61,8 @@ describe('stage shell', () => {
     expect(screen.queryByRole('button', { name: '화면 효과' })).not.toBeInTheDocument();
     const next = plate(container, 'next');
     expect(within(next).getAllByText('TERMINAL').some(word => !word.closest('a'))).toBe(true);
-    expect(within(next).getByRole('group', { name: '콘텐츠 언어' })).toBeInTheDocument();
+    // The language switch is not a site-wide control: it sits only in the heads of bilingual texts.
+    expect(within(next).queryByRole('group', { name: '소개글 언어' })).not.toBeInTheDocument();
     go('/events');
     expect(plate(container, 'events')).toHaveAttribute('data-mode', 'hero');
     expect(within(plate(container, 'events')).getByRole('heading', { level: 1, name: /이벤트/ })).toBeInTheDocument();
@@ -184,6 +185,26 @@ describe('stage views', () => {
     expect(within(file).getByRole('region', { name: '무대 2' })).toHaveTextContent('02:00–03:00');
     expect(container).not.toHaveTextContent('PRIVATE NAME');
     expect(within(file).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
+  });
+
+  it('offers the language only where a text comes in two, and reads the browser’s language first', () => {
+    const bilingualEvent = { ...past, description: { ko: '한국어 소개', en: 'English briefing' } };
+    const { container, go } = shell([bilingualEvent]);
+    go('/events/OLD');
+    const file = detail(container, 'event:OLD');
+    expect(file).toHaveTextContent('한국어 소개');
+    const toggle = within(file).getByRole('group', { name: '소개글 언어' });
+    fireEvent.click(within(toggle).getByRole('button', { name: 'EN' }));
+    expect(file).toHaveTextContent('English briefing');
+    expect(window.localStorage.getItem('terminal:language')).toBe('en');
+    fireEvent.click(within(toggle).getByRole('button', { name: 'KO' }));
+    window.localStorage.removeItem('terminal:language');
+  });
+
+  it('shows no language switch for a text in one language', () => {
+    const { container, go } = shell([{ ...past, description: { ko: '한국어만', en: '' } }]);
+    go('/events/OLD');
+    expect(within(detail(container, 'event:OLD')).queryByRole('group', { name: '소개글 언어' })).not.toBeInTheDocument();
   });
 
   it('drops the text-art frame lines of an invitation but keeps its title', () => {
@@ -436,6 +457,16 @@ describe('event countdown', () => {
     expect(within(screen.getByRole('timer')).getByText('초').nextElementSibling).toHaveTextContent('06');
     rerender(<EventCountdown event={{ date: '2026-11-28', time: 'TBA' }} />);
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+  });
+});
+
+describe('boot screen', () => {
+  it('shows while the console gets ready and steps aside once it is', async () => {
+    const { container } = shell();
+    const boot = () => container.ownerDocument.querySelector<HTMLElement>('[role=status][class*=bootLine]')?.parentElement;
+    expect(boot()).toBeTruthy();
+    await waitFor(() => expect(boot()).toHaveAttribute('data-done'));
+    expect(boot()).toHaveAttribute('aria-hidden', 'true');
   });
 });
 

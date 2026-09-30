@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { ArtistChronology } from '@/features/artists/ArtistChronology';
 import { artistHref, type ArtistProfile } from '@/features/artists/model';
 import { SignalText } from '@/features/display/Display';
-import { paragraphs } from '@/features/events/model';
+import { bilingual, paragraphs } from '@/features/events/model';
+import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { ui, type Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
@@ -94,7 +95,7 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
         {data.events && <ArtistChronology profile={profile} events={data.events} />}
       </div>
       <section className={styles.fileBio} data-surface="inset" aria-label="소개">
-        <p className={styles.columnHead}><b aria-hidden="true">Biography</b><span>소개</span><small aria-hidden="true">{language.toUpperCase()}</small></p>
+        <p className={styles.columnHead}><b aria-hidden="true">Biography</b><span>소개</span>{bilingual(biography?.artist.description) && <LanguageToggle />}</p>
         <TextPages paragraphs={paragraphs(biography?.artist.description, language)} language={language} label="아티스트 소개" empty="소개는 공개되는 대로 이곳에 표시됩니다." />
       </section>
     </article>

@@ -69,33 +69,35 @@
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .2em;
 }
+/* The language of a bilingual text, printed in its head: KO · EN as small caps, the one in use in
+   the plate's ink, the other muted; pressing lights it like any key. Each key keeps a 32px target. */
 .language {
-  display: flex;
-  gap: 2px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
 }
 .language button {
-  min-width: 40px;
-  height: 32px;
-  padding: 0 8px;
+  min-width: 36px;
+  min-height: 32px;
+  padding: 0 6px;
   border: 0;
-  background: var(--well);
-  color: var(--ink);
-  font: 700 var(--t-sm)/1 var(--display);
-  letter-spacing: .12em;
+  background: none;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
   transition: var(--light-motion);
+}
+.language button + button::before {
+  content: '·';
+  margin-right: 10px;
+  color: var(--muted);
+}
+.language button[aria-pressed=true] {
+  color: var(--ink);
 }
 .language button:not([aria-pressed=true]):hover {
   box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   color: var(--on-hi);
-}
-.language button:active {
-  box-shadow: inset 0 0 0 100vmax var(--on-hi);
-  color: var(--hi);
-  transition: none;
-}
-.language button[aria-pressed=true] {
-  background: var(--fill);
-  color: var(--on-fill);
 }
 .language button:focus-visible {
   outline-offset: -4px;

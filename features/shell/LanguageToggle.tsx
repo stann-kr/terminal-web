@@ -2,16 +2,19 @@
 import { useLanguage } from './Providers';
 import styles from './shell.module.css';
 
-/** Content language (event briefings, biographies, the introduction). */
+/**
+ * The language of a text that comes in two (a briefing, a biography, the introduction), switched
+ * where it is read. The choice holds for every such text and is remembered in this browser.
+ */
 export function LanguageToggle() {
   const { language, setLanguage } = useLanguage();
   return (
-    <div className={styles.language} role="group" aria-label="콘텐츠 언어">
+    <span className={styles.language} role="group" aria-label="소개글 언어">
       {(['ko', 'en'] as const).map(lang => (
-        <button key={lang} type="button" aria-pressed={language === lang} onClick={() => setLanguage(lang)}>
+        <button key={lang} type="button" lang={lang} aria-pressed={language === lang} onClick={() => setLanguage(lang)}>
           {lang.toUpperCase()}
         </button>
       ))}
-    </div>
+    </span>
   );
 }

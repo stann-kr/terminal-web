@@ -6,7 +6,6 @@ import { DataActivity } from '@/features/display/Display';
 import { eventHref, publicArtists, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
-import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { Action, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
 import { FitStack } from '../FitStack';
 import { FitTitle } from '../FitTitle';
@@ -35,11 +34,12 @@ function BrandBar({ compact = false }: { compact?: boolean }) {
       <p className={styles.brandMark}>
         <BrandText text="TERMINAL" />
       </p>
-      <div className={styles.brandSystem}>
-        {!compact && <DataActivity />}
-        {!compact && <Clock />}
-        <LanguageToggle />
-      </div>
+      {!compact && (
+        <div className={styles.brandSystem}>
+          <DataActivity />
+          <Clock />
+        </div>
+      )}
     </div>
   );
 }

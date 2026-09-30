@@ -20,6 +20,10 @@ export function paragraphs(value: unknown, language: 'ko'|'en'): string[] {
   }
   return [];
 }
+/** Whether any of these texts is written in both languages (only then is there a language to switch). */
+export const bilingual = (...values: unknown[]) =>
+  values.some(value => !!value && typeof value === 'object' && !Array.isArray(value)
+    && paragraphs(value, 'ko').length > 0 && paragraphs(value, 'en').length > 0);
 /** A line drawn only of box or rule characters (a text-art frame): it is decoration, and its width breaks. */
 export const isRuleLine = (line: string) => line.trim().length >= 3 && /^[\s\u2500-\u257f\-=_+|~]+$/.test(line);
 export function accessAvailability(event: TerminalEvent, events: TerminalEvent[], now: Date) {

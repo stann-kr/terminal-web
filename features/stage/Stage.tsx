@@ -7,6 +7,7 @@ import { Loading, StateNotice, type Surface } from '@/features/ui/Ui';
 import { stageConfig } from './config';
 import { stageSizeFor, useStageData, useViewport } from './data';
 import { Box } from './Box';
+import { BootScreen } from './BootScreen';
 import { Rings } from './Rings';
 import { ScrollHint } from './ScrollHint';
 import { NO_SPILL, computeFlowLayout, computeLayout, stageMetrics, type PlacedItem, type PlateMode, type Rect, type Spill, type StageLayout } from './layout';
@@ -38,6 +39,8 @@ const ITEM_STAGGER = 16;
 const ITEM_STAGGER_MAX = 160;
 /** How long after a change of view the boxes are still travelling (pointer light-up rests meanwhile). */
 const MOVING_MS = 900;
+/** Longest a first visit waits behind the boot screen before the stage shows as it is (ms). */
+const BOOT_MAX_MS = 5000;
 /** How long a folded detail keeps its full content before it rests as a light row (ms). */
 const DETAIL_REST_MS = 700;
 /** Plates whose heads the carriers sit under; their real head heights feed the layout. */
@@ -351,6 +354,21 @@ export function Stage({ state: address }: { state: StageState }) {
   const { minDesktop } = stageConfig;
   const tooShort = !!viewport && viewport.w >= minDesktop.w && viewport.h < minDesktop.h && !goOn;
 
+  // The boot screen holds until the first stage is tiled with its fonts and the first read of the
+  // events has settled (read or failed), so the console opens complete. A page outside the stage, or
+  // a window asked to grow, does not wait; nothing waits longer than BOOT_MAX_MS.
+  const settled = !query.isPending;
+  const [booted, setBooted] = useState(false);
+  useEffect(() => {
+    if (booted || !(state.view === 'none' || tooShort || (onStage && ready && settled))) return;
+    const frame = requestAnimationFrame(() => setBooted(true));
+    return () => cancelAnimationFrame(frame);
+  }, [booted, state.view, tooShort, onStage, ready, settled]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setBooted(true), BOOT_MAX_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const vars = (size && onStage ? { '--stage-w': `${size.w}px`, '--stage-h': `${last ? last.y + last.h : size.h}px` } : {}) as CSSProperties;
   const rect = (value: Rect) => (onStage ? value : null);
 
@@ -524,6 +542,7 @@ export function Stage({ state: address }: { state: StageState }) {
         )}
       </div>
       <ScrollHint key={scene} active={onStage && sheetCount > 1 && !tooShort} />
+      <BootScreen done={booted} />
     </StageModeContext.Provider>
   );
 }

@@ -31,6 +31,7 @@ export function Panel({
   title,
   label,
   code,
+  aside,
   children,
   surface = 'panel',
   heading = true,
@@ -40,6 +41,8 @@ export function Panel({
   /** Short English station label printed large; decorative. */
   label?: string;
   code?: string;
+  /** A control printed at the right of the head (the language of a bilingual text). */
+  aside?: ReactNode;
   children: ReactNode;
   surface?: Surface;
   heading?: boolean;
@@ -54,6 +57,7 @@ export function Panel({
           <span className={styles.panelKo}><BrandText text={title} /></span>
         </Title>
         {code && <span className={styles.chip} aria-hidden="true">{code}</span>}
+        {aside}
       </header>
       <div className={styles.panelBody}>{children}</div>
     </section>

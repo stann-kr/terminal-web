@@ -1,13 +1,15 @@
 'use client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
+import { chooseLanguage, readLanguage, serverLanguage, subscribeLanguage } from './language';
 
-type Language = 'ko' | 'en';
-const LanguageContext = createContext<{ language: Language; setLanguage: (value: Language) => void }>({ language: 'ko', setLanguage: () => {} });
-export const useLanguage = () => useContext(LanguageContext);
+/** The content language (see ./language): read from the browser, the same wherever it is used. */
+export function useLanguage() {
+  const language = useSyncExternalStore(subscribeLanguage, readLanguage, serverLanguage);
+  return { language, setLanguage: chooseLanguage };
+}
 
 export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(() => new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: true } } }));
-  const [language, setLanguage] = useState<Language>('ko');
-  return <QueryClientProvider client={client}><LanguageContext.Provider value={{ language, setLanguage }}>{children}</LanguageContext.Provider></QueryClientProvider>;
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }

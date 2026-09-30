@@ -5,7 +5,8 @@ import { useState } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { AccessRequest } from '@/features/access/Access';
 import { EventActions, EventFacts, Lineup } from '@/features/events/EventRecord';
-import { eventHref, isRuleLine, paragraphs, publicArtists, statusLabel } from '@/features/events/model';
+import { bilingual, eventHref, isRuleLine, paragraphs, publicArtists, statusLabel } from '@/features/events/model';
+import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
@@ -138,7 +139,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
       <div className={styles.sessionSide}>
         {!request && (
           <section className={styles.sessionBriefing} data-surface="inset" aria-label="행사 소개">
-            <p className={styles.columnHead}><b aria-hidden="true">Briefing</b><span>행사 소개</span><small aria-hidden="true">{language.toUpperCase()}</small></p>
+            <p className={styles.columnHead}><b aria-hidden="true">Briefing</b><span>행사 소개</span>{bilingual(event.description, event.invitationLines) && <LanguageToggle />}</p>
             <TextPages
               paragraphs={invitation.length ? [...briefing, '초대 안내', ...invitation] : briefing}
               language={language}

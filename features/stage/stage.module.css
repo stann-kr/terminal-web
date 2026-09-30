@@ -212,7 +212,7 @@
 @media (scripting: enabled) {
   .stage[data-stage=boot] {
     visibility: hidden;
-    animation: bootReveal 0s linear 2.5s forwards;
+    animation: bootReveal 0s linear 6s forwards;
   }
 }
 @media (scripting: none) {
@@ -475,4 +475,67 @@
 }
 @media (forced-colors: active) {
   .scrollHint { border: 1px solid CanvasText; }
+}
+
+/* ── Boot screen: the first visit's wait, the wordmark over a lamp line ─────
+   Shown from the server's first markup, faded when the stage is ready. Without script it never
+   shows; if the script never takes over, it gives way after 6s with the document layout. */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  background: var(--field);
+  color: var(--ink);
+  transition: opacity 420ms var(--ease-move), visibility 0s linear 420ms;
+}
+.boot[data-done] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.bootMark {
+  color: var(--feature);
+  font: 400 clamp(44px, 9vw, 128px)/1 var(--brand);
+}
+.bootLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .24em;
+  text-transform: uppercase;
+}
+.bootLine i {
+  width: 9px;
+  height: 9px;
+  background: currentColor;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bootLine i {
+    animation: bootLamp 1s steps(1, end) infinite;
+  }
+}
+@keyframes bootLamp {
+  50% { opacity: .25; }
+}
+@media (scripting: enabled) {
+  .boot:not([data-done]) {
+    animation: bootGiveWay 0s linear 6s forwards;
+  }
+}
+@keyframes bootGiveWay {
+  to { visibility: hidden; opacity: 0; }
+}
+@media (scripting: none) {
+  .boot { display: none; }
+}
+
+/* The scroll cue is for a pointer and a wheel: a finger scrolls a page to see if it goes on. */
+@media (hover: none), (pointer: coarse) {
+  .scrollHint { display: none; }
 }
