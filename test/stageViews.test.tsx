@@ -622,6 +622,20 @@ describe('stage viewport', () => {
     vi.unstubAllGlobals();
   });
 
+  it('hands the frame the height the stage holds, not the live window height', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('coarse'), media: query, addEventListener() {}, removeEventListener() {} }));
+    viewport(390, 724);
+    shell();
+    const held = () => document.documentElement.style.getPropertyValue('--viewport-h');
+    await waitFor(() => expect(held()).toBe('724px'));
+    // A bar hides: the window is taller, the page keeps its height.
+    viewport(390, 780);
+    act(() => void window.dispatchEvent(new Event('resize')));
+    await act(() => new Promise(resolve => setTimeout(resolve, 200)));
+    expect(held()).toBe('724px');
+    vi.unstubAllGlobals();
+  });
+
   it('re-tiles once when an in-app browser bar first shows, and never while it comes and goes', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('coarse'), media: query, addEventListener() {}, removeEventListener() {} }));
     viewport(390, 780);

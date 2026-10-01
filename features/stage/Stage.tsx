@@ -182,6 +182,18 @@ export function Stage({ state: address }: { state: StageState }) {
       delete html.dataset.stageMode;
     };
   }, [mode]);
+  // The window height the stage is tiled for (held through a browser bar sliding, see useViewport),
+  // for the frame around it: were the frame to follow the live `svh`, an in-app browser's bar would
+  // grow and shrink the page under the reader's finger while the stage itself held still.
+  const heldHeight = viewport?.h;
+  useLayoutEffect(() => {
+    if (!heldHeight) return;
+    const html = document.documentElement;
+    html.style.setProperty('--viewport-h', `${heldHeight}px`);
+    return () => {
+      html.style.removeProperty('--viewport-h');
+    };
+  }, [heldHeight]);
   // More than one sheet: the page snaps sheet by sheet (html scroll-snap), like turning pages.
   useLayoutEffect(() => {
     document.documentElement.dataset.sheets = String(sheetCount);
