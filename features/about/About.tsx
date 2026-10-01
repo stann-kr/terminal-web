@@ -12,7 +12,6 @@ export const channels = [
   ['TERMINAL INSTAGRAM', 'https://www.instagram.com/terminal_hub/'],
   ['STANN LUMO WEB', 'https://lumo.stann.kr'],
   ['STANN LUMO INSTAGRAM', 'https://www.instagram.com/stannlumo/'],
-  ['STANN OS HUB', 'https://stann.kr'],
 ] as const;
 export function NodeFacts() {
   return (
