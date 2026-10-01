@@ -41,6 +41,8 @@ const ITEM_STAGGER_MAX = 160;
 const MOVING_MS = 900;
 /** Longest a first visit waits behind the boot screen before the stage shows as it is (ms). */
 const BOOT_MAX_MS = 5000;
+/** Shortest time the boot screen stays, counted from the page load, so it reads as a moment (ms). */
+const BOOT_MIN_MS = 1000;
 /** How long a folded detail keeps its full content before it rests as a light row (ms). */
 const DETAIL_REST_MS = 700;
 /** Plates whose heads the carriers sit under; their real head heights feed the layout. */
@@ -368,8 +370,17 @@ export function Stage({ state: address }: { state: StageState }) {
   const [booted, setBooted] = useState(false);
   useEffect(() => {
     if (booted || !(state.view === 'none' || tooShort || (onStage && ready && settled))) return;
-    const frame = requestAnimationFrame(() => setBooted(true));
-    return () => cancelAnimationFrame(frame);
+    // The console itself holds its loading screen for at least BOOT_MIN_MS from the page load, so a
+    // fast start does not flash past; pages outside the stage and the enlarge card never wait.
+    const hold = state.view === 'none' || tooShort ? 0 : Math.max(0, BOOT_MIN_MS - performance.now());
+    let frame = 0;
+    const timer = window.setTimeout(() => {
+      frame = requestAnimationFrame(() => setBooted(true));
+    }, hold);
+    return () => {
+      window.clearTimeout(timer);
+      cancelAnimationFrame(frame);
+    };
   }, [booted, state.view, tooShort, onStage, ready, settled]);
   useEffect(() => {
     const timer = window.setTimeout(() => setBooted(true), BOOT_MAX_MS);

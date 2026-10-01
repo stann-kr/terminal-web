@@ -547,6 +547,16 @@ describe('boot screen', () => {
     await waitFor(() => expect(boot()).toHaveAttribute('data-done'));
     expect(boot()).toHaveAttribute('aria-hidden', 'true');
   });
+
+  it('holds for at least a second from the page load, however fast the console is ready', async () => {
+    // 0.2s into the page load: the screen has 0.8s still to hold.
+    vi.spyOn(performance, 'now').mockReturnValue(200);
+    const { container } = shell();
+    const boot = () => container.ownerDocument.querySelector<HTMLElement>('[role=status][class*=bootLine]')?.parentElement;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    expect(boot()).not.toHaveAttribute('data-done');
+    await waitFor(() => expect(boot()).toHaveAttribute('data-done'), { timeout: 2000 });
+  });
 });
 
 describe('stage scroll', () => {
