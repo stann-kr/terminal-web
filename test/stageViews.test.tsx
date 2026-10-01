@@ -6,6 +6,7 @@ import { Shell } from '../features/shell/Shell';
 import { EventCountdown } from '../features/events/EventCountdown';
 import { useViewport } from '../features/stage/data';
 import { useTransmitRange } from '../features/transmit/useTransmit';
+import { NodeActivity } from '../features/transmit/NodeActivity';
 import siteContent from '../features/about/content.json';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
@@ -333,6 +334,20 @@ describe('home plates', () => {
     expect(container).not.toHaveTextContent('05.09');
     expect(container).not.toHaveTextContent('SECRET_HANDLE');
     expect(container).not.toHaveTextContent('free text');
+  });
+
+  it('lists as many nodes as the plate asks for, joining server pages and keeping rows while one loads', async () => {
+    const node = (n: number) => ({ id: `log-${n}`, ts: '', handle: `NODE-${'ABCDEFGHJK'[n % 10]}2345`, message: '', createdAt: '' });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+    client.setQueryData(['transmit', 1], { logs: [0, 1, 2, 3, 4].map(node), total: 8, page: 1, totalPages: 2 });
+    let resolve!: (value: Response) => void;
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(new Promise<Response>(r => { resolve = r; })));
+    const { container } = render(<QueryClientProvider client={client}><NodeActivity limit={8} quiet /></QueryClientProvider>);
+    // The second page is still on its way: the first five stay on screen.
+    expect(container.querySelectorAll('li')).toHaveLength(5);
+    await act(async () => resolve(new Response(JSON.stringify({ logs: [5, 6, 7].map(node), total: 8, page: 2, totalPages: 2 }), { headers: { 'Content-Type': 'application/json' } })));
+    await waitFor(() => expect(container.querySelectorAll('li')).toHaveLength(8));
+    vi.unstubAllGlobals();
   });
 
   it('draws the session cells as the sessions’ own elements, which become the directory rows', () => {

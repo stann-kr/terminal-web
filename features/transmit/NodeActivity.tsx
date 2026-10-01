@@ -1,6 +1,6 @@
 'use client';
 import { Loading, StateNotice } from '@/features/ui/Ui';
-import { useTransmit } from './useTransmit';
+import { useTransmit, useTransmitRange } from './useTransmit';
 import { isNodeName, nodeNameOf } from './nodeIdentity';
 import styles from './transmit.module.css';
 
@@ -10,9 +10,13 @@ const nodeTag = (log: { id: string; handle: string }) => (isNodeName(log.handle)
 /**
  * Recent public-log activity as node records, newest first: which node left a record, without
  * the time, the message or a chosen nickname, so the home screen never surfaces free text from visitors.
+ * As many as `limit` (the plate's room): the server's pages are joined for it, and while a further
+ * page is read the rows already in hand stay, so a growing plate does not blank its list.
  */
 export function NodeActivity({ limit = 6, quiet = false }: { limit?: number; quiet?: boolean }) {
-  const query = useTransmit(1);
+  const range = useTransmitRange(0, limit);
+  const first = useTransmit(1);
+  const query = range.data ? range : first;
   // Quiet (inside a plate that is one link): a failed read is one line, with no key of its own.
   if (!query.data && quiet && query.isError) return <p className={styles.nodeEmpty}>접속 기록을 불러오지 못했습니다</p>;
   if (!query.data)
