@@ -34,6 +34,8 @@
   --c-rose-tint: #e4d4d5;
   --c-lilac-tint: #dcdce6;
   --c-sage-tint: #d8dfd4;
+  /* The scroll cue's hue: a muted teal no plate wears, beside the primary blue. */
+  --c-teal: #3f7f7a;
   /* Derived: the lightest and the recessed ceramic, and hues mixed toward text to read at 4.5:1. */
   --c-porcelain: #f7f7f3;
   --c-recess: #c5cbcb;
@@ -43,7 +45,7 @@
 
   --field: var(--c-background);
   --pointer: var(--c-primary);
-  --cue: var(--c-amber);
+  --cue: var(--c-teal);
   --on-cue: var(--c-porcelain);
 
   --panel: var(--c-surface);
