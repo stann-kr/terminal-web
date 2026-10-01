@@ -1,3 +1,4 @@
+import { sessionShort } from '@/features/events/model';
 import { BrandText } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import type { PlateId, StageState } from '../state';
@@ -6,7 +7,7 @@ import { CardLink } from './faces';
 import styles from './plates.module.css';
 
 const PLATE_NAME: Record<PlateId, [string, string]> = {
-  next: ['NEXT', '다음 행사'],
+  next: ['NEXT', '다음 이벤트'],
   events: ['EVENTS', '이벤트'],
   artists: ['ARTISTS', '아티스트'],
   log: ['LOG', '방문자 로그'],
@@ -22,7 +23,7 @@ function describe(state: StageState, data: StageData): [string, string] {
       return [state.page > 1 ? `${name} · ${String(state.page).padStart(2, '0')}` : name, title];
     }
     case 'session':
-      return [state.request ? 'ACCESS' : 'SESSION', data.ordered.find(event => event.id === state.eventId)?.session ?? state.eventId];
+      return [state.request ? 'ACCESS' : 'SESSION', sessionShort(data.ordered.find(event => event.id === state.eventId)?.session ?? state.eventId)];
     case 'artist':
       return ['ARTIST', data.profiles.find(profile => profile.key === state.artistKey)?.name ?? '아티스트'];
     default:

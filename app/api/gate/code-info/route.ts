@@ -24,7 +24,7 @@ function json(body: { name: string | null } | { error: string }, status = 200) {
  * guestCode 자체는 노출하지 않으며, 코드 유효 여부도 명시하지 않음.
  *
  * @body code - 인증 코드
- * @body eventId - 화면에 표시된 신청 대상 행사
+ * @body eventId - 화면에 표시된 신청 대상 이벤트
  * @returns { name: string | null }; returns a no-store 503 error when verification is unavailable
  */
 export async function POST(request: Request) {

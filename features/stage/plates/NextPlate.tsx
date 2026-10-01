@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import type { TerminalEvent } from '@/lib/events/types';
 import { DataActivity } from '@/features/display/Display';
-import { accessAvailability, dayMark, eventHref, publicArtists, statusLabel } from '@/features/events/model';
+import { accessAvailability, dayMark, eventHref, eventSubtitle, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
 import { Action, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
@@ -43,13 +43,13 @@ export function NextPlate({ mode, data, query, rings }: PlateProps) {
   const short = mode !== 'hero' && mode !== 'panel';
   const body = () => {
     if (!data.events) {
-      if (short) return <PlateStatus state={query.isError ? 'error' : 'loading'} text={query.isError ? '행사 기록을 불러오지 못했습니다' : '행사 기록을 불러오는 중'} retry={() => void query.refetch()} />;
-      return query.isError ? <StateNotice error title="행사 기록을 불러오지 못했습니다" retry={() => void query.refetch()} /> : <Loading />;
+      if (short) return <PlateStatus state={query.isError ? 'error' : 'loading'} text={query.isError ? '기록을 불러오지 못했습니다' : '기록을 불러오는 중'} retry={() => void query.refetch()} />;
+      return query.isError ? <StateNotice error title="기록을 불러오지 못했습니다" retry={() => void query.refetch()} /> : <Loading />;
     }
     if (!event) {
-      if (short) return <PlateStatus state="empty" text="공개된 행사가 아직 없습니다" />;
+      if (short) return <PlateStatus state="empty" text="공개된 이벤트가 아직 없습니다" />;
       return (
-        <StateNotice title="공개된 행사가 아직 없습니다">
+        <StateNotice title="공개된 이벤트가 아직 없습니다">
           <div className={styles.keys}>
             <Action href="/signal">소식 신청</Action>
             <Action href="/about">소개</Action>
@@ -60,7 +60,7 @@ export function NextPlate({ mode, data, query, rings }: PlateProps) {
     return <NextSession event={event} events={data.events} mode={mode} now={data.now} rings={rings} />;
   };
   return (
-    <section className={styles.next} aria-label="대표 행사" data-density={mode} data-origin="">
+    <section className={styles.next} aria-label="대표 이벤트" data-density={mode} data-origin="">
       <BrandBar compact={mode === 'chip'} />
       {body()}
     </section>
@@ -71,14 +71,15 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
   const carrier = `event:${event.id}`;
   // Guest requests open 30 days ahead; the home plate says so, so nobody has to open the file to find out.
   const accessOpen = accessAvailability(event, events, now).canRequest;
+  const subtitle = eventSubtitle(event);
   const label = event.status === 'ARCHIVED' ? 'Last session' : 'Next session';
   if (mode === 'chip' || mode === 'index') {
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextChip}`} data-carrier={carrier} scroll={false}>
         <span className={styles.chipName} aria-hidden="true">NEXT</span>
-        <FitTitle as="span" text={`${event.session} · ${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine}>
-          <span className={styles.srOnly}>다음 행사 </span>
-          <BrandText text={event.session} />
+        <FitTitle as="span" text={`${sessionShort(event.session)} · ${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine}>
+          <span className={styles.srOnly}>다음 이벤트 </span>
+          <BrandText text={sessionShort(event.session)} />
           <span aria-hidden="true"> · {event.id} · {dayMark(event, now)}</span>
         </FitTitle>
       </Link>
@@ -97,7 +98,7 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
       href={eventHref(event.id)}
       className={`${styles.card} ${styles.nextBlock}`}
       data-carrier={carrier}
-      aria-label={`${label === 'Last session' ? '지난 행사' : '다음 행사'} ${event.session}${accessOpen ? ', 게스트 신청 접수 중' : ''} 상세 보기`}
+      aria-label={`${label === 'Last session' ? '지난 이벤트' : '다음 이벤트'} ${sessionShort(event.session)}${subtitle ? ` ${subtitle}` : ''}${accessOpen ? ', 게스트 신청 접수 중' : ''} 상세 보기`}
       scroll={false}
     >
       {rings && <Rings at={rings} under />}
@@ -112,14 +113,14 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
               <Chip>{dayMark(event, now)}</Chip>
             </span>
           </span>
-          {event.status === 'ARCHIVED' && mode === 'hero' && <span className={styles.noUpcoming}>다음 행사 미정</span>}
-          <FitTitle as="h2" text={event.session} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
-            <BrandText text={event.session} />
+          {event.status === 'ARCHIVED' && mode === 'hero' && <span className={styles.noUpcoming}>다음 이벤트 미정</span>}
+          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
+            <BrandText text={sessionShort(event.session)} />
           </FitTitle>
         </span>
-        {mode !== 'tile' && event.subtitle && (
+        {mode !== 'tile' && subtitle && (
           <span className={styles.part} data-priority="5">
-            <span className={styles.nextSubtitle}>{event.subtitle}</span>
+            <span className={styles.nextSubtitle}>{subtitle}</span>
           </span>
         )}
         {mode !== 'tile' && (

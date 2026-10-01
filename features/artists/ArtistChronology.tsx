@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
-import { eventHref, publicArtists, statusLabel } from '@/features/events/model';
+import { eventHref, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
 import { Bay, BrandText, Panel } from '@/features/ui/Ui';
 import { artistHref, buildArtistArchive, profileForAppearance, type ArtistProfile } from './model';
 import styles from './artists.module.css';
@@ -27,7 +27,7 @@ export function ArtistChronology({
       const file = profileForAppearance(profiles, event.id, other.id);
       if (file?.key === profile.key) continue;
       const key = file?.key ?? `${event.id}:${other.id}`;
-      if (!shared.has(key)) shared.set(key, { name: other.name, href: file ? artistHref(file.key) : undefined, session: event.session });
+      if (!shared.has(key)) shared.set(key, { name: other.name, href: file ? artistHref(file.key) : undefined, session: sessionShort(event.session) });
     }
   }
   return (

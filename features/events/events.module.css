@@ -188,10 +188,6 @@
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .16em;
 }
-.keyGlyph {
-  flex: none;
-  font: 400 var(--t-xl)/1 var(--mono);
-}
 /* Lit or pressed, the label follows the key's own text colour. */
 .sessionKeys > a:active small {
   color: inherit;

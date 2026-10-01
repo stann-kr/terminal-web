@@ -37,7 +37,7 @@ function SignalChannel({ request }: { request: ReturnType<typeof useSignalSubscr
         rows={[
           ['채널', 'CH 01'],
           ['수신', '이메일 · 인스타그램'],
-          ['대상', '다음 행사 소식'],
+          ['대상', '다음 이벤트 소식'],
           ['상태', request.pending ? '전송 중' : request.done ? '등록 완료' : request.error ? '전송 실패' : '대기'],
         ]}
       />
@@ -54,7 +54,7 @@ function SignalInformation({
   const { pending, done, error } = request;
   return (
     <Panel title="수신 안내" label="Signal" code="CH 01" surface="alert">
-      <p className={styles.lead}>TERMINAL의 새로운 행사와 소식을 안내합니다.</p>
+      <p className={styles.lead}>TERMINAL의 새로운 이벤트와 소식을 안내합니다.</p>
       <p
         className={styles.signalMatrix}
         aria-hidden="true"

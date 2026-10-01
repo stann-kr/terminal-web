@@ -58,4 +58,27 @@ describe('public event DTOs', () => {
       [],
     )).toBeNull();
   });
+
+  it('preserves bilingual editorial line breaks while whitelisting narrative fields', () => {
+    const stage = { ko: '방향', en: 'Bearing' };
+    const log = { ko: '헬리오포즈 돌파 후 204일. 미확인 신호 수신.', en: '204 days past the heliopause. Unidentified signal received.' };
+    const description = {
+      ko: '헬리오포즈 돌파 후 204일.\n미확인 신호 수신.\n\n1.337초마다 한 번.\n흔들림 없이, 정확하게.',
+      en: '204 days past the heliopause.\nUnidentified signal received.\n\nOne pulse every 1.337 seconds.\nSteady. Exact.',
+    };
+    const event = parsePublicEventRow({
+      id: 'TRM-03',
+      data: JSON.stringify({ ...eventData, stage: { ...stage, internalNote: 'private' }, log, description }),
+    }, []);
+    expect(event).toEqual({ id: 'TRM-03', ...eventData, stage, log, description, artists: [] });
+  });
+
+  it.each([
+    { stage: { ko: '방향' } },
+    { stage: { ko: '방향', en: 'x'.repeat(101) } },
+    { log: { ko: [], en: 'Signal received.' } },
+    { log: { ko: '수신', en: 'x'.repeat(501) } },
+  ])('rejects malformed narrative fields: %j', (invalid) => {
+    expect(parsePublicEventRow({ id: 'invalid', data: JSON.stringify({ ...eventData, ...invalid }) }, [])).toBeNull();
+  });
 });

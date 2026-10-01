@@ -258,14 +258,21 @@ export function Stage({ state: address }: { state: StageState }) {
   // ── Carrier origin: a detail opened from elsewhere sets out from where the click was ─────────
   const [origin, setOrigin] = useState<Origin | null>(null);
   const settledKey = useRef(key);
+  const openBefore = useRef(layout.open);
   useLayoutEffect(() => {
     if (settledKey.current === key) return;
     settledKey.current = key;
     // A detail grows out of where it was opened: the pressed row or plate, else its own index line.
+    // A file of the same kind already open (another session from a session, its request form) stays
+    // where it is and only trades its content, as every other box does; growing it again out of
+    // the pressed line would fold the open file down and back up for nothing.
     const carrier = stageOrigin.take(state);
+    const before = openBefore.current;
+    openBefore.current = layout.open;
     const opened = layout.open ? layout.items[carrierKey(layout.open.kind, layout.open.id)] : null;
     const from = carrier?.rect ?? (opened?.visible ? opened.rect : null);
-    if (layout.open && from) setOrigin({ item: `detail:${layout.open.kind}`, token: performance.now(), rect: from });
+    const alreadyOpen = !!before && before.kind === layout.open?.kind;
+    if (layout.open && from && !alreadyOpen) setOrigin({ item: `detail:${layout.open.kind}`, token: performance.now(), rect: from });
     // Focus follows the view: its title, or the stage when the title is not there yet.
     const element = root.current;
     if (element) (viewTitle(element) ?? element).focus({ preventScroll: true });
@@ -529,7 +536,7 @@ export function Stage({ state: address }: { state: StageState }) {
               {query.isError ? (
                 <StateNotice
                   error
-                  title={layout.open.kind === 'event' ? '행사 기록을 불러오지 못했습니다' : '아티스트 기록을 불러오지 못했습니다'}
+                  title={layout.open.kind === 'event' ? '기록을 불러오지 못했습니다' : '아티스트 기록을 불러오지 못했습니다'}
                   retry={() => void query.refetch()}
                 >
                   잠시 후 다시 불러오거나 다른 판으로 이동해 주세요.

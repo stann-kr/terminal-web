@@ -1,7 +1,7 @@
 import type { TerminalEvent } from '@/lib/events/types';
 import { getEventDateTime } from '@/lib/events/lifecycle';
 import { sessionNamesBrand } from './metadata';
-import { eventHref, publicArtists } from './model';
+import { eventHref, eventSubtitle, publicArtists } from './model';
 
 /** The subscription feed's path; calendars re-read it, so a changed session reaches every subscriber. */
 export const CALENDAR_FEED_PATH = '/calendar.ics';
@@ -38,7 +38,8 @@ function sessionEntry(event: TerminalEvent, origin: string, now: Date): string[]
   if (!Number.isFinite(start.getTime())) return [];
   const url = `${origin}${eventHref(event.id)}`;
   const lineup = publicArtists(event).map((artist) => artist.name);
-  const description = [event.subtitle, lineup.length ? `LINEUP: ${lineup.join(', ')}` : '', url]
+  const subtitle = eventSubtitle(event);
+  const description = [event.session.includes(subtitle) ? '' : subtitle, lineup.length ? `LINEUP: ${lineup.join(', ')}` : '', url]
     .filter(Boolean)
     .join('\n');
   return [

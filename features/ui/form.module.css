@@ -13,8 +13,12 @@
   flex-wrap: wrap;
   gap: 2px 12px;
   margin-bottom: 14px;
-  padding-bottom: 6px;
-  border-bottom: var(--rule) solid var(--line);
+  /* No rule under the title: the form's cells below are told apart by tone. The rule's width stays
+     as space, so the heading keeps its height. */
+  padding-bottom: calc(6px + var(--rule));
+}
+@media (forced-colors: active) {
+  .formHeading { border-bottom: 1px solid CanvasText; }
 }
 .formCode {
   color: var(--ink);

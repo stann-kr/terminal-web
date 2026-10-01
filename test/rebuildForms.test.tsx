@@ -23,7 +23,7 @@ describe('guest request UI',()=>{
     expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');expect(screen.getByRole('button',{name:'신청 저장 중…'})).toBeDisabled();
     await act(async()=>{resolve(saved?json({ok:true}):json({error:'DATA_UNAVAILABLE'},503));});
     if(saved) { expect(await screen.findByRole('heading',{name:'게스트 신청을 저장했습니다'})).toBeInTheDocument();await act(async()=>{client.setQueryData(['events'],[]);});expect(screen.getByRole('heading',{name:'게스트 신청을 저장했습니다'})).toBeInTheDocument(); }
-    else { expect(await screen.findByRole('alert')).toHaveTextContent('행사 정보를 확인할 수 없습니다');expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');expect(screen.getByRole('button',{name:'게스트 신청 저장'})).toBeDisabled(); }
+    else { expect(await screen.findByRole('alert')).toHaveTextContent('이벤트 정보를 확인할 수 없습니다');expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');expect(screen.getByRole('button',{name:'게스트 신청 저장'})).toBeDisabled(); }
     mounted.unmount();client.clear();
   });
   it('discards a late code lookup after the input changes and requires a fresh verification',async()=>{
@@ -66,7 +66,7 @@ describe('guest request UI',()=>{
     await user.keyboard('Example');await user.type(screen.getByLabelText(/^이메일/),'example@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     const saved=await screen.findByRole('status');
     expect(saved).toHaveTextContent('INVITER');expect(saved).toHaveTextContent('example@example.test');expect(saved).toHaveTextContent('@example');
-    expect(screen.getByRole('link',{name:'다음 행사 소식 신청'})).toHaveAttribute('href','/signal');
+    expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');
   });
 });
 describe('transmit UI',()=>{

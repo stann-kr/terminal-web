@@ -1,0 +1,9 @@
+{
+  "name": "TERMINAL",
+  "tagline": "A Voyage to the Unknown Sector.",
+  "architect": "STANN LUMO",
+  "manifesto": {
+    "ko": "TERMINAL은 서울을 기반으로 한 플랫폼입니다.\n\n[ DEFINITION ]\nTERMINAL은 이벤트가 아니라 하나의 항로입니다.\n감각과 사람들이 모여드는 정거장이자,\n미지의 영역(Unknown Sector)을 향해 함께 떠나는 여정의 출발점입니다.\n\n매 회차는 이 항로 위의 새로운 정거장이며,\n그날의 기록은 하나의 비행 로그로 남습니다.\n\n[ DESIGN PRINCIPLE ]\n불필요한 시각적 노이즈를 덜어내고,\n꼭 필요한 빛과 소리만으로 공간을 채웁니다.\n\n텍스트만으로 본질에 닿는 CLI(Command Line Interface)처럼,\n장식보다 경험 그 자체에 깊이 잠길 수 있는\n미니멀한 환경을 지향합니다.\n\n[ OBJECTIVE ]\nTERMINAL은 바라보기 위한 무대가 아닙니다.\n이곳에 발을 들인 모든 사람은\n이 항해를 함께 완성하는 주체입니다.\n\n우리는 이 공간을 매개로 교감하며,\n끝없이 나아가는 하나의 흐름 안에서\n완전히 연결되는 순간을 향해 갑니다.",
+    "en": "TERMINAL is a platform based in Seoul.\n\n[ DEFINITION ]\nTERMINAL is not an event. It is a route.\nA station where senses and people converge,\nand the point of departure for a voyage into the Unknown Sector.\n\nEach edition is a new station on this route,\nand each night is kept as a flight log.\n\n[ DESIGN PRINCIPLE ]\nWe strip away visual noise\nand fill the space with only the light and sound it needs.\n\nLike a CLI (Command Line Interface) that reaches the core through text alone,\nwe build minimal environments\nwhere the experience itself comes before decoration.\n\n[ OBJECTIVE ]\nTERMINAL is not a stage to be watched.\nEveryone who steps inside\nis a subject who completes this voyage.\n\nThrough this space we connect,\nmoving within one endless flow\ntoward the moment we are fully connected."
+  }
+}

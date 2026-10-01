@@ -137,15 +137,17 @@ export function StateNotice({
   children,
   error = false,
   retry,
+  className = '',
 }: {
   title: string;
   children?: ReactNode;
   error?: boolean;
   retry?: () => void;
+  className?: string;
 }) {
   return (
     <div
-      className={styles.notice}
+      className={`${styles.notice} ${className}`}
       data-surface={error ? 'alert' : undefined}
       role={error ? 'alert' : 'status'}
     >

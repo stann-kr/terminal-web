@@ -1,23 +1,17 @@
 'use client';
 import { Bay, Facts, Panel } from '@/features/ui/Ui';
 import styles from './about.module.css';
+import content from './content.json';
 /** The home About plate's one line; the same in every language. */
-export const aboutTagline = 'A Voyage to the Unknown Sector.';
+export const aboutTagline = content.tagline;
 export const aboutCopy = {
-  ko: [
-    'TERMINAL은 서울 기반의 테크노 플랫폼입니다.',
-    '행사를 기획해 열고, 행사와 참여 아티스트의 기록을 공개합니다.',
-  ],
-  en: [
-    'TERMINAL is a Seoul-based techno platform.',
-    'We produce events and publish the records of each event and its artists.',
-  ],
+  ko: [content.tagline, ...content.manifesto.ko.split('\n\n'), `Terminal Architect : ${content.architect}`],
+  en: [content.tagline, ...content.manifesto.en.split('\n\n'), `Terminal Architect : ${content.architect}`],
 };
 export const channels = [
   ['TERMINAL INSTAGRAM', 'https://www.instagram.com/terminal_hub/'],
   ['STANN LUMO WEB', 'https://lumo.stann.kr'],
   ['STANN LUMO INSTAGRAM', 'https://www.instagram.com/stannlumo/'],
-  ['STANN OS HUB', 'https://stann.kr'],
 ] as const;
 export function NodeFacts() {
   return (
