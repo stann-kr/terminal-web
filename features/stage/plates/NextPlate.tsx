@@ -142,12 +142,13 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
                       <small aria-hidden="true">{artist.dock ? `DOCK ${artist.dock}` : 'DOCK TBA'}</small>
                     </li>
                   ))
-                : Array.from({ length: 4 }, (_, index) => (
-                    <li key={index} data-empty="">
-                      <b>{index === 0 ? '공개 전' : '----'}</b>
+                : (
+                    // How many play is not set until the lineup is out: one cell says so, not a guessed count.
+                    <li data-empty="">
+                      <b>공개 전</b>
                       <small aria-hidden="true">TBA</small>
                     </li>
-                  ))}
+                  )}
             </ul>
           </span>
         )}
