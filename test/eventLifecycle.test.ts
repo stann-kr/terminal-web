@@ -12,7 +12,7 @@ import {
   selectEvent,
 } from '../lib/events/lifecycle';
 import type { EventStatus, TerminalEvent } from '../lib/events/types';
-import { dayMark, venueMapHref } from '../features/events/model';
+import { dayMark, sessionShort, venueMapHref } from '../features/events/model';
 import { calendarSubscribeHref, sessionsCalendar } from '../features/events/calendar';
 
 function event(id: string, date: string, time: string, status: EventStatus): TerminalEvent {
@@ -155,6 +155,12 @@ describe('session marks and hand-offs', () => {
     expect(dayMark(night, new Date('2026-11-27T14:30:00Z'))).toBe('D-1');
     expect(dayMark({ ...night, status: 'LIVE' }, new Date())).toBe('LIVE');
     expect(dayMark(event('B', '2026-02-30', '23:00', 'UPCOMING'), new Date())).toBe('TBA');
+  });
+
+  it('shortens a titled session name for narrow slots', () => {
+    expect(sessionShort('TERMINAL [03] : Interstellar Junction')).toBe('TERMINAL [03]');
+    expect(sessionShort('TERMINAL [04]')).toBe('TERMINAL [04]');
+    expect(sessionShort('A:B')).toBe('A:B');
   });
 
   it('looks the venue up on Google Maps by name, and not an undisclosed one', () => {

@@ -116,6 +116,12 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+/* A language switch in the head is centred on the title line and never taller than it, so a head
+   with one keeps its rule level with its neighbour's. */
+.columnHead > [role=group] {
+  align-self: center;
+  margin-block: calc((var(--t-xl) - 32px) / 2);
+}
 .columnHead small {
   margin-left: auto;
   color: var(--ink);
@@ -125,6 +131,11 @@
 /* A column that may not spill: it is measured (data-fit) and a spill moves or grows its sheet. It
    reaches the column's edges (its padding stands in for the column's), so the flush lines inside
    are not cut at the text line by its clip. */
+/* A notice that is a column's whole body wears the column's own tone: head and body read as one
+   plate, as a text column does. */
+.fitColumn > .columnNotice:not([data-surface]) {
+  background: none;
+}
 .fitColumn {
   display: flex;
   flex: 1 1 auto;

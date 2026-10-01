@@ -14,7 +14,7 @@ export function SignalPlate({ mode, rings }: PlateProps) {
       <CardLink href="/signal" className={styles.signalCard}>
         {rings && <Rings at={rings} under />}
         <span className={styles.signalHead} aria-hidden="true">SIGNAL</span>
-        <span className={styles.signalText}>다음 행사 소식 받기</span>
+        <span className={styles.signalText}>다음 이벤트 소식 받기</span>
         <span className={styles.bandTags} aria-hidden="true">
           <Chip>CH 01</Chip>
           <Chip>MAIL</Chip>

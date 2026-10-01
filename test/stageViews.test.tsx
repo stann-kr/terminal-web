@@ -98,7 +98,7 @@ describe('stage shell', () => {
     expect(face('events')).toHaveAttribute('href', '/events');
     expect(face('artists')).toHaveAttribute('href', '/artists');
     expect(face('log')).toHaveAttribute('href', '/transmit');
-    expect(within(plate(container, 'next')).getByRole('link', { name: /다음 행사 TERMINAL \[03\] 상세 보기/ })).toHaveAttribute('href', '/events/TRM-03');
+    expect(within(plate(container, 'next')).getByRole('link', { name: /다음 이벤트 TERMINAL \[03\] 상세 보기/ })).toHaveAttribute('href', '/events/TRM-03');
     expect(within(item(container, 'event:TRM-03')).getByRole('link')).toHaveAttribute('href', '/events/TRM-03');
     go('/events');
     expect(face('events')?.tagName).not.toBe('A');
@@ -194,7 +194,7 @@ describe('stage views', () => {
     go('/events/OLD');
     const file = detail(container, 'event:OLD');
     expect(file).toHaveTextContent('한국어 소개');
-    const briefing = within(file).getByRole('group', { name: '행사 소개' });
+    const briefing = within(file).getByRole('group', { name: '이벤트 소개' });
     expect(Array.from(briefing.querySelectorAll('p'), p => p.textContent)).toEqual(['한국어 소개\n둘째 줄', '다음 문단']);
     expect(file).not.toHaveTextContent('방향');
     expect(file).not.toHaveTextContent(bilingualEvent.subtitle);
@@ -249,7 +249,7 @@ describe('stage views', () => {
     const file = detail(container, 'event:TRM-03');
     expect(within(file).getByRole('heading', { name: '게스트 신청서' })).toBeInTheDocument();
     expect(within(file).getByRole('link', { name: '신청 닫기' })).toHaveAttribute('href', '/events/TRM-03');
-    expect(within(file).queryByRole('group', { name: '행사 소개' })).not.toBeInTheDocument();
+    expect(within(file).queryByRole('group', { name: '이벤트 소개' })).not.toBeInTheDocument();
   });
 
   it('shows an unknown session as an error inside the open directory', () => {
@@ -295,7 +295,7 @@ describe('stage views', () => {
     expect(within(canonical).getByRole('heading', { name: 'STANN LUMO' })).toBeInTheDocument();
     const other = item(container, 'artist:appearance:OTHER:X');
     expect(within(other).getByRole('link')).not.toHaveAttribute('data-featured');
-    expect(container).not.toHaveTextContent('참여 행사');
+    expect(container).not.toHaveTextContent('참여 이벤트');
     expect(container).not.toHaveTextContent('최근 출연');
   });
 
@@ -313,11 +313,11 @@ describe('stage views', () => {
 describe('home plates', () => {
   it('counts down to the next session and keeps useful links when there are none', async () => {
     const { container, client } = shell([past, upcoming]);
-    const next = within(plate(container, 'next')).getByRole('region', { name: '대표 행사' });
+    const next = within(plate(container, 'next')).getByRole('region', { name: '대표 이벤트' });
     expect(within(next).getByRole('heading', { name: 'TERMINAL [03]' })).toBeInTheDocument();
     expect(within(next).getByRole('timer', { name: '이벤트 시작까지 남은 시간' })).toBeInTheDocument();
     act(() => client.setQueryData(['events'], []));
-    expect(await within(plate(container, 'next')).findByText('공개된 행사가 아직 없습니다')).toBeInTheDocument();
+    expect(await within(plate(container, 'next')).findByText('공개된 이벤트가 아직 없습니다')).toBeInTheDocument();
     expect(within(plate(container, 'next')).getByRole('link', { name: /소식 신청/ })).toHaveAttribute('href', '/signal');
   });
 
@@ -381,7 +381,7 @@ describe('directory and roster contracts', () => {
     const { container, go } = shell();
     go('/events');
     expect(within(item(container, 'event:OLD')).getByRole('link', { name: /Past event/ })).toHaveAttribute('href', '/events/OLD');
-    expect(within(plate(container, 'events')).getByText('지난 행사').nextElementSibling).toHaveTextContent('1');
+    expect(within(plate(container, 'events')).getByText('지난 이벤트').nextElementSibling).toHaveTextContent('1');
     expect(within(stage(container)).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
   });
 
@@ -449,8 +449,8 @@ describe('directory and roster contracts', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     clients.push(client);
     const { container } = render(<QueryClientProvider client={client}><Shell>{null}</Shell></QueryClientProvider>);
-    await waitFor(() => expect(within(plate(container, 'next')).getByRole('alert')).toHaveTextContent('행사 기록을 불러오지 못했습니다'));
-    expect(container).not.toHaveTextContent('공개된 행사가 아직 없습니다');
+    await waitFor(() => expect(within(plate(container, 'next')).getByRole('alert')).toHaveTextContent('기록을 불러오지 못했습니다'));
+    expect(container).not.toHaveTextContent('공개된 이벤트가 아직 없습니다');
     vi.unstubAllGlobals();
   });
 
@@ -465,7 +465,7 @@ describe('directory and roster contracts', () => {
     await waitFor(() => expect(within(file()!).getByRole('alert')).toHaveTextContent('아티스트 기록을 불러오지 못했습니다'));
     expect(within(file()!).getByRole('button', { name: '다시 불러오기' })).toBeInTheDocument();
     // The small plates state the failure in one line and never claim zero records.
-    expect(within(plate(container, 'next')).getByRole('status')).toHaveTextContent('행사 기록을 불러오지 못했습니다');
+    expect(within(plate(container, 'next')).getByRole('status')).toHaveTextContent('기록을 불러오지 못했습니다');
     expect(container).not.toHaveTextContent(/000 (FILES|REC)/);
     vi.unstubAllGlobals();
   });

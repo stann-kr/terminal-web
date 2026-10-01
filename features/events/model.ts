@@ -5,7 +5,9 @@ import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
 export const isPublicArtist = (artist: Artist) => artist.status === 'CONFIRMED' || artist.status === 'ARCHIVED';
 export const publicArtists = (event: TerminalEvent) => event.artists.filter(isPublicArtist);
 export const eventHref = (id: string) => `/events/${encodeURIComponent(id)}`;
-export const statusLabel = (status: TerminalEvent['status']) => ({ LIVE: '진행 중', UPCOMING: '예정', ARCHIVED: '행사 기록' })[status];
+/** `TERMINAL [03] : Interstellar Junction` → `TERMINAL [03]`: the name narrow slots (chips, index lines, cells, BACK) print in full. */
+export const sessionShort = (session: string) => session.split(/\s+:\s+/)[0].trim() || session;
+export const statusLabel = (status: TerminalEvent['status']) => ({ LIVE: '진행 중', UPCOMING: '예정', ARCHIVED: '기록' })[status];
 export function orderEventDirectory(events: readonly TerminalEvent[], now = new Date()) {
   const effective = events.map(event => withEffectiveEventStatus(event,now));
   const upcoming = effective.filter(event => event.status === 'UPCOMING').sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) || a.id.localeCompare(b.id));
@@ -28,10 +30,10 @@ export const bilingual = (...values: unknown[]) =>
 export const isRuleLine = (line: string) => line.trim().length >= 3 && /^[\s\u2500-\u257f\-=_+|~]+$/.test(line);
 export function accessAvailability(event: TerminalEvent, events: TerminalEvent[], now: Date) {
   const target = getFutureUpcomingEvent(events,now);
-  if (event.status !== 'UPCOMING') return { canRequest: false, message: event.status === 'ARCHIVED' ? '이 행사의 접수는 종료되었습니다.' : '진행 중인 행사는 접수할 수 없습니다.' };
-  if (target?.id !== event.id) return { canRequest: false, message: '현재는 가장 가까운 예정 행사만 접수합니다.' };
+  if (event.status !== 'UPCOMING') return { canRequest: false, message: event.status === 'ARCHIVED' ? '이 이벤트의 접수는 종료되었습니다.' : '진행 중인 이벤트는 접수할 수 없습니다.' };
+  if (target?.id !== event.id) return { canRequest: false, message: '현재는 가장 가까운 예정 이벤트만 접수합니다.' };
   const window = getRequestWindowState(event, ACCESS_WINDOW_DAYS,now);
-  return { canRequest: window.isActive, message: window.isActive ? '게스트 신청을 접수하고 있습니다.' : `행사 시작 30일 전부터 신청할 수 있습니다. ${window.opensInDays ?? 0}일 후 열립니다.` };
+  return { canRequest: window.isActive, message: window.isActive ? '게스트 신청을 접수하고 있습니다.' : `이벤트 시작 30일 전부터 신청할 수 있습니다. ${window.opensInDays ?? 0}일 후 열립니다.` };
 }
 export function pageNumber(value: string | null, max = 1000) { return value && /^[1-9]\d*$/.test(value) && Number(value) <= max ? Number(value) : 1; }
 

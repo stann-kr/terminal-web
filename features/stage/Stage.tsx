@@ -529,7 +529,7 @@ export function Stage({ state: address }: { state: StageState }) {
               {query.isError ? (
                 <StateNotice
                   error
-                  title={layout.open.kind === 'event' ? '행사 기록을 불러오지 못했습니다' : '아티스트 기록을 불러오지 못했습니다'}
+                  title={layout.open.kind === 'event' ? '기록을 불러오지 못했습니다' : '아티스트 기록을 불러오지 못했습니다'}
                   retry={() => void query.refetch()}
                 >
                   잠시 후 다시 불러오거나 다른 판으로 이동해 주세요.

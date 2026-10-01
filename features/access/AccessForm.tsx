@@ -62,7 +62,7 @@ export function AccessForm({
         <h2>게스트 신청을 저장했습니다</h2>
         <Facts
           rows={[
-            ...(event ? [['행사', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
+            ...(event ? [['이벤트', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
             ...(verified ? [['초대인', verified.name] as [string, string]] : []),
             ['이름', fields.name.trim()],
             ['이메일', fields.email.trim()],
@@ -71,8 +71,8 @@ export function AccessForm({
           ]}
         />
         <ActionDeck>
-          <Action primary href={eventHref(eventId)}>행사로 돌아가기</Action>
-          {!fields.marketingConsent && <Action href="/signal">다음 행사 소식 신청</Action>}
+          <Action primary href={eventHref(eventId)}>이벤트로 돌아가기</Action>
+          {!fields.marketingConsent && <Action href="/signal">다음 이벤트 소식 신청</Action>}
         </ActionDeck>
       </FormSuccess>
     );

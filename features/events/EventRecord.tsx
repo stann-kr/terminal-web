@@ -144,7 +144,7 @@ export function EventActions({
           게스트 신청
         </Action>
       )}
-      <Action href="/signal">다음 행사 소식 신청</Action>
+      <Action href="/signal">다음 이벤트 소식 신청</Action>
     </ActionDeck>
     </>
   );

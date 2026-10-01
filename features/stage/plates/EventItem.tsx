@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { AccessRequest } from '@/features/access/Access';
 import { EventActions, EventFacts, Lineup } from '@/features/events/EventRecord';
-import { bilingual, eventHref, isRuleLine, paragraphs, publicArtists, statusLabel } from '@/features/events/model';
+import { bilingual, eventHref, isRuleLine, paragraphs, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
@@ -31,7 +31,7 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventCell}`} data-state={event.status} data-carrier={carrier} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
-        <FitTitle as="span" text={event.session} maxLines={1} minPx={12} className={styles.cellName}><BrandText text={event.session} /></FitTitle>
+        <FitTitle as="span" text={sessionShort(event.session)} maxLines={1} minPx={12} className={styles.cellName}><BrandText text={sessionShort(event.session)} /></FitTitle>
         <span className={styles.cellState}>{statusLabel(event.status)}</span>
       </Link>
     );
@@ -40,7 +40,7 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} aria-current={current ? 'page' : undefined} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
-        <FitTitle as="span" text={event.session} maxLines={1} minPx={12} className={styles.cellName}><BrandText text={event.session} /></FitTitle>
+        <FitTitle as="span" text={sessionShort(event.session)} maxLines={1} minPx={12} className={styles.cellName}><BrandText text={sessionShort(event.session)} /></FitTitle>
       </Link>
     );
   }
@@ -123,7 +123,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
           <BrandText text={event.session} />
         </FitTitle>
         <EventFacts event={event} modular />
-        {event.posterUrl && <Poster src={event.posterUrl} alt={`${event.session} 행사 포스터 — 새 탭에서 확대`} />}
+        {event.posterUrl && <Poster src={event.posterUrl} alt={`${event.session} 이벤트 포스터 — 새 탭에서 확대`} />}
       </div>
       <section className={styles.sessionOrder} data-surface="panel" aria-label="공연표">
         <p className={styles.columnHead}><b aria-hidden="true">Running order</b><span>공연표</span></p>
@@ -131,19 +131,19 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
           {hasOrder && data.events ? (
             <Lineup event={event} events={data.events} stages />
           ) : (
-            <StateNotice title="공연표 공개 전입니다">출연진과 시간표는 공개되는 대로 이곳에 표시됩니다.</StateNotice>
+            <StateNotice title="공연표 공개 전입니다" className={styles.columnNotice}>출연진과 시간표는 공개되는 대로 이곳에 표시됩니다.</StateNotice>
           )}
         </div>
       </section>
       <div className={styles.sessionSide}>
         {!request && (
-          <section className={styles.sessionBriefing} data-surface="inset" aria-label="행사 소개">
-            <p className={styles.columnHead}><b aria-hidden="true">Briefing</b><span>행사 소개</span>{bilingual(event.description, event.invitationLines) && <LanguageToggle />}</p>
+          <section className={styles.sessionBriefing} data-surface="inset" aria-label="이벤트 소개">
+            <p className={styles.columnHead}><b aria-hidden="true">Briefing</b><span>이벤트 소개</span>{bilingual(event.description, event.invitationLines) && <LanguageToggle />}</p>
             <TextPages
               paragraphs={invitation.length ? [...briefing, '초대 안내', ...invitation] : briefing}
               language={language}
-              label="행사 소개"
-              empty="행사 소개는 공개되는 대로 이곳에 표시됩니다."
+              label="이벤트 소개"
+              empty="이벤트 소개는 공개되는 대로 이곳에 표시됩니다."
             />
           </section>
         )}
