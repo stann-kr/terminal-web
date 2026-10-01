@@ -904,9 +904,28 @@
   min-height: 0;
   overflow: hidden;
 }
+/* The write column: the length readout and its gauge stay together on top, and the height the
+   column has to spare goes to the message box (at least 140px) instead of opening gaps between the
+   readout, the gauge and the fields. */
+:global([data-stage=stage]) .logWrite form {
+  display: flex;
+  flex-direction: column;
+}
+:global([data-stage=stage]) .logWrite form > *,
+:global([data-stage=stage]) .logWrite form > :last-child > * {
+  flex: none;
+}
+:global([data-stage=stage]) .logWrite form > :last-child,
+:global([data-stage=stage]) .logWrite form > :last-child > :first-child {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
 :global([data-stage=stage]) .logWrite textarea {
-  height: 96px;
-  min-height: 96px;
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 140px;
 }
 .logPages {
   display: flex;
