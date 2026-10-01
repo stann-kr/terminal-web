@@ -419,7 +419,7 @@
 }
 
 /* ── Scroll cue: an icon key at the foot of the window while sheets lie below ──
-   Two chevrons on a translucent square in the palette's cue colour (one no plate wears), letting the
+   Two chevrons on a translucent square in the palette's cue colour (one of its own source colours), letting the
    plates show through. Hover fills it solid. */
 .scrollHint {
   position: fixed;
