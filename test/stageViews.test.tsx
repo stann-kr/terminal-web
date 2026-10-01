@@ -621,4 +621,26 @@ describe('stage viewport', () => {
     expect(result.current).toMatchObject({ w: 844, h: 390, resizing: false });
     vi.unstubAllGlobals();
   });
+
+  it('re-tiles once when an in-app browser bar first shows, and never while it comes and goes', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('coarse'), media: query, addEventListener() {}, removeEventListener() {} }));
+    viewport(390, 780);
+    const { result } = renderHook(() => useViewport());
+    const settle = () => act(() => new Promise(resolve => setTimeout(resolve, 200)));
+    const height = async (h: number) => {
+      viewport(390, h);
+      act(() => void window.dispatchEvent(new Event('resize')));
+      await settle();
+      return result.current?.h;
+    };
+    // The bar shows: the page is shorter, and the stage follows once.
+    expect(await height(724)).toBe(724);
+    // The bar hides and shows again while scrolling: the stage stays as it is.
+    expect(await height(780)).toBe(724);
+    expect(await height(724)).toBe(724);
+    expect(await height(780)).toBe(724);
+    // A keyboard is no bar: the stage follows it.
+    expect(await height(420)).toBe(420);
+    vi.unstubAllGlobals();
+  });
 });

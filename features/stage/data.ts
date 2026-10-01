@@ -76,8 +76,12 @@ export function useViewport(): Viewport | null {
     const measure = () => {
       const small = probe ? Math.round(probe.getBoundingClientRect().height) : 0;
       const size = { w: window.innerWidth, h: small > 0 ? small : window.innerHeight };
-      // No steady `svh` reading: at the same width, a small height change on a touch screen is the toolbar.
-      if (small <= 0 && touch && last && size.w === last.w && Math.abs(size.h - last.h) < TOOLBAR_SLACK) return last;
+      // On a touch screen, at the same width, a height change smaller than a toolbar is a browser bar
+      // sliding in or out. Safari keeps `svh` steady through it, but an in-app browser (a messenger's)
+      // resizes the page and `svh` with its bar, and some browsers have no `svh` at all. Either way the
+      // stage keeps the shortest height seen at this width: it re-tiles once, when a bar first shows,
+      // and never again while the bar comes and goes.
+      if (touch && last && size.w === last.w && Math.abs(size.h - last.h) < TOOLBAR_SLACK) return size.h < last.h ? size : last;
       return size;
     };
     const commit = (size: { w: number; h: number }, resizing: boolean) => {
