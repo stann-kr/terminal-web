@@ -346,15 +346,27 @@ export function Stage({ state: address }: { state: StageState }) {
   const reach = size ? Math.hypot(size.w, size.h) : 1;
   const wave = (target: Rect) => (from ? Math.round(Math.min(1, Math.hypot(target.x + target.w / 2 - from.x, target.y + target.h / 2 - from.y) / reach) * WAVE_MS) : 0);
 
-  // While the boxes travel, pointing lights nothing up: a box sliding under a still pointer does not flash.
+  // While the boxes travel, pointing lights nothing up: a box sliding under a still pointer does not
+  // flash. Nor after they land, until the pointer moves: a browser re-hit-tests hover only on pointer
+  // movement, so a card that travelled out from under a resting pointer would stay lit.
   const [moving, setMoving] = useState(false);
   const firstKey = useRef(key);
   useLayoutEffect(() => {
     if (firstKey.current === key) return;
     firstKey.current = key;
     setMoving(true);
-    const timer = window.setTimeout(() => setMoving(false), MOVING_MS);
-    return () => window.clearTimeout(timer);
+    let landed = false;
+    const timer = window.setTimeout(() => {
+      landed = true;
+    }, MOVING_MS);
+    const wake = () => {
+      if (landed) setMoving(false);
+    };
+    window.addEventListener('pointermove', wake, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('pointermove', wake);
+    };
   }, [key]);
 
   // ── Render ──────────────────────────────────────────────────────────────────────────────

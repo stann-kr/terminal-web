@@ -59,7 +59,8 @@
   outline-offset: -4px;
 }
 /* While the boxes are still travelling after a change of view, a box sliding under a resting pointer
-   does not light up; pointing lights things again once they have landed. */
+   does not light up; pointing lights things again once they have landed and the pointer moves (the
+   browser only re-finds what is under a still pointer when it moves, see Stage). */
 @media (hover: hover) {
   :global([data-moving]) .card:hover {
     box-shadow: none;

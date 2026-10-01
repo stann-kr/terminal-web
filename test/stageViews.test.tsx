@@ -56,6 +56,21 @@ afterEach(() => {
 });
 
 describe('stage shell', () => {
+  it('keeps hover off after a change of view until the pointer moves once the boxes have landed', () => {
+    vi.useFakeTimers();
+    const { container, go } = shell();
+    const stage = () => container.querySelector('#stage')!;
+    go('/signal');
+    expect(stage()).toHaveAttribute('data-moving');
+    // Moving while the boxes travel, or simply waiting, does not bring hover back.
+    act(() => void fireEvent.pointerMove(window));
+    act(() => void vi.advanceTimersByTime(1000));
+    expect(stage()).toHaveAttribute('data-moving');
+    // The first movement after landing does: the browser now re-finds what is under the pointer.
+    act(() => void fireEvent.pointerMove(window));
+    expect(stage()).not.toHaveAttribute('data-moving');
+  });
+
   it('has no header, footer or menu: the wordmark rides on the next plate and the plates are the menu', () => {
     const { container, go } = shell();
     expect(screen.queryByRole('banner')).not.toBeInTheDocument();
