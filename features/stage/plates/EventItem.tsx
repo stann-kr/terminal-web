@@ -9,7 +9,6 @@ import { bilingual, eventHref, eventSubtitle, isRuleLine, paragraphs, publicArti
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
-import { LiveValue } from '@/features/display/Display';
 import type { StageData } from '../data';
 import { FitTitle } from '../FitTitle';
 import type { ItemMode } from '../layout';
@@ -119,7 +118,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
       <div className={styles.sessionMain} data-fit="">
         <p className={`${ui.band} ${styles.sessionState}`} aria-hidden="true">
           <span data-event-state={event.status}>{statusLabel(event.status)}</span>
-          <span><LiveValue value={event.id} cascade /></span>
+          <span>{event.id}</span>
         </p>
         <FitTitle as="h1" id={`session-${event.id}`} heading={current} text={sessionShort(event.session)} maxLines={3} minPx={28} className={styles.sessionTitle}>
           <BrandText text={sessionShort(event.session)} />

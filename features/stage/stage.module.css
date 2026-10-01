@@ -121,7 +121,7 @@
 /* In a box that does not move (see Swap), the content is traded sub-plate by sub-plate instead:
    each of the content's own parts (a file's columns, the back card and its home key) fades out and
    its successor fades in, one after another from the side of the index, like the stage's own wave.
-   Nothing travels, so nothing twitches; the readouts in each part roll in as it appears. */
+   Nothing travels, so nothing twitches. */
 .stage[data-stage=stage] .layer[data-swap=still] {
   --wave-step: 70ms;
   animation: none;
@@ -133,15 +133,10 @@
 .stage[data-stage=stage] .layer[data-swap=still] > * > :nth-child(3) { --i: 2; }
 .stage[data-stage=stage] .layer[data-swap=still] > * > :nth-child(n + 4) { --i: 3; }
 .stage[data-stage=stage] .layer[data-layer=current][data-swap=still] > * > * {
-  --roll-at: calc(var(--enter-delay) + var(--i) * var(--wave-step));
-  animation: layerFade var(--dur-enter) cubic-bezier(.2, .7, .2, 1) var(--roll-at) backwards;
+  animation: layerFade var(--dur-enter) cubic-bezier(.2, .7, .2, 1) calc(var(--enter-delay) + var(--i) * var(--wave-step)) backwards;
 }
 .stage[data-stage=stage] .layer[data-layer=leaving][data-swap=still] > * > * {
   animation: layerOut var(--dur-exit) cubic-bezier(.4, 0, .8, .6) calc(var(--i) * var(--wave-step)) forwards;
-}
-/* Elsewhere a readout rolls in with its layer. */
-.stage[data-stage=stage] .layer[data-layer=current] {
-  --roll-at: calc(var(--enter-delay) + var(--delay, 0ms));
 }
 @keyframes layerFade {
   from { opacity: 0; }
