@@ -202,9 +202,17 @@ export function Stage({ state: address }: { state: StageState }) {
     };
   }, [sheetCount]);
   // A new scene starts at its first sheet; turning a list or log page keeps where the reader is.
+  // The jump is instant (the plates already travel; the page's smooth scrolling would be cut short
+  // on a phone by a finger's momentum or the sheets settling), and checked once more after the
+  // layout has settled.
   const scene = sceneKey(state);
   useLayoutEffect(() => {
-    window.scrollTo({ top: 0 });
+    const top = () => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    top();
+    const frame = requestAnimationFrame(() => {
+      if (window.scrollY !== 0) top();
+    });
+    return () => cancelAnimationFrame(frame);
   }, [scene]);
 
   // Heads are measured at the arrival size right after each change, before the frame paints.

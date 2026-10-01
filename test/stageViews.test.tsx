@@ -583,6 +583,8 @@ describe('stage scroll', () => {
     go('/transmit');
     go('/transmit', 'page=2');
     expect(scrollTo).toHaveBeenCalledTimes(1);
+    // The jump to a new scene is instant: a smooth one is cut short on a phone.
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
     scrollTo.mockRestore();
   });
 });
