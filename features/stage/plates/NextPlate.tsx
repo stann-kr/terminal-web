@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import type { TerminalEvent } from '@/lib/events/types';
 import { DataActivity } from '@/features/display/Display';
-import { accessAvailability, dayMark, eventHref, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
+import { accessAvailability, dayMark, eventHref, eventSubtitle, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
 import { Action, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
@@ -71,6 +71,7 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
   const carrier = `event:${event.id}`;
   // Guest requests open 30 days ahead; the home plate says so, so nobody has to open the file to find out.
   const accessOpen = accessAvailability(event, events, now).canRequest;
+  const subtitle = eventSubtitle(event);
   const label = event.status === 'ARCHIVED' ? 'Last session' : 'Next session';
   if (mode === 'chip' || mode === 'index') {
     return (
@@ -97,7 +98,7 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
       href={eventHref(event.id)}
       className={`${styles.card} ${styles.nextBlock}`}
       data-carrier={carrier}
-      aria-label={`${label === 'Last session' ? '지난 이벤트' : '다음 이벤트'} ${event.session}${accessOpen ? ', 게스트 신청 접수 중' : ''} 상세 보기`}
+      aria-label={`${label === 'Last session' ? '지난 이벤트' : '다음 이벤트'} ${sessionShort(event.session)}${subtitle ? ` ${subtitle}` : ''}${accessOpen ? ', 게스트 신청 접수 중' : ''} 상세 보기`}
       scroll={false}
     >
       {rings && <Rings at={rings} under />}
@@ -113,13 +114,13 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
             </span>
           </span>
           {event.status === 'ARCHIVED' && mode === 'hero' && <span className={styles.noUpcoming}>다음 이벤트 미정</span>}
-          <FitTitle as="h2" text={event.session} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
-            <BrandText text={event.session} />
+          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
+            <BrandText text={sessionShort(event.session)} />
           </FitTitle>
         </span>
-        {mode !== 'tile' && event.subtitle && (
+        {mode !== 'tile' && subtitle && (
           <span className={styles.part} data-priority="5">
-            <span className={styles.nextSubtitle}>{event.subtitle}</span>
+            <span className={styles.nextSubtitle}>{subtitle}</span>
           </span>
         )}
         {mode !== 'tile' && (

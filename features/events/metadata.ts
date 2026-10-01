@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import type { TerminalEvent } from '@/lib/events/types';
 import { buildArtistArchive, type ArtistProfile } from '@/features/artists/model';
-import { eventHref, publicArtists } from './model';
+import { eventHref, eventSubtitle, publicArtists } from './model';
 
 export const sessionNamesBrand = (session: string) => /\bTERMINAL\b/i.test(session);
 
@@ -14,7 +14,8 @@ export function eventMetadata(event: TerminalEvent, prefix = ''): Metadata {
   const description = [
     `${event.date} ${event.time}`,
     `${event.venue} · ${event.district}`,
-    event.subtitle,
+    // The name already carries its subtitle (`TERMINAL [03] : Interstellar Junction`).
+    event.session.includes(eventSubtitle(event)) ? '' : eventSubtitle(event),
     lineup.length ? `LINEUP ${lineup.join(', ')}` : '',
   ]
     .filter(Boolean)

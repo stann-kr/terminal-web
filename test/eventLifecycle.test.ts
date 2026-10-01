@@ -12,7 +12,7 @@ import {
   selectEvent,
 } from '../lib/events/lifecycle';
 import type { EventStatus, TerminalEvent } from '../lib/events/types';
-import { dayMark, sessionShort, venueMapHref } from '../features/events/model';
+import { dayMark, eventSubtitle, sessionShort, venueMapHref } from '../features/events/model';
 import { calendarSubscribeHref, sessionsCalendar } from '../features/events/calendar';
 
 function event(id: string, date: string, time: string, status: EventStatus): TerminalEvent {
@@ -161,6 +161,12 @@ describe('session marks and hand-offs', () => {
     expect(sessionShort('TERMINAL [03] : Interstellar Junction')).toBe('TERMINAL [03]');
     expect(sessionShort('TERMINAL [04]')).toBe('TERMINAL [04]');
     expect(sessionShort('A:B')).toBe('A:B');
+  });
+
+  it("takes a session's subtitle from its name, never TERMINAL's tagline", () => {
+    expect(eventSubtitle({ session: 'TERMINAL [03] : Interstellar Junction', subtitle: 'A Voyage to the Unknown Sector.' })).toBe('Interstellar Junction');
+    expect(eventSubtitle({ session: 'TERMINAL [04]', subtitle: 'A Voyage to the Unknown Sector.' })).toBe('');
+    expect(eventSubtitle({ session: 'TERMINAL [04]', subtitle: 'Deep Field' })).toBe('Deep Field');
   });
 
   it('looks the venue up on Google Maps by name, and not an undisclosed one', () => {

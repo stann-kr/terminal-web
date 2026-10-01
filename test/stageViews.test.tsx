@@ -98,7 +98,7 @@ describe('stage shell', () => {
     expect(face('events')).toHaveAttribute('href', '/events');
     expect(face('artists')).toHaveAttribute('href', '/artists');
     expect(face('log')).toHaveAttribute('href', '/transmit');
-    expect(within(plate(container, 'next')).getByRole('link', { name: /다음 이벤트 TERMINAL \[03\] 상세 보기/ })).toHaveAttribute('href', '/events/TRM-03');
+    expect(within(plate(container, 'next')).getByRole('link', { name: /다음 이벤트 TERMINAL \[03\] A past night 상세 보기/ })).toHaveAttribute('href', '/events/TRM-03');
     expect(within(item(container, 'event:TRM-03')).getByRole('link')).toHaveAttribute('href', '/events/TRM-03');
     go('/events');
     expect(face('events')?.tagName).not.toBe('A');

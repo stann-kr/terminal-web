@@ -74,15 +74,12 @@ function useSubscribeHref() {
   );
 }
 
-function KeyFace({ label, glyph, children }: { label: string; glyph: string; children: ReactNode }) {
+function KeyFace({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <>
-      <span className={styles.keyText}>
-        <small lang="en">{label}</small>
-        <span>{children}</span>
-      </span>
-      <span className={styles.keyGlyph} aria-hidden="true">{glyph}</span>
-    </>
+    <span className={styles.keyText}>
+      <small lang="en">{label}</small>
+      <span>{children}</span>
+    </span>
   );
 }
 
@@ -97,13 +94,13 @@ function SessionKeys({ event }: { event: TerminalEvent }) {
   return (
     <ActionDeck className={styles.sessionKeys}>
       <Action primary href={subscribe} external={subscribe.startsWith('https:')}>
-        <KeyFace label="CALENDAR" glyph="+">
+        <KeyFace label="CALENDAR">
           <BrandText text="TERMINAL" /> 일정 구독
         </KeyFace>
       </Action>
       {map && (
         <Action primary external href={map}>
-          <KeyFace label="MAP" glyph="↗">
+          <KeyFace label="MAP">
             지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span>
           </KeyFace>
         </Action>

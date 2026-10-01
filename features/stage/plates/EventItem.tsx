@@ -5,7 +5,7 @@ import { useState } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { AccessRequest } from '@/features/access/Access';
 import { EventActions, EventFacts, Lineup } from '@/features/events/EventRecord';
-import { bilingual, eventHref, isRuleLine, paragraphs, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
+import { bilingual, eventHref, eventSubtitle, isRuleLine, paragraphs, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
@@ -46,19 +46,20 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
   }
   if (shape === 'row') {
     const artists = publicArtists(event).map(artist => artist.name).join(' · ');
-    const line = [event.subtitle, artists].filter(Boolean).join(' · ');
+    const subtitle = eventSubtitle(event);
+    const line = [subtitle, artists].filter(Boolean).join(' · ');
     const when = `${event.date} ${event.time.replace(' KST', '')} KST`;
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventRow}`} data-event-state={event.status} data-carrier={carrier} scroll={false}>
         <span className={styles.rowId}>{event.id}</span>
         <span className={styles.rowMain}>
-          <FitTitle as="h2" text={event.session} maxLines={1} minPx={16} className={styles.rowName}>
-            <BrandText text={event.session} />
+          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={1} minPx={16} className={styles.rowName}>
+            <BrandText text={sessionShort(event.session)} />
           </FitTitle>
           {line && (
             <FitTitle as="span" text={line} maxLines={1} minPx={12} className={styles.rowLine}>
-              {event.subtitle}
-              {event.subtitle && artists && ' · '}
+              {subtitle}
+              {subtitle && artists && ' · '}
               {artists && <span className={styles.rowArtists}><span className={styles.srOnly}>출연 </span>{artists}</span>}
             </FitTitle>
           )}
@@ -119,9 +120,10 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
           <span data-event-state={event.status}>{statusLabel(event.status)}</span>
           <span>{event.id}</span>
         </p>
-        <FitTitle as="h1" id={`session-${event.id}`} heading={current} text={event.session} maxLines={3} minPx={28} className={styles.sessionTitle}>
-          <BrandText text={event.session} />
+        <FitTitle as="h1" id={`session-${event.id}`} heading={current} text={sessionShort(event.session)} maxLines={3} minPx={28} className={styles.sessionTitle}>
+          <BrandText text={sessionShort(event.session)} />
         </FitTitle>
+        {eventSubtitle(event) && <p className={styles.sessionSubtitle}>{eventSubtitle(event)}</p>}
         <EventFacts event={event} modular />
         {event.posterUrl && <Poster src={event.posterUrl} alt={`${event.session} 이벤트 포스터 — 새 탭에서 확대`} />}
       </div>

@@ -1,12 +1,24 @@
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getArchivedOrElapsedEvents, getEventDateTime, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, withEffectiveEventStatus } from '@/lib/events/lifecycle';
 import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
+import aboutContent from '@/features/about/content.json';
 
 export const isPublicArtist = (artist: Artist) => artist.status === 'CONFIRMED' || artist.status === 'ARCHIVED';
 export const publicArtists = (event: TerminalEvent) => event.artists.filter(isPublicArtist);
 export const eventHref = (id: string) => `/events/${encodeURIComponent(id)}`;
 /** `TERMINAL [03] : Interstellar Junction` → `TERMINAL [03]`: the name narrow slots (chips, index lines, cells, BACK) print in full. */
 export const sessionShort = (session: string) => session.split(/\s+:\s+/)[0].trim() || session;
+/**
+ * A session's own subtitle: the part of its name after ` : ` (`Interstellar Junction`). The stored
+ * `subtitle` is used only for a name without one, and never when it is TERMINAL's own tagline,
+ * which belongs to the brand (About), not to a session.
+ */
+export function eventSubtitle(event: Pick<TerminalEvent, 'session' | 'subtitle'>) {
+  const named = event.session.split(/\s+:\s+/).slice(1).join(' : ').trim();
+  if (named) return named;
+  const stored = event.subtitle.trim();
+  return stored && stored !== aboutContent.tagline ? stored : '';
+}
 export const statusLabel = (status: TerminalEvent['status']) => ({ LIVE: '진행 중', UPCOMING: '예정', ARCHIVED: '기록' })[status];
 export function orderEventDirectory(events: readonly TerminalEvent[], now = new Date()) {
   const effective = events.map(event => withEffectiveEventStatus(event,now));
