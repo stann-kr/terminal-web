@@ -103,7 +103,7 @@
   --alert-accent: var(--c-porcelain);
   --alert-fill: var(--c-text);
   --alert-on-fill: var(--c-porcelain);
-  --alert-hi: var(--c-porcelain);
+  --alert-hi: var(--c-rose-tint);
   --alert-on-hi: var(--c-text);
   --alert-danger: var(--c-porcelain);
 
