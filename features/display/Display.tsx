@@ -1,6 +1,6 @@
 'use client';
 import { useIsFetching } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import styles from './display.module.css';
 
 /** Status-line lamp for real query activity; it only blinks while a request is pending. */
@@ -19,12 +19,12 @@ export function DataActivity() {
  * A readout that rolls like a mechanical counter: each character sits in its own window and only
  * the characters that changed drop in, so a ticking second rolls one digit, not the whole number.
  */
-export function LiveValue({ value }: { value: string | number }) {
+export function LiveValue({ value, cascade = false }: { value: string | number; cascade?: boolean }) {
   return (
-    <span className={styles.value}>
+    <span className={`${styles.value} ${cascade ? styles.cascade : ''}`}>
       {[...String(value)].map((glyph, index) => (
         <span key={index} className={styles.window}>
-          <span key={glyph} className={styles.glyph}>{glyph}</span>
+          <span key={glyph} className={styles.glyph} style={cascade ? ({ '--g': index } as CSSProperties) : undefined}>{glyph}</span>
         </span>
       ))}
     </span>

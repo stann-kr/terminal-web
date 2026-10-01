@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useSyncExternalStore, type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { Action, ActionDeck, BrandText, Facts, ui } from '@/features/ui/Ui';
+import { LiveValue } from '@/features/display/Display';
 import { CALENDAR_FEED_PATH, calendarSubscribeHref } from './calendar';
 import {
   buildArtistArchive,
@@ -23,9 +24,9 @@ export function EventFacts({
     {
       label: 'DATE / TIME',
       rows: [
-        ['날짜', event.date],
-        ['시작 / KST', event.time.replace(' KST', '')],
-      ],
+        ['날짜', <LiveValue key="date" value={event.date} cascade />],
+        ['시작 / KST', <LiveValue key="time" value={event.time.replace(' KST', '')} cascade />],
+      ] as [string, ReactNode][],
     },
     {
       label: 'VENUE',

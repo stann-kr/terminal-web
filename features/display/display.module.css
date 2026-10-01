@@ -33,6 +33,12 @@
 }
 @media (prefers-reduced-motion: no-preference) and (forced-colors: none) {
   .glyph { animation: glyphRoll var(--dur-hover) var(--ease-move) backwards; }
+  /* A file's readouts (codes, dates) roll in as their sub-plate appears (`--roll-at`, set by the
+     stage), one character after another, like a split-flap board settling. */
+  .cascade .glyph {
+    animation-duration: var(--dur-enter);
+    animation-delay: calc(var(--roll-at, 0ms) + var(--g, 0) * 22ms);
+  }
 }
 /* A changed digit drops into its window (defined in this module, where its name is resolved). */
 @keyframes glyphRoll {

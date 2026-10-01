@@ -1,4 +1,5 @@
 'use client';
+import { LiveValue } from '@/features/display/Display';
 import Link from 'next/link';
 import { ArtistChronology } from '@/features/artists/ArtistChronology';
 import { artistHref, type ArtistProfile } from '@/features/artists/model';
@@ -87,7 +88,7 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
       <div className={styles.fileMain} data-fit="">
         <p className={`${ui.band} ${styles.fileOrigin}`} aria-hidden="true">
           <span>ORIGIN / {profile.origin || '—'}</span>
-          <span>{profile.origin || 'XX'}-{serial(profile.key)}</span>
+          <span><LiveValue value={`${profile.origin || 'XX'}-${serial(profile.key)}`} cascade /></span>
         </p>
         <FitTitle as="h1" id={`artist-${profile.key}`} heading={current} text={profile.name} maxLines={3} minPx={28} className={styles.fileName} />
       </div>

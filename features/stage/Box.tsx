@@ -6,8 +6,9 @@ import styles from './stage.module.css';
 /** A content layer and the box size it was last drawn at. */
 type Layer = { key: string; node: ReactNode; x?: number; y?: number; w?: number; h?: number; still?: boolean };
 
-/** Outlasts the exit fade (`--dur-exit`), so a leaving layer is only removed once it is invisible. */
-const EXIT_MS = 300;
+/** Outlasts the exit fade (`--dur-exit`) and, in a still box, its wave across the sub-plates
+ * (`--wave-step` × 3), so a leaving layer is only removed once it is invisible. */
+const EXIT_MS = 520;
 
 /**
  * Content that changes shape: when `id` changes, the old content fades out underneath while the new
@@ -26,7 +27,7 @@ function Swap({ id, x, y, w, h, children }: { id: string; x?: number; y?: number
     // card) only crossfades: the rise that new content makes inside a travelling box would read
     // here as the box itself twitching.
     const still = w !== undefined && shown.x === x && shown.y === y && shown.w === w && shown.h === h;
-    setLeaving(list => [...list.filter(layer => layer.key !== id && layer.key !== shown.key), shown]);
+    setLeaving(list => [...list.filter(layer => layer.key !== id && layer.key !== shown.key), { ...shown, still }]);
     setShown({ key: id, node: children, x, y, w, h, still });
   } else if (shown.node !== children || shown.x !== x || shown.y !== y || shown.w !== w || shown.h !== h) {
     setShown({ ...shown, node: children, x, y, w, h });
@@ -47,7 +48,7 @@ function Swap({ id, x, y, w, h, children }: { id: string; x?: number; y?: number
           key={layer.key}
           className={styles.layer}
           data-layer={layer.out ? 'leaving' : 'current'}
-          data-enter={!layer.out && layer.still ? 'fade' : undefined}
+          data-swap={layer.still ? 'still' : undefined}
           inert={layer.out || undefined}
           aria-hidden={layer.out || undefined}
           data-fit={layer.out ? undefined : ''}
