@@ -636,7 +636,7 @@ describe('stage viewport', () => {
     vi.unstubAllGlobals();
   });
 
-  it('re-tiles once when an in-app browser bar first shows, and never while it comes and goes', async () => {
+  it('re-tiles once when a browser bar first shows, never while bars come and go or a keyboard opens', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('coarse'), media: query, addEventListener() {}, removeEventListener() {} }));
     viewport(390, 780);
     const { result } = renderHook(() => useViewport());
@@ -649,12 +649,19 @@ describe('stage viewport', () => {
     };
     // The bar shows: the page is shorter, and the stage follows once.
     expect(await height(724)).toBe(724);
-    // The bar hides and shows again while scrolling: the stage stays as it is.
+    // The bars hide and show again while scrolling, by however much: the stage stays as it is.
     expect(await height(780)).toBe(724);
     expect(await height(724)).toBe(724);
-    expect(await height(780)).toBe(724);
-    // A keyboard is no bar: the stage follows it.
-    expect(await height(420)).toBe(420);
+    expect(await height(924)).toBe(724);
+    // Typing in a field, the keyboard takes height: the stage stays, and is not left short after.
+    const field = document.createElement('input');
+    document.body.appendChild(field);
+    field.focus();
+    expect(await height(420)).toBe(724);
+    field.blur();
+    field.remove();
+    // A window that really is shorter is followed.
+    expect(await height(600)).toBe(600);
     vi.unstubAllGlobals();
   });
 });
