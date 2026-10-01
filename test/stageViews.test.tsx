@@ -189,19 +189,21 @@ describe('stage views', () => {
   });
 
   it('offers the language only where a text comes in two, and reads the browser’s language first', () => {
-    const bilingualEvent = { ...past, stage: { ko: '방향', en: 'Bearing' }, description: { ko: '한국어 소개\n둘째 줄\n\n다음 문단', en: 'English briefing\nSecond line\n\nNext paragraph' } };
+    const bilingualEvent = { ...past, subtitle: 'A Voyage to the Unknown Sector.', stage: { ko: '방향', en: 'Bearing' }, description: { ko: '한국어 소개\n둘째 줄\n\n다음 문단', en: 'English briefing\nSecond line\n\nNext paragraph' } };
     const { container, go } = shell([bilingualEvent]);
     go('/events/OLD');
     const file = detail(container, 'event:OLD');
     expect(file).toHaveTextContent('한국어 소개');
     const briefing = within(file).getByRole('group', { name: '행사 소개' });
     expect(Array.from(briefing.querySelectorAll('p'), p => p.textContent)).toEqual(['한국어 소개\n둘째 줄', '다음 문단']);
-    expect(file).toHaveTextContent('방향');
+    expect(file).not.toHaveTextContent('방향');
+    expect(file).not.toHaveTextContent(bilingualEvent.subtitle);
     const toggle = within(file).getByRole('group', { name: '소개글 언어' });
     fireEvent.click(within(toggle).getByRole('button', { name: 'EN' }));
     expect(file).toHaveTextContent('English briefing');
     expect(Array.from(briefing.querySelectorAll('p'), p => p.textContent)).toEqual(['English briefing\nSecond line', 'Next paragraph']);
-    expect(file).toHaveTextContent('Bearing');
+    expect(file).not.toHaveTextContent('Bearing');
+    expect(file).not.toHaveTextContent(bilingualEvent.subtitle);
     expect(window.localStorage.getItem('terminal:language')).toBe('en');
     fireEvent.click(within(toggle).getByRole('button', { name: 'KO' }));
     window.localStorage.removeItem('terminal:language');
