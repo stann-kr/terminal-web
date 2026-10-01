@@ -182,6 +182,15 @@
 .plateCard {
   padding: 0 var(--pad) var(--pad);
 }
+/* A summary plate is one link, and its cells fill the rest of it: the band is where the plate itself
+   is pressed, so it is a generous key, its name set a step larger. */
+.plateCard > .band {
+  min-height: 88px;
+  padding-top: 18px;
+}
+.plateCard > .band .bandLabel {
+  font-size: clamp(30px, 2.4vw, 46px);
+}
 .bandTitle {
   display: flex;
   flex-wrap: wrap;

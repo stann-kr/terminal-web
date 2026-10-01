@@ -159,6 +159,27 @@ describe('stage layout', () => {
     expect(measured.list!.perPage).toBeLessThanOrEqual(plain.list!.perPage);
   });
 
+  it('fills plates with their sub-plates: no strip under a full page, short lists grow to twice at most, a half row widens', () => {
+    const stage = STAGES[0].stage;
+    const m = stageMetrics(1440);
+    const close = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThan(0.01);
+    // A full page: its last row ends on the pager.
+    const full = computeLayout(stageStateFromUrl('/events'), stage, { viewportW: 1440, items: items() });
+    const rows = shownItems(full).filter(([, item]) => item.mode === 'row').map(([, item]) => item.rect);
+    close(rows.at(-1)!.y + rows.at(-1)!.h, full.list!.pager.y);
+    // Two sessions on a page that fits more: taller rows, but not past twice their height.
+    const few = computeLayout(stageStateFromUrl('/events'), stage, { viewportW: 1440, items: { event: { order: EVENTS.slice(0, 2) } } });
+    const fewRows = shownItems(few).filter(([, item]) => item.mode === 'row').map(([, item]) => item.rect);
+    expect(fewRows[0].h).toBeGreaterThan(m.rowH);
+    expect(fewRows[0].h).toBeLessThanOrEqual(2 * m.rowH);
+    expect(fewRows[1].y).toBe(fewRows[0].y + fewRows[0].h);
+    // Three artists in a two-column summary: the third cell runs the plate's width.
+    const home = computeLayout(stageStateFromUrl('/'), stage, { viewportW: 1440, items: { artist: { order: ARTISTS.slice(0, 3) } } });
+    const cells = ARTISTS.slice(0, 3).map(id => home.items[`artist:${id}`].rect);
+    close(cells[0].w * 2, home.plates.artists.rect.w);
+    close(cells[2].w, home.plates.artists.rect.w);
+  });
+
   it('pages the list by the rows that fit and parks other pages beside their slot', () => {
     const layout = computeLayout(stageStateFromUrl('/events', { page: '2' }), STAGES[1].stage, { viewportW: 1280, items: items(2) });
     const metrics = stageMetrics(1280);
