@@ -167,6 +167,16 @@
 .accessDeck {
   margin-top: auto;
 }
+/* Calendar and map keys sit under the date and venue facts, a gap apart like the facts under the
+   title; the note on the right names where each key leads. */
+.sessionKeys {
+  margin-top: 14px;
+}
+.keyNote {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1 var(--mono);
+  letter-spacing: .08em;
+}
 
 /* Short labels, codes and times never break mid-phrase. */
 .slotCode,

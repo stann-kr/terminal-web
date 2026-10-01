@@ -157,12 +157,11 @@ describe('session marks and hand-offs', () => {
     expect(dayMark(event('B', '2026-02-30', '23:00', 'UPCOMING'), new Date())).toBe('TBA');
   });
 
-  it('pins the venue on a map only from real coordinates', () => {
-    expect(venueMapHref({ venue: 'FAUST SEOUL', coords: '37.5335° N, 126.9958° E' }))
-      .toBe('https://map.kakao.com/link/map/FAUST%20SEOUL,37.5335,126.9958');
-    expect(venueMapHref({ venue: 'X', coords: '33.8° S, 151.2° W' })).toBe('https://map.kakao.com/link/map/X,-33.8,-151.2');
-    expect(venueMapHref({ venue: 'X', coords: 'test' })).toBeNull();
-    expect(venueMapHref({ venue: 'X', coords: '' })).toBeNull();
+  it('looks the venue up on Google Maps by name, and not an undisclosed one', () => {
+    expect(venueMapHref({ venue: 'FAUST SEOUL', district: 'YONGSAN-GU // ITAEWON' }))
+      .toBe('https://www.google.com/maps/search/?api=1&query=FAUST%20SEOUL%20YONGSAN-GU%20ITAEWON');
+    expect(venueMapHref({ venue: 'TBA', district: 'SEOUL' })).toBeNull();
+    expect(venueMapHref({ venue: '  ', district: 'SEOUL' })).toBeNull();
   });
 
   it('writes a start-only iCalendar entry with escaped text', () => {

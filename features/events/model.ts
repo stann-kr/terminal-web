@@ -47,12 +47,13 @@ export function dayMark(event: TerminalEvent, now: Date) {
   return days <= 0 ? 'D-DAY' : `D-${days}`;
 }
 
-/** `37.5335° N, 126.9958° E` → a Kakao Map pin with the venue name, or `null` when there are no coordinates. */
-export function venueMapHref(event: Pick<TerminalEvent, 'venue' | 'coords'>) {
-  const match = /^\s*(\d{1,2}(?:\.\d+)?)°\s*([NS])\s*,\s*(\d{1,3}(?:\.\d+)?)°\s*([EW])\s*$/i.exec(event.coords);
-  if (!match) return null;
-  const lat = Number(match[1]) * (match[2].toUpperCase() === 'S' ? -1 : 1);
-  const lng = Number(match[3]) * (match[4].toUpperCase() === 'W' ? -1 : 1);
-  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
-  return `https://map.kakao.com/link/map/${encodeURIComponent(event.venue.replace(/,/g, ' '))},${lat},${lng}`;
+/**
+ * A Google Maps search for the venue by name and district. The stored coordinates are approximate,
+ * so the place listing (its pin, its entrance) is found by name; an undisclosed venue gets no link.
+ */
+export function venueMapHref(event: Pick<TerminalEvent, 'venue' | 'district'>) {
+  const venue = event.venue.trim();
+  if (!venue || /^(TBA|TBD|CLASSIFIED|SECRET|미정|비공개)\b/i.test(venue)) return null;
+  const query = [venue, event.district.replace(/\/+/g, ' ')].join(' ').replace(/\s+/g, ' ').trim();
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }

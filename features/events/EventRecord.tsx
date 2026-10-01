@@ -36,16 +36,19 @@ export function EventFacts({
   ];
   if (modular)
     return (
-      <div className={styles.factModules}>
-        {groups.map((group) => (
-          <div key={group.label}>
-            <p className={ui.band} lang="en">
-              {group.label}
-            </p>
-            <Facts rows={group.rows.map(([label, value]) => [label, value])} />
-          </div>
-        ))}
-      </div>
+      <>
+        <div className={styles.factModules}>
+          {groups.map((group) => (
+            <div key={group.label}>
+              <p className={ui.band} lang="en">
+                {group.label}
+              </p>
+              <Facts rows={group.rows.map(([label, value]) => [label, value])} />
+            </div>
+          ))}
+        </div>
+        <SessionKeys event={event} />
+      </>
     );
   return (
     <Facts
@@ -58,6 +61,30 @@ export function EventFacts({
     />
   );
 }
+/**
+ * What a guest does with the date and the place: a pair of keys under the facts they act on, set
+ * off by the same gap as the facts below the title. Each key names where it leads on its right, so
+ * it does not read as one more fact line. A past session has neither.
+ */
+function SessionKeys({ event }: { event: TerminalEvent }) {
+  if (event.status === 'ARCHIVED') return null;
+  const map = venueMapHref(event);
+  return (
+    <ActionDeck className={styles.sessionKeys}>
+      <Action download href={`${eventHref(event.id)}/event.ics`}>
+        <span>캘린더에 추가</span>
+        <small className={styles.keyNote} aria-hidden="true">.ICS</small>
+      </Action>
+      {map && (
+        <Action external href={map}>
+          <span>지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span></span>
+          <small className={styles.keyNote} aria-hidden="true">GOOGLE MAPS</small>
+        </Action>
+      )}
+    </ActionDeck>
+  );
+}
+
 export function EventActions({
   event,
   events,
@@ -68,8 +95,6 @@ export function EventActions({
   now: Date;
 }) {
   const access = accessAvailability(event, events, now);
-  const ahead = event.status !== 'ARCHIVED';
-  const map = ahead ? venueMapHref(event) : null;
   return (
     <>
     <div className={styles.accessProtocol} data-open={access.canRequest}>
@@ -92,8 +117,6 @@ export function EventActions({
           게스트 신청
         </Action>
       )}
-      {map && <Action external href={map}>지도에서 보기</Action>}
-      {ahead && <Action download href={`${eventHref(event.id)}/event.ics`}>캘린더에 추가</Action>}
       <Action href="/signal">다음 행사 소식 신청</Action>
     </ActionDeck>
     </>
