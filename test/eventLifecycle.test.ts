@@ -13,7 +13,7 @@ import {
 } from '../lib/events/lifecycle';
 import type { EventStatus, TerminalEvent } from '../lib/events/types';
 import { dayMark, venueMapHref } from '../features/events/model';
-import { eventCalendar } from '../features/events/calendar';
+import { calendarSubscribeHref, sessionsCalendar } from '../features/events/calendar';
 
 function event(id: string, date: string, time: string, status: EventStatus): TerminalEvent {
   return {
@@ -164,22 +164,32 @@ describe('session marks and hand-offs', () => {
     expect(venueMapHref({ venue: '  ', district: 'SEOUL' })).toBeNull();
   });
 
-  it('writes a start-only iCalendar entry with escaped text', () => {
-    const ics = eventCalendar(
-      { ...event('TRM-03', '2026-11-28', '23:00 KST', 'UPCOMING'), session: 'LUMO; NIGHT', subtitle: 'A\\B', venue: 'FAUST SEOUL', district: 'YONGSAN-GU, ITAEWON' },
+  it('writes every session into one subscription feed with stable ids and escaped text', () => {
+    const ics = sessionsCalendar(
+      [
+        { ...event('TRM-03', '2026-11-28', '23:00 KST', 'UPCOMING'), session: 'LUMO; NIGHT', subtitle: 'A\\B', venue: 'FAUST SEOUL', district: 'YONGSAN-GU, ITAEWON' },
+        { ...event('TRM-02', '2026-05-08', '23:00', 'ARCHIVED'), session: 'TERMINAL [02]' },
+        event('BAD', '2026-02-30', '23:00', 'UPCOMING'),
+      ],
       'https://terminal.stann.kr',
       new Date('2026-10-01T00:00:00Z'),
-    )!;
+    );
     const lines = ics.split('\r\n');
+    expect(lines).toContain('X-WR-CALNAME:TERMINAL');
+    expect(lines.filter((line) => line === 'BEGIN:VEVENT')).toHaveLength(2);
+    expect(lines).toContain('UID:TRM-03@terminal.stann.kr');
     expect(lines).toContain('DTSTART:20261128T140000Z');
     expect(lines).toContain('SUMMARY:TERMINAL LUMO\\; NIGHT');
+    expect(lines).toContain('SUMMARY:TERMINAL [02]');
     expect(lines).toContain('LOCATION:FAUST SEOUL\\, YONGSAN-GU\\, ITAEWON');
-    expect(lines).toContain('URL:https://terminal.stann.kr/events/TRM-03');
     expect(ics).toContain('DESCRIPTION:A\\\\B\\nhttps://terminal.stann.kr/events/TRM-03');
-    expect(ics).not.toMatch(/DTEND|DURATION/);
+    expect(ics).not.toMatch(/^(DTEND|DURATION)[:;]/m);
     expect(lines.every((line) => new TextEncoder().encode(line).length <= 75)).toBe(true);
-    expect(eventCalendar(event('B', '2026-02-30', '23:00', 'UPCOMING'), 'https://x')).toBeNull();
-    expect(eventCalendar({ ...event('C', '2026-11-28', '23:00', 'UPCOMING'), session: 'TERMINAL [03]' }, 'https://x'))
-      .toContain('SUMMARY:TERMINAL [03]\r\n');
+  });
+
+  it('subscribes Apple calendars by webcal and others through Google Calendar', () => {
+    expect(calendarSubscribeHref('https://terminal.stann.kr', true)).toBe('webcal://terminal.stann.kr/calendar.ics');
+    expect(calendarSubscribeHref('https://terminal.stann.kr', false))
+      .toBe('https://calendar.google.com/calendar/render?cid=webcal%3A%2F%2Fterminal.stann.kr%2Fcalendar.ics');
   });
 });

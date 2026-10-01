@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
+import { useSyncExternalStore, type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
-import { Action, ActionDeck, Facts, ui } from '@/features/ui/Ui';
+import { Action, ActionDeck, BrandText, Facts, ui } from '@/features/ui/Ui';
+import { CALENDAR_FEED_PATH, calendarSubscribeHref } from './calendar';
 import {
   buildArtistArchive,
   profileForAppearance,
@@ -61,24 +63,49 @@ export function EventFacts({
     />
   );
 }
+const noSubscribe = () => () => {};
+/** The subscribe link for this browser: `webcal:` on Apple devices, Google Calendar elsewhere. */
+function useSubscribeHref() {
+  return useSyncExternalStore(
+    noSubscribe,
+    () => calendarSubscribeHref(location.origin, /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)),
+    // The server cannot know the device; the feed itself stands in until hydration.
+    () => CALENDAR_FEED_PATH,
+  );
+}
+
+function KeyFace({ label, glyph, children }: { label: string; glyph: string; children: ReactNode }) {
+  return (
+    <>
+      <span className={styles.keyText}>
+        <small lang="en">{label}</small>
+        <span>{children}</span>
+      </span>
+      <span className={styles.keyGlyph} aria-hidden="true">{glyph}</span>
+    </>
+  );
+}
+
 /**
- * What a guest does with the date and the place: a pair of keys under the facts they act on, set
- * off by the same gap as the facts below the title. Each key names where it leads on its right, so
- * it does not read as one more fact line. A past session has neither.
+ * What a guest does with the date and the place: labelled keys under the facts they act on,
+ * filled like every key so they never read as one more fact line. The calendar key subscribes to
+ * the whole TERMINAL feed (later changes reach the subscriber); a past session has no map key.
  */
 function SessionKeys({ event }: { event: TerminalEvent }) {
-  if (event.status === 'ARCHIVED') return null;
-  const map = venueMapHref(event);
+  const subscribe = useSubscribeHref();
+  const map = event.status === 'ARCHIVED' ? null : venueMapHref(event);
   return (
     <ActionDeck className={styles.sessionKeys}>
-      <Action download href={`${eventHref(event.id)}/event.ics`}>
-        <span>캘린더에 추가</span>
-        <small className={styles.keyNote} aria-hidden="true">.ICS</small>
+      <Action primary href={subscribe} external={subscribe.startsWith('https:')}>
+        <KeyFace label="CALENDAR" glyph="+">
+          <BrandText text="TERMINAL" /> 일정 구독
+        </KeyFace>
       </Action>
       {map && (
-        <Action external href={map}>
-          <span>지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span></span>
-          <small className={styles.keyNote} aria-hidden="true">GOOGLE MAPS</small>
+        <Action primary external href={map}>
+          <KeyFace label="MAP" glyph="↗">
+            지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span>
+          </KeyFace>
         </Action>
       )}
     </ActionDeck>

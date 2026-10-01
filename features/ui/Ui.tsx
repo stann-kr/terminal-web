@@ -83,7 +83,7 @@ export function Action({
   primary = false,
   carrier,
   external = false,
-  download = false,
+  className: extra = '',
 }: {
   href: string;
   children: ReactNode;
@@ -92,17 +92,13 @@ export function Action({
   carrier?: string;
   /** Another site, opened in a new tab. */
   external?: boolean;
-  /** A file to save (a calendar entry), not a page. */
-  download?: boolean;
+  className?: string;
 }) {
-  const className = `${styles.action} ${primary ? styles.primary : ''}`;
-  if (external || download)
+  const className = `${styles.action} ${primary ? styles.primary : ''} ${extra}`;
+  // Only the site's own paths go through the router; a `webcal:` feed or another site is a plain link.
+  if (external || !href.startsWith('/'))
     return (
-      <a
-        className={className}
-        href={href}
-        {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : { download: true })}
-      >
+      <a className={className} href={href} {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
         {brand(children)}
       </a>
     );

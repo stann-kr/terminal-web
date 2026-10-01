@@ -168,14 +168,38 @@
   margin-top: auto;
 }
 /* Calendar and map keys sit under the date and venue facts, a gap apart like the facts under the
-   title; the note on the right names where each key leads. */
+   title. They are filled keys, so they never read as one more fact line; a hairline of the plate
+   parts two neighbours. Each names its kind in a small label above what it does. */
 .sessionKeys {
+  gap: 2px;
   margin-top: 14px;
 }
-.keyNote {
-  color: var(--muted);
-  font: 400 var(--t-xs)/1 var(--mono);
-  letter-spacing: .08em;
+.sessionKeys > a {
+  min-height: 64px;
+  padding-block: 10px;
+  white-space: normal;
+}
+.keyText {
+  display: grid;
+  gap: 5px;
+}
+.keyText small {
+  color: var(--on-fill-muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+}
+.keyGlyph {
+  flex: none;
+  font: 400 var(--t-xl)/1 var(--mono);
+}
+/* Lit or pressed, the label follows the key's own text colour. */
+.sessionKeys > a:active small {
+  color: inherit;
+}
+@media (hover: hover) {
+  .sessionKeys > a:hover small {
+    color: inherit;
+  }
 }
 
 /* Short labels, codes and times never break mid-phrase. */
