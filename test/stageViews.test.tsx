@@ -6,6 +6,7 @@ import { Shell } from '../features/shell/Shell';
 import { EventCountdown } from '../features/events/EventCountdown';
 import { useViewport } from '../features/stage/data';
 import { useTransmitRange } from '../features/transmit/useTransmit';
+import siteContent from '../features/about/content.json';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
@@ -188,15 +189,38 @@ describe('stage views', () => {
   });
 
   it('offers the language only where a text comes in two, and reads the browser’s language first', () => {
-    const bilingualEvent = { ...past, description: { ko: '한국어 소개', en: 'English briefing' } };
+    const bilingualEvent = { ...past, stage: { ko: '방향', en: 'Bearing' }, description: { ko: '한국어 소개\n둘째 줄\n\n다음 문단', en: 'English briefing\nSecond line\n\nNext paragraph' } };
     const { container, go } = shell([bilingualEvent]);
     go('/events/OLD');
     const file = detail(container, 'event:OLD');
     expect(file).toHaveTextContent('한국어 소개');
+    const briefing = within(file).getByRole('group', { name: '행사 소개' });
+    expect(Array.from(briefing.querySelectorAll('p'), p => p.textContent)).toEqual(['한국어 소개\n둘째 줄', '다음 문단']);
+    expect(file).toHaveTextContent('방향');
     const toggle = within(file).getByRole('group', { name: '소개글 언어' });
     fireEvent.click(within(toggle).getByRole('button', { name: 'EN' }));
     expect(file).toHaveTextContent('English briefing');
+    expect(Array.from(briefing.querySelectorAll('p'), p => p.textContent)).toEqual(['English briefing\nSecond line', 'Next paragraph']);
+    expect(file).toHaveTextContent('Bearing');
     expect(window.localStorage.getItem('terminal:language')).toBe('en');
+    fireEvent.click(within(toggle).getByRole('button', { name: 'KO' }));
+    window.localStorage.removeItem('terminal:language');
+  });
+
+  it('reads the complete manifesto in either language with authored lines and paragraphs intact', () => {
+    const { container, go } = shell();
+    go('/about');
+    const about = plate(container, 'about');
+    const copy = within(about).getByRole('group', { name: 'TERMINAL 소개' });
+    const toggle = within(about).getByRole('group', { name: '소개글 언어' });
+    for (const language of ['ko', 'en'] as const) {
+      fireEvent.click(within(toggle).getByRole('button', { name: language.toUpperCase() }));
+      expect(Array.from(copy.querySelectorAll('p'), p => p.textContent)).toEqual([
+        siteContent.tagline,
+        ...siteContent.manifesto[language].split('\n\n'),
+        'Terminal Architect : STANN LUMO',
+      ]);
+    }
     fireEvent.click(within(toggle).getByRole('button', { name: 'KO' }));
     window.localStorage.removeItem('terminal:language');
   });

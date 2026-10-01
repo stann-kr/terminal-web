@@ -96,13 +96,13 @@ function parseLocalizedLines(value: unknown): TerminalEvent['invitationLines'] |
   return validLines(value.en) && validLines(value.ko) ? { en: value.en, ko: value.ko } : null;
 }
 
-function parseLocalizedText(value: unknown): TerminalEvent['description'] | undefined | null {
+function parseLocalizedText(value: unknown, max = MAX_DESCRIPTION): TerminalEvent['description'] | undefined | null {
   if (value === undefined) return undefined;
   if (!isJsonObject(value)) return null;
   return isString(value.en)
-    && value.en.length <= MAX_DESCRIPTION
+    && value.en.length <= max
     && isString(value.ko)
-    && value.ko.length <= MAX_DESCRIPTION
+    && value.ko.length <= max
     ? { en: value.en, ko: value.ko }
     : null;
 }
@@ -121,6 +121,8 @@ export function parsePublicEventRow(
 
   const session = parseBoundedString(data.session, 100);
   const subtitle = parseBoundedString(data.subtitle, 200);
+  const stage = parseLocalizedText(data.stage, 100);
+  const log = parseLocalizedText(data.log, MAX_TEXT);
   const date = parseBoundedString(data.date, 10);
   const time = parseBoundedString(data.time, 20);
   const venue = parseBoundedString(data.venue, 200);
@@ -138,6 +140,7 @@ export function parsePublicEventRow(
     || !isValidEventDateTime({ date, time })
     || !isString(data.status) || !EVENT_STATUSES.has(data.status as EventStatus)
     || invitationLines === null || description === null || posterUrl === null
+    || stage === null || log === null
   ) {
     return null;
   }
@@ -146,6 +149,8 @@ export function parsePublicEventRow(
     id: row.id,
     session,
     subtitle,
+    ...(stage === undefined ? {} : { stage }),
+    ...(log === undefined ? {} : { log }),
     date,
     time,
     venue,

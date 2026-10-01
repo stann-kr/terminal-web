@@ -123,6 +123,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
           <BrandText text={event.session} />
         </FitTitle>
         {event.subtitle && <p className={styles.sessionSubtitle}>{event.subtitle}</p>}
+        {event.stage && <p className={ui.band} lang={language}>{event.stage[language]}</p>}
         <EventFacts event={event} modular />
         {event.posterUrl && <Poster src={event.posterUrl} alt={`${event.session} 행사 포스터 — 새 탭에서 확대`} />}
       </div>
