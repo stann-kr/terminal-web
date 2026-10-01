@@ -147,10 +147,12 @@
   background: var(--fill);
   color: var(--on-fill);
 }
-.action:hover,
-.button:hover:not(:disabled) {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .action:hover,
+  .button:hover:not(:disabled) {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 /* A pressed key flashes inverse, like a backlit switch taking the command. */
 .action:active,

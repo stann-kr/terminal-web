@@ -8,6 +8,7 @@ import {
   FormPanel,
   FormSuccess,
   formStyles,
+  literalInput,
 } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
 import { useSignalSubscription } from './useSignalSubscription';
@@ -125,10 +126,12 @@ function SignalForm({
             />
             <Field
               id="signal-instagram"
-              label="인스타그램 ID"
-              required
+              label="인스타그램 ID (선택)"
+              hint="적어 두면 인스타그램으로도 소식을 보냅니다."
               maxLength={31}
               pattern="@?[A-Za-z0-9_.]{1,30}"
+              {...literalInput}
+              placeholder="@handle"
               value={fields.instagram}
               error={
                 errorCode === 'INVALID_INSTAGRAM_FORMAT'
@@ -146,8 +149,8 @@ function SignalForm({
               checked={fields.consent}
               onChange={(value) => setFields({ ...fields, consent: value })}
             >
-              이메일·인스타그램 계정을 TERMINAL 이벤트 소식 안내 목적으로
-              수집하는 데 동의합니다.
+              이메일과 (적은 경우) 인스타그램 계정을 TERMINAL 이벤트 소식 안내
+              목적으로 수집하는 데 동의합니다. 보존 기간: 수신 거부 시까지.
             </Consent>
             <button
               aria-busy={pending}

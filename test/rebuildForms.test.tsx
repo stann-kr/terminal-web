@@ -54,6 +54,20 @@ describe('guest request UI',()=>{
     await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByLabelText(/^이메일/),'example@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     expect(await screen.findByRole('heading',{name:'게스트 신청을 저장했습니다'})).toBeInTheDocument();expect(screen.getByRole('status')).toHaveTextContent('게스트 신청을 저장했습니다');expect(screen.getByRole('status')).toHaveFocus();
   });
+  it('checks the code on Enter, then moves on to the name and summarises the saved request',async()=>{
+    const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockResolvedValueOnce(json({ok:true}));vi.stubGlobal('fetch',fetch);
+    const user=userEvent.setup();render(<AccessForm eventId="A"/>);
+    expect(screen.getByText('초대 코드를 확인하면 입력할 수 있습니다.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
+    expect(await screen.findByText('초대 코드를 확인했습니다.')).toBeInTheDocument();
+    expect(fetch.mock.calls[0][0]).toBe('/api/gate/code-info');
+    expect(screen.getByLabelText(/^이름/)).toHaveFocus();
+    expect(screen.queryByText('초대 코드를 확인하면 입력할 수 있습니다.')).not.toBeInTheDocument();
+    await user.keyboard('Example');await user.type(screen.getByLabelText(/^이메일/),'example@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    const saved=await screen.findByRole('status');
+    expect(saved).toHaveTextContent('INVITER');expect(saved).toHaveTextContent('example@example.test');expect(saved).toHaveTextContent('@example');
+    expect(screen.getByRole('link',{name:'다음 행사 소식 신청'})).toHaveAttribute('href','/signal');
+  });
 });
 describe('transmit UI',()=>{
   it('refreshes saved data but never navigates from a form that was left during submission',async()=>{

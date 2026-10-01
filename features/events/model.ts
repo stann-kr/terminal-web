@@ -1,5 +1,5 @@
 import type { Artist, TerminalEvent } from '@/lib/events/types';
-import { getArchivedOrElapsedEvents, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, withEffectiveEventStatus } from '@/lib/events/lifecycle';
+import { getArchivedOrElapsedEvents, getEventDateTime, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, withEffectiveEventStatus } from '@/lib/events/lifecycle';
 import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
 
 export const isPublicArtist = (artist: Artist) => artist.status === 'CONFIRMED' || artist.status === 'ARCHIVED';
@@ -34,3 +34,26 @@ export function accessAvailability(event: TerminalEvent, events: TerminalEvent[]
   return { canRequest: window.isActive, message: window.isActive ? '게스트 신청을 접수하고 있습니다.' : `행사 시작 30일 전부터 신청할 수 있습니다. ${window.opensInDays ?? 0}일 후 열립니다.` };
 }
 export function pageNumber(value: string | null, max = 1000) { return value && /^[1-9]\d*$/.test(value) && Number(value) <= max ? Number(value) : 1; }
+
+const KST_OFFSET_MS = 9 * 3_600_000;
+const kstDay = (time: number) => Math.floor((time + KST_OFFSET_MS) / 86_400_000);
+/** `D-12` by KST calendar days (a session tonight is `D-DAY`), or the state once it has started. */
+export function dayMark(event: TerminalEvent, now: Date) {
+  if (event.status === 'LIVE') return 'LIVE';
+  if (event.status === 'ARCHIVED') return 'ARCHIVE';
+  const start = getEventDateTime(event).getTime();
+  if (!Number.isFinite(start)) return 'TBA';
+  const days = kstDay(start) - kstDay(now.getTime());
+  return days <= 0 ? 'D-DAY' : `D-${days}`;
+}
+
+/**
+ * A Google Maps search for the venue by name and district. The stored coordinates are approximate,
+ * so the place listing (its pin, its entrance) is found by name; an undisclosed venue gets no link.
+ */
+export function venueMapHref(event: Pick<TerminalEvent, 'venue' | 'district'>) {
+  const venue = event.venue.trim();
+  if (!venue || /^(TBA|TBD|CLASSIFIED|SECRET|미정|비공개)\b/i.test(venue)) return null;
+  const query = [venue, event.district.replace(/\/+/g, ' ')].join(' ').replace(/\s+/g, ' ').trim();
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}

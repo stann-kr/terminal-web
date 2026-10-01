@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+import { HTML_LIMITED_BOT_UA_RE } from "next/dist/shared/lib/router/utils/html-bots";
 
 // Local dev and previews read the live D1 (wrangler.toml `remote = true`). CI (GitHub Actions, Workers
 // Builds) has no interactive Cloudflare login, so builds there use the local D1 simulation instead.
@@ -35,6 +36,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  // Link-preview bots read the title and description from <head>, so they get blocking metadata.
+  // Next's list leaves out the KakaoTalk and Telegram scrapers, where TERMINAL links are shared.
+  htmlLimitedBots: new RegExp(`${HTML_LIMITED_BOT_UA_RE.source}|kakaotalk-scrap|TelegramBot`, "i"),
   allowedDevOrigins: ['127.0.0.1'],
   poweredByHeader: false,
   images: {

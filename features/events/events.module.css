@@ -81,12 +81,16 @@
   letter-spacing: .16em;
 }
 /* Hover sweeps the whole line in from the side the pointer entered. */
-.stageSlots li:has(a:hover) {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .stageSlots li:has(a:hover) {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
-.stageSlots li:has(a:hover) * {
-  color: inherit !important;
+@media (hover: hover) {
+  .stageSlots li:has(a:hover) * {
+    color: inherit !important;
+  }
 }
 .stageSlots li:has(a:focus-visible) {
   outline: 2px solid var(--focus);
@@ -126,9 +130,11 @@
 .lineup a {
   transition: var(--light-motion);
 }
-.lineup a:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .lineup a:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 .lineup small {
   display: block;
@@ -160,6 +166,40 @@
 }
 .accessDeck {
   margin-top: auto;
+}
+/* Calendar and map keys sit under the date and venue facts, a gap apart like the facts under the
+   title. They are filled keys, so they never read as one more fact line; a hairline of the plate
+   parts two neighbours. Each names its kind in a small label above what it does. */
+.sessionKeys {
+  gap: 2px;
+  margin-top: 14px;
+}
+.sessionKeys > a {
+  min-height: 64px;
+  padding-block: 10px;
+  white-space: normal;
+}
+.keyText {
+  display: grid;
+  gap: 5px;
+}
+.keyText small {
+  color: var(--on-fill-muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+}
+.keyGlyph {
+  flex: none;
+  font: 400 var(--t-xl)/1 var(--mono);
+}
+/* Lit or pressed, the label follows the key's own text colour. */
+.sessionKeys > a:active small {
+  color: inherit;
+}
+@media (hover: hover) {
+  .sessionKeys > a:hover small {
+    color: inherit;
+  }
 }
 
 /* Short labels, codes and times never break mid-phrase. */

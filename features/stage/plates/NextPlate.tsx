@@ -1,9 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { getEventDateTime } from '@/lib/events/lifecycle';
 import type { TerminalEvent } from '@/lib/events/types';
 import { DataActivity } from '@/features/display/Display';
-import { eventHref, publicArtists, statusLabel } from '@/features/events/model';
+import { accessAvailability, dayMark, eventHref, publicArtists, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
 import { Action, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
@@ -13,16 +12,6 @@ import { Rings } from '../Rings';
 import { PlateStatus } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
-
-/** `D-12`, `D-DAY`, or the state once the session has started. */
-function dayMark(event: TerminalEvent, now: Date) {
-  if (event.status === 'LIVE') return 'LIVE';
-  if (event.status === 'ARCHIVED') return 'ARCHIVE';
-  const start = getEventDateTime(event).getTime();
-  if (!Number.isFinite(start)) return 'TBA';
-  const days = Math.ceil((start - now.getTime()) / 86_400_000);
-  return days <= 0 ? 'D-DAY' : `D-${days}`;
-}
 
 /**
  * The console's own plate: the TERMINAL wordmark and the readouts ride on top of it everywhere,
@@ -68,7 +57,7 @@ export function NextPlate({ mode, data, query, rings }: PlateProps) {
         </StateNotice>
       );
     }
-    return <NextSession event={event} mode={mode} now={data.now} rings={rings} />;
+    return <NextSession event={event} events={data.events} mode={mode} now={data.now} rings={rings} />;
   };
   return (
     <section className={styles.next} aria-label="대표 행사" data-density={mode} data-origin="">
@@ -78,8 +67,10 @@ export function NextPlate({ mode, data, query, rings }: PlateProps) {
   );
 }
 
-function NextSession({ event, mode, now, rings }: { event: TerminalEvent; mode: PlateProps['mode']; now: Date; rings?: PlateProps['rings'] }) {
+function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent; events: TerminalEvent[]; mode: PlateProps['mode']; now: Date; rings?: PlateProps['rings'] }) {
   const carrier = `event:${event.id}`;
+  // Guest requests open 30 days ahead; the home plate says so, so nobody has to open the file to find out.
+  const accessOpen = accessAvailability(event, events, now).canRequest;
   const label = event.status === 'ARCHIVED' ? 'Last session' : 'Next session';
   if (mode === 'chip' || mode === 'index') {
     return (
@@ -106,7 +97,7 @@ function NextSession({ event, mode, now, rings }: { event: TerminalEvent; mode: 
       href={eventHref(event.id)}
       className={`${styles.card} ${styles.nextBlock}`}
       data-carrier={carrier}
-      aria-label={`${label === 'Last session' ? '지난 행사' : '다음 행사'} ${event.session} 상세 보기`}
+      aria-label={`${label === 'Last session' ? '지난 행사' : '다음 행사'} ${event.session}${accessOpen ? ', 게스트 신청 접수 중' : ''} 상세 보기`}
       scroll={false}
     >
       {rings && <Rings at={rings} under />}
@@ -116,6 +107,7 @@ function NextSession({ event, mode, now, rings }: { event: TerminalEvent; mode: 
             <span className={styles.nextLabel}>{label}</span>
             <span className={styles.bandTags}>
               <Chip solid>{statusLabel(event.status)}</Chip>
+              {accessOpen && <Chip solid>ACCESS OPEN</Chip>}
               <Chip>{event.id}</Chip>
               <Chip>{dayMark(event, now)}</Chip>
             </span>

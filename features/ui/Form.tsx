@@ -4,6 +4,7 @@ import {
   useRef,
   type InputHTMLAttributes,
   type ReactNode,
+  type Ref,
 } from 'react';
 import { Bay } from './Ui';
 import styles from './form.module.css';
@@ -31,12 +32,17 @@ export function FormPanel({
     </section>
   );
 }
+/** For handles and codes, typed as they are: no capital first letter, no autocorrect. */
+export const literalInput = { autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false } as const;
+
 export function Field({
   label,
   error,
   hint,
+  ref,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & {
+  ref?: Ref<HTMLInputElement>;
   id: string;
   label: string;
   error?: string;
@@ -66,6 +72,7 @@ export function Field({
       </div>
       <input
         {...props}
+        ref={ref}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
       />

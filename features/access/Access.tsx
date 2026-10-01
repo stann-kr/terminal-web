@@ -23,7 +23,7 @@ export function AccessRequest({ eventId }: { eventId: string }) {
         };
   return (
     <FormPanel title="게스트 신청서" code="ACCESS">
-      <AccessForm key={eventId} eventId={eventId} availability={availability} />
+      <AccessForm key={eventId} eventId={eventId} event={event} availability={availability} />
     </FormPanel>
   );
 }

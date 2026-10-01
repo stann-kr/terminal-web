@@ -153,9 +153,11 @@
   text-decoration: none;
   transition: var(--light-motion);
 }
-.pager a:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .pager a:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 .pager a:focus-visible {
   outline-offset: -4px;
@@ -310,9 +312,11 @@
   letter-spacing: inherit;
   transition: var(--light-motion);
 }
-.textPager button:hover:not(:disabled) {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .textPager button:hover:not(:disabled) {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 .textPager button:disabled {
   cursor: default;
@@ -363,9 +367,11 @@
   letter-spacing: .12em;
   transition: var(--light-motion);
 }
-.enlarge button:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .enlarge button:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 
 @media (forced-colors: active) {
@@ -442,8 +448,10 @@
   visibility: visible;
   transition-delay: 0s;
 }
-.scrollHint:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cue);
+@media (hover: hover) {
+  .scrollHint:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cue);
+  }
 }
 .scrollHint:focus-visible {
   outline-color: var(--cue);
