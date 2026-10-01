@@ -1,4 +1,4 @@
-name = "terminal-2"
+name = "terminal-web"
 main = ".open-next/worker.js"
 compatibility_date = "2026-08-04"
 compatibility_flags = ["nodejs_compat"]
@@ -25,7 +25,7 @@ migrations_dir = "migrations"
 remote = true
 
 [env.production]
-name = "terminal-2"
+name = "terminal-web"
 
 [env.production.assets]
 directory = ".open-next/assets"
@@ -38,7 +38,7 @@ database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
 
 [env.development]
-name = "terminal-2-dev"
+name = "terminal-web-dev"
 workers_dev = true
 preview_urls = true
 
