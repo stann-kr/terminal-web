@@ -132,7 +132,7 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
           {mode === 'tile' ? <span className={styles.nextWhen}>{event.date} · {event.venue}</span> : <Facts rows={schedule} />}
         </span>
         {mode === 'hero' && (
-          <span className={`${styles.part} ${styles.partFlush}`} data-priority="4">
+          <span className={`${styles.part} ${styles.partFlush} ${styles.partLineup}`} data-priority="4">
             <span className={ui.band} aria-hidden="true"><span>Lineup</span></span>
             <ul className={styles.lineupCells}>
               {artists.length

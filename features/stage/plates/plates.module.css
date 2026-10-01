@@ -1275,6 +1275,26 @@
 .lineupCells li:nth-child(odd) {
   background: var(--well);
 }
+/* The lineup fills the next-session plate like any plate's sub-plates (layout.ts fillHeight): it
+   takes the height left above the open key, its rows growing to twice their own height at most
+   (the grid shares free space up to each row's max), and the last cell runs to its row's end. It
+   grows but never shrinks, so a plate too short still folds it (FitStack) rather than clipping. */
+:global([data-stage=stage]) .partLineup {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+:global([data-stage=stage]) .partLineup .lineupCells {
+  flex: 1 0 auto;
+  grid-auto-rows: minmax(auto, 104px);
+  align-content: start;
+}
+.lineupCells li:last-child {
+  grid-column-end: -1;
+}
+.lineupCells li {
+  align-content: center;
+}
 .lineupCells small {
   color: var(--muted);
 }
