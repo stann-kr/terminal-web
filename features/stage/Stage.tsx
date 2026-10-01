@@ -258,14 +258,21 @@ export function Stage({ state: address }: { state: StageState }) {
   // ── Carrier origin: a detail opened from elsewhere sets out from where the click was ─────────
   const [origin, setOrigin] = useState<Origin | null>(null);
   const settledKey = useRef(key);
+  const openBefore = useRef(layout.open);
   useLayoutEffect(() => {
     if (settledKey.current === key) return;
     settledKey.current = key;
     // A detail grows out of where it was opened: the pressed row or plate, else its own index line.
+    // A file of the same kind already open (another session from a session, its request form) stays
+    // where it is and only trades its content, as every other box does; growing it again out of
+    // the pressed line would fold the open file down and back up for nothing.
     const carrier = stageOrigin.take(state);
+    const before = openBefore.current;
+    openBefore.current = layout.open;
     const opened = layout.open ? layout.items[carrierKey(layout.open.kind, layout.open.id)] : null;
     const from = carrier?.rect ?? (opened?.visible ? opened.rect : null);
-    if (layout.open && from) setOrigin({ item: `detail:${layout.open.kind}`, token: performance.now(), rect: from });
+    const alreadyOpen = !!before && before.kind === layout.open?.kind;
+    if (layout.open && from && !alreadyOpen) setOrigin({ item: `detail:${layout.open.kind}`, token: performance.now(), rect: from });
     // Focus follows the view: its title, or the stage when the title is not there yet.
     const element = root.current;
     if (element) (viewTitle(element) ?? element).focus({ preventScroll: true });

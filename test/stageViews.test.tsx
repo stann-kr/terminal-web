@@ -6,6 +6,7 @@ import { Shell } from '../features/shell/Shell';
 import { EventCountdown } from '../features/events/EventCountdown';
 import { useViewport } from '../features/stage/data';
 import { useTransmitRange } from '../features/transmit/useTransmit';
+import { stageOrigin } from '../features/stage/state';
 import { NodeActivity } from '../features/transmit/NodeActivity';
 import siteContent from '../features/about/content.json';
 
@@ -348,6 +349,33 @@ describe('home plates', () => {
     await act(async () => resolve(new Response(JSON.stringify({ logs: [5, 6, 7].map(node), total: 8, page: 2, totalPages: 2 }), { headers: { 'Content-Type': 'application/json' } })));
     await waitFor(() => expect(container.querySelectorAll('li')).toHaveLength(8));
     vi.unstubAllGlobals();
+  });
+
+  it('grows a file out of the pressed line once, then trades sessions in place without folding it down', () => {
+    const { container, go } = shell([past, upcoming]);
+    go('/events');
+    const pressed = { x: 5, y: 5, w: 33, h: 11 };
+    const styles = (box: HTMLElement, step: () => void) => {
+      const seen: string[] = [];
+      const observer = new MutationObserver(records => records.forEach(record => seen.push(record.oldValue ?? '')));
+      observer.observe(box, { attributes: true, attributeFilter: ['style'], attributeOldValue: true });
+      step();
+      observer.takeRecords().forEach(record => seen.push(record.oldValue ?? ''));
+      observer.disconnect();
+      return seen.join(' | ');
+    };
+    // Opened from the directory, the file sets out from the pressed line.
+    stageOrigin.record({ kind: 'event', id: 'TRM-03', rect: pressed });
+    go('/events/TRM-03');
+    const box = detail(container, 'event:TRM-03');
+    stageOrigin.record({ kind: 'event', id: 'TRM-03', rect: pressed });
+    go('/events');
+    stageOrigin.record({ kind: 'event', id: 'TRM-03', rect: pressed });
+    expect(styles(box, () => go('/events/TRM-03'))).toContain('width: 33px');
+    // From an open session to another: the same box stays put and only trades its content.
+    stageOrigin.record({ kind: 'event', id: 'OLD', rect: pressed });
+    expect(styles(box, () => go('/events/OLD'))).not.toContain('width: 33px');
+    expect(box).toHaveAttribute('data-detail', 'event:OLD');
   });
 
   it('draws the session cells as the sessions’ own elements, which become the directory rows', () => {
