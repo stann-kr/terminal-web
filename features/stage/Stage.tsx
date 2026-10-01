@@ -182,6 +182,18 @@ export function Stage({ state: address }: { state: StageState }) {
       delete html.dataset.stageMode;
     };
   }, [mode]);
+  // The window height the stage is tiled for (held through a browser bar sliding, see useViewport),
+  // for the frame around it: were the frame to follow the live `svh`, an in-app browser's bar would
+  // grow and shrink the page under the reader's finger while the stage itself held still.
+  const heldHeight = viewport?.h;
+  useLayoutEffect(() => {
+    if (!heldHeight) return;
+    const html = document.documentElement;
+    html.style.setProperty('--viewport-h', `${heldHeight}px`);
+    return () => {
+      html.style.removeProperty('--viewport-h');
+    };
+  }, [heldHeight]);
   // More than one sheet: the page snaps sheet by sheet (html scroll-snap), like turning pages.
   useLayoutEffect(() => {
     document.documentElement.dataset.sheets = String(sheetCount);
@@ -190,9 +202,17 @@ export function Stage({ state: address }: { state: StageState }) {
     };
   }, [sheetCount]);
   // A new scene starts at its first sheet; turning a list or log page keeps where the reader is.
+  // The jump is instant (the plates already travel; the page's smooth scrolling would be cut short
+  // on a phone by a finger's momentum or the sheets settling), and checked once more after the
+  // layout has settled.
   const scene = sceneKey(state);
   useLayoutEffect(() => {
-    window.scrollTo({ top: 0 });
+    const top = () => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    top();
+    const frame = requestAnimationFrame(() => {
+      if (window.scrollY !== 0) top();
+    });
+    return () => cancelAnimationFrame(frame);
   }, [scene]);
 
   // Heads are measured at the arrival size right after each change, before the frame paints.

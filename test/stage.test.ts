@@ -230,6 +230,22 @@ describe('stage layout', () => {
     expect(layout.sheets[0].h).toBe(narrow.h);
   });
 
+  it('keeps the back card at its height when a long file grows its sheet', () => {
+    const state = stageStateFromUrl('/events/TRM-05');
+    const m = stageMetrics(390);
+    const narrow = { w: 370, h: 824 };
+    const plain = computeLayout(state, narrow, { viewportW: 390, items: items() });
+    const grown = computeLayout(state, narrow, { viewportW: 390, items: items(), spill: { alone: true, moved: [], grow: { detail: 1600 } } });
+    expect(Math.round(plain.back!.h)).toBe(m.natural.back);
+    expect(Math.round(grown.back!.h)).toBe(m.natural.back);
+    expect(Math.round(grown.detail!.h - plain.detail!.h)).toBe(1600);
+    // The same on a wide stage, where a spilled file has a sheet of its own under the back card.
+    const wide = STAGES[0].stage;
+    const alone = computeLayout(state, wide, { viewportW: 1440, items: items(), spill: { alone: true, moved: [], grow: {} } });
+    const tall = computeLayout(state, wide, { viewportW: 1440, items: items(), spill: { alone: true, moved: [], grow: { detail: 900 } } });
+    expect(Math.round(tall.back!.h)).toBe(Math.round(alone.back!.h));
+  });
+
   it('sizes a narrow home’s summary plates by what they hold', () => {
     const narrow = { w: 370, h: 824 };
     const m = stageMetrics(390);

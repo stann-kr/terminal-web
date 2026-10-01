@@ -583,6 +583,8 @@ describe('stage scroll', () => {
     go('/transmit');
     go('/transmit', 'page=2');
     expect(scrollTo).toHaveBeenCalledTimes(1);
+    // The jump to a new scene is instant: a smooth one is cut short on a phone.
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
     scrollTo.mockRestore();
   });
 });
@@ -619,6 +621,49 @@ describe('stage viewport', () => {
     act(() => void window.dispatchEvent(new Event('resize')));
     await settle();
     expect(result.current).toMatchObject({ w: 844, h: 390, resizing: false });
+    vi.unstubAllGlobals();
+  });
+
+  it('hands the frame the height the stage holds, not the live window height', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('coarse'), media: query, addEventListener() {}, removeEventListener() {} }));
+    viewport(390, 724);
+    shell();
+    const held = () => document.documentElement.style.getPropertyValue('--viewport-h');
+    await waitFor(() => expect(held()).toBe('724px'));
+    // A bar hides: the window is taller, the page keeps its height.
+    viewport(390, 780);
+    act(() => void window.dispatchEvent(new Event('resize')));
+    await act(() => new Promise(resolve => setTimeout(resolve, 200)));
+    expect(held()).toBe('724px');
+    vi.unstubAllGlobals();
+  });
+
+  it('re-tiles once when a browser bar first shows, never while bars come and go or a keyboard opens', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('coarse'), media: query, addEventListener() {}, removeEventListener() {} }));
+    viewport(390, 780);
+    const { result } = renderHook(() => useViewport());
+    const settle = () => act(() => new Promise(resolve => setTimeout(resolve, 200)));
+    const height = async (h: number) => {
+      viewport(390, h);
+      act(() => void window.dispatchEvent(new Event('resize')));
+      await settle();
+      return result.current?.h;
+    };
+    // The bar shows: the page is shorter, and the stage follows once.
+    expect(await height(724)).toBe(724);
+    // The bars hide and show again while scrolling, by however much: the stage stays as it is.
+    expect(await height(780)).toBe(724);
+    expect(await height(724)).toBe(724);
+    expect(await height(924)).toBe(724);
+    // Typing in a field, the keyboard takes height: the stage stays, and is not left short after.
+    const field = document.createElement('input');
+    document.body.appendChild(field);
+    field.focus();
+    expect(await height(420)).toBe(724);
+    field.blur();
+    field.remove();
+    // A window that really is shorter is followed.
+    expect(await height(600)).toBe(600);
     vi.unstubAllGlobals();
   });
 });

@@ -48,9 +48,6 @@ export type Viewport = { w: number; h: number; resizing: boolean };
 /** How long the window must hold still before a resize counts as finished (ms). */
 const RESIZE_SETTLE_MS = 150;
 
-/** Without `svh`, a touch browser's height change of less than this at the same width is its toolbar. */
-const TOOLBAR_SLACK = 120;
-
 /**
  * The window size, measured before the first paint and followed on every frame of a resize;
  * `resizing` holds while the window is being dragged. Null on the server.
@@ -72,12 +69,18 @@ export function useViewport(): Viewport | null {
       document.body.appendChild(probe);
     }
     const touch = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+    const editing = () => !!document.activeElement?.matches?.('input, textarea, select, [contenteditable=true]');
     let last: { w: number; h: number } | null = null;
     const measure = () => {
       const small = probe ? Math.round(probe.getBoundingClientRect().height) : 0;
       const size = { w: window.innerWidth, h: small > 0 ? small : window.innerHeight };
-      // No steady `svh` reading: at the same width, a small height change on a touch screen is the toolbar.
-      if (small <= 0 && touch && last && size.w === last.w && Math.abs(size.h - last.h) < TOOLBAR_SLACK) return last;
+      // On a touch screen, at the same width, the height moves with the browser's bars as the page
+      // scrolls: Safari's own (by more than a fixed slack on some phones), an in-app browser's that
+      // resizes the page and `svh` with it. The stage keeps the shortest height seen at this width:
+      // it follows a height only when it is shorter than any before, so it re-tiles at most once,
+      // when a bar first shows, and never while the bars come and go. While a field is being typed
+      // in, a height change is the keyboard: the stage stays as it is, so it is not left short after.
+      if (touch && last && size.w === last.w) return editing() || size.h >= last.h ? last : size;
       return size;
     };
     const commit = (size: { w: number; h: number }, resizing: boolean) => {

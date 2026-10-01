@@ -1119,6 +1119,19 @@
 :global([data-stage]:not([data-stage=stage])) .poster img {
   max-height: 420px;
 }
+/* Stacked (one column), the overview is only as tall as it is, so the poster cannot take the height
+   left in it: it is set by the width instead, up to 440px, its frame held at a poster's proportion
+   until the image is in so nothing shifts when it arrives. */
+@container layer (max-width: 700px) {
+  .poster {
+    flex: none;
+  }
+  .poster img {
+    width: min(100%, 440px);
+    max-height: none;
+    aspect-ratio: 707 / 1000;
+  }
+}
 .sessionOrder,
 .sessionBriefing,
 .sessionAccess,
@@ -1211,8 +1224,17 @@
 }
 @container layer (max-width: 700px) {
   .artistFile { grid-template-columns: minmax(0, 1fr); }
-  /* As the session file: the records are as tall as they are, the biography takes the rest. */
-  :global([data-stage=stage]) .artistFile { grid-template-rows: auto auto minmax(var(--paged-min), 1fr); }
+  /* Stacked, the biography is read right after the records, and the shared lineup closes the file:
+     the records column opens up so its two panels sit in the file's own order. As the session file,
+     the records and the lineup are as tall as they are, the biography takes the rest. */
+  .fileRecords,
+  .fileRecords > div {
+    display: contents;
+  }
+  .fileRecords > div > :first-child { order: 1; }
+  .fileBio { order: 2; }
+  .fileRecords > div > :nth-child(2) { order: 3; }
+  :global([data-stage=stage]) .artistFile { grid-template-rows: auto auto minmax(var(--paged-min), 1fr) auto; }
 }
 
 
