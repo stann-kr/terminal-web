@@ -168,11 +168,15 @@
   margin-top: auto;
 }
 /* Calendar and map keys sit under the date and venue facts, a gap apart like the facts under the
-   title. They are filled keys, so they never read as one more fact line; a hairline of the plate
-   parts two neighbours. Each names its kind in a small label above what it does. */
+   title. They are filled keys, so they never read as one more fact line. Two neighbours sit flush,
+   parted by tone as tone bars are: the second is the fill lifted a step toward its label colour.
+   Each names its kind in a small label above what it does. */
 .sessionKeys {
-  gap: 2px;
+  gap: 0;
   margin-top: 14px;
+}
+.sessionKeys > a + a {
+  background: color-mix(in srgb, var(--fill) 84%, var(--on-fill));
 }
 .sessionKeys > a {
   min-height: 64px;
