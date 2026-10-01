@@ -558,12 +558,12 @@
   .boot:not([data-done]) {
     animation: bootGiveWay 0s linear 6s forwards;
   }
-  /* A quick start never shows the wordmark: the field alone covers the stage, and the words come in
-     only when the wait runs past 0.6s. */
+  /* The screen holds for at least 1s (Stage), so its words come in early: the field alone covers
+     the stage for the first moment, then the wordmark and the loading line fade in. */
   .bootMark,
   .bootLine {
     opacity: 0;
-    animation: bootShow 320ms var(--ease-move) 600ms forwards;
+    animation: bootShow 320ms var(--ease-move) 200ms forwards;
   }
 }
 @media (scripting: enabled) and (prefers-reduced-motion: reduce) {

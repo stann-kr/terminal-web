@@ -56,6 +56,21 @@ afterEach(() => {
 });
 
 describe('stage shell', () => {
+  it('keeps hover off after a change of view until the pointer moves once the boxes have landed', () => {
+    vi.useFakeTimers();
+    const { container, go } = shell();
+    const stage = () => container.querySelector('#stage')!;
+    go('/signal');
+    expect(stage()).toHaveAttribute('data-moving');
+    // Moving while the boxes travel, or simply waiting, does not bring hover back.
+    act(() => void fireEvent.pointerMove(window));
+    act(() => void vi.advanceTimersByTime(1000));
+    expect(stage()).toHaveAttribute('data-moving');
+    // The first movement after landing does: the browser now re-finds what is under the pointer.
+    act(() => void fireEvent.pointerMove(window));
+    expect(stage()).not.toHaveAttribute('data-moving');
+  });
+
   it('has no header, footer or menu: the wordmark rides on the next plate and the plates are the menu', () => {
     const { container, go } = shell();
     expect(screen.queryByRole('banner')).not.toBeInTheDocument();
@@ -546,6 +561,16 @@ describe('boot screen', () => {
     expect(boot()).toBeTruthy();
     await waitFor(() => expect(boot()).toHaveAttribute('data-done'));
     expect(boot()).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('holds for at least a second from the page load, however fast the console is ready', async () => {
+    // 0.2s into the page load: the screen has 0.8s still to hold.
+    vi.spyOn(performance, 'now').mockReturnValue(200);
+    const { container } = shell();
+    const boot = () => container.ownerDocument.querySelector<HTMLElement>('[role=status][class*=bootLine]')?.parentElement;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    expect(boot()).not.toHaveAttribute('data-done');
+    await waitFor(() => expect(boot()).toHaveAttribute('data-done'), { timeout: 2000 });
   });
 });
 

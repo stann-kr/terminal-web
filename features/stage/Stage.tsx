@@ -41,6 +41,8 @@ const ITEM_STAGGER_MAX = 160;
 const MOVING_MS = 900;
 /** Longest a first visit waits behind the boot screen before the stage shows as it is (ms). */
 const BOOT_MAX_MS = 5000;
+/** Shortest time the boot screen stays, counted from the page load, so it reads as a moment (ms). */
+const BOOT_MIN_MS = 1000;
 /** How long a folded detail keeps its full content before it rests as a light row (ms). */
 const DETAIL_REST_MS = 700;
 /** Plates whose heads the carriers sit under; their real head heights feed the layout. */
@@ -344,15 +346,27 @@ export function Stage({ state: address }: { state: StageState }) {
   const reach = size ? Math.hypot(size.w, size.h) : 1;
   const wave = (target: Rect) => (from ? Math.round(Math.min(1, Math.hypot(target.x + target.w / 2 - from.x, target.y + target.h / 2 - from.y) / reach) * WAVE_MS) : 0);
 
-  // While the boxes travel, pointing lights nothing up: a box sliding under a still pointer does not flash.
+  // While the boxes travel, pointing lights nothing up: a box sliding under a still pointer does not
+  // flash. Nor after they land, until the pointer moves: a browser re-hit-tests hover only on pointer
+  // movement, so a card that travelled out from under a resting pointer would stay lit.
   const [moving, setMoving] = useState(false);
   const firstKey = useRef(key);
   useLayoutEffect(() => {
     if (firstKey.current === key) return;
     firstKey.current = key;
     setMoving(true);
-    const timer = window.setTimeout(() => setMoving(false), MOVING_MS);
-    return () => window.clearTimeout(timer);
+    let landed = false;
+    const timer = window.setTimeout(() => {
+      landed = true;
+    }, MOVING_MS);
+    const wake = () => {
+      if (landed) setMoving(false);
+    };
+    window.addEventListener('pointermove', wake, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('pointermove', wake);
+    };
   }, [key]);
 
   // ── Render ──────────────────────────────────────────────────────────────────────────────
@@ -368,8 +382,17 @@ export function Stage({ state: address }: { state: StageState }) {
   const [booted, setBooted] = useState(false);
   useEffect(() => {
     if (booted || !(state.view === 'none' || tooShort || (onStage && ready && settled))) return;
-    const frame = requestAnimationFrame(() => setBooted(true));
-    return () => cancelAnimationFrame(frame);
+    // The console itself holds its loading screen for at least BOOT_MIN_MS from the page load, so a
+    // fast start does not flash past; pages outside the stage and the enlarge card never wait.
+    const hold = state.view === 'none' || tooShort ? 0 : Math.max(0, BOOT_MIN_MS - performance.now());
+    let frame = 0;
+    const timer = window.setTimeout(() => {
+      frame = requestAnimationFrame(() => setBooted(true));
+    }, hold);
+    return () => {
+      window.clearTimeout(timer);
+      cancelAnimationFrame(frame);
+    };
   }, [booted, state.view, tooShort, onStage, ready, settled]);
   useEffect(() => {
     const timer = window.setTimeout(() => setBooted(true), BOOT_MAX_MS);

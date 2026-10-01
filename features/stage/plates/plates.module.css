@@ -59,7 +59,8 @@
   outline-offset: -4px;
 }
 /* While the boxes are still travelling after a change of view, a box sliding under a resting pointer
-   does not light up; pointing lights things again once they have landed. */
+   does not light up; pointing lights things again once they have landed and the pointer moves (the
+   browser only re-finds what is under a still pointer when it moves, see Stage). */
 @media (hover: hover) {
   :global([data-moving]) .card:hover {
     box-shadow: none;
@@ -181,6 +182,15 @@
 /* A summary plate that is one link: the band on top, the plate's carriers float over the rest. */
 .plateCard {
   padding: 0 var(--pad) var(--pad);
+}
+/* A summary plate is one link, and its cells fill the rest of it: the band is where the plate itself
+   is pressed, so it is a generous key, its name set a step larger. */
+.plateCard > .band {
+  min-height: 88px;
+  padding-top: 18px;
+}
+.plateCard > .band .bandLabel {
+  font-size: clamp(30px, 2.4vw, 46px);
 }
 .bandTitle {
   display: flex;
@@ -1264,6 +1274,70 @@
 }
 .lineupCells li:nth-child(odd) {
   background: var(--well);
+}
+/* Lineup columns follow the plate's width (cells at least ~120px), set explicitly so a short last
+   row can be filled: its last cell spans the columns left in that row, and a lone cell runs the
+   whole row. (Ending a cell at the last line without a start would drop it into the last column.) */
+.lineupCells {
+  grid-template-columns: repeat(var(--lineup-cols, 1), minmax(0, 1fr));
+}
+.lineupCells b {
+  word-break: keep-all;
+}
+.lineupCells li[data-empty] b {
+  white-space: nowrap;
+}
+@container layer (min-width: 240px) {
+  .lineupCells { --lineup-cols: 2; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(2n + 1) { grid-column: span 2; }
+}
+@container layer (min-width: 360px) {
+  .lineupCells { --lineup-cols: 3; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(3n + 1) { grid-column: span 3; }
+  .lineupCells li:last-child:nth-child(3n + 2) { grid-column: span 2; }
+}
+@container layer (min-width: 480px) {
+  .lineupCells { --lineup-cols: 4; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(4n + 1) { grid-column: span 4; }
+  .lineupCells li:last-child:nth-child(4n + 2) { grid-column: span 3; }
+  .lineupCells li:last-child:nth-child(4n + 3) { grid-column: span 2; }
+}
+@container layer (min-width: 600px) {
+  .lineupCells { --lineup-cols: 5; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(5n + 1) { grid-column: span 5; }
+  .lineupCells li:last-child:nth-child(5n + 2) { grid-column: span 4; }
+  .lineupCells li:last-child:nth-child(5n + 3) { grid-column: span 3; }
+  .lineupCells li:last-child:nth-child(5n + 4) { grid-column: span 2; }
+}
+@container layer (min-width: 720px) {
+  .lineupCells { --lineup-cols: 6; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(6n + 1) { grid-column: span 6; }
+  .lineupCells li:last-child:nth-child(6n + 2) { grid-column: span 5; }
+  .lineupCells li:last-child:nth-child(6n + 3) { grid-column: span 4; }
+  .lineupCells li:last-child:nth-child(6n + 4) { grid-column: span 3; }
+  .lineupCells li:last-child:nth-child(6n + 5) { grid-column: span 2; }
+}
+/* The lineup fills the next-session plate like any plate's sub-plates (layout.ts fillHeight): it
+   takes the height left above the open key, its rows growing to twice their own height at most
+   (the grid shares free space up to each row's max), and the last cell runs to its row's end. It
+   grows but never shrinks, so a plate too short still folds it (FitStack) rather than clipping. */
+:global([data-stage=stage]) .partLineup {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+:global([data-stage=stage]) .partLineup .lineupCells {
+  flex: 1 0 auto;
+  grid-auto-rows: minmax(auto, 104px);
+  align-content: start;
+}
+.lineupCells li {
+  align-content: center;
 }
 .lineupCells small {
   color: var(--muted);
