@@ -118,6 +118,13 @@
 @keyframes layerIn {
   from { opacity: 0; transform: translateY(4px); }
 }
+/* In a box that does not move, new content only fades in over the old (see Swap). */
+.stage[data-stage=stage] .layer[data-layer=current][data-enter=fade] {
+  animation-name: layerFade;
+}
+@keyframes layerFade {
+  from { opacity: 0; }
+}
 @keyframes layerOut {
   to { opacity: 0; }
 }

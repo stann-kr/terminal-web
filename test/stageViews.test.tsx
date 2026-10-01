@@ -372,10 +372,13 @@ describe('home plates', () => {
     go('/events');
     stageOrigin.record({ kind: 'event', id: 'TRM-03', rect: pressed });
     expect(styles(box, () => go('/events/TRM-03'))).toContain('width: 33px');
+    expect(box.querySelector('[data-layer=current]')).not.toHaveAttribute('data-enter');
     // From an open session to another: the same box stays put and only trades its content.
     stageOrigin.record({ kind: 'event', id: 'OLD', rect: pressed });
     expect(styles(box, () => go('/events/OLD'))).not.toContain('width: 33px');
     expect(box).toHaveAttribute('data-detail', 'event:OLD');
+    // Its new content only fades in: a rise would read as the still box twitching.
+    expect(box.querySelector('[data-layer=current]')).toHaveAttribute('data-enter', 'fade');
   });
 
   it('draws the session cells as the sessions’ own elements, which become the directory rows', () => {
