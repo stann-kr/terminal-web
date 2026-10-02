@@ -77,7 +77,7 @@ export function ArtistItem({ profile, shape, current = false }: { profile: Artis
   return null;
 }
 
-/** The artist file a cell grows into: identity, appearances and shared lineups, then the biography. */
+/** The artist file: identity, appearances, biography, then the shared lineup in reading order. */
 export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; state: StageState; data: StageData }) {
   const { language } = useLanguage();
   const current = state.view === 'artist' && state.artistKey === profile.key;
@@ -91,13 +91,12 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
         </p>
         <FitTitle as="h1" id={`artist-${profile.key}`} heading={current} text={profile.name} maxLines={3} minPx={28} className={styles.fileName} />
       </div>
-      <div className={styles.fileRecords} data-fit="">
-        {data.events && <ArtistChronology profile={profile} events={data.events} />}
-      </div>
-      <section className={styles.fileBio} data-surface="inset" aria-label="소개">
-        <p className={styles.columnHead}><b aria-hidden="true">Biography</b><span>소개</span>{bilingual(biography?.artist.description) && <LanguageToggle />}</p>
-        <TextPages paragraphs={paragraphs(biography?.artist.description, language)} language={language} label="아티스트 소개" empty="소개는 공개되는 대로 이곳에 표시됩니다." />
-      </section>
+      <ArtistChronology profile={profile} events={data.events ?? []} recordsClassName={styles.fileRecords} sharedClassName={styles.fileShared}>
+        <section className={styles.fileBio} data-surface="inset" aria-label="소개">
+          <p className={styles.columnHead}><b aria-hidden="true">Biography</b><span>소개</span>{bilingual(biography?.artist.description) && <LanguageToggle />}</p>
+          <TextPages paragraphs={paragraphs(biography?.artist.description, language)} language={language} label="아티스트 소개" empty="소개는 공개되는 대로 이곳에 표시됩니다." />
+        </section>
+      </ArtistChronology>
     </article>
   );
 }

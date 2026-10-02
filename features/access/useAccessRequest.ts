@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ApiError, postJson } from '@/features/ui/http';
+import { useAccessDraft, type AccessDraft } from './AccessDraftProvider';
 
 export type AccessAvailability = { canRequest: boolean; message: string };
 
@@ -8,23 +9,17 @@ export function useAccessRequest(
   eventId: string,
   availability: AccessAvailability,
 ) {
-  const [code, setCode] = useState('');
+  const { draft, setCode, setFields, clear } = useAccessDraft(eventId);
+  const [saved, setSaved] = useState<AccessDraft | null>(null);
+  const { code, fields } = saved ?? draft;
   const [verified, setVerified] = useState<{
     code: string;
     name: string;
   } | null>(null);
   const [checking, setChecking] = useState(false);
   const [pending, setPending] = useState(false);
-  const [done, setDone] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [codeMessage, setCodeMessage] = useState('');
-  const [fields, setFields] = useState({
-    name: '',
-    email: '',
-    instagram: '',
-    privacyConsent: false,
-    marketingConsent: false,
-  });
   const revision = useRef(0),
     controller = useRef<AbortController | null>(null),
     submitting = useRef(false);
@@ -87,6 +82,7 @@ export function useAccessRequest(
     )
       return;
     submitting.current = true;
+    const submittedDraft = draft;
     setPending(true);
     setError(null);
     try {
@@ -96,7 +92,8 @@ export function useAccessRequest(
         ...fields,
       });
       if (result.ok !== true) throw new ApiError('INVALID_RESPONSE', 200);
-      setDone(true);
+      setSaved(submittedDraft);
+      clear(submittedDraft);
     } catch (error) {
       setError(error);
       if (
@@ -130,7 +127,7 @@ export function useAccessRequest(
     verified,
     checking,
     pending,
-    done,
+    done: saved !== null,
     error,
     setError,
     codeMessage,

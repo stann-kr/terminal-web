@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { AccessForm, AccessRequest } from '../features/access/Access';
+import { AccessDraftProvider } from '../features/access/AccessDraftProvider';
 import { TransmitForm } from '../features/transmit/TransmitForm';
 import { SignalBody } from '../features/signal/Signal';
 
@@ -11,6 +12,61 @@ afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}});
 const log={id:'log-1',handle:'VISITOR',message:'hello',ts:'2026.09.24 / 04:00',createdAt:'2026-09-23T19:00:00.000Z'};
 describe('guest request UI',()=>{
+  it('isolates visit drafts by event, clears a saved draft, and drops unsaved details with the visit', async () => {
+    const fetch = vi.fn().mockImplementation((url: string) => Promise.resolve(json(url.endsWith('code-info') ? { name: 'INVITER' } : { ok: true })));
+    vi.stubGlobal('fetch', fetch);
+    const user = userEvent.setup();
+    const tree = (eventId: string | null, visit = 'one') => <AccessDraftProvider key={visit}>{eventId && <AccessForm key={eventId} eventId={eventId} />}</AccessDraftProvider>;
+    const view = render(tree('A'));
+    await user.type(screen.getByLabelText(/초대 코드/), 'CODE-A{Enter}');
+    await user.type(screen.getByLabelText(/^이름/), 'Example');
+    await user.type(screen.getByLabelText(/^이메일/), 'example@example.test');
+    await user.type(screen.getByRole('textbox', { name: /인스타그램 ID/ }), 'example');
+    await user.click(screen.getByRole('checkbox', { name: /게스트 접근 관리/ }));
+    view.rerender(tree('B'));
+    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');
+    expect(screen.getByLabelText(/^이메일/)).toHaveValue('');
+    expect(screen.getByRole('checkbox', { name: /게스트 접근 관리/ })).not.toBeChecked();
+    await user.type(screen.getByLabelText(/초대 코드/), 'CODE-B');
+    view.rerender(tree('A'));
+    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('CODE-A');
+    expect(screen.getByLabelText(/^이메일/)).toHaveValue('example@example.test');
+    expect(screen.getByRole('checkbox', { name: /게스트 접근 관리/ })).toBeChecked();
+    expect(screen.getByRole('button', { name: '게스트 신청 저장' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: '코드 확인' }));
+    await user.click(screen.getByRole('button', { name: '게스트 신청 저장' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('example@example.test');
+    view.rerender(tree(null));
+    view.rerender(tree('A'));
+    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');
+    expect(screen.getByLabelText(/^이름/)).toHaveValue('');
+    view.rerender(tree('B'));
+    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('CODE-B');
+    view.rerender(tree('B', 'new visit'));
+    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');
+  });
+
+  it('does not erase a newer draft when a submission completes after the form was left', async () => {
+    let resolve!: (value: Response) => void;
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(json({ name: 'INVITER' })).mockReturnValueOnce(new Promise<Response>(done => { resolve = done; })));
+    const user = userEvent.setup();
+    const tree = (open: boolean) => <AccessDraftProvider>{open && <AccessForm eventId="A" />}</AccessDraftProvider>;
+    const view = render(tree(true));
+    await user.type(screen.getByLabelText(/초대 코드/), 'CODE{Enter}');
+    await user.type(screen.getByLabelText(/^이름/), 'Example');
+    await user.type(screen.getByLabelText(/^이메일/), 'example@example.test');
+    await user.type(screen.getByRole('textbox', { name: /인스타그램 ID/ }), 'example');
+    await user.click(screen.getByRole('checkbox', { name: /게스트 접근 관리/ }));
+    await user.click(screen.getByRole('button', { name: '게스트 신청 저장' }));
+    view.rerender(tree(false));
+    view.rerender(tree(true));
+    await user.clear(screen.getByLabelText(/초대 코드/));
+    await user.type(screen.getByLabelText(/초대 코드/), 'NEW-CODE');
+    await act(async () => { resolve(json({ ok: true })); });
+    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('NEW-CODE');
+    expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');
+  });
+
   it.each([true,false])('preserves a pending request through event closure and handles its result (saved=%s)',async(saved)=>{
     const event:TerminalEvent={id:'A',session:'Test event',subtitle:'',date:new Date(Date.now()+7*86400000).toISOString().slice(0,10),time:'23:00',venue:'Local',district:'',coords:'',capacity:'',sound:'',status:'UPCOMING',artists:[]};
     const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});client.setQueryData(['events'],[event]);
