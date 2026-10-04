@@ -26,6 +26,7 @@ body {
 
 /* ── Tones: a plate role as the poster's ground ─────────────────────────── */
 .poster[data-tone=night] { --ground: var(--paper-fill); --ink: var(--paper-on-fill); }
+.poster[data-tone=field] { --ground: var(--field); --ink: var(--panel-ink); }
 
 .poster {
   --m: 5cqw;
@@ -42,14 +43,29 @@ body {
   font-family: var(--display);
 }
 
-/* ── The painted ground and light, and the paper's grain ───────────────── */
-.ground,
-.art {
+/* ── The bearing dial: flat planes and lines, the accent only on the signal and its tick ───── */
+.poster { --accent: var(--c-amber, var(--mark)); }
+.chart {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  overflow: hidden;
 }
+.chart .plane { fill: color-mix(in srgb, var(--ink) 11%, var(--ground)); }
+.chart .inner { fill: color-mix(in srgb, var(--ink) 6%, var(--ground)); }
+.chart .star { fill: var(--ink); }
+.chart .rim { fill: none; stroke: color-mix(in srgb, var(--ink) 78%, transparent); }
+.chart .bezel { fill: none; stroke: color-mix(in srgb, var(--ink) 22%, transparent); }
+.chart .tick { stroke: color-mix(in srgb, var(--ink) 34%, transparent); }
+.chart .tick.mid { stroke: color-mix(in srgb, var(--ink) 56%, transparent); }
+.chart .tick.major { stroke: color-mix(in srgb, var(--ink) 80%, transparent); }
+.chart .tick.marked { stroke: color-mix(in srgb, var(--ink) 80%, transparent); }
+.chart .tick.marked.lit { stroke: var(--accent); }
+.chart .bearing { stroke: color-mix(in srgb, var(--ink) 55%, transparent); }
+.chart .signal { fill: var(--accent); }
+.chart .pulse { fill: none; stroke: var(--accent); }
+
 .grain {
   position: absolute;
   inset: 0;
@@ -205,3 +221,90 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
   white-space: nowrap;
 }
 .field.end { justify-items: end; }
+
+/* ── The site's grammar: plates of its roles on the field ──────────────── */
+.plates {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: .93cqw;
+  height: 100%;
+  padding: 1.3cqw;
+}
+/* A plate's own role sets its ink (globals.css); type on it follows that ink. */
+.plates [data-surface],
+.heroPlate { --type: var(--ink); --muted: color-mix(in srgb, var(--ink) 62%, var(--plate, var(--ground))); }
+.brandPlate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2cqw 3cqw 1.7cqw;
+}
+.brandPlate .wordmark { font-size: 5.6cqw; }
+.heroPlate {
+  --ground: var(--paper-fill);
+  --ink: var(--paper-on-fill);
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--type);
+}
+.heroPlate .title {
+  position: absolute;
+  right: 2.8cqw;
+  bottom: 3.2cqw;
+  left: 2.8cqw;
+}
+.infoRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .93cqw;
+}
+.infoPlate {
+  display: grid;
+  gap: 1cqw;
+  padding: 2cqw 2.6cqw 2.4cqw;
+}
+.infoPlate b {
+  font: 700 3.7cqw/1 var(--display);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lineupPlate {
+  display: grid;
+  gap: 1.3cqw;
+  padding: 1.9cqw 3cqw 2.2cqw;
+}
+.lineupPlate .well {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 1.5cqw 1.9cqw;
+  background: var(--well);
+}
+.lineupPlate .well b {
+  font: 700 3.3cqw/1 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.lineupPlate .cells {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .5cqw;
+}
+.lineupPlate .cells li {
+  display: grid;
+  gap: .6cqw;
+  padding: 1.2cqw 1.5cqw;
+  background: var(--fill);
+  color: var(--on-fill);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.footPlate {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.7cqw 3cqw;
+}

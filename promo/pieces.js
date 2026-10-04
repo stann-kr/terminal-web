@@ -25,6 +25,8 @@ export const posters = [
   ...(confirmed ? [{ piece: 'lineup', format: 'feed', title: '라인업 공개' }] : []),
   { piece: 'main', format: 'feed', title: '메인' },
   { piece: 'main', format: 'a2', title: '메인', pdf: true },
+  { piece: 'plates', format: 'feed', title: '메인 · 판' },
+  { piece: 'plates', format: 'a2', title: '메인 · 판', pdf: true },
 ];
 
 /** The motion set: the same compositions played from a bare ground to the full poster and back. */
@@ -40,6 +42,7 @@ export const motions = [
     : []),
   { piece: 'main', format: 'feed', title: '메인' },
   { piece: 'main', format: 'story', title: '메인' },
+  { piece: 'plates', format: 'feed', title: '메인 · 판' },
 ];
 
 /** Previews of the pieces that wait for the lineup, set with sample names (never exported). */
