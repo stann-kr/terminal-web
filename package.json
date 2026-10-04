@@ -66,7 +66,9 @@
     "test": "vitest run",
     "test:d1": "node scripts/verify-local-d1.mjs",
     "typecheck": "tsc --noEmit",
-    "postinstall": "patch-package --error-on-fail && node scripts/verify-use-scramble-patch.mjs"
+    "postinstall": "patch-package --error-on-fail && node scripts/verify-use-scramble-patch.mjs",
+    "promo": "node promo/serve.mjs",
+    "promo:export": "node promo/export.mjs"
   },
   "version": "0.1.0",
   "overrides": {
