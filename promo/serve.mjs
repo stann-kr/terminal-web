@@ -23,6 +23,8 @@ const TYPES = {
   '.png': 'image/png',
   '.mp4': 'video/mp4',
   '.pdf': 'application/pdf',
+  '.md': 'text/markdown; charset=utf-8',
+  '.zip': 'application/zip',
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
 };
