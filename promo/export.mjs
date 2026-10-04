@@ -3,7 +3,9 @@
  *   out/posters/<piece>.png   every poster; A2 at 300 dpi, plus a vector out/posters/main_a2.pdf
  *   out/motion/<piece>.mp4    every motion piece, H.264 at 30 fps
  *
- *   node promo/export.mjs [posters|motion|all] [--only <text>]
+ *   node promo/export.mjs [posters|motion|all|templates] [--only <text>]
+ *
+ * `templates` writes out/templates/<piece>.png: the pieces that wait for the lineup, with sample names.
  *
  * Chrome is driven over the DevTools protocol; each frame is the composition seeked to an exact time,
  * so the video does not depend on how fast the machine renders. The browser is CHROME_PATH, else
@@ -15,14 +17,14 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startServer } from './serve.mjs';
-import { fileName, formats, motions, pieceQuery, posters } from './pieces.js';
+import { fileName, formats, motions, pieceQuery, posters, templates } from './pieces.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const CHROME = process.env.CHROME_PATH ?? (await headlessShell()) ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const A2_DPI = 300;
 
 const args = process.argv.slice(2);
-const set = ['posters', 'motion', 'all'].includes(args[0]) ? args[0] : 'all';
+const set = ['posters', 'motion', 'all', 'templates'].includes(args[0]) ? args[0] : 'all';
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 const selected = list => list.filter(item => !only || fileName(item).includes(only));
 
@@ -166,51 +168,65 @@ function encoder(file, fps) {
 }
 
 /**
- * Headless Chrome drops its DevTools connection once a session has sent some 100MB of screenshots,
- * so a fresh browser takes over before that. The piece is reloaded and seeked back to the same time,
- * which the timeline makes seamless.
+ * Headless Chrome drops its DevTools connection after it has sent a large amount of screenshot data
+ * in one session. A fresh browser takes over at a byte budget, and when the connection drops anyway
+ * the step is retried in a new browser: the piece is reloaded and seeked back to the same time, which
+ * the timeline makes seamless.
  */
-const BYTES_PER_BROWSER = 48 * 1024 * 1024;
+const BYTES_PER_BROWSER = 32 * 1024 * 1024;
+const RETRIES = 3;
 function renderer() {
   let browser = null;
   let page = null;
   let sent = 0;
   let loaded = null;
-  let time = 0;
+  let time = null;
   const close = async () => {
     if (!browser) return;
     browser.cdp.close();
     await browser.chrome.close();
     browser = null;
   };
-  const open = async () => {
+  /** A fresh browser on the piece and the time the last one was at. */
+  const reopen = async () => {
     await close();
     const chrome = await launchChrome();
     browser = { chrome, cdp: await connect(chrome.url) };
     page = await openPage(browser.cdp);
     sent = 0;
+    if (loaded) await page.load(...loaded);
+    if (time != null) await page.seek(time);
+  };
+  const attempt = async step => {
+    for (let tries = 0; ; tries++) {
+      try {
+        if (!browser || sent >= BYTES_PER_BROWSER) await reopen();
+        return await step();
+      } catch (error) {
+        if (tries >= RETRIES) throw error;
+        await close();
+      }
+    }
   };
   return {
     async load(...args) {
-      if (!browser || sent >= BYTES_PER_BROWSER) await open();
       loaded = args;
-      return page.load(...args);
+      time = null;
+      sent = BYTES_PER_BROWSER;
+      return attempt(() => page.load(...args));
     },
     seek(t) {
       time = t;
-      return page.seek(t);
+      return attempt(() => page.seek(t));
     },
-    async shot(format) {
-      if (sent >= BYTES_PER_BROWSER) {
-        await open();
-        await page.load(...loaded);
-        await page.seek(time);
-      }
-      const frame = await page.shot(format);
-      sent += frame.length;
-      return frame;
+    shot(format) {
+      return attempt(async () => {
+        const frame = await page.shot(format);
+        sent += frame.length;
+        return frame;
+      });
     },
-    pdf: paper => page.pdf(paper),
+    pdf: paper => attempt(() => page.pdf(paper)),
     close,
   };
 }
@@ -219,20 +235,21 @@ const server = await startServer({ port: 0, host: '127.0.0.1' });
 const base = `http://127.0.0.1:${server.address().port}/`;
 const page = renderer();
 try {
-  if (set !== 'motion') {
-    await mkdir(join(here, 'out/posters'), { recursive: true });
-    for (const item of selected(posters)) {
+  if (set === 'posters' || set === 'all' || set === 'templates') {
+    const folder = set === 'templates' ? 'templates' : 'posters';
+    await mkdir(join(here, 'out', folder), { recursive: true });
+    for (const item of selected(set === 'templates' ? templates : posters)) {
       const format = formats[item.format];
       const scale = format.paper ? (A2_DPI * format.paper.width) / 25.4 / format.width : 1;
       const { hold } = await page.load(base + pieceQuery(item), format, scale);
       await page.seek(hold);
-      const file = join(here, 'out/posters', fileName(item));
+      const file = join(here, 'out', folder, fileName(item));
       await writeFile(`${file}.png`, await page.shot());
       if (item.pdf) await writeFile(`${file}.pdf`, await page.pdf(format.paper));
       console.log(`poster  ${fileName(item)}${item.pdf ? ' (+pdf)' : ''}`);
     }
   }
-  if (set !== 'posters') {
+  if (set === 'motion' || set === 'all') {
     await mkdir(join(here, 'out/motion'), { recursive: true });
     for (const item of selected(motions)) {
       const { duration, fps } = await page.load(base + pieceQuery(item), formats[item.format]);

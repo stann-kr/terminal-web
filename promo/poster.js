@@ -1,17 +1,20 @@
 /**
  * One promo composition on one canvas: poster.html?piece=teaser|artist|lineup|main&format=feed|story|a2
- * (&artist=<id>, &palette=<id>, &play). Every piece is also its motion: a timeline that draws the
- * poster from a bare ground, holds it and clears it again. The still poster is the timeline's held
+ * (&artist=<id>, &palette=<id>, &sample, &play). Every piece is also its motion: a timeline that draws
+ * the poster from a bare ground, holds it and clears it again. The still poster is the timeline's held
  * frame, so print and motion never drift apart.
  *
- * The graphic is the site's one motif grown into an event: a disc (the heliosphere) with dense rings
- * inside its edge, and sparser rings outside from two near centres whose interference sets up a slow
- * moiré. The rings flow outward at the site's own pace; the second centre drifts on a small orbit.
+ * The graphic tells the edition's story with the site's one motif. A pulsar — one bright point —
+ * sends out rings at the signal's own period (data.js `signal.period`), so in motion the poster beats
+ * once every pulse. The heliosphere of the last edition stays behind as a great disc off the edge,
+ * its rings still. A bearing line runs from its boundary to the signal: the course change at the
+ * junction. A pulse trace, one spike per period, scrolls with the same beat.
  *
  * `window.promo` lets the exporter drive it: `ready` (resolves once laid out), `seek(t)`, and the
  * timeline's `duration`, `hold` and `fps`.
  */
 import { edition } from './data.js';
+import { sampleArtists } from './pieces.js';
 
 const params = new URLSearchParams(location.search);
 const format = ['feed', 'story', 'a2'].includes(params.get('format')) ? params.get('format') : 'feed';
@@ -19,10 +22,15 @@ document.documentElement.dataset.format = format;
 document.documentElement.dataset.palette = params.get('palette') || edition.palette;
 
 const SVG = 'http://www.w3.org/2000/svg';
-/** The site's ambient rings flow outward by one spacing every period (globals.css --ring-period). */
-const RING_PERIOD = 2.4;
+/** The beat of every moving ring and of the trace: the signal's period, else the site's ring period. */
+const PULSE = edition.signal?.period ?? 2.4;
+const pulses = count => count * PULSE;
 /** The last stretch of every timeline: the poster clears back to its ground, so a loop starts clean. */
 const EXIT = { start: 1.2, length: 0.9 };
+
+/** Before the lineup is out, the artist and lineup pieces can be previewed with stand-in names. */
+const sample = edition.artists.length === 0 && params.has('sample');
+const artists = sample ? sampleArtists : edition.artists;
 
 /* ── Easing: the site's stage curves (globals.css --ease-move, --ease) ──────────────────────── */
 function bezier(x1, y1, x2, y2) {
@@ -50,8 +58,7 @@ const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const [year, month, day] = edition.date.split('-');
 const weekday = DAYS[new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))).getUTCDay()];
 const dateShort = `${month}.${day}`;
-const docks = [...new Set(edition.artists.map(artist => artist.dock))];
-const twoDigits = value => String(value).padStart(2, '0');
+const docks = [...new Set(artists.map(artist => artist.dock))];
 
 /* ── Building ───────────────────────────────────────────────────────────────────────────────── */
 function h(tag, props = {}, ...children) {
@@ -106,9 +113,9 @@ function stub(start) {
       'footer',
       { class: 'stub' },
       h('p', { class: 'stubDate' }, dateShort, h('small', {}, `${weekday} ${year}`)),
-      h('div', { class: 'stubCol' }, mono('Venue'), h('b', {}, edition.venue), mono(edition.district)),
-      h('div', { class: 'stubCol' }, mono('Doors'), h('b', {}, `${edition.time} KST`), mono(edition.sound)),
-      h('div', { class: 'stubCol stubEnd' }, mono(edition.code), mono(edition.site)),
+      h('div', { class: 'stubCol' }, mono('Venue'), h('b', {}, edition.venue)),
+      h('div', { class: 'stubCol' }, mono('Doors'), h('b', {}, `${edition.time} KST`)),
+      h('div', { class: 'stubCol stubEnd' }, mono(edition.site)),
     ),
     start,
     0.9,
@@ -118,12 +125,11 @@ function stub(start) {
 
 /* ── The graphic ────────────────────────────────────────────────────────────────────────────── */
 /**
- * Art specs, in fractions of the canvas (x of width, y of height, sizes of width):
- *   disc  { x, y, r, at }                          a solid disc that grows in at `at`
- *   sets  [{ x, y, spacing, stroke, opacity, tone, disc: 'in'|'out', fade, drift, at }]
- *         rings from one centre; `disc` keeps them inside or outside the disc; `fade` [from, to]
- *         fades them out with distance; `drift` { r, turns } moves the centre round a small orbit.
- *   edge  { stroke, opacity, at }                  the disc's boundary drawn as one line
+ * Art specs, in fractions of the canvas (x of width, y of height, lengths of width):
+ *   shell    { x, y, r, spacing, at }        the last edition's heliosphere: a disc, still rings, an edge
+ *   pulsar   { x, y, spacing, stroke, opacity, fade, at }
+ *            rings that leave the point once per pulse; `fade` [from, to] of the farthest corner
+ *   bearing  { at }                          a line from the shell's boundary to the pulsar
  */
 const arts = [];
 function art(spec) {
@@ -132,218 +138,247 @@ function art(spec) {
   return svg;
 }
 
-function drawArt(duration) {
+/** A pulse trace: a flat line with one sharp spike per period, scrolling with the beat. */
+const traces = [];
+function trace(start) {
+  const svg = s('svg', { class: 'trace', 'aria-hidden': 'true' });
+  traces.push({ svg, start });
+  return svg;
+}
+
+function drawArt() {
   const unit = document.body.clientWidth / 100;
   const width = document.body.clientWidth;
   const height = document.body.clientHeight;
   const far = (x, y) => Math.max(...[[0, 0], [width, 0], [0, height], [width, height]].map(([cx, cy]) => Math.hypot(cx - x, cy - y)));
-  const scenes = [];
+  const painters = [];
   arts.forEach(({ svg, spec }, index) => {
     const key = `art-${index}`;
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
     const defs = s('defs');
-    const disc = spec.disc && { x: spec.disc.x * width, y: spec.disc.y * height, r: spec.disc.r * width, at: spec.disc.at };
-    const discShape = disc && s('circle', { class: 'disc', cx: disc.x, cy: disc.y, r: disc.r });
-    const clipIn = disc && s('circle', { cx: disc.x, cy: disc.y, r: disc.r });
-    const holeOut = disc && s('circle', { cx: disc.x, cy: disc.y, r: disc.r, fill: '#000' });
-    if (disc) defs.append(s('clipPath', { id: `${key}-in` }, clipIn));
-    const layers = [];
-    const sets = (spec.sets ?? []).map((set, i) => {
-      const cx = set.x * width;
-      const cy = set.y * height;
-      const step = set.spacing * unit;
-      const reach = set.disc === 'in' && disc ? disc.r + Math.hypot(cx - disc.x, cy - disc.y) : far(cx, cy);
-      const circles = Array.from({ length: Math.ceil(reach / step) + 3 }, () => s('circle', { cx, cy, r: 0 }));
-      const group = s('g', { class: `rings ${set.tone ?? ''}`.trim(), fill: 'none', stroke: 'currentColor', 'stroke-width': set.stroke * unit, opacity: set.opacity }, ...circles);
-      let holder = group;
-      if (set.disc === 'in' && disc) holder = s('g', { 'clip-path': `url(#${key}-in)` }, group);
-      if (set.fade || set.disc === 'out') {
-        const id = `${key}-m${i}`;
-        const fill = set.fade ? `url(#${id}-g)` : '#fff';
-        if (set.fade) {
-          defs.append(s('radialGradient', { id: `${id}-g`, gradientUnits: 'userSpaceOnUse', cx, cy, r: far(cx, cy) }, s('stop', { offset: set.fade[0], 'stop-color': '#fff' }), s('stop', { offset: set.fade[1], 'stop-color': '#fff', 'stop-opacity': 0 })));
-        }
-        const mask = s('mask', { id, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width, height }, s('rect', { width, height, fill }));
-        if (set.disc === 'out' && disc) mask.append(holeOut.cloneNode());
-        defs.append(mask);
-        holder = s('g', { mask: `url(#${id})` }, holder);
-      }
-      layers.push(holder);
-      return { circles, group, cx, cy, step, drift: set.drift, at: set.at ?? 0.4 };
-    });
-    const edge = disc && spec.edge && s('circle', { class: `edge ${spec.edge.tone ?? ''}`.trim(), cx: disc.x, cy: disc.y, r: disc.r, fill: 'none', stroke: 'currentColor', 'stroke-width': spec.edge.stroke * unit, opacity: spec.edge.opacity, pathLength: 1, transform: `rotate(-90 ${disc.x} ${disc.y})` });
-    svg.replaceChildren(defs, ...(discShape ? [discShape] : []), ...layers, ...(edge ? [edge] : []));
-    // Masked holes follow the disc as it grows, so each mask keeps its own copy to update.
-    const holes = [...defs.querySelectorAll('mask > circle')];
-    scenes.push({ disc, discShape, clipIn, holes, edge, edgeAt: spec.edge?.at ?? 1, sets, unit });
-  });
-  return t => {
-    for (const { disc, discShape, clipIn, holes, edge, edgeAt, sets, unit: u } of scenes) {
-      if (disc) {
-        const r = disc.r * easeMove(clamp01((t - disc.at) / 1.4));
-        for (const circle of [discShape, clipIn, ...holes]) circle.setAttribute('r', r.toFixed(2));
-      }
-      if (edge) {
-        const drawn = easeMove(clamp01((t - edgeAt) / 1.8));
-        edge.setAttribute('stroke-dasharray', `${drawn} 1`);
-      }
-      for (const set of sets) {
-        const phase = ((t / RING_PERIOD) % 1) * set.step;
-        const angle = set.drift ? (t / duration) * Math.PI * 2 * set.drift.turns : 0;
-        const cx = set.cx + (set.drift ? Math.cos(angle) * set.drift.r * 100 * u : 0);
-        const cy = set.cy + (set.drift ? Math.sin(angle) * set.drift.r * 100 * u : 0);
-        set.circles.forEach((circle, i) => {
-          circle.setAttribute('cx', cx.toFixed(2));
-          circle.setAttribute('cy', cy.toFixed(2));
-          circle.setAttribute('r', (i * set.step + phase).toFixed(2));
-        });
-        const shown = easeEnter(clamp01((t - set.at) / 1.6));
-        set.group.style.opacity = shown < 1 ? String(shown * Number(set.group.getAttribute('opacity'))) : '';
-      }
+    const nodes = [defs];
+    const p = spec.pulsar && { x: spec.pulsar.x * width, y: spec.pulsar.y * height };
+
+    let shell = null;
+    if (spec.shell) {
+      const { x, y, r, spacing, at } = spec.shell;
+      shell = { x: x * width, y: y * height, r: r * width, at };
+      const disc = s('circle', { class: 'disc', cx: shell.x, cy: shell.y, r: shell.r });
+      const clip = s('circle', { cx: shell.x, cy: shell.y, r: shell.r });
+      defs.append(s('clipPath', { id: `${key}-shell` }, clip));
+      const step = spacing * unit;
+      const inner = s('g', { class: 'onAccent', fill: 'none', stroke: 'currentColor', 'stroke-width': 0.09 * unit, opacity: 0.4 }, ...Array.from({ length: Math.ceil(shell.r / step) }, (_, i) => s('circle', { cx: shell.x, cy: shell.y, r: (i + 1) * step })));
+      const edge = s('circle', { cx: shell.x, cy: shell.y, r: shell.r, fill: 'none', stroke: 'currentColor', 'stroke-width': 0.16 * unit, opacity: 0.7, pathLength: 1, transform: `rotate(-90 ${shell.x} ${shell.y})` });
+      nodes.push(disc, s('g', { 'clip-path': `url(#${key}-shell)` }, inner), edge);
+      painters.push(t => {
+        const grown = shell.r * easeMove(clamp01((t - at) / 1.6));
+        disc.setAttribute('r', grown.toFixed(2));
+        clip.setAttribute('r', grown.toFixed(2));
+        edge.setAttribute('stroke-dasharray', `${easeMove(clamp01((t - at - 0.3) / 1.8))} 1`);
+      });
     }
+
+    if (spec.pulsar) {
+      const { spacing, stroke, opacity, fade, at } = spec.pulsar;
+      const step = spacing * unit;
+      const reach = far(p.x, p.y);
+      defs.append(
+        s('radialGradient', { id: `${key}-fade`, gradientUnits: 'userSpaceOnUse', cx: p.x, cy: p.y, r: reach }, s('stop', { offset: fade[0], 'stop-color': '#fff' }), s('stop', { offset: fade[1], 'stop-color': '#fff', 'stop-opacity': 0 })),
+        s('mask', { id: `${key}-mask`, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width, height }, s('rect', { width, height, fill: `url(#${key}-fade)` })),
+      );
+      const circles = Array.from({ length: Math.ceil((reach * fade[1]) / step) + 2 }, () => s('circle', { cx: p.x, cy: p.y, r: 0 }));
+      const rings = s('g', { fill: 'none', stroke: 'currentColor', 'stroke-width': stroke * unit, opacity }, ...circles);
+      const core = s('circle', { class: 'core', cx: p.x, cy: p.y, r: 0 });
+      const flash = s('circle', { cx: p.x, cy: p.y, r: 0, fill: 'none', stroke: 'currentColor', 'stroke-width': 0.3 * unit });
+      nodes.push(s('g', { mask: `url(#${key}-mask)` }, rings), flash, core);
+      painters.push(t => {
+        const phase = (t / PULSE) % 1;
+        circles.forEach((circle, i) => circle.setAttribute('r', ((i + phase) * step).toFixed(2)));
+        const shown = easeEnter(clamp01((t - at) / 1.4));
+        rings.style.opacity = shown < 1 ? String(shown * opacity) : '';
+        core.setAttribute('r', (0.85 * unit * easeMove(clamp01((t - at + 0.4) / 0.8))).toFixed(2));
+        // Each pulse leaves the core as a bright ring that thins out over the first part of the period.
+        const burst = clamp01(phase / 0.4);
+        flash.setAttribute('r', (unit * (0.85 + burst * 3.2)).toFixed(2));
+        flash.style.opacity = String(t < at ? 0 : (1 - burst) ** 2);
+      });
+    }
+
+    if (spec.bearing && p) {
+      const from = shell
+        ? (() => {
+            const angle = Math.atan2(p.y - shell.y, p.x - shell.x);
+            return { x: shell.x + Math.cos(angle) * shell.r, y: shell.y + Math.sin(angle) * shell.r };
+          })()
+        : { x: spec.bearing.x * width, y: spec.bearing.y * height };
+      const line = s('line', { x1: from.x, y1: from.y, x2: p.x, y2: p.y, stroke: 'currentColor', 'stroke-width': 0.14 * unit, pathLength: 1 });
+      const node = s('circle', { cx: from.x, cy: from.y, r: 0.55 * unit, class: 'nodeDot' });
+      nodes.push(line, node);
+      painters.push(t => {
+        const drawn = easeMove(clamp01((t - spec.bearing.at) / 1.6));
+        line.setAttribute('stroke-dasharray', `${drawn} 1`);
+        node.style.opacity = String(clamp01((t - spec.bearing.at) / 0.4));
+      });
+    }
+
+    svg.replaceChildren(...nodes);
+  });
+
+  for (const { svg, start } of traces) {
+    const w = svg.clientWidth;
+    const hgt = svg.clientHeight;
+    svg.setAttribute('viewBox', `0 0 ${w} ${hgt}`);
+    const path = s('path', { fill: 'none', stroke: 'currentColor', 'stroke-width': 0.14 * unit, 'stroke-linejoin': 'round' });
+    svg.replaceChildren(path);
+    const period = 14 * unit;
+    const mid = hgt * 0.72;
+    // Low, fixed ripple on the line between pulses: quiet, never random, so every frame is repeatable.
+    const ripple = x => Math.sin(x * 0.21) * 0.5 + Math.sin(x * 0.057 + 1.3) * 0.7;
+    painters.push(t => {
+      const offset = (t / PULSE) * period;
+      const visible = easeMove(clamp01((t - start) / 1.4)) * w;
+      let d = '';
+      for (let x = 0; x <= visible; x += 0.5) {
+        const local = (((x + offset) % period) + period) % period;
+        const spike = Math.exp(-(((local - period * 0.5) / (period * 0.022)) ** 2));
+        const y = mid - spike * hgt * 0.68 + ripple(x + offset) * (unit * 0.08);
+        d += `${x ? 'L' : 'M'}${x.toFixed(2)} ${y.toFixed(2)}`;
+      }
+      path.setAttribute('d', d);
+    });
+  }
+
+  return t => {
+    for (const paint of painters) paint(t);
   };
 }
 
 /* ── Pieces ─────────────────────────────────────────────────────────────────────────────────── */
-/** The teaser: an eclipse on bare ceramic. Almost nothing written; the date carries it. */
+/** The teaser: one pulse in a quiet field, the date it was first heard and the date we answer. */
 function teaser() {
   const graphic = art({
-    disc: { x: 0.5, y: 0.43, r: 0.36, at: 0.3 },
-    sets: [
-      { x: 0.5, y: 0.43, spacing: 0.95, stroke: 0.1, opacity: 0.5, tone: 'onAccent', disc: 'in', at: 1 },
-      { x: 0.5, y: 0.43, spacing: 1.9, stroke: 0.11, opacity: 0.55, disc: 'out', fade: [0.2, 0.78], at: 0.6 },
-      { x: 0.53, y: 0.46, spacing: 1.9, stroke: 0.11, opacity: 0.4, disc: 'out', fade: [0.15, 0.62], drift: { r: 0.02, turns: 1 }, at: 1.2 },
-    ],
-    edge: { stroke: 0.22, opacity: 1, at: 0.8 },
+    shell: { x: -0.14, y: 0.9, r: 0.56, spacing: 0.85, at: 0.3 },
+    pulsar: { x: 0.66, y: 0.32, spacing: 4.4, stroke: 0.12, opacity: 0.8, fade: [0, 0.64], at: 0.9 },
+    bearing: { at: 1.6 },
   });
   const layout = h(
     'div',
     { class: 'layout' },
-    h('header', { class: 'top' }, cue(wordmark(), 1.4, 0.8), cue(h('p', { class: 'meta' }, mono(edition.code), mono(edition.site)), 1.6, 0.8)),
+    h('header', { class: 'top' }, cue(wordmark(), 1.4, 0.8), cue(h('p', { class: 'meta' }, mono(`Session ${edition.number}`, 'strong')), 1.6, 0.8)),
     h('div', { class: 'spacer' }),
     h(
       'div',
       { class: 'teaserFoot' },
-      cue(h('p', { class: 'teaserDate' }, fitLine(dateShort, 'date', 31)), 2.2, 1.1, 'rise'),
-      cue(h('div', { class: 'teaserMeta' }, mono(`Session ${edition.number}`, 'strong'), balance(edition.title).map(line => mono(line)), mono(`${weekday} · ${edition.time} KST`), mono(edition.venue)), 2.8, 0.9),
+      cue(h('p', { class: 'teaserDate' }, fitLine(dateShort, 'date', 31)), 2.4, 1.1, 'rise'),
+      cue(h('div', { class: 'teaserMeta' }, balance(edition.title).map(line => mono(line, 'strong')), mono(`${weekday} · ${edition.time} KST`), mono(edition.venue)), 3, 0.9),
     ),
   );
-  return { label: `TERMINAL Session ${edition.number} 티저`, tone: 'ceramic', duration: 9.6, nodes: [graphic, layout] };
+  return { label: `TERMINAL Session ${edition.number} 티저`, tone: 'night', duration: pulses(8), nodes: [graphic, layout] };
 }
 
-/** One artist: a poster per name, each in its own plate role with the disc set somewhere else. */
+/** One artist: a poster per name, each in its own plate role with the signal somewhere else. */
 function artist() {
-  const index = Math.max(0, edition.artists.findIndex(item => item.id === params.get('artist')));
-  const person = edition.artists[index];
+  const index = Math.max(0, artists.findIndex(item => item.id === params.get('artist')));
+  const person = artists[index];
   const tone = ['feature', 'calm', 'mark', 'fresh', 'alert'][index % 5];
   const spots = [
-    { x: 0.7, y: 0.32 },
-    { x: 0.3, y: 0.3 },
-    { x: 0.66, y: 0.4 },
-    { x: 0.34, y: 0.38 },
-    { x: 0.62, y: 0.28 },
+    { pulsar: { x: 0.7, y: 0.3 }, shell: { x: -0.18, y: 0.62 } },
+    { pulsar: { x: 0.32, y: 0.28 }, shell: { x: 1.16, y: 0.6 } },
+    { pulsar: { x: 0.68, y: 0.38 }, shell: { x: -0.16, y: 0.2 } },
+    { pulsar: { x: 0.36, y: 0.34 }, shell: { x: 1.18, y: 0.24 } },
   ];
-  const at = spots[index % spots.length];
+  const spot = spots[index % spots.length];
   const graphic = art({
-    disc: { ...at, r: 0.27, at: 0.3 },
-    sets: [
-      { ...at, spacing: 0.85, stroke: 0.09, opacity: 0.45, tone: 'onAccent', disc: 'in', at: 1 },
-      { ...at, spacing: 1.7, stroke: 0.1, opacity: 0.5, disc: 'out', fade: [0.12, 0.7], at: 0.6 },
-      { x: at.x + 0.035, y: at.y + 0.03, spacing: 1.7, stroke: 0.1, opacity: 0.35, disc: 'out', fade: [0.1, 0.55], drift: { r: 0.018, turns: 1 }, at: 1.2 },
-    ],
-    edge: { stroke: 0.2, opacity: 1, tone: 'onGround', at: 0.8 },
+    shell: { ...spot.shell, r: 0.42, spacing: 0.8, at: 0.3 },
+    pulsar: { ...spot.pulsar, spacing: 4, stroke: 0.11, opacity: 0.7, fade: [0, 0.58], at: 0.8 },
+    bearing: { at: 1.4 },
   });
-  const lines = balance(person.name);
   const layout = h(
     'div',
     { class: 'layout' },
-    h('header', { class: 'top' }, cue(wordmark(), 1.4, 0.8), cue(h('p', { class: 'meta' }, mono(`Artist ${twoDigits(index + 1)} / ${twoDigits(edition.artists.length)}`, 'strong'), mono(edition.code)), 1.6, 0.8)),
+    h(
+      'header',
+      { class: 'top' },
+      cue(wordmark(), 1.4, 0.8),
+      cue(h('p', { class: 'meta' }, mono(`Session ${edition.number}`, 'strong'), sample && mono('Sample')), 1.6, 0.8),
+    ),
     h('div', { class: 'spacer' }),
-    h('h1', { class: 'name' }, lines.map((line, i) => cue(fitLine(line, 'name', 30), 2.1 + i * 0.22, 1.1, 'rise'))),
-    cue(h('p', { class: 'kicker' }, mono(`Dock ${person.dock}`, 'strong'), mono(person.origin), mono(`Session ${edition.number} · ${edition.title}`)), 2.8, 0.8),
+    h('h1', { class: 'name' }, balance(person.name).map((line, i) => cue(fitLine(line, 'name', 30), 2.1 + i * 0.22, 1.1, 'rise'))),
+    cue(h('p', { class: 'kicker' }, mono(`Dock ${person.dock}`, 'strong')), 2.8, 0.8),
     stub(3.2),
   );
-  return { label: `TERMINAL Session ${edition.number} 아티스트 공개: ${person.name}`, tone, duration: 7.2, nodes: [graphic, layout] };
+  return { label: `TERMINAL Session ${edition.number} 아티스트 공개: ${person.name}`, tone, duration: pulses(6), nodes: [graphic, layout] };
 }
 
-/** The lineup: every name large on its own rule, the disc rising off the top edge. */
+/** The lineup: every name large on its own rule under the signal. */
 function lineup() {
   const graphic = art({
-    disc: { x: 0.82, y: 0.06, r: 0.3, at: 0.3 },
-    sets: [
-      { x: 0.82, y: 0.06, spacing: 0.9, stroke: 0.09, opacity: 0.45, tone: 'onAccent', disc: 'in', at: 1 },
-      { x: 0.82, y: 0.06, spacing: 1.8, stroke: 0.1, opacity: 0.4, disc: 'out', fade: [0.1, 0.62], at: 0.6 },
-      { x: 0.86, y: 0.09, spacing: 1.8, stroke: 0.1, opacity: 0.28, disc: 'out', fade: [0.08, 0.5], drift: { r: 0.02, turns: 1 }, at: 1.2 },
-    ],
-    edge: { stroke: 0.2, opacity: 1, tone: 'onGround', at: 0.8 },
+    pulsar: { x: 0.8, y: 0.14, spacing: 4, stroke: 0.11, opacity: 0.7, fade: [0, 0.5], at: 0.5 },
   });
   const roster = h(
     'ol',
     { class: 'roster' },
-    edition.artists.map((person, i) =>
-      cue(h('li', {}, mono(twoDigits(i + 1)), h('b', {}, fitLine(person.name, 'roster', 13)), mono(`Dock ${person.dock}`)), 1.8 + i * 0.28, 0.9, 'plate'),
-    ),
+    artists.map((person, i) => cue(h('li', {}, h('b', {}, fitLine(person.name, 'roster', 13)), mono(`Dock ${person.dock}`)), 1.8 + i * 0.28, 0.9, 'plate')),
   );
-  const settled = 1.8 + edition.artists.length * 0.28 + 0.9;
+  const settled = 1.8 + artists.length * 0.28 + 0.9;
   const layout = h(
     'div',
     { class: 'layout' },
-    h('header', { class: 'top' }, cue(wordmark(), 1.2, 0.8)),
+    h('header', { class: 'top' }, cue(wordmark(), 1.2, 0.8), sample && cue(h('p', { class: 'meta' }, mono('Sample', 'strong')), 1.4, 0.8)),
     h('div', { class: 'spacer' }),
-    cue(h('p', { class: 'rosterHead' }, mono('Lineup', 'strong'), mono(`Session ${edition.number} · ${edition.artists.length} Artists`)), 1.5, 0.8),
+    cue(h('p', { class: 'rosterHead' }, mono('Lineup', 'strong'), mono(`Session ${edition.number}`)), 1.5, 0.8),
     roster,
     stub(settled),
   );
-  return {
-    label: `TERMINAL Session ${edition.number} 라인업 공개`,
-    tone: 'night',
-    duration: Math.ceil((settled + 4.4) / RING_PERIOD) * RING_PERIOD,
-    nodes: [graphic, layout],
-  };
+  return { label: `TERMINAL Session ${edition.number} 라인업 공개`, tone: 'night', duration: Math.ceil((settled + 4.4) / PULSE) * PULSE, nodes: [graphic, layout] };
 }
 
-/** The main poster: the heliosphere over the title, the lineup by dock, the stub. */
+/** Lineup by dock once it is out; until then the main poster says it is to be announced. */
+function lineupBlock(start) {
+  if (!artists.length) {
+    return cue(h('section', { class: 'tba' }, mono('Lineup', 'strong'), h('p', {}, 'To be announced')), start, 0.9, 'plate');
+  }
+  return cue(
+    h(
+      'section',
+      { class: 'docks' },
+      docks.map((dock, row) =>
+        h(
+          'div',
+          { class: 'dock' },
+          cue(h('p', { class: 'dockHead' }, mono(`Dock ${dock}`, 'strong')), start + 0.1 + row * 0.15, 0.6),
+          h(
+            'ul',
+            {},
+            artists.filter(person => person.dock === dock).map((person, i) => cue(h('li', {}, fitLine(person.name, 'lineup', 6.2)), start + 0.3 + row * 0.15 + i * 0.12, 0.8, 'plate')),
+          ),
+        ),
+      ),
+    ),
+    start,
+    1,
+    'plate',
+  );
+}
+
+/** The main poster: the signal over the title, the trace, the lineup, the stub. */
 function main() {
   const graphic = art({
-    disc: { x: 0.66, y: 0.3, r: 0.31, at: 0.3 },
-    sets: [
-      { x: 0.66, y: 0.3, spacing: 0.9, stroke: 0.09, opacity: 0.5, tone: 'onAccent', disc: 'in', at: 1 },
-      { x: 0.66, y: 0.3, spacing: 1.8, stroke: 0.1, opacity: 0.42, disc: 'out', fade: [0.12, 0.66], at: 0.6 },
-      { x: 0.7, y: 0.33, spacing: 1.8, stroke: 0.1, opacity: 0.3, disc: 'out', fade: [0.1, 0.52], drift: { r: 0.02, turns: 1 }, at: 1.2 },
-    ],
-    edge: { stroke: 0.2, opacity: 1, tone: 'onGround', at: 0.8 },
+    shell: { x: -0.1, y: 0.02, r: 0.34, spacing: 0.85, at: 0.3 },
+    pulsar: { x: 0.72, y: 0.25, spacing: 4.2, stroke: 0.12, opacity: 0.8, fade: [0, 0.6], at: 0.9 },
+    bearing: { at: 1.6 },
   });
   const layout = h(
     'div',
     { class: 'layout' },
-    h('header', { class: 'top' }, cue(wordmark(), 1.2, 0.8), cue(h('p', { class: 'meta' }, mono(`Session ${edition.number}`, 'strong'), mono(edition.code)), 1.4, 0.8)),
+    h('header', { class: 'top' }, cue(wordmark(), 1.2, 0.8), cue(h('p', { class: 'meta' }, mono(`Session ${edition.number}`, 'strong')), 1.4, 0.8)),
     h('div', { class: 'spacer' }),
     h('h1', { class: 'title' }, balance(edition.title).map((line, i) => cue(fitLine(line, 'title', 17), 2 + i * 0.22, 1.1, 'rise'))),
-    cue(h('p', { class: 'kicker' }, mono(edition.stage.en, 'strong'), mono(edition.stage.ko), mono(edition.coords)), 2.6, 0.8),
-    cue(
-      h(
-        'section',
-        { class: 'docks' },
-        docks.map((dock, row) =>
-          h(
-            'div',
-            { class: 'dock' },
-            cue(h('p', { class: 'dockHead' }, mono(`Dock ${dock}`, 'strong')), 3 + row * 0.15, 0.6),
-            h(
-              'ul',
-              {},
-              edition.artists.filter(person => person.dock === dock).map((person, i) => cue(h('li', {}, fitLine(person.name, 'lineup', 6.2)), 3.2 + row * 0.15 + i * 0.12, 0.8, 'plate')),
-            ),
-          ),
-        ),
-      ),
-      2.9,
-      1,
-      'plate',
-    ),
-    stub(4.2),
+    h('div', { class: 'traceRow' }, trace(3.3)),
+    lineupBlock(3.9),
+    stub(4.5),
   );
-  return { label: `TERMINAL Session ${edition.number}: ${edition.title} 메인 포스터`, tone: 'night', duration: 12, nodes: [graphic, layout] };
+  return { label: `TERMINAL Session ${edition.number}: ${edition.title} 메인 포스터`, tone: 'night', duration: pulses(9), nodes: [graphic, layout] };
 }
 
 /* ── Layout passes ──────────────────────────────────────────────────────────────────────────── */
@@ -413,7 +448,7 @@ async function start() {
   await fontsReady();
   fit();
   const { duration } = composition;
-  const paint = drawArt(duration);
+  const paint = drawArt();
   // Text that no longer fits the canvas (a long name, a long title) is reported, not silently cut.
   const layout = poster.querySelector('.layout');
   const bottom = poster.getBoundingClientRect().bottom;

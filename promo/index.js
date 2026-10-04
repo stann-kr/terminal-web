@@ -3,7 +3,7 @@
  * full-size page and to whatever the exporter has written for it (out/).
  */
 import { edition } from './data.js';
-import { fileName, formats, motions, pieceQuery, posters } from './pieces.js';
+import { fileName, formats, motions, pieceQuery, posters, templates } from './pieces.js';
 
 document.documentElement.dataset.palette = edition.palette;
 document.getElementById('meta').textContent = `${edition.code} · ${edition.title} · palette ${edition.palette} · promo/data.js`;
@@ -33,7 +33,7 @@ function card(item, motion) {
   links.className = 'links';
   links.append(open);
   const name = fileName(item);
-  const files = motion ? [[`out/motion/${name}.mp4`, 'MP4']] : [[`out/posters/${name}.png`, 'PNG'], ...(item.pdf ? [[`out/posters/${name}.pdf`, 'PDF']] : [])];
+  const files = item.sample ? [] : motion ? [[`out/motion/${name}.mp4`, 'MP4']] : [[`out/posters/${name}.png`, 'PNG'], ...(item.pdf ? [[`out/posters/${name}.pdf`, 'PDF']] : [])];
   for (const [href, text] of files) {
     fetch(href, { method: 'HEAD' }).then(response => {
       if (response.ok) links.append(Object.assign(document.createElement('a'), { href, textContent: text, download: '' }));
@@ -49,3 +49,6 @@ function card(item, motion) {
 
 document.querySelector('[data-set=posters]').append(...posters.map(item => card(item, false)));
 document.querySelector('[data-set=motions]').append(...motions.map(item => card(item, true)));
+const waiting = document.querySelector('[data-set=templates]');
+if (templates.length) waiting.append(...templates.map(item => card(item, true)));
+else waiting.closest('section').hidden = true;

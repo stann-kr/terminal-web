@@ -55,6 +55,8 @@ body {
 }
 .art .disc { fill: var(--accent); }
 .art .onAccent { color: var(--on-accent); }
+.art .core,
+.art .nodeDot { fill: var(--ink); }
 .grain {
   position: absolute;
   inset: 0;
@@ -149,7 +151,7 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
 .roster { margin-bottom: 3.6cqw; }
 .roster li {
   display: grid;
-  grid-template-columns: 6cqw minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
   gap: 2cqw;
   padding-block: 1.2cqw .9cqw;
@@ -159,6 +161,31 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
 .roster b {
   font-weight: 800;
   line-height: .9;
+  text-transform: uppercase;
+}
+
+/* The pulse trace under the title. */
+.traceRow {
+  margin-top: 4.4cqw;
+}
+.trace {
+  display: block;
+  width: 100%;
+  height: 6cqw;
+  color: var(--ink);
+}
+.tba {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 3cqw;
+  margin-top: 2.6cqw;
+  padding: 1.8cqw 0 3.4cqw;
+  border-top: var(--hair) solid var(--ink);
+}
+.tba p {
+  font: 700 4.6cqw/1 var(--display);
+  letter-spacing: .01em;
   text-transform: uppercase;
 }
 
