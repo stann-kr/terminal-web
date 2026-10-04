@@ -1,14 +1,15 @@
 /**
  * One promo composition on one canvas: poster.html?piece=teaser|artist|lineup|main&format=feed|story|a2
  * (&artist=<id>, &palette=<id>, &sample, &play). Every piece is also its motion: a timeline that draws
- * the poster from a bare ground, holds it and clears it again. The still poster is the timeline's held
+ * the poster out of the dark, holds it and lets it go again. The still poster is the timeline's held
  * frame, so print and motion never drift apart.
  *
- * The graphic tells the edition's story with the site's one motif. A pulsar — one bright point —
- * sends out rings at the signal's own period (data.js `signal.period`), so in motion the poster beats
- * once every pulse. The heliosphere of the last edition stays behind as a great disc off the edge,
- * its rings still. A bearing line runs from its boundary to the signal: the course change at the
- * junction. A pulse trace, one spike per period, scrolls with the same beat.
+ * The edition's story, in light rather than in shapes: there are no coordinates left to return to,
+ * only the dark, and in it one signal, far off, steady, exact. It is painted on a canvas — a deep
+ * ground that sinks toward its edges with a little dust in it, and a soft point that sends out rings
+ * of light once every period of the signal (data.js `signal.period`), each ring fading as it travels.
+ * A faint course line rises from below the frame, where we are, toward the signal: a direction found
+ * for the first time.
  *
  * `window.promo` lets the exporter drive it: `ready` (resolves once laid out), `seek(t)`, and the
  * timeline's `duration`, `hold` and `fps`.
@@ -21,11 +22,10 @@ const format = ['feed', 'story', 'a2'].includes(params.get('format')) ? params.g
 document.documentElement.dataset.format = format;
 document.documentElement.dataset.palette = params.get('palette') || edition.palette;
 
-const SVG = 'http://www.w3.org/2000/svg';
-/** The beat of every moving ring and of the trace: the signal's period, else the site's ring period. */
+/** The beat of the rings: the signal's period, else the site's ring period. */
 const PULSE = edition.signal?.period ?? 2.4;
 const pulses = count => count * PULSE;
-/** The last stretch of every timeline: the poster clears back to its ground, so a loop starts clean. */
+/** The last stretch of every timeline: the poster goes back to the dark, so a loop starts clean. */
 const EXIT = { start: 1.2, length: 0.9 };
 
 /** Before the lineup is out, the artist and lineup pieces can be previewed with stand-in names. */
@@ -70,12 +70,6 @@ function h(tag, props = {}, ...children) {
   element.append(...children.flat().filter(child => child != null && child !== false));
   return element;
 }
-function s(tag, attributes = {}, ...children) {
-  const element = document.createElementNS(SVG, tag);
-  for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
-  element.append(...children);
-  return element;
-}
 
 /** Timeline entries: an element enters at `start` over `length` seconds, in one of a few ways. */
 const cues = [];
@@ -102,283 +96,281 @@ function balance(text) {
 
 const mono = (text, extra = '') => h('span', { class: `mono ${extra}`.trim() }, text);
 const wordmark = () => h('p', { class: 'wordmark' }, 'TERMINAL');
+const top = start => h('header', { class: 'top' }, cue(wordmark(), start, 1.2), cue(h('p', { class: 'meta' }, mono(`Session ${edition.number}`, 'strong'), sample && mono('Sample')), start + 0.2, 1.2));
 
-/**
- * The ticket stub: the one solid plate on the poster, in the site's way of setting a key along a
- * plate's foot. Date large, the rest small.
- */
-function stub(start) {
+/** The essentials along the foot, under one hairline: date, doors, venue, the site. */
+function info(start) {
+  const field = (label, value) => h('div', { class: 'field' }, mono(label), h('b', {}, value));
   return cue(
-    h(
-      'footer',
-      { class: 'stub' },
-      h('p', { class: 'stubDate' }, dateShort, h('small', {}, `${weekday} ${year}`)),
-      h('div', { class: 'stubCol' }, mono('Venue'), h('b', {}, edition.venue)),
-      h('div', { class: 'stubCol' }, mono('Doors'), h('b', {}, `${edition.time} KST`)),
-      h('div', { class: 'stubCol stubEnd' }, mono(edition.site)),
-    ),
+    h('footer', { class: 'info' }, field('Date', `${dateShort} ${weekday}`), field('Doors', `${edition.time} KST`), field('Venue', edition.venue), h('div', { class: 'field end' }, mono(edition.site))),
     start,
-    0.9,
-    'plate',
+    1.2,
   );
 }
 
 /* ── The graphic ────────────────────────────────────────────────────────────────────────────── */
 /**
  * Art specs, in fractions of the canvas (x of width, y of height, lengths of width):
- *   shell    { x, y, r, spacing, at }        the last edition's heliosphere: a disc, still rings, an edge
- *   pulsar   { x, y, spacing, stroke, opacity, fade, at }
- *            rings that leave the point once per pulse; `fade` [from, to] of the farthest corner
- *   bearing  { at }                          a line from the shell's boundary to the pulsar
+ *   signal  { x, y }          where the signal is
+ *   spacing                   the distance between rings, i.e. how far light goes in one period
+ *   reach                     how far the rings carry before they are gone
+ *   tint                      a plate role whose colour warms the light (an artist's own), or none
+ *   course  { x, y, at }      the point below the frame the course line rises from, and when
+ *   at                        when the signal is first picked up
  */
 const arts = [];
 function art(spec) {
-  const svg = s('svg', { class: 'art', 'aria-hidden': 'true' });
-  arts.push({ svg, spec });
-  return svg;
+  const ground = h('canvas', { class: 'ground', 'aria-hidden': 'true' });
+  const light = h('canvas', { class: 'art', 'aria-hidden': 'true' });
+  arts.push({ ground, light, spec });
+  return [ground, light];
 }
 
-/** A pulse trace: a flat line with one sharp spike per period, scrolling with the beat. */
-const traces = [];
-function trace(start) {
-  const svg = s('svg', { class: 'trace', 'aria-hidden': 'true' });
-  traces.push({ svg, start });
-  return svg;
+/** The poster's own colours, read from the palette through the tone's tokens. */
+function colour(token) {
+  const probe = h('i', { style: `color: var(${token}); display: none` });
+  document.querySelector('.poster').append(probe);
+  const [r, g, b] = getComputedStyle(probe).color.match(/[\d.]+/g).map(Number);
+  probe.remove();
+  return [r, g, b];
+}
+const mix = (a, b, share) => a.map((value, i) => Math.round(value * share + b[i] * (1 - share)));
+const rgba = ([r, g, b], alpha) => `rgba(${r},${g},${b},${alpha})`;
+
+/** A small seeded generator, so the dust lies the same in every frame and every export. */
+function seeded(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 function drawArt() {
-  const unit = document.body.clientWidth / 100;
   const width = document.body.clientWidth;
   const height = document.body.clientHeight;
-  const far = (x, y) => Math.max(...[[0, 0], [width, 0], [0, height], [width, height]].map(([cx, cy]) => Math.hypot(cx - x, cy - y)));
+  const unit = width / 100;
+  const scale = window.devicePixelRatio || 1;
   const painters = [];
-  arts.forEach(({ svg, spec }, index) => {
-    const key = `art-${index}`;
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-    const defs = s('defs');
-    const nodes = [defs];
-    const p = spec.pulsar && { x: spec.pulsar.x * width, y: spec.pulsar.y * height };
+  for (const { ground, light, spec } of arts) {
+    for (const canvas of [ground, light]) {
+      canvas.width = Math.round(width * scale);
+      canvas.height = Math.round(height * scale);
+    }
+    const base = colour('--ground');
+    const ink = colour('--ink');
+    const glow = spec.tint ? mix(colour(`--${spec.tint}`), ink, 0.55) : ink;
+    const signal = { x: spec.signal.x * width, y: spec.signal.y * height };
+    const deep = mix(base, [0, 0, 0], 0.42);
 
-    let shell = null;
-    if (spec.shell) {
-      const { x, y, r, spacing, at } = spec.shell;
-      shell = { x: x * width, y: y * height, r: r * width, at };
-      const disc = s('circle', { class: 'disc', cx: shell.x, cy: shell.y, r: shell.r });
-      const clip = s('circle', { cx: shell.x, cy: shell.y, r: shell.r });
-      defs.append(s('clipPath', { id: `${key}-shell` }, clip));
-      const step = spacing * unit;
-      const inner = s('g', { class: 'onAccent', fill: 'none', stroke: 'currentColor', 'stroke-width': 0.09 * unit, opacity: 0.4 }, ...Array.from({ length: Math.ceil(shell.r / step) }, (_, i) => s('circle', { cx: shell.x, cy: shell.y, r: (i + 1) * step })));
-      const edge = s('circle', { cx: shell.x, cy: shell.y, r: shell.r, fill: 'none', stroke: 'currentColor', 'stroke-width': 0.16 * unit, opacity: 0.7, pathLength: 1, transform: `rotate(-90 ${shell.x} ${shell.y})` });
-      nodes.push(disc, s('g', { 'clip-path': `url(#${key}-shell)` }, inner), edge);
-      painters.push(t => {
-        const grown = shell.r * easeMove(clamp01((t - at) / 1.6));
-        disc.setAttribute('r', grown.toFixed(2));
-        clip.setAttribute('r', grown.toFixed(2));
-        edge.setAttribute('stroke-dasharray', `${easeMove(clamp01((t - at - 0.3) / 1.8))} 1`);
-      });
+    // The ground: the tone's colour, lifted a little around the signal and sinking toward the edges.
+    const g = ground.getContext('2d');
+    g.scale(scale, scale);
+    g.fillStyle = rgba(deep, 1);
+    g.fillRect(0, 0, width, height);
+    const lift = g.createRadialGradient(signal.x, signal.y, 0, signal.x, signal.y, Math.hypot(width, height) * 0.8);
+    lift.addColorStop(0, rgba(mix(base, glow, 0.86), 1));
+    lift.addColorStop(0.35, rgba(base, 1));
+    lift.addColorStop(1, rgba(deep, 1));
+    g.fillStyle = lift;
+    g.fillRect(0, 0, width, height);
+    // Dust: a few hundred faint grains, more of them dim than bright.
+    const random = seeded(edition.number.charCodeAt(0) * 7919 + (spec.seed ?? 0));
+    for (let i = 0; i < 420; i++) {
+      const size = (0.25 + random() ** 3 * 1.1) * unit * 0.12;
+      g.fillStyle = rgba(ink, 0.04 + random() ** 2.4 * 0.42);
+      g.beginPath();
+      g.arc(random() * width, random() * height, size, 0, Math.PI * 2);
+      g.fill();
     }
 
-    if (spec.pulsar) {
-      const { spacing, stroke, opacity, fade, at } = spec.pulsar;
-      const step = spacing * unit;
-      const reach = far(p.x, p.y);
-      defs.append(
-        s('radialGradient', { id: `${key}-fade`, gradientUnits: 'userSpaceOnUse', cx: p.x, cy: p.y, r: reach }, s('stop', { offset: fade[0], 'stop-color': '#fff' }), s('stop', { offset: fade[1], 'stop-color': '#fff', 'stop-opacity': 0 })),
-        s('mask', { id: `${key}-mask`, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width, height }, s('rect', { width, height, fill: `url(#${key}-fade)` })),
-      );
-      const circles = Array.from({ length: Math.ceil((reach * fade[1]) / step) + 2 }, () => s('circle', { cx: p.x, cy: p.y, r: 0 }));
-      const rings = s('g', { fill: 'none', stroke: 'currentColor', 'stroke-width': stroke * unit, opacity }, ...circles);
-      const core = s('circle', { class: 'core', cx: p.x, cy: p.y, r: 0 });
-      const flash = s('circle', { cx: p.x, cy: p.y, r: 0, fill: 'none', stroke: 'currentColor', 'stroke-width': 0.3 * unit });
-      nodes.push(s('g', { mask: `url(#${key}-mask)` }, rings), flash, core);
-      painters.push(t => {
-        const phase = (t / PULSE) % 1;
-        circles.forEach((circle, i) => circle.setAttribute('r', ((i + phase) * step).toFixed(2)));
-        const shown = easeEnter(clamp01((t - at) / 1.4));
-        rings.style.opacity = shown < 1 ? String(shown * opacity) : '';
-        core.setAttribute('r', (0.85 * unit * easeMove(clamp01((t - at + 0.4) / 0.8))).toFixed(2));
-        // Each pulse leaves the core as a bright ring that thins out over the first part of the period.
-        const burst = clamp01(phase / 0.4);
-        flash.setAttribute('r', (unit * (0.85 + burst * 3.2)).toFixed(2));
-        flash.style.opacity = String(t < at ? 0 : (1 - burst) ** 2);
-      });
-    }
-
-    if (spec.bearing && p) {
-      const from = shell
-        ? (() => {
-            const angle = Math.atan2(p.y - shell.y, p.x - shell.x);
-            return { x: shell.x + Math.cos(angle) * shell.r, y: shell.y + Math.sin(angle) * shell.r };
-          })()
-        : { x: spec.bearing.x * width, y: spec.bearing.y * height };
-      const line = s('line', { x1: from.x, y1: from.y, x2: p.x, y2: p.y, stroke: 'currentColor', 'stroke-width': 0.14 * unit, pathLength: 1 });
-      const node = s('circle', { cx: from.x, cy: from.y, r: 0.55 * unit, class: 'nodeDot' });
-      nodes.push(line, node);
-      painters.push(t => {
-        const drawn = easeMove(clamp01((t - spec.bearing.at) / 1.6));
-        line.setAttribute('stroke-dasharray', `${drawn} 1`);
-        node.style.opacity = String(clamp01((t - spec.bearing.at) / 0.4));
-      });
-    }
-
-    svg.replaceChildren(...nodes);
-  });
-
-  for (const { svg, start } of traces) {
-    const w = svg.clientWidth;
-    const hgt = svg.clientHeight;
-    svg.setAttribute('viewBox', `0 0 ${w} ${hgt}`);
-    const path = s('path', { fill: 'none', stroke: 'currentColor', 'stroke-width': 0.14 * unit, 'stroke-linejoin': 'round' });
-    svg.replaceChildren(path);
-    const period = 14 * unit;
-    const mid = hgt * 0.72;
-    // Low, fixed ripple on the line between pulses: quiet, never random, so every frame is repeatable.
-    const ripple = x => Math.sin(x * 0.21) * 0.5 + Math.sin(x * 0.057 + 1.3) * 0.7;
+    const l = light.getContext('2d');
+    l.scale(scale, scale);
+    const step = spec.spacing * unit;
+    const reach = spec.reach * width;
+    const course = spec.course && { x: spec.course.x * width, y: spec.course.y * height, at: spec.course.at };
     painters.push(t => {
-      const offset = (t / PULSE) * period;
-      const visible = easeMove(clamp01((t - start) / 1.4)) * w;
-      let d = '';
-      for (let x = 0; x <= visible; x += 0.5) {
-        const local = (((x + offset) % period) + period) % period;
-        const spike = Math.exp(-(((local - period * 0.5) / (period * 0.022)) ** 2));
-        const y = mid - spike * hgt * 0.68 + ripple(x + offset) * (unit * 0.08);
-        d += `${x ? 'L' : 'M'}${x.toFixed(2)} ${y.toFixed(2)}`;
+      l.clearRect(0, 0, width, height);
+      const found = easeEnter(clamp01((t - spec.at) / 2.2));
+      if (found <= 0) return;
+      const phase = (t / PULSE) % 1;
+      // Rings of light: each one soft (a wide faint stroke under a fine one), dimming as it travels.
+      for (let i = 0; ; i++) {
+        const r = (i + phase) * step;
+        if (r > reach) break;
+        const fade = Math.exp(-r / (reach * 0.26)) * (1 - (r / reach) ** 3) * found;
+        if (r < step * 0.25) continue;
+        for (const [lineWidth, alpha] of [[1.8, 0.05], [0.6, 0.11], [0.14, 0.4]]) {
+          l.strokeStyle = rgba(glow, alpha * fade);
+          l.lineWidth = lineWidth * unit;
+          l.beginPath();
+          l.arc(signal.x, signal.y, r, 0, Math.PI * 2);
+          l.stroke();
+        }
       }
-      path.setAttribute('d', d);
+      // The point: a bloom that swells as each pulse leaves it and settles before the next.
+      const beat = Math.exp(-phase * 6);
+      const bloomR = unit * (5 + beat * 3);
+      const bloom = l.createRadialGradient(signal.x, signal.y, 0, signal.x, signal.y, bloomR);
+      bloom.addColorStop(0, rgba(glow, (0.55 + beat * 0.3) * found));
+      bloom.addColorStop(0.18, rgba(glow, (0.16 + beat * 0.12) * found));
+      bloom.addColorStop(1, rgba(glow, 0));
+      l.fillStyle = bloom;
+      l.beginPath();
+      l.arc(signal.x, signal.y, bloomR, 0, Math.PI * 2);
+      l.fill();
+      l.fillStyle = rgba(mix(glow, [255, 255, 255], 0.6), found);
+      l.beginPath();
+      l.arc(signal.x, signal.y, unit * 0.45, 0, Math.PI * 2);
+      l.fill();
+      // The course: from below the frame toward the signal, faint where we are, clearer near it.
+      if (course) {
+        const drawn = easeMove(clamp01((t - course.at) / 2.4));
+        if (drawn > 0) {
+          const gap = unit * 2.2;
+          const length = Math.hypot(signal.x - course.x, signal.y - course.y) - gap;
+          const angle = Math.atan2(signal.y - course.y, signal.x - course.x);
+          const end = { x: course.x + Math.cos(angle) * length * drawn, y: course.y + Math.sin(angle) * length * drawn };
+          const line = l.createLinearGradient(course.x, course.y, signal.x, signal.y);
+          line.addColorStop(0, rgba(ink, 0));
+          line.addColorStop(0.45, rgba(ink, 0.04));
+          line.addColorStop(0.8, rgba(ink, 0.26));
+          line.addColorStop(1, rgba(ink, 0.55));
+          l.strokeStyle = line;
+          l.lineWidth = unit * 0.12;
+          l.beginPath();
+          l.moveTo(course.x, course.y);
+          l.lineTo(end.x, end.y);
+          l.stroke();
+        }
+      }
     });
   }
-
   return t => {
     for (const paint of painters) paint(t);
   };
 }
 
 /* ── Pieces ─────────────────────────────────────────────────────────────────────────────────── */
-/** The teaser: one pulse in a quiet field, the date it was first heard and the date we answer. */
+/** The teaser: the dark, one signal, and the date. */
 function teaser() {
-  const graphic = art({
-    shell: { x: -0.14, y: 0.9, r: 0.56, spacing: 0.85, at: 0.3 },
-    pulsar: { x: 0.66, y: 0.32, spacing: 4.4, stroke: 0.12, opacity: 0.8, fade: [0, 0.64], at: 0.9 },
-    bearing: { at: 1.6 },
-  });
-  const layout = h(
-    'div',
-    { class: 'layout' },
-    h('header', { class: 'top' }, cue(wordmark(), 1.4, 0.8), cue(h('p', { class: 'meta' }, mono(`Session ${edition.number}`, 'strong')), 1.6, 0.8)),
-    h('div', { class: 'spacer' }),
-    h(
-      'div',
-      { class: 'teaserFoot' },
-      cue(h('p', { class: 'teaserDate' }, fitLine(dateShort, 'date', 31)), 2.4, 1.1, 'rise'),
-      cue(h('div', { class: 'teaserMeta' }, balance(edition.title).map(line => mono(line, 'strong')), mono(`${weekday} · ${edition.time} KST`), mono(edition.venue)), 3, 0.9),
-    ),
-  );
-  return { label: `TERMINAL Session ${edition.number} 티저`, tone: 'night', duration: pulses(8), nodes: [graphic, layout] };
+  return {
+    label: `TERMINAL Session ${edition.number} 티저`,
+    tone: 'night',
+    duration: pulses(8),
+    nodes: [
+      ...art({ signal: { x: 0.64, y: 0.36 }, spacing: 4.2, reach: 0.62, course: { x: 0.2, y: 1.06, at: 3.4 }, at: 0.5 }),
+      h(
+        'div',
+        { class: 'layout' },
+        top(2.4),
+        h('div', { class: 'spacer' }),
+        h(
+          'div',
+          { class: 'teaserFoot' },
+          cue(h('p', { class: 'teaserDate' }, fitLine(dateShort, 'date', 26)), 4.4, 1.6),
+          cue(h('div', { class: 'teaserMeta' }, balance(edition.title).map(line => mono(line, 'strong')), mono(`${weekday} · ${edition.time} KST`), mono(edition.venue)), 5, 1.4),
+        ),
+      ),
+    ],
+  };
 }
 
-/** One artist: a poster per name, each in its own plate role with the signal somewhere else. */
+/** One artist: a poster per name, the signal set elsewhere each time and tinted in the artist's role. */
 function artist() {
   const index = Math.max(0, artists.findIndex(item => item.id === params.get('artist')));
   const person = artists[index];
-  const tone = ['feature', 'calm', 'mark', 'fresh', 'alert'][index % 5];
+  const tint = ['feature', 'calm', 'mark', 'fresh', 'alert'][index % 5];
   const spots = [
-    { pulsar: { x: 0.7, y: 0.3 }, shell: { x: -0.18, y: 0.62 } },
-    { pulsar: { x: 0.32, y: 0.28 }, shell: { x: 1.16, y: 0.6 } },
-    { pulsar: { x: 0.68, y: 0.38 }, shell: { x: -0.16, y: 0.2 } },
-    { pulsar: { x: 0.36, y: 0.34 }, shell: { x: 1.18, y: 0.24 } },
+    { signal: { x: 0.7, y: 0.28 }, course: { x: 0.22, y: 1.06 } },
+    { signal: { x: 0.3, y: 0.3 }, course: { x: 0.8, y: 1.06 } },
+    { signal: { x: 0.66, y: 0.36 }, course: { x: 0.14, y: 1.06 } },
+    { signal: { x: 0.36, y: 0.26 }, course: { x: 0.86, y: 1.06 } },
   ];
   const spot = spots[index % spots.length];
-  const graphic = art({
-    shell: { ...spot.shell, r: 0.42, spacing: 0.8, at: 0.3 },
-    pulsar: { ...spot.pulsar, spacing: 4, stroke: 0.11, opacity: 0.7, fade: [0, 0.58], at: 0.8 },
-    bearing: { at: 1.4 },
-  });
-  const layout = h(
-    'div',
-    { class: 'layout' },
-    h(
-      'header',
-      { class: 'top' },
-      cue(wordmark(), 1.4, 0.8),
-      cue(h('p', { class: 'meta' }, mono(`Session ${edition.number}`, 'strong'), sample && mono('Sample')), 1.6, 0.8),
-    ),
-    h('div', { class: 'spacer' }),
-    h('h1', { class: 'name' }, balance(person.name).map((line, i) => cue(fitLine(line, 'name', 30), 2.1 + i * 0.22, 1.1, 'rise'))),
-    cue(h('p', { class: 'kicker' }, mono(`Dock ${person.dock}`, 'strong')), 2.8, 0.8),
-    stub(3.2),
-  );
-  return { label: `TERMINAL Session ${edition.number} 아티스트 공개: ${person.name}`, tone, duration: pulses(6), nodes: [graphic, layout] };
+  return {
+    label: `TERMINAL Session ${edition.number} 아티스트 공개: ${person.name}`,
+    tone: 'night',
+    duration: pulses(6),
+    nodes: [
+      ...art({ signal: spot.signal, spacing: 4, reach: 0.56, tint, seed: index + 1, course: { ...spot.course, at: 2.6 }, at: 0.4 }),
+      h(
+        'div',
+        { class: 'layout' },
+        top(1.8),
+        h('div', { class: 'spacer' }),
+        h('h1', { class: 'name' }, balance(person.name).map((line, i) => cue(fitLine(line, 'name', 24), 2.6 + i * 0.25, 1.4, 'rise'))),
+        cue(h('p', { class: 'kicker' }, mono(`Dock ${person.dock}`, 'strong')), 3.4, 1),
+        info(3.8),
+      ),
+    ],
+  };
 }
 
-/** The lineup: every name large on its own rule under the signal. */
+/** The lineup: every name on its own rule under the signal. */
 function lineup() {
-  const graphic = art({
-    pulsar: { x: 0.8, y: 0.14, spacing: 4, stroke: 0.11, opacity: 0.7, fade: [0, 0.5], at: 0.5 },
-  });
-  const roster = h(
-    'ol',
-    { class: 'roster' },
-    artists.map((person, i) => cue(h('li', {}, h('b', {}, fitLine(person.name, 'roster', 13)), mono(`Dock ${person.dock}`)), 1.8 + i * 0.28, 0.9, 'plate')),
-  );
-  const settled = 1.8 + artists.length * 0.28 + 0.9;
-  const layout = h(
-    'div',
-    { class: 'layout' },
-    h('header', { class: 'top' }, cue(wordmark(), 1.2, 0.8), sample && cue(h('p', { class: 'meta' }, mono('Sample', 'strong')), 1.4, 0.8)),
-    h('div', { class: 'spacer' }),
-    cue(h('p', { class: 'rosterHead' }, mono('Lineup', 'strong'), mono(`Session ${edition.number}`)), 1.5, 0.8),
-    roster,
-    stub(settled),
-  );
-  return { label: `TERMINAL Session ${edition.number} 라인업 공개`, tone: 'night', duration: Math.ceil((settled + 4.4) / PULSE) * PULSE, nodes: [graphic, layout] };
+  const settled = 2 + artists.length * 0.3 + 1;
+  return {
+    label: `TERMINAL Session ${edition.number} 라인업 공개`,
+    tone: 'night',
+    duration: Math.ceil((settled + 4.4) / PULSE) * PULSE,
+    nodes: [
+      ...art({ signal: { x: 0.76, y: 0.18 }, spacing: 3.8, reach: 0.5, course: { x: 0.12, y: 1.06, at: 1.6 }, at: 0.4 }),
+      h(
+        'div',
+        { class: 'layout' },
+        top(1.2),
+        h('div', { class: 'spacer' }),
+        cue(h('p', { class: 'rosterHead' }, mono('Lineup', 'strong')), 1.8, 1),
+        h(
+          'ol',
+          { class: 'roster' },
+          artists.map((person, i) => cue(h('li', {}, h('b', {}, fitLine(person.name, 'roster', 11)), mono(`Dock ${person.dock}`)), 2 + i * 0.3, 1, 'plate')),
+        ),
+        info(settled),
+      ),
+    ],
+  };
 }
 
 /** Lineup by dock once it is out; until then the main poster says it is to be announced. */
 function lineupBlock(start) {
-  if (!artists.length) {
-    return cue(h('section', { class: 'tba' }, mono('Lineup', 'strong'), h('p', {}, 'To be announced')), start, 0.9, 'plate');
-  }
+  if (!artists.length) return cue(h('section', { class: 'tba' }, mono('Lineup', 'strong'), h('p', {}, 'To be announced')), start, 1.2);
   return cue(
     h(
       'section',
       { class: 'docks' },
-      docks.map((dock, row) =>
-        h(
-          'div',
-          { class: 'dock' },
-          cue(h('p', { class: 'dockHead' }, mono(`Dock ${dock}`, 'strong')), start + 0.1 + row * 0.15, 0.6),
-          h(
-            'ul',
-            {},
-            artists.filter(person => person.dock === dock).map((person, i) => cue(h('li', {}, fitLine(person.name, 'lineup', 6.2)), start + 0.3 + row * 0.15 + i * 0.12, 0.8, 'plate')),
-          ),
-        ),
+      docks.map(dock =>
+        h('div', { class: 'dock' }, h('p', { class: 'dockHead' }, mono(`Dock ${dock}`, 'strong')), h('ul', {}, artists.filter(person => person.dock === dock).map(person => h('li', {}, fitLine(person.name, 'lineup', 5.4))))),
       ),
     ),
     start,
-    1,
-    'plate',
+    1.2,
   );
 }
 
-/** The main poster: the signal over the title, the trace, the lineup, the stub. */
+/** The main poster: the signal high in the dark, the title below it, the lineup, the essentials. */
 function main() {
-  const graphic = art({
-    shell: { x: -0.1, y: 0.02, r: 0.34, spacing: 0.85, at: 0.3 },
-    pulsar: { x: 0.72, y: 0.25, spacing: 4.2, stroke: 0.12, opacity: 0.8, fade: [0, 0.6], at: 0.9 },
-    bearing: { at: 1.6 },
-  });
-  const layout = h(
-    'div',
-    { class: 'layout' },
-    h('header', { class: 'top' }, cue(wordmark(), 1.2, 0.8), cue(h('p', { class: 'meta' }, mono(`Session ${edition.number}`, 'strong')), 1.4, 0.8)),
-    h('div', { class: 'spacer' }),
-    h('h1', { class: 'title' }, balance(edition.title).map((line, i) => cue(fitLine(line, 'title', 17), 2 + i * 0.22, 1.1, 'rise'))),
-    h('div', { class: 'traceRow' }, trace(3.3)),
-    lineupBlock(3.9),
-    stub(4.5),
-  );
-  return { label: `TERMINAL Session ${edition.number}: ${edition.title} 메인 포스터`, tone: 'night', duration: pulses(9), nodes: [graphic, layout] };
+  return {
+    label: `TERMINAL Session ${edition.number}: ${edition.title} 메인 포스터`,
+    tone: 'night',
+    duration: pulses(9),
+    nodes: [
+      ...art({ signal: { x: 0.7, y: 0.27 }, spacing: 4.2, reach: 0.6, course: { x: 0.16, y: 1.06, at: 2.4 }, at: 0.5 }),
+      h(
+        'div',
+        { class: 'layout' },
+        top(1.6),
+        h('div', { class: 'spacer' }),
+        h('h1', { class: 'title' }, balance(edition.title).map((line, i) => cue(fitLine(line, 'title', 14), 3 + i * 0.25, 1.4, 'rise'))),
+        lineupBlock(4),
+        info(4.4),
+      ),
+    ],
+  };
 }
 
 /* ── Layout passes ──────────────────────────────────────────────────────────────────────────── */
