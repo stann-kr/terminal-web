@@ -95,8 +95,8 @@ async function launchChrome() {
   const chrome = spawn(CHROME, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--hide-scrollbars', '--force-color-profile=srgb', '--no-first-run', '--no-default-browser-check', 'about:blank'], {
     stdio: ['ignore', 'ignore', 'pipe'],
   });
+  let log = '';
   const url = await new Promise((resolve, reject) => {
-    let log = '';
     chrome.stderr.on('data', chunk => {
       log += chunk;
       const match = log.match(/DevTools listening on (ws:\/\/\S+)/);
@@ -108,9 +108,14 @@ async function launchChrome() {
       reject(new Error(`Chrome did not start within 20s: ${CHROME}\nSet CHROME_PATH to a working Chrome or chrome-headless-shell.`));
     }, 20_000).unref();
   });
+  let closing = false;
+  chrome.on('exit', (code, signal) => {
+    if (!closing) console.error(`Chrome exited during the run (${code ?? signal})\n${log.slice(-2000)}`);
+  });
   return {
     url,
     async close() {
+      closing = true;
       chrome.kill();
       await new Promise(resolve => chrome.once('exit', resolve));
       await rm(profile, { recursive: true, force: true });
@@ -140,14 +145,14 @@ async function openPage(cdp) {
   };
   // The screenshot that follows renders a fresh frame; waiting on requestAnimationFrame can stall headless.
   const seek = t => evaluate(`window.promo.seek(${t})`);
-  const shot = async () => Buffer.from((await page('Page.captureScreenshot', { format: 'png' })).data, 'base64');
+  const shot = async (format = 'png') => Buffer.from((await page('Page.captureScreenshot', format === 'png' ? { format } : { format, quality: 95 })).data, 'base64');
   const pdf = async paper => Buffer.from((await page('Page.printToPDF', { paperWidth: paper.width / 25.4, paperHeight: paper.height / 25.4, marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0, printBackground: true })).data, 'base64');
   return { load, seek, shot, pdf };
 }
 
-/** Encodes PNG frames piped in, in order, to an H.264 file most players and Instagram accept. */
+/** Encodes JPEG frames piped in, in order, to an H.264 file most players and Instagram accept. */
 function encoder(file, fps) {
-  const ffmpeg = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-c:v', 'png', '-framerate', String(fps), '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', '-vf', 'scale=out_color_matrix=bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709', '-movflags', '+faststart', file], {
+  const ffmpeg = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-c:v', 'mjpeg', '-framerate', String(fps), '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', '-vf', 'scale=out_color_matrix=bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709', '-movflags', '+faststart', file], {
     stdio: ['pipe', 'inherit', 'inherit'],
   });
   const done = new Promise((resolve, reject) => ffmpeg.on('exit', code => (code === 0 ? resolve() : reject(new Error(`ffmpeg exited ${code}`)))));
@@ -161,15 +166,15 @@ function encoder(file, fps) {
 }
 
 /**
- * Headless Chrome drops its DevTools connection after a couple of hundred screenshots in one session,
- * so a fresh browser takes over every SHOTS_PER_BROWSER frames. The piece is reloaded and seeked back
- * to the same time, which the timeline makes seamless.
+ * Headless Chrome drops its DevTools connection once a session has sent some 100MB of screenshots,
+ * so a fresh browser takes over before that. The piece is reloaded and seeked back to the same time,
+ * which the timeline makes seamless.
  */
-const SHOTS_PER_BROWSER = 200;
+const BYTES_PER_BROWSER = 48 * 1024 * 1024;
 function renderer() {
   let browser = null;
   let page = null;
-  let shots = 0;
+  let sent = 0;
   let loaded = null;
   let time = 0;
   const close = async () => {
@@ -183,11 +188,11 @@ function renderer() {
     const chrome = await launchChrome();
     browser = { chrome, cdp: await connect(chrome.url) };
     page = await openPage(browser.cdp);
-    shots = 0;
+    sent = 0;
   };
   return {
     async load(...args) {
-      if (!browser || shots >= SHOTS_PER_BROWSER) await open();
+      if (!browser || sent >= BYTES_PER_BROWSER) await open();
       loaded = args;
       return page.load(...args);
     },
@@ -195,14 +200,15 @@ function renderer() {
       time = t;
       return page.seek(t);
     },
-    async shot() {
-      if (shots >= SHOTS_PER_BROWSER) {
+    async shot(format) {
+      if (sent >= BYTES_PER_BROWSER) {
         await open();
         await page.load(...loaded);
         await page.seek(time);
       }
-      shots += 1;
-      return page.shot();
+      const frame = await page.shot(format);
+      sent += frame.length;
+      return frame;
     },
     pdf: paper => page.pdf(paper),
     close,
@@ -234,7 +240,7 @@ try {
       const frames = Math.round(duration * fps);
       for (let frame = 0; frame < frames; frame++) {
         await page.seek(frame / fps);
-        await video.write(await page.shot());
+        await video.write(await page.shot('jpeg'));
       }
       await video.end();
       console.log(`motion  ${fileName(item)} (${frames} frames)`);
