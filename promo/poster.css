@@ -18,6 +18,10 @@ body {
   margin: 0;
   overflow: hidden;
 }
+@media screen {
+  html { background: var(--field); }
+  body { transform: var(--fit, none); transform-origin: 0 0; }
+}
 body {
   container-type: size;
   -webkit-print-color-adjust: exact;
@@ -64,7 +68,7 @@ body {
 .chart .tick.marked.lit { stroke: var(--accent); }
 .chart .bearing { stroke: color-mix(in srgb, var(--ink) 55%, transparent); }
 .chart .signal { fill: var(--accent); }
-.chart .pulse { fill: none; stroke: var(--accent); }
+.chart .wave { fill: none; stroke: var(--ink); }
 
 .grain {
   position: absolute;
@@ -79,22 +83,8 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
 @media print { .grain { display: none; } }
 
 /* ── Type ───────────────────────────────────────────────────────────────── */
-.layout {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: var(--m);
-}
-.spacer { flex: 1 1 auto; }
-.top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 4cqw;
-}
 .wordmark {
-  font: 400 6.6cqw/.82 var(--brand);
+  font: 400 5.6cqw/.82 var(--brand);
   letter-spacing: .01em;
   white-space: nowrap;
 }
@@ -106,18 +96,6 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
   text-transform: uppercase;
 }
 .mono.strong { color: var(--type); }
-.meta {
-  display: grid;
-  justify-items: end;
-  padding-top: .3cqw;
-  text-align: right;
-}
-.kicker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 2.6cqw;
-  margin-top: 2.4cqw;
-}
 .fit {
   display: block;
   width: 100%;
@@ -125,102 +103,12 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
 }
 .title,
 .name {
-  margin-left: -.04em;
+  margin: 0 0 0 -.04em;
   font-weight: 700;
   line-height: .88;
   letter-spacing: .005em;
   text-transform: uppercase;
 }
-
-/* Lineup: to be announced, or names by dock. */
-.tba,
-.docks {
-  margin-top: 5cqw;
-  padding-top: 1.8cqw;
-  border-top: var(--hair) solid var(--rule);
-}
-.tba {
-  display: flex;
-  align-items: baseline;
-  gap: 3cqw;
-}
-.tba p {
-  font: 600 3.4cqw/1 var(--display);
-  letter-spacing: .04em;
-  text-transform: uppercase;
-}
-.docks {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-  gap: 4cqw;
-}
-.dockHead { margin-bottom: 1cqw; }
-.dock li {
-  font-weight: 600;
-  line-height: 1.06;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-}
-
-/* The lineup reveal: names on rules. */
-.rosterHead { margin-bottom: 1.2cqw; }
-.roster li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: 2cqw;
-  padding-block: 1.3cqw 1cqw;
-  border-top: var(--hair) solid var(--rule);
-}
-.roster b {
-  font-weight: 700;
-  line-height: .92;
-  text-transform: uppercase;
-}
-
-/* The teaser's foot: the date large, the rest in small print. */
-.teaserFoot {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: end;
-  gap: 4cqw;
-}
-.teaserDate {
-  font-weight: 700;
-  line-height: .8;
-  letter-spacing: -.01em;
-}
-.teaserDate .fit { width: auto; }
-.teaserMeta {
-  display: grid;
-  justify-items: end;
-  padding-bottom: .4cqw;
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* ── The essentials along the foot, under one hairline ─────────────────── */
-.info {
-  display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  align-items: end;
-  gap: 5cqw;
-  margin-top: 4cqw;
-  padding-top: 1.8cqw;
-  border-top: var(--hair) solid var(--rule);
-}
-.field {
-  display: grid;
-  gap: .4cqw;
-  min-width: 0;
-}
-.field b {
-  font: 600 3cqw/1 var(--display);
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.field.end { justify-items: end; }
 
 /* ── The site's grammar: plates of its roles on the field ──────────────── */
 .plates {
@@ -237,10 +125,8 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
 .brandPlate {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 2cqw 3cqw 1.7cqw;
 }
-.brandPlate .wordmark { font-size: 5.6cqw; }
 .heroPlate {
   --ground: var(--paper-fill);
   --ink: var(--paper-on-fill);
@@ -250,17 +136,46 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
   background: var(--ground);
   color: var(--type);
 }
-.heroPlate .title {
+.heroPlate .title,
+.heroText {
   position: absolute;
   right: 2.8cqw;
   bottom: 3.2cqw;
   left: 2.8cqw;
 }
+.heroText {
+  display: grid;
+  gap: 1.4cqw;
+}
+/* The teaser sets its words high in the dark, above the dial. */
+.heroText.atTop {
+  top: 3.6cqw;
+  bottom: auto;
+}
+.heroDate {
+  font-weight: 700;
+  line-height: .8;
+  letter-spacing: -.01em;
+}
+.heroSub {
+  font-weight: 700;
+  line-height: .9;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+}
+/* The session number beside the wordmark, as the site writes it: TERMINAL [03]. */
+.sessionMark {
+  margin-left: auto;
+  font: 700 6.2cqw/.8 var(--display);
+  letter-spacing: .02em;
+}
+.brandPlate .mono { margin-left: 3cqw; }
 .infoRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .93cqw;
 }
+.infoPlate.wide { grid-column: span 2; }
 .infoPlate {
   display: grid;
   gap: 1cqw;
@@ -294,6 +209,7 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .5cqw;
 }
+.lineupPlate .cells .mono { color: var(--on-fill-muted); }
 .lineupPlate .cells li {
   display: grid;
   gap: .6cqw;
