@@ -64,8 +64,12 @@ body {
 .chart .tick { stroke: color-mix(in srgb, var(--ink) 34%, transparent); }
 .chart .tick.mid { stroke: color-mix(in srgb, var(--ink) 56%, transparent); }
 .chart .tick.major { stroke: color-mix(in srgb, var(--ink) 80%, transparent); }
-.chart .tick.marked { stroke: color-mix(in srgb, var(--ink) 80%, transparent); }
-.chart .tick.marked.lit { stroke: var(--accent); }
+.chart .tick.marked { stroke: var(--accent); }
+.chart .needle { fill: var(--ink); }
+.chart .needle.lit { fill: var(--accent); }
+.chart .tail { fill: color-mix(in srgb, var(--ink) 34%, transparent); }
+.chart .north { fill: color-mix(in srgb, var(--ink) 78%, transparent); }
+.chart .fork { fill: var(--ink); }
 .chart .bearing { stroke: color-mix(in srgb, var(--ink) 55%, transparent); }
 .chart .signal { fill: var(--accent); }
 .chart .wave { fill: none; stroke: var(--ink); }
@@ -172,10 +176,12 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
 .brandPlate .mono { margin-left: 3cqw; }
 .infoRow {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
   gap: .93cqw;
 }
-.infoPlate.wide { grid-column: span 2; }
+/* The address closes the row, set small and to the plate's foot. */
+.infoPlate.address { align-content: end; justify-items: end; }
 .infoPlate {
   display: grid;
   gap: 1cqw;
@@ -218,9 +224,4 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
   color: var(--on-fill);
   font-weight: 700;
   text-transform: uppercase;
-}
-.footPlate {
-  display: flex;
-  justify-content: space-between;
-  padding: 1.7cqw 3cqw;
 }
