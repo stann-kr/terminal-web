@@ -62,13 +62,17 @@
 .channels a {
   transition: var(--light-motion);
 }
-.channels a:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .channels a:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
-.channels a:hover > * {
-  background: none !important;
-  color: inherit !important;
+@media (hover: hover) {
+  .channels a:hover > * {
+    background: none !important;
+    color: inherit !important;
+  }
 }
 
 /* ── Sub-plates: channel rows run flush in turns of tone; the number is printed in the accent. ── */
@@ -85,8 +89,32 @@
 .host {
   background: none;
 }
-.channels li:nth-child(odd) a > * {
+.channels li:nth-child(odd) a {
   background: var(--well);
+}
+/* Three channels share the panel's height: each row is a roomy key, its number and name set large
+   and centred in it, the tone running the whole row. */
+.channels {
+  flex: 1 1 auto;
+  grid-auto-rows: minmax(88px, 1fr);
+}
+.channels li {
+  display: grid;
+}
+.channels a {
+  align-content: center;
+  row-gap: 6px;
+}
+.channels a > span:first-child,
+.channels strong {
+  font-size: var(--t-xl);
+}
+.channels strong {
+  padding: 0 max(12px, var(--bleed, 0px)) 0 12px;
+}
+.host {
+  padding: 0 max(12px, var(--bleed, 0px)) 0 12px;
+  font-size: var(--t-sm);
 }
 .channels a > span:first-child {
   justify-content: start;

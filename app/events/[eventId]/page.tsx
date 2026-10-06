@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { eventMetadata } from '@/features/events/metadata';
+import { findEvent } from '../findEvent';
 
 export default async function Page({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
@@ -10,4 +12,8 @@ export default async function Page({ params }: { params: Promise<{ eventId: stri
   }
   return null;
 }
-export const metadata: Metadata = { title: '행사 상세' };
+
+export async function generateMetadata({ params }: { params: Promise<{ eventId: string }> }): Promise<Metadata> {
+  const event = await findEvent((await params).eventId);
+  return event ? eventMetadata(event) : { title: '이벤트 상세' };
+}

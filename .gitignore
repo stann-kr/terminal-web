@@ -64,3 +64,6 @@ build_log.txt
 
 # seed data
 migrations/seed_*.sql
+
+# promo kit exports (node promo/export.mjs)
+/promo/out/

@@ -25,6 +25,8 @@ export interface TerminalEvent {
   id: string;
   session: string;
   subtitle: string;
+  stage?: { en: string; ko: string };
+  log?: { en: string; ko: string };
   date: string;
   time: string;
   venue: string;

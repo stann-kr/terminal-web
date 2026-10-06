@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { artistIdentities } from '@/features/artists/identities';
 import { appearanceKey, artistHref } from '@/features/artists/model';
+import { artistMetadata, findArtistProfile } from '@/features/events/metadata';
+import { readPublicEvents } from '@/lib/events/requestEvents';
 
 export default async function Page({ params }: { params: Promise<{ artistKey: string }> }) {
   const { artistKey: encodedKey } = await params;
@@ -11,4 +13,12 @@ export default async function Page({ params }: { params: Promise<{ artistKey: st
   if (identity) redirect(artistHref(identity.key));
   return null;
 }
-export const metadata: Metadata = { title: '아티스트 출연 이력' };
+
+export async function generateMetadata({ params }: { params: Promise<{ artistKey: string }> }): Promise<Metadata> {
+  const fallback: Metadata = { title: '아티스트 출연 이력' };
+  let key: string;
+  try { key = decodeURIComponent((await params).artistKey); } catch { return fallback; }
+  const events = await readPublicEvents();
+  const profile = events && findArtistProfile(events, key);
+  return profile ? artistMetadata(profile) : fallback;
+}

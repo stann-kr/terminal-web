@@ -12,6 +12,8 @@ import {
   selectEvent,
 } from '../lib/events/lifecycle';
 import type { EventStatus, TerminalEvent } from '../lib/events/types';
+import { dayMark, eventSubtitle, sessionShort, venueMapHref } from '../features/events/model';
+import { calendarSubscribeHref, sessionsCalendar } from '../features/events/calendar';
 
 function event(id: string, date: string, time: string, status: EventStatus): TerminalEvent {
   return {
@@ -139,5 +141,67 @@ describe('event lifecycle', () => {
     } finally {
       vi.unstubAllEnvs();
     }
+  });
+});
+
+describe('session marks and hand-offs', () => {
+  it('counts D-day in KST calendar days, not hours left', () => {
+    const night = event('A', '2026-11-28', '23:00 KST', 'UPCOMING');
+    // Same day, 01:00 KST: the session is tonight.
+    expect(dayMark(night, new Date('2026-11-27T16:00:00Z'))).toBe('D-DAY');
+    // 01:00 KST the day before: one calendar day, though 46 hours remain.
+    expect(dayMark(night, new Date('2026-11-26T16:00:00Z'))).toBe('D-1');
+    // 23:30 KST the day before: still D-1, not D-DAY.
+    expect(dayMark(night, new Date('2026-11-27T14:30:00Z'))).toBe('D-1');
+    expect(dayMark({ ...night, status: 'LIVE' }, new Date())).toBe('LIVE');
+    expect(dayMark(event('B', '2026-02-30', '23:00', 'UPCOMING'), new Date())).toBe('TBA');
+  });
+
+  it('shortens a titled session name for narrow slots', () => {
+    expect(sessionShort('TERMINAL [03] : Interstellar Junction')).toBe('TERMINAL [03]');
+    expect(sessionShort('TERMINAL [04]')).toBe('TERMINAL [04]');
+    expect(sessionShort('A:B')).toBe('A:B');
+  });
+
+  it("takes a session's subtitle from its name, never TERMINAL's tagline", () => {
+    expect(eventSubtitle({ session: 'TERMINAL [03] : Interstellar Junction', subtitle: 'A Voyage to the Unknown Sector.' })).toBe('Interstellar Junction');
+    expect(eventSubtitle({ session: 'TERMINAL [04]', subtitle: 'A Voyage to the Unknown Sector.' })).toBe('');
+    expect(eventSubtitle({ session: 'TERMINAL [04]', subtitle: 'Deep Field' })).toBe('Deep Field');
+  });
+
+  it('looks the venue up on Google Maps by name, and not an undisclosed one', () => {
+    expect(venueMapHref({ venue: 'FAUST SEOUL', district: 'YONGSAN-GU // ITAEWON' }))
+      .toBe('https://www.google.com/maps/search/?api=1&query=FAUST%20SEOUL%20YONGSAN-GU%20ITAEWON');
+    expect(venueMapHref({ venue: 'TBA', district: 'SEOUL' })).toBeNull();
+    expect(venueMapHref({ venue: '  ', district: 'SEOUL' })).toBeNull();
+  });
+
+  it('writes every session into one subscription feed with stable ids and escaped text', () => {
+    const ics = sessionsCalendar(
+      [
+        { ...event('TRM-03', '2026-11-28', '23:00 KST', 'UPCOMING'), session: 'LUMO; NIGHT', subtitle: 'A\\B', venue: 'FAUST SEOUL', district: 'YONGSAN-GU, ITAEWON' },
+        { ...event('TRM-02', '2026-05-08', '23:00', 'ARCHIVED'), session: 'TERMINAL [02]' },
+        event('BAD', '2026-02-30', '23:00', 'UPCOMING'),
+      ],
+      'https://terminal.stann.kr',
+      new Date('2026-10-01T00:00:00Z'),
+    );
+    const lines = ics.split('\r\n');
+    expect(lines).toContain('X-WR-CALNAME:TERMINAL');
+    expect(lines.filter((line) => line === 'BEGIN:VEVENT')).toHaveLength(2);
+    expect(lines).toContain('UID:TRM-03@terminal.stann.kr');
+    expect(lines).toContain('DTSTART:20261128T140000Z');
+    expect(lines).toContain('SUMMARY:TERMINAL LUMO\\; NIGHT');
+    expect(lines).toContain('SUMMARY:TERMINAL [02]');
+    expect(lines).toContain('LOCATION:FAUST SEOUL\\, YONGSAN-GU\\, ITAEWON');
+    expect(ics).toContain('DESCRIPTION:A\\\\B\\nhttps://terminal.stann.kr/events/TRM-03');
+    expect(ics).not.toMatch(/^(DTEND|DURATION)[:;]/m);
+    expect(lines.every((line) => new TextEncoder().encode(line).length <= 75)).toBe(true);
+  });
+
+  it('subscribes Apple calendars by webcal and others through Google Calendar', () => {
+    expect(calendarSubscribeHref('https://terminal.stann.kr', true)).toBe('webcal://terminal.stann.kr/calendar.ics');
+    expect(calendarSubscribeHref('https://terminal.stann.kr', false))
+      .toBe('https://calendar.google.com/calendar/render?cid=webcal%3A%2F%2Fterminal.stann.kr%2Fcalendar.ics');
   });
 });

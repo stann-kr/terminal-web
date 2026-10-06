@@ -33,16 +33,18 @@
   text-decoration: none;
   transition: var(--light-motion);
 }
-.card:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
-  --ink: var(--on-hi);
-  --muted: var(--on-hi);
-  --accent: var(--on-hi);
-  --line: var(--on-hi);
-  --well: color-mix(in srgb, var(--on-hi) 12%, transparent);
-  --fill: var(--on-hi);
-  --on-fill: var(--hi);
+@media (hover: hover) {
+  .card:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+    --ink: var(--on-hi);
+    --muted: var(--on-hi);
+    --accent: var(--on-hi);
+    --line: var(--on-hi);
+    --well: color-mix(in srgb, var(--on-hi) 12%, transparent);
+    --fill: var(--on-hi);
+    --on-fill: var(--hi);
+  }
 }
 .card:active {
   box-shadow: inset 0 0 0 100vmax var(--on-hi);
@@ -57,17 +59,20 @@
   outline-offset: -4px;
 }
 /* While the boxes are still travelling after a change of view, a box sliding under a resting pointer
-   does not light up; pointing lights things again once they have landed. */
-:global([data-moving]) .card:hover {
-  box-shadow: none;
-  color: inherit;
-  --ink: inherit;
-  --muted: inherit;
-  --accent: inherit;
-  --line: inherit;
-  --well: inherit;
-  --fill: inherit;
-  --on-fill: inherit;
+   does not light up; pointing lights things again once they have landed and the pointer moves (the
+   browser only re-finds what is under a still pointer when it moves, see Stage). */
+@media (hover: hover) {
+  :global([data-moving]) .card:hover {
+    box-shadow: none;
+    color: inherit;
+    --ink: inherit;
+    --muted: inherit;
+    --accent: inherit;
+    --line: inherit;
+    --well: inherit;
+    --fill: inherit;
+    --on-fill: inherit;
+  }
 }
 
 /* ── Shared print ────────────────────────────────────────────────────────── */
@@ -100,8 +105,9 @@
   align-items: baseline;
   gap: 4px 12px;
   margin: 0 calc(var(--bleed, 0px) * -1) 10px;
-  padding: 0 var(--bleed, 0px) 6px;
-  border-bottom: var(--rule) solid var(--accent);
+  /* No rule under a column's title: the lines below are sub-plates told apart by tone. The rule's
+     width stays as space, so a head keeps its height. */
+  padding: 0 var(--bleed, 0px) calc(6px + var(--rule));
   color: var(--muted);
   font: 600 var(--t-md)/1.3 var(--sans);
 }
@@ -112,6 +118,12 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+/* A language switch in the head is centred on the title line and never taller than it, so a head
+   with one keeps its rule level with its neighbour's. */
+.columnHead > [role=group] {
+  align-self: center;
+  margin-block: calc((var(--t-xl) - 32px) / 2);
+}
 .columnHead small {
   margin-left: auto;
   color: var(--ink);
@@ -121,6 +133,11 @@
 /* A column that may not spill: it is measured (data-fit) and a spill moves or grows its sheet. It
    reaches the column's edges (its padding stands in for the column's), so the flush lines inside
    are not cut at the text line by its clip. */
+/* A notice that is a column's whole body wears the column's own tone: head and body read as one
+   plate, as a text column does. */
+.fitColumn > .columnNotice:not([data-surface]) {
+  background: none;
+}
 .fitColumn {
   display: flex;
   flex: 1 1 auto;
@@ -157,8 +174,8 @@
   justify-content: space-between;
   gap: 6px 12px;
   margin-inline: calc(var(--pad) * -1);
-  padding: 12px var(--pad) 8px;
-  border-bottom: var(--rule) solid var(--accent);
+  /* Like a column head, a plate's band has no rule: its sub-plates are told apart by tone. */
+  padding: 12px var(--pad) calc(8px + var(--rule));
   color: var(--ink);
   text-decoration: none;
 }
@@ -166,8 +183,14 @@
 .plateCard {
   padding: 0 var(--pad) var(--pad);
 }
-.card:hover .band {
-  border-bottom-color: currentColor;
+/* A summary plate is one link, and its cells fill the rest of it: the band is where the plate itself
+   is pressed, so it is a generous key, its name set a step larger. */
+.plateCard > .band {
+  min-height: 88px;
+  padding-top: 18px;
+}
+.plateCard > .band .bandLabel {
+  font-size: clamp(30px, 2.4vw, 46px);
 }
 .bandTitle {
   display: flex;
@@ -373,8 +396,10 @@
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .24em;
 }
-.back:hover .backLabel {
-  color: inherit;
+@media (hover: hover) {
+  .back:hover .backLabel {
+    color: inherit;
+  }
 }
 .backName {
   --title-ls: .06em;
@@ -531,8 +556,10 @@
   box-shadow: inset 4px 0 0 var(--accent);
   background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
-.indexLine[aria-current=page]:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+@media (hover: hover) {
+  .indexLine[aria-current=page]:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+  }
 }
 .eventRow,
 .eventCell,
@@ -887,9 +914,28 @@
   min-height: 0;
   overflow: hidden;
 }
+/* The write column: the length readout and its gauge stay together on top, and the height the
+   column has to spare goes to the message box (at least 140px) instead of opening gaps between the
+   readout, the gauge and the fields. */
+:global([data-stage=stage]) .logWrite form {
+  display: flex;
+  flex-direction: column;
+}
+:global([data-stage=stage]) .logWrite form > *,
+:global([data-stage=stage]) .logWrite form > :last-child > * {
+  flex: none;
+}
+:global([data-stage=stage]) .logWrite form > :last-child,
+:global([data-stage=stage]) .logWrite form > :last-child > :first-child {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
 :global([data-stage=stage]) .logWrite textarea {
-  height: 96px;
-  min-height: 96px;
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 140px;
 }
 .logPages {
   display: flex;
@@ -973,9 +1019,11 @@
   letter-spacing: inherit;
   transition: var(--light-motion);
 }
-.logPager button:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .logPager button:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 .feedRule {
   display: flex;
@@ -1054,6 +1102,17 @@
   min-height: 64px;
   margin-top: 12px;
 }
+.posterLink {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+}
+.posterError {
+  width: 100%;
+  align-self: start;
+}
 .poster img {
   display: block;
   max-width: 100%;
@@ -1070,6 +1129,19 @@
 }
 :global([data-stage]:not([data-stage=stage])) .poster img {
   max-height: 420px;
+}
+/* Stacked (one column), the overview is only as tall as it is, so the poster cannot take the height
+   left in it: it is set by the width instead, up to 440px, its frame held at a poster's proportion
+   until the image is in so nothing shifts when it arrives. */
+@container layer (max-width: 700px) {
+  .poster {
+    flex: none;
+  }
+  .poster img {
+    width: min(100%, 440px);
+    max-height: none;
+    aspect-ratio: 707 / 1000;
+  }
 }
 .sessionOrder,
 .sessionBriefing,
@@ -1125,11 +1197,15 @@
 .artistFile {
   display: grid;
   grid-template-columns: minmax(240px, .8fr) minmax(0, 1.3fr) minmax(260px, 1fr);
+  grid-template-areas: 'identity records bio' 'identity shared bio';
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: var(--gap);
   min-width: 0;
   padding: var(--gap);
 }
+:global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) auto; }
 .fileMain {
+  grid-area: identity;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1146,25 +1222,37 @@
   text-transform: uppercase;
   outline: none;
 }
-.fileRecords {
+.fileRecords,
+.fileShared {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
   min-width: 0;
   min-height: 0;
 }
-:global([data-stage=stage]) .fileRecords {
+.fileRecords { grid-area: records; }
+.fileRecords > :first-child { flex: 1; }
+.fileShared { grid-area: shared; }
+.fileBio { grid-area: bio; }
+:global([data-stage=stage]) :is(.fileRecords, .fileShared) {
   overflow: hidden;
 }
 @container layer (max-width: 1000px) {
-  .artistFile { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .fileBio { grid-column: 1 / -1; }
-  :global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+  .artistFile {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'identity records' 'identity shared' 'bio bio';
+    grid-template-rows: auto auto auto;
+  }
+  :global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr); }
 }
 @container layer (max-width: 700px) {
-  .artistFile { grid-template-columns: minmax(0, 1fr); }
-  /* As the session file: the records are as tall as they are, the biography takes the rest. */
-  :global([data-stage=stage]) .artistFile { grid-template-rows: auto auto minmax(var(--paged-min), 1fr); }
+  .artistFile {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'identity' 'records' 'bio' 'shared';
+    grid-template-rows: auto auto auto auto;
+  }
+  /* The mobile reading order is also the DOM and keyboard order; no visual-only reordering. */
+  :global([data-stage=stage]) .artistFile { grid-template-rows: auto auto minmax(var(--paged-min), 1fr) auto; }
 }
 
 
@@ -1194,7 +1282,8 @@
 .session,
 .artistFile,
 .sessionSide,
-.fileRecords {
+.fileRecords,
+.fileShared {
   gap: 0;
   padding: 0;
 }
@@ -1226,6 +1315,70 @@
 }
 .lineupCells li:nth-child(odd) {
   background: var(--well);
+}
+/* Lineup columns follow the plate's width (cells at least ~120px), set explicitly so a short last
+   row can be filled: its last cell spans the columns left in that row, and a lone cell runs the
+   whole row. (Ending a cell at the last line without a start would drop it into the last column.) */
+.lineupCells {
+  grid-template-columns: repeat(var(--lineup-cols, 1), minmax(0, 1fr));
+}
+.lineupCells b {
+  word-break: keep-all;
+}
+.lineupCells li[data-empty] b {
+  white-space: nowrap;
+}
+@container layer (min-width: 240px) {
+  .lineupCells { --lineup-cols: 2; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(2n + 1) { grid-column: span 2; }
+}
+@container layer (min-width: 360px) {
+  .lineupCells { --lineup-cols: 3; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(3n + 1) { grid-column: span 3; }
+  .lineupCells li:last-child:nth-child(3n + 2) { grid-column: span 2; }
+}
+@container layer (min-width: 480px) {
+  .lineupCells { --lineup-cols: 4; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(4n + 1) { grid-column: span 4; }
+  .lineupCells li:last-child:nth-child(4n + 2) { grid-column: span 3; }
+  .lineupCells li:last-child:nth-child(4n + 3) { grid-column: span 2; }
+}
+@container layer (min-width: 600px) {
+  .lineupCells { --lineup-cols: 5; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(5n + 1) { grid-column: span 5; }
+  .lineupCells li:last-child:nth-child(5n + 2) { grid-column: span 4; }
+  .lineupCells li:last-child:nth-child(5n + 3) { grid-column: span 3; }
+  .lineupCells li:last-child:nth-child(5n + 4) { grid-column: span 2; }
+}
+@container layer (min-width: 720px) {
+  .lineupCells { --lineup-cols: 6; }
+  .lineupCells li:last-child:nth-child(n) { grid-column: auto; }
+  .lineupCells li:last-child:nth-child(6n + 1) { grid-column: span 6; }
+  .lineupCells li:last-child:nth-child(6n + 2) { grid-column: span 5; }
+  .lineupCells li:last-child:nth-child(6n + 3) { grid-column: span 4; }
+  .lineupCells li:last-child:nth-child(6n + 4) { grid-column: span 3; }
+  .lineupCells li:last-child:nth-child(6n + 5) { grid-column: span 2; }
+}
+/* The lineup fills the next-session plate like any plate's sub-plates (layout.ts fillHeight): it
+   takes the height left above the open key, its rows growing to twice their own height at most
+   (the grid shares free space up to each row's max), and the last cell runs to its row's end. It
+   grows but never shrinks, so a plate too short still folds it (FitStack) rather than clipping. */
+:global([data-stage=stage]) .partLineup {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+:global([data-stage=stage]) .partLineup .lineupCells {
+  flex: 1 0 auto;
+  grid-auto-rows: minmax(auto, 104px);
+  align-content: start;
+}
+.lineupCells li {
+  align-content: center;
 }
 .lineupCells small {
   color: var(--muted);
@@ -1285,9 +1438,11 @@
   text-transform: uppercase;
   transition: var(--light-motion);
 }
-.status button:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--alert-ink);
-  color: var(--alert);
+@media (hover: hover) {
+  .status button:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--alert-ink);
+    color: var(--alert);
+  }
 }
 .status button:focus-visible {
   outline-color: currentColor;
@@ -1309,6 +1464,7 @@
 }
 @media (forced-colors: active) {
   .status, .status button { border: 1px solid CanvasText; }
+  .band, .columnHead { border-bottom: 1px solid CanvasText; }
 }
 
 /* A low next-session chip puts the wordmark bar and the session line side by side. */

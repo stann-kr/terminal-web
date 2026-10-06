@@ -16,6 +16,8 @@ import styles from './plates.module.css';
 const pad = (value: number, size = 3) => String(value).padStart(size, '0');
 /** Height of one node row on the home plate, gap included (px). */
 const NODE_ROW = 46;
+/** The home plate lists as many nodes as fit, up to the open log's own page limit. */
+const MAX_NODES = 30;
 const logHref = (page: number) => `/transmit${page > 1 ? `?page=${page}` : ''}`;
 /** A usual log entry's height (handle line and one line of message) and the pager and state line under the list, px. */
 const LOG_ROW = 84;
@@ -31,7 +33,7 @@ export function LogPlate({ mode, state, size }: PlateProps) {
   if (mode === 'chip' || mode === 'index') return <ChipFace href="/transmit" name="LOG" title="방문자 로그" meta={meta} />;
   if (mode !== 'hero') {
     // As many node rows as the plate has room for, below its band. The plate is one link.
-    const limit = size ? Math.max(1, Math.min(6, Math.floor((size.h - 110) / NODE_ROW))) : 6;
+    const limit = size ? Math.max(1, Math.min(MAX_NODES, Math.floor((size.h - 110) / NODE_ROW))) : 6;
     return (
       <CardLink href="/transmit" className={styles.summaryCard} label={`방문자 로그 · ${meta}`}>
         <span className={styles.band}>

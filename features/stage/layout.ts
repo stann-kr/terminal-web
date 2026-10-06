@@ -202,46 +202,73 @@ export function listRowsPerPage(areaH: number, head: number, m: StageMetrics, ar
   return Math.max(1, Math.floor((areaH - head - m.pagerH + m.rowGap) / (rowHeight(areaW, m) + m.rowGap)));
 }
 
-/** Slot rects of one list page, flush from edge to edge: rows for events, a grid of cards for artists. */
-function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics): Rect[] {
+/**
+ * How tall flush sub-plates are, so they fill their plate instead of leaving a strip under them:
+ * `fit` rows fit at the `base` height in `avail`. A full run shares out what is left below the
+ * last whole row (the page size does not change); a run of only `used` rows (a short single-page
+ * list, a summary with few cells) grows to fill the plate, but to twice its own height at most.
+ */
+export function fillHeight(avail: number, base: number, fit: number, used = fit): number {
+  if (fit <= 0) return base;
+  const even = avail / fit;
+  if (used <= 0 || used >= fit) return even;
+  return Math.max(even, Math.min(avail / used, base * 2));
+}
+
+/**
+ * Rects of `count` sub-plates in `cols` columns from `top`, each `h` tall and flush; a last row
+ * that is not full widens its cells to the plate's width, so no hole is left at its end.
+ */
+function gridRects(x: number, w: number, top: number, cols: number, h: number, count: number, shown = count): Rect[] {
+  const columns = split(x, w, Array.from({ length: cols }, () => 1), 0);
+  const lastRow = Math.floor((Math.max(1, shown) - 1) / cols);
+  const inLast = shown - lastRow * cols;
+  const lastColumns = inLast > 0 && inLast < cols ? split(x, w, Array.from({ length: inLast }, () => 1), 0) : columns;
+  return Array.from({ length: count }, (_, index) => {
+    const row = Math.floor(index / cols);
+    const [x0, x1] = (row === lastRow ? lastColumns : columns)[index % cols] ?? columns[index % cols];
+    const y = top + row * h;
+    return edges(x0, y, x1, y + h);
+  });
+}
+
+/**
+ * Slot rects of one list page, flush from edge to edge: rows for events, a grid of cards for
+ * artists. `shown` is how many sit on this page; `single` says the list has one page only, so a
+ * short list may stretch (see `fillHeight`).
+ */
+function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics, shown = Infinity, single = false): Rect[] {
   const top = area.y + head;
+  const avail = area.h - head - m.pagerH;
   if (kind === 'event') {
-    const rowH = rowHeight(area.w, m);
-    return Array.from({ length: listRowsPerPage(area.h, head, m, area.w) }, (_, index) => {
-      const y = top + index * (rowH + m.rowGap);
-      return edges(area.x, y, area.x + area.w, y + rowH);
-    });
+    const fit = listRowsPerPage(area.h, head, m, area.w);
+    const h = fillHeight(avail, rowHeight(area.w, m), fit, single ? Math.min(shown, fit) : fit);
+    return gridRects(area.x, area.w, top, 1, h, fit);
   }
   const cols = Math.max(1, Math.floor(area.w / m.cellMinW));
-  const rows = Math.max(1, Math.floor((area.h - head - m.pagerH) / m.cellH));
-  const columns = split(area.x, area.w, Array.from({ length: cols }, () => 1), 0);
-  return Array.from({ length: cols * rows }, (_, index) => {
-    const [x0, x1] = columns[index % cols];
-    const y = top + Math.floor(index / cols) * m.cellH;
-    return edges(x0, y, x1, y + m.cellH);
-  });
+  const rows = Math.max(1, Math.floor(avail / m.cellH));
+  const onPage = Math.min(shown, cols * rows);
+  const h = fillHeight(avail, m.cellH, rows, single ? Math.ceil(onPage / cols) : rows);
+  return gridRects(area.x, area.w, top, cols, h, cols * rows, onPage);
 }
 
-/** Cells under a summary plate's head, flush, as many as fit up to the kind's max. */
-function panelSlots(kind: CarrierKind, plate: Rect, head: number, m: StageMetrics): Rect[] {
+/** Cells under a summary plate's head, flush, as many as fit up to the kind's max, filling the plate. */
+function panelSlots(kind: CarrierKind, plate: Rect, head: number, m: StageMetrics, total: number): Rect[] {
   const { max, columns } = m.panelCells[kind];
-  const rows = Math.max(0, Math.floor((plate.h - head) / m.panelCellH));
-  const count = Math.min(max, rows * columns);
-  const cols = split(plate.x, plate.w, Array.from({ length: columns }, () => 1), 0);
-  return Array.from({ length: count }, (_, index) => {
-    const [x0, x1] = cols[index % columns];
-    const y = plate.y + head + Math.floor(index / columns) * m.panelCellH;
-    return edges(x0, y, x1, y + m.panelCellH);
-  });
+  const avail = plate.h - head;
+  const rows = Math.max(0, Math.floor(avail / m.panelCellH));
+  const count = Math.min(max, rows * columns, total);
+  if (!count) return [];
+  const h = fillHeight(avail, m.panelCellH, rows, Math.ceil(count / columns));
+  return gridRects(plate.x, plate.w, plate.y + head, columns, h, count);
 }
 
-/** Lines of an index under its head, flush. */
-function indexSlots(plate: Rect, head: number, m: StageMetrics): Rect[] {
-  const count = Math.max(0, Math.floor((plate.h - head) / m.indexRowH));
-  return Array.from({ length: count }, (_, index) => {
-    const y = plate.y + head + index * m.indexRowH;
-    return edges(plate.x, y, plate.x + plate.w, y + m.indexRowH);
-  });
+/** Lines of an index under its head, flush, filling the plate (see `fillHeight`). */
+function indexSlots(plate: Rect, head: number, m: StageMetrics, total: number): Rect[] {
+  const avail = plate.h - head;
+  const fit = Math.max(0, Math.floor(avail / m.indexRowH));
+  const h = fillHeight(avail, m.indexRowH, fit, Math.min(total, fit));
+  return gridRects(plate.x, plate.w, plate.y + head, 1, h, fit);
 }
 
 type LeafKey = PlateId | 'detail' | 'back';
@@ -337,6 +364,18 @@ function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill, m: StageMetrics
 const inside = (rect: Rect, w: number) => rect.x >= 0 && rect.y >= 0 && rect.x + rect.w <= w;
 
 /**
+ * A sheet that grows for a long plate keeps its back card at the height it had on the sheet as
+ * tiled (the split is by weight, so the card would otherwise swell with the plate); the plate under
+ * it takes all of the added height.
+ */
+function keepBack(tree: LayoutNode, base: number, h: number, gap: number): LayoutNode {
+  const [first, second] = tree.parts;
+  if (tree.dir !== 'col' || tree.parts.length !== 2 || !isLeaf(first[1]) || leafKey(first[1]) !== 'back') return tree;
+  const back = ((base - gap) * first[0]) / (first[0] + second[0]);
+  return { dir: 'col', parts: [[back, first[1]], [h - gap - back, second[1]]] };
+}
+
+/**
  * Where every plate and carrier sits for a state. Pure and deterministic: it reads no DOM (head
  * heights and spills come in measured), so the same inputs always give the same rects.
  */
@@ -362,7 +401,7 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
     const grow = only.length === 1 ? spill.grow[leafKey(only[0]) as PlateId | 'detail'] ?? 0 : 0;
     const h = (natural ?? stage.h) + grow;
     sheets.push({ y, h });
-    for (const [leaf, rect] of tile(tree, { x: 0, y, w: stage.w, h }, m.gap)) {
+    for (const [leaf, rect] of tile(grow > 0 ? keepBack(tree, natural ?? stage.h, h, m.gap) : tree, { x: 0, y, w: stage.w, h }, m.gap)) {
       sheetOf[leafKey(leaf)] = index;
       if ('plate' in leaf) plates[leaf.plate] = { mode: view ? leaf.density : 'hidden', rect };
       else if (leaf.slot === 'detail') detail = rect;
@@ -397,29 +436,31 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
 
     if (owner.mode === 'hero') {
       const head = input.heads?.[ownerId] ?? m.head.hero;
-      const slots = listSlots(kind, owner.rect, head, m);
-      const perPage = slots.length;
+      const perPage = listSlots(kind, owner.rect, head, m).length;
       const pages = Math.max(1, Math.ceil(source.order.length / perPage));
       const page = Math.min(Math.max(1, source.page ?? 1), pages);
+      const shownOnPage = Math.min(perPage, source.order.length - (page - 1) * perPage);
+      // This page's slots fill the plate; other pages wait beside the plain ones.
+      const slots = listSlots(kind, owner.rect, head, m, shownOnPage, pages === 1);
+      const parked = listSlots(kind, owner.rect, head, m);
       const pagerTop = owner.rect.y + owner.rect.h - m.pagerH;
       list = { kind, perPage, pages, page, pager: edges(owner.rect.x, pagerTop, owner.rect.x + owner.rect.w, owner.rect.y + owner.rect.h) };
       source.order.forEach((id, index) => {
         const onPage = Math.floor(index / perPage) + 1;
-        const slot = slots[index % perPage];
         // Rows of other pages wait in their own slot, just off it on the side they will come from.
-        if (onPage === page) place(id, { rect: slot, mode: 'row', visible: true }, index % perPage);
-        else place(id, { rect: shift(slot, onPage < page ? -m.pageShift : m.pageShift), mode: 'folded', visible: false });
+        if (onPage === page) place(id, { rect: slots[index % perPage], mode: 'row', visible: true }, index % perPage);
+        else place(id, { rect: shift(parked[index % perPage], onPage < page ? -m.pageShift : m.pageShift), mode: 'folded', visible: false });
       });
     } else if (owner.mode === 'panel') {
       const head = input.heads?.[ownerId] ?? m.head.panel;
-      const slots = panelSlots(kind, owner.rect, head, m);
+      const slots = panelSlots(kind, owner.rect, head, m, source.order.length);
       source.order.forEach((id, index) => {
         if (index < slots.length) place(id, { rect: slots[index], mode: 'cell', visible: true }, index);
         else folded(id);
       });
     } else if (owner.mode === 'index') {
       const head = input.heads?.[ownerId] ?? m.head.index;
-      const slots = indexSlots(owner.rect, head, m);
+      const slots = indexSlots(owner.rect, head, m, source.order.length);
       // A window of the list that keeps the open line in view.
       const at = open ? source.order.indexOf(open) : 0;
       const start = Math.max(0, Math.min(at - Math.floor(slots.length / 2), source.order.length - slots.length));

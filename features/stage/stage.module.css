@@ -118,6 +118,29 @@
 @keyframes layerIn {
   from { opacity: 0; transform: translateY(4px); }
 }
+/* In a box that does not move (see Swap), the content is traded sub-plate by sub-plate instead:
+   each of the content's own parts (a file's columns, the back card and its home key) fades out and
+   its successor fades in, one after another from the side of the index, like the stage's own wave.
+   Nothing travels, so nothing twitches. */
+.stage[data-stage=stage] .layer[data-swap=still] {
+  --wave-step: 70ms;
+  animation: none;
+}
+.stage[data-stage=stage] .layer[data-swap=still] > * > * {
+  --i: 0;
+}
+.stage[data-stage=stage] .layer[data-swap=still] > * > :nth-child(2) { --i: 1; }
+.stage[data-stage=stage] .layer[data-swap=still] > * > :nth-child(3) { --i: 2; }
+.stage[data-stage=stage] .layer[data-swap=still] > * > :nth-child(n + 4) { --i: 3; }
+.stage[data-stage=stage] .layer[data-layer=current][data-swap=still] > * > * {
+  animation: layerFade var(--dur-enter) cubic-bezier(.2, .7, .2, 1) calc(var(--enter-delay) + var(--i) * var(--wave-step)) backwards;
+}
+.stage[data-stage=stage] .layer[data-layer=leaving][data-swap=still] > * > * {
+  animation: layerOut var(--dur-exit) cubic-bezier(.4, 0, .8, .6) calc(var(--i) * var(--wave-step)) forwards;
+}
+@keyframes layerFade {
+  from { opacity: 0; }
+}
 @keyframes layerOut {
   to { opacity: 0; }
 }
@@ -153,9 +176,11 @@
   text-decoration: none;
   transition: var(--light-motion);
 }
-.pager a:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .pager a:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 .pager a:focus-visible {
   outline-offset: -4px;
@@ -310,9 +335,11 @@
   letter-spacing: inherit;
   transition: var(--light-motion);
 }
-.textPager button:hover:not(:disabled) {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .textPager button:hover:not(:disabled) {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 .textPager button:disabled {
   cursor: default;
@@ -363,9 +390,11 @@
   letter-spacing: .12em;
   transition: var(--light-motion);
 }
-.enlarge button:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-  color: var(--on-hi);
+@media (hover: hover) {
+  .enlarge button:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
 }
 
 @media (forced-colors: active) {
@@ -413,7 +442,7 @@
 }
 
 /* ── Scroll cue: an icon key at the foot of the window while sheets lie below ──
-   Two chevrons on a translucent square in the palette's cue colour (one no plate wears), letting the
+   Two chevrons on a translucent square in the palette's cue colour (one of its own source colours), letting the
    plates show through. Hover fills it solid. */
 .scrollHint {
   position: fixed;
@@ -442,8 +471,10 @@
   visibility: visible;
   transition-delay: 0s;
 }
-.scrollHint:hover {
-  box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cue);
+@media (hover: hover) {
+  .scrollHint:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--cue);
+  }
 }
 .scrollHint:focus-visible {
   outline-color: var(--cue);
@@ -527,6 +558,20 @@
   .boot:not([data-done]) {
     animation: bootGiveWay 0s linear 6s forwards;
   }
+  /* The screen holds for at least 1s (Stage), so its words come in early: the field alone covers
+     the stage for the first moment, then the wordmark and the loading line fade in. */
+  .bootMark,
+  .bootLine {
+    opacity: 0;
+    animation: bootShow 320ms var(--ease-move) 200ms forwards;
+  }
+}
+@media (scripting: enabled) and (prefers-reduced-motion: reduce) {
+  .bootMark,
+  .bootLine { animation-duration: 0s; }
+}
+@keyframes bootShow {
+  to { opacity: 1; }
 }
 @keyframes bootGiveWay {
   to { visibility: hidden; opacity: 0; }

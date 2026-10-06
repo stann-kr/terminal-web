@@ -23,7 +23,7 @@ afterEach(()=>{
 });
 function Screen() {
   const ref=useRef<HTMLDivElement>(null);useDisplayPolicy(ref);
-  return <div ref={ref} data-testid="display"><main><h2>행사 정보</h2><button>열기</button></main></div>;
+  return <div ref={ref} data-testid="display"><main><h2>이벤트 정보</h2><button>열기</button></main></div>;
 }
 describe('display motion policy',()=>{
   it('starts without a paused marker so server and hydrated markup match',()=>{

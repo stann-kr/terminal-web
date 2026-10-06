@@ -1,10 +1,11 @@
 /* Barlow / Barlow Condensed (Jeremy Tribby, OFL) and Share Tech Mono (Carrois, OFL): public/fonts/instrument/OFL-*.txt */
+/* The wordmark and the display face wait for their own glyphs (block) rather than flash a fallback; all faces are preloaded (app/layout.tsx). */
 @font-face { font-family: 'Barlow'; src: url('/fonts/instrument/Barlow-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'Barlow'; src: url('/fonts/instrument/Barlow-Medium.woff2') format('woff2'); font-weight: 500 700; font-display: swap; }
-@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: swap; }
-@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
-@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: swap; }
-@font-face { font-family: 'ProcrastinatingPixie'; src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype'); font-weight: 400 800; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: block; }
+@font-face { font-family: 'ProcrastinatingPixie'; src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype'); font-weight: 400 800; font-display: block; }
 @font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
 /*
  * Hypnotic console: plates on a workspace field, a few loud solid plates among them. Concentric rings
@@ -56,9 +57,16 @@
   /* Ambient rings: they flow outward by one 18px spacing each period, unrelated to any beat. */
   --ring-period: 2.4s;
   --dur-hover: 200ms;
-  --ease-hover: ease-out;
-  /* Hover light-up: the fill sweeps in, the label flips once the fill is part way across. */
-  --light-motion: box-shadow var(--dur-hover) var(--ease-hover), color 0s linear calc(var(--dur-hover) / 4);
+  /* Hover light-up. With so many lit surfaces the light comes in calmly and goes out quickly: the
+     fill sweeps in from the side the pointer entered at an even pace (--light-motion-in, set on
+     the hovered element), and on leaving it is taken back fast (--light-motion, on the element
+     itself). The label and everything printed on the surface change colour over the same span
+     instead of flipping at once. */
+  --dur-light-in: 260ms;
+  --dur-light-out: 120ms;
+  --ease-light-in: cubic-bezier(.3, .15, .4, 1);
+  --light-motion: box-shadow var(--dur-light-out) ease-out, color var(--dur-light-out) linear;
+  --light-motion-in: box-shadow var(--dur-light-in) var(--ease-light-in), color var(--dur-light-in) linear;
   /* Concentric rings from the bottom-right corner: the site's one graphic motif. */
   --rings: repeating-radial-gradient(circle at 100% 100%, currentColor 0 1.5px, transparent 1.5px 12px);
 }
@@ -198,6 +206,16 @@ input[type=checkbox]:checked::before { transform: scale(1); }
 button { color: inherit; }
 summary { min-height: 40px; padding-block: 8px; color: var(--ink); font: 700 var(--text-ui)/1.4 var(--display); letter-spacing: .1em; text-transform: uppercase; }
 details[open] > summary { margin-bottom: 6px; }
+/* Hover timing (see --light-motion): the hovered surface takes the calm way in, and so does what is
+   printed on it, whose colours follow the surface's tokens; without hover it all goes back quickly.
+   Specificity-free on the printed parts, so a part with its own transition keeps it; a press shows
+   its inverse at once. */
+:where(a, button, li) :where(*) { transition: color var(--dur-light-out) linear, background-color var(--dur-light-out) linear; }
+@media (hover: hover) {
+  :root :is(a, button, li):hover { transition: var(--light-motion-in); }
+  :where(a:hover, button:hover, li:hover) :where(*) { transition: color var(--dur-light-in) linear, background-color var(--dur-light-in) linear; }
+}
+:root :is(a, button):active { transition: none; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }
 

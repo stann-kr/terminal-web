@@ -4,10 +4,11 @@ import type { Rect } from './layout';
 import styles from './stage.module.css';
 
 /** A content layer and the box size it was last drawn at. */
-type Layer = { key: string; node: ReactNode; w?: number; h?: number };
+type Layer = { key: string; node: ReactNode; x?: number; y?: number; w?: number; h?: number; still?: boolean };
 
-/** Outlasts the exit fade (`--dur-exit`), so a leaving layer is only removed once it is invisible. */
-const EXIT_MS = 300;
+/** Outlasts the exit fade (`--dur-exit`) and, in a still box, its wave across the sub-plates
+ * (`--wave-step` × 3), so a leaving layer is only removed once it is invisible. */
+const EXIT_MS = 520;
 
 /**
  * Content that changes shape: when `id` changes, the old content fades out underneath while the new
@@ -16,16 +17,20 @@ const EXIT_MS = 300;
  * showed, and it is inert while it leaves. It keeps the size it was drawn at, so it never re-wraps:
  * the box's window closes or opens over it as it travels.
  */
-function Swap({ id, w, h, children }: { id: string; w?: number; h?: number; children: ReactNode }) {
+function Swap({ id, x, y, w, h, children }: { id: string; x?: number; y?: number; w?: number; h?: number; children: ReactNode }) {
   // The last rendered content and the layers on their way out, both derived during render so a
   // swap paints in the same frame as the change that caused it.
-  const [shown, setShown] = useState<Layer>({ key: id, node: children, w, h });
+  const [shown, setShown] = useState<Layer>({ key: id, node: children, x, y, w, h });
   const [leaving, setLeaving] = useState<Layer[]>([]);
   if (shown.key !== id) {
-    setLeaving(list => [...list.filter(layer => layer.key !== id && layer.key !== shown.key), shown]);
-    setShown({ key: id, node: children, w, h });
-  } else if (shown.node !== children || shown.w !== w || shown.h !== h) {
-    setShown({ key: id, node: children, w, h });
+    // A box that stays where it is (another session in the open file, a new title on the back
+    // card) only crossfades: the rise that new content makes inside a travelling box would read
+    // here as the box itself twitching.
+    const still = w !== undefined && shown.x === x && shown.y === y && shown.w === w && shown.h === h;
+    setLeaving(list => [...list.filter(layer => layer.key !== id && layer.key !== shown.key), { ...shown, still }]);
+    setShown({ key: id, node: children, x, y, w, h, still });
+  } else if (shown.node !== children || shown.x !== x || shown.y !== y || shown.w !== w || shown.h !== h) {
+    setShown({ ...shown, node: children, x, y, w, h });
   }
   useLayoutEffect(() => {
     if (!leaving.length) return;
@@ -34,7 +39,7 @@ function Swap({ id, w, h, children }: { id: string; w?: number; h?: number; chil
   }, [leaving]);
   const layers = [
     ...leaving.filter(layer => layer.key !== id).map(layer => ({ ...layer, out: true })),
-    { key: id, node: children, out: false },
+    { key: id, node: children, out: false, still: shown.still },
   ];
   return (
     <>
@@ -43,6 +48,7 @@ function Swap({ id, w, h, children }: { id: string; w?: number; h?: number; chil
           key={layer.key}
           className={styles.layer}
           data-layer={layer.out ? 'leaving' : 'current'}
+          data-swap={layer.still ? 'still' : undefined}
           inert={layer.out || undefined}
           aria-hidden={layer.out || undefined}
           data-fit={layer.out ? undefined : ''}
@@ -138,7 +144,7 @@ export function Box({ rect, visible, contentKey, children, className = '', surfa
       {...Object.fromEntries(Object.entries(data ?? {}).map(([key, value]) => [`data-${key}`, value]))}
     >
       {decor}
-      <Swap id={`${contentKey}:${shape.generation}`} w={rect?.w} h={rect?.h}>{children}</Swap>
+      <Swap id={`${contentKey}:${shape.generation}`} x={rect?.x} y={rect?.y} w={rect?.w} h={rect?.h}>{children}</Swap>
       {overlay}
     </Tag>
   );
