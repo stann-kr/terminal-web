@@ -1,14 +1,14 @@
 'use client';
 /* eslint-disable @next/next/no-img-element -- Posters retain their source aspect ratio without invented dimensions. */
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { AccessRequest } from '@/features/access/Access';
 import { EventActions, EventFacts, Lineup } from '@/features/events/EventRecord';
 import { bilingual, eventHref, eventSubtitle, isRuleLine, paragraphs, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
-import { BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
+import { Action, ActionDeck, BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import { FitTitle } from '../FitTitle';
 import type { ItemMode } from '../layout';
@@ -81,23 +81,44 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
 }
 
 /**
- * A poster in a slot the layout sizes, never the image: until the image has decoded the slot shows
- * its ring pattern, then the poster fades in, contained. A late image never moves anything.
+ * A poster fades into its reserved slot. A failed image explains the empty slot and can be retried.
  */
 function Poster({ src, alt }: { src: string; alt: string }) {
-  const [loaded, setLoaded] = useState(false);
+  const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [attempt, setAttempt] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
+  const retry = () => {
+    setStatus('loading');
+    setAttempt(previous => previous + 1);
+    // The retry button goes away; keep keyboard focus at the poster instead of losing it to body.
+    root.current?.focus({ preventScroll: true });
+  };
   return (
-    <a className={styles.poster} href={src} target="_blank" rel="noopener noreferrer" data-loaded={loaded || undefined}>
-      <img
-        ref={image => {
-          if (image?.complete && image.naturalWidth) setLoaded(true);
-        }}
-        src={src}
-        alt={alt}
-        decoding="async"
-        onLoad={() => setLoaded(true)}
-      />
-    </a>
+    <div ref={root} className={styles.poster} role="group" aria-label="이벤트 포스터" tabIndex={-1} aria-busy={status === 'loading'} data-loaded={status === 'loaded' || undefined}>
+      {status === 'error' ? (
+        <StateNotice title="포스터를 불러오지 못했습니다" className={styles.posterError}>
+          <p>연결을 확인한 뒤 다시 시도하거나 원본을 열어 주세요.</p>
+          <ActionDeck>
+            <button type="button" className={ui.button} onClick={retry}>포스터 다시 불러오기</button>
+            <Action href={src} external>원본 열기<span className={ui.srOnly}> (새 탭)</span></Action>
+          </ActionDeck>
+        </StateNotice>
+      ) : (
+        <a className={styles.posterLink} href={src} target="_blank" rel="noopener noreferrer">
+          <img
+            key={attempt}
+            ref={image => {
+              if (image?.complete) setStatus(image.naturalWidth ? 'loaded' : 'error');
+            }}
+            src={src}
+            alt={alt}
+            decoding="async"
+            onLoad={() => setStatus('loaded')}
+            onError={() => setStatus('error')}
+          />
+        </a>
+      )}
+    </div>
   );
 }
 
@@ -125,7 +146,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
         </FitTitle>
         {eventSubtitle(event) && <p className={styles.sessionSubtitle}>{eventSubtitle(event)}</p>}
         <EventFacts event={event} modular />
-        {event.posterUrl && <Poster src={event.posterUrl} alt={`${event.session} 이벤트 포스터 — 새 탭에서 확대`} />}
+        {event.posterUrl && <Poster key={event.posterUrl} src={event.posterUrl} alt={`${event.session} 이벤트 포스터 — 새 탭에서 확대`} />}
       </div>
       <section className={styles.sessionOrder} data-surface="panel" aria-label="공연표">
         <p className={styles.columnHead}><b aria-hidden="true">Running order</b><span>공연표</span></p>

@@ -1102,6 +1102,17 @@
   min-height: 64px;
   margin-top: 12px;
 }
+.posterLink {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+}
+.posterError {
+  width: 100%;
+  align-self: start;
+}
 .poster img {
   display: block;
   max-width: 100%;
@@ -1186,11 +1197,15 @@
 .artistFile {
   display: grid;
   grid-template-columns: minmax(240px, .8fr) minmax(0, 1.3fr) minmax(260px, 1fr);
+  grid-template-areas: 'identity records bio' 'identity shared bio';
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: var(--gap);
   min-width: 0;
   padding: var(--gap);
 }
+:global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) auto; }
 .fileMain {
+  grid-area: identity;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1207,33 +1222,36 @@
   text-transform: uppercase;
   outline: none;
 }
-.fileRecords {
+.fileRecords,
+.fileShared {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
   min-width: 0;
   min-height: 0;
 }
-:global([data-stage=stage]) .fileRecords {
+.fileRecords { grid-area: records; }
+.fileRecords > :first-child { flex: 1; }
+.fileShared { grid-area: shared; }
+.fileBio { grid-area: bio; }
+:global([data-stage=stage]) :is(.fileRecords, .fileShared) {
   overflow: hidden;
 }
 @container layer (max-width: 1000px) {
-  .artistFile { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .fileBio { grid-column: 1 / -1; }
-  :global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+  .artistFile {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'identity records' 'identity shared' 'bio bio';
+    grid-template-rows: auto auto auto;
+  }
+  :global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr); }
 }
 @container layer (max-width: 700px) {
-  .artistFile { grid-template-columns: minmax(0, 1fr); }
-  /* Stacked, the biography is read right after the records, and the shared lineup closes the file:
-     the records column opens up so its two panels sit in the file's own order. As the session file,
-     the records and the lineup are as tall as they are, the biography takes the rest. */
-  .fileRecords,
-  .fileRecords > div {
-    display: contents;
+  .artistFile {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'identity' 'records' 'bio' 'shared';
+    grid-template-rows: auto auto auto auto;
   }
-  .fileRecords > div > :first-child { order: 1; }
-  .fileBio { order: 2; }
-  .fileRecords > div > :nth-child(2) { order: 3; }
+  /* The mobile reading order is also the DOM and keyboard order; no visual-only reordering. */
   :global([data-stage=stage]) .artistFile { grid-template-rows: auto auto minmax(var(--paged-min), 1fr) auto; }
 }
 
@@ -1264,7 +1282,8 @@
 .session,
 .artistFile,
 .sessionSide,
-.fileRecords {
+.fileRecords,
+.fileShared {
   gap: 0;
   padding: 0;
 }

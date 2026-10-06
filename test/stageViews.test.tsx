@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { Shell } from '../features/shell/Shell';
@@ -267,6 +268,72 @@ describe('stage views', () => {
     expect(within(file).getByRole('heading', { name: '게스트 신청서' })).toBeInTheDocument();
     expect(within(file).getByRole('link', { name: '신청 닫기' })).toHaveAttribute('href', '/events/TRM-03');
     expect(within(file).queryByRole('group', { name: '이벤트 소개' })).not.toBeInTheDocument();
+  });
+
+  it('restores a guest draft after leaving the session, with the code awaiting verification again', async () => {
+    const openEvent = { ...upcoming, date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) };
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(new Response(JSON.stringify(
+      url.startsWith('/api/transmit') ? { logs: [], total: 0, page: 1, totalPages: 0 }
+        : url === '/api/events' ? [openEvent] : { name: 'INVITER' },
+    )))));
+    const { container, go } = shell([openEvent]);
+    const form = () => within(detail(container, 'event:TRM-03').querySelector<HTMLElement>(':scope > [data-layer=current]')!);
+    go('/events/TRM-03/request');
+    fireEvent.change(form().getByLabelText(/초대 코드/), { target: { value: 'CODE' } });
+    fireEvent.click(form().getByRole('button', { name: '코드 확인' }));
+    await waitFor(() => expect(form().getByLabelText(/^이름/)).toBeEnabled());
+    fireEvent.change(form().getByLabelText(/^이름/), { target: { value: 'Example' } });
+    fireEvent.change(form().getByLabelText(/^이메일/), { target: { value: 'example@example.test' } });
+    go('/about');
+    // Let the leaving layer and the closed file release the actual form instance.
+    await act(() => new Promise(resolve => setTimeout(resolve, 750)));
+    go('/events/TRM-03/request');
+    expect(form().getByLabelText(/초대 코드/)).toHaveValue('CODE');
+    expect(form().getByLabelText(/^이름/)).toHaveValue('Example');
+    expect(form().getByLabelText(/^이메일/)).toHaveValue('example@example.test');
+    expect(form().getByLabelText(/^이름/)).toBeDisabled();
+    expect(form().getByRole('button', { name: '게스트 신청 저장' })).toBeDisabled();
+    vi.unstubAllGlobals();
+  });
+
+  it('reads the mobile artist file as records, biography, then shared lineup in document order', () => {
+    viewport(390, 844);
+    const event = { ...past, artists: [...past.artists, artist('SECOND', 'SECOND ARTIST')] };
+    const { container, go } = shell([event]);
+    go('/artists/appearance:OLD:PUBLIC');
+    const file = detail(container, 'artist:appearance:OLD:PUBLIC');
+    const records = within(file).getByRole('heading', { name: '출연 기록' });
+    const biography = within(file).getByRole('region', { name: '소개' });
+    const shared = within(file).getByRole('heading', { name: '같은 세션 출연진' });
+    expect(records.compareDocumentPosition(biography) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(biography.compareDocumentPosition(shared) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(file).getByRole('link', { name: 'SECOND ARTIST' })).toHaveAttribute('href', '/artists/appearance%3AOLD%3ASECOND');
+    expect(file).not.toHaveTextContent('PRIVATE NAME');
+  });
+
+  it('recovers a failed poster by keyboard without losing focus, and resets for a changed source', async () => {
+    const user = userEvent.setup();
+    const event = { ...past, posterUrl: 'https://example.test/poster.jpg' };
+    const { container, client, go } = shell([event]);
+    go('/events/OLD');
+    const poster = () => within(detail(container, 'event:OLD')).getByRole('group', { name: '이벤트 포스터' });
+    const image = within(poster()).getByRole('img');
+    fireEvent.error(image);
+    expect(within(poster()).getByRole('status')).toHaveTextContent('포스터를 불러오지 못했습니다');
+    expect(within(poster()).getByRole('link', { name: /원본 열기/ })).toHaveAttribute('href', event.posterUrl);
+    within(poster()).getByRole('button', { name: '포스터 다시 불러오기' }).focus();
+    await user.keyboard('{Enter}');
+    expect(poster()).toHaveFocus();
+    expect(poster()).toHaveAttribute('aria-busy', 'true');
+    const retried = within(poster()).getByRole('img');
+    expect(retried).not.toBe(image);
+    expect(retried).toHaveAttribute('src', event.posterUrl);
+    fireEvent.load(retried);
+    expect(poster()).toHaveAttribute('aria-busy', 'false');
+    expect(within(poster()).queryByRole('status')).not.toBeInTheDocument();
+    act(() => client.setQueryData(['events'], [{ ...event, posterUrl: 'https://example.test/revised.jpg' }]));
+    await waitFor(() => expect(within(poster()).getByRole('img')).toHaveAttribute('src', 'https://example.test/revised.jpg'));
+    expect(poster()).toHaveAttribute('aria-busy', 'true');
   });
 
   it('shows an unknown session as an error inside the open directory', () => {

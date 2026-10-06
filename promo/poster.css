@@ -1,0 +1,227 @@
+/*
+ * Promo canvases: one poster per page, sized to its format. Colours and faces come from the site
+ * (palettes.css, globals.css): each poster wears one plate role as its ground, and the site's faces —
+ * the brand face for the wordmark, the condensed display face for names, the mono face for the small
+ * print. The graphic is painted (poster.js); type sits on it a step softer than the ink, so nothing
+ * glares like a screen. Sizes are in units of the canvas width (cqw), so one composition prints the
+ * same at any size.
+ */
+html[data-format=feed] { --w: 1080px; --h: 1440px; }
+html[data-format=story] { --w: 1080px; --h: 1920px; }
+html[data-format=a2] { --w: 420mm; --h: 594mm; }
+@page { size: 420mm 594mm; margin: 0; }
+
+html,
+body {
+  width: var(--w);
+  height: var(--h);
+  margin: 0;
+  overflow: hidden;
+}
+@media screen {
+  html { background: var(--field); }
+  body { transform: var(--fit, none); transform-origin: 0 0; }
+}
+body {
+  container-type: size;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ── Tones: a plate role as the poster's ground ─────────────────────────── */
+.poster[data-tone=night] { --ground: var(--paper-fill); --ink: var(--paper-on-fill); }
+.poster[data-tone=field] { --ground: var(--field); --ink: var(--panel-ink); }
+
+.poster {
+  --m: 5cqw;
+  --hair: max(1px, .09cqw);
+  --type: color-mix(in srgb, var(--ink) 86%, var(--ground));
+  --muted: color-mix(in srgb, var(--ink) 52%, var(--ground));
+  --rule: color-mix(in srgb, var(--ink) 30%, transparent);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--type);
+  font-family: var(--display);
+}
+
+/* ── The bearing dial: flat planes and lines, the accent only on the signal and its tick ───── */
+.poster { --accent: var(--c-amber, var(--mark)); }
+.chart {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.chart .plane { fill: color-mix(in srgb, var(--ink) 11%, var(--ground)); }
+.chart .inner { fill: color-mix(in srgb, var(--ink) 6%, var(--ground)); }
+.chart .star { fill: var(--ink); }
+.chart .rim { fill: none; stroke: color-mix(in srgb, var(--ink) 78%, transparent); }
+.chart .bezel { fill: none; stroke: color-mix(in srgb, var(--ink) 22%, transparent); }
+.chart .tick { stroke: color-mix(in srgb, var(--ink) 34%, transparent); }
+.chart .tick.mid { stroke: color-mix(in srgb, var(--ink) 56%, transparent); }
+.chart .tick.major { stroke: color-mix(in srgb, var(--ink) 80%, transparent); }
+.chart .tick.marked { stroke: var(--accent); }
+.chart .needle { fill: var(--ink); }
+.chart .needle.lit { fill: var(--accent); }
+.chart .tail { fill: color-mix(in srgb, var(--ink) 34%, transparent); }
+.chart .north { fill: color-mix(in srgb, var(--ink) 78%, transparent); }
+.chart .fork { fill: var(--ink); }
+.chart .bearing { stroke: color-mix(in srgb, var(--ink) 55%, transparent); }
+.chart .signal { fill: var(--accent); }
+.chart .wave { fill: none; stroke: var(--ink); }
+
+.grain {
+  position: absolute;
+  inset: 0;
+  opacity: .14;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 2.2 -.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: calc(240px * var(--grain-scale, 1));
+}
+html[data-format=a2] .grain { --grain-scale: 1.5; }
+@media print { .grain { display: none; } }
+
+/* ── Type ───────────────────────────────────────────────────────────────── */
+.wordmark {
+  font: 400 5.6cqw/.82 var(--brand);
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+.mono {
+  display: block;
+  color: var(--muted);
+  font: 400 1.55cqw/1.6 var(--mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.mono.strong { color: var(--type); }
+.fit {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+}
+.title,
+.name {
+  margin: 0 0 0 -.04em;
+  font-weight: 700;
+  line-height: .88;
+  letter-spacing: .005em;
+  text-transform: uppercase;
+}
+
+/* ── The site's grammar: plates of its roles on the field ──────────────── */
+.plates {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: .93cqw;
+  height: 100%;
+  padding: 1.3cqw;
+}
+/* A plate's own role sets its ink (globals.css); type on it follows that ink. */
+.plates [data-surface],
+.heroPlate { --type: var(--ink); --muted: color-mix(in srgb, var(--ink) 62%, var(--plate, var(--ground))); }
+.brandPlate {
+  display: flex;
+  align-items: center;
+  padding: 2cqw 3cqw 1.7cqw;
+}
+.heroPlate {
+  --ground: var(--paper-fill);
+  --ink: var(--paper-on-fill);
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--type);
+}
+.heroPlate .title,
+.heroText {
+  position: absolute;
+  right: 2.8cqw;
+  bottom: 3.2cqw;
+  left: 2.8cqw;
+}
+.heroText {
+  display: grid;
+  gap: 1.4cqw;
+}
+/* The teaser sets its words high in the dark, above the dial. */
+.heroText.atTop {
+  top: 3.6cqw;
+  bottom: auto;
+}
+.heroDate {
+  font-weight: 700;
+  line-height: .8;
+  letter-spacing: -.01em;
+}
+.heroSub {
+  font-weight: 700;
+  line-height: .9;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+}
+/* The session number beside the wordmark, as the site writes it: TERMINAL [03]. */
+.sessionMark {
+  margin-left: auto;
+  font: 700 6.2cqw/.8 var(--display);
+  letter-spacing: .02em;
+}
+.brandPlate .mono { margin-left: 3cqw; }
+.infoRow {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: .93cqw;
+}
+/* The address closes the row, set small and to the plate's foot. */
+.infoPlate.address { align-content: end; justify-items: end; }
+.infoPlate {
+  display: grid;
+  gap: 1cqw;
+  padding: 2cqw 2.6cqw 2.4cqw;
+}
+.infoPlate b {
+  font: 700 3.7cqw/1 var(--display);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lineupPlate {
+  display: grid;
+  gap: 1.3cqw;
+  padding: 1.9cqw 3cqw 2.2cqw;
+}
+.lineupPlate .well {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 1.5cqw 1.9cqw;
+  background: var(--well);
+}
+.lineupPlate .well b {
+  font: 700 3.3cqw/1 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.lineupPlate .cells {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .5cqw;
+}
+.lineupPlate .cells .mono { color: var(--on-fill-muted); }
+.lineupPlate .cells li {
+  display: grid;
+  gap: .6cqw;
+  padding: 1.2cqw 1.5cqw;
+  background: var(--fill);
+  color: var(--on-fill);
+  font-weight: 700;
+  text-transform: uppercase;
+}

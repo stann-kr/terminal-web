@@ -2,6 +2,7 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useDisplayPolicy } from '@/features/display/useDisplayPolicy';
+import { AccessDraftProvider } from '@/features/access/AccessDraftProvider';
 import { stageConfig } from '@/features/stage/config';
 import { Stage } from '@/features/stage/Stage';
 import { stageStateFromUrl } from '@/features/stage/state';
@@ -50,8 +51,10 @@ export function Shell({ children }: { children: ReactNode }) {
         <SearchSync onChange={setSearch} />
       </Suspense>
       <main ref={main} id="main" aria-label="본문" tabIndex={-1} className={styles.main}>
-        <Stage state={state} />
-        {children}
+        <AccessDraftProvider>
+          <Stage state={state} />
+          {children}
+        </AccessDraftProvider>
       </main>
       <ConsoleCursor />
     </div>
