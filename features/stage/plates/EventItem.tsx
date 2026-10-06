@@ -47,7 +47,6 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
   if (shape === 'row') {
     const artists = publicArtists(event).map(artist => artist.name).join(' · ');
     const subtitle = eventSubtitle(event);
-    const line = [subtitle, artists].filter(Boolean).join(' · ');
     const when = `${event.date} ${event.time.replace(' KST', '')} KST`;
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventRow}`} data-event-state={event.status} data-carrier={carrier} scroll={false}>
@@ -56,11 +55,14 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
           <FitTitle as="h2" text={sessionShort(event.session)} maxLines={1} minPx={16} className={styles.rowName}>
             <BrandText text={sessionShort(event.session)} />
           </FitTitle>
-          {line && (
-            <FitTitle as="span" text={line} maxLines={1} minPx={12} className={styles.rowLine}>
+          {subtitle && (
+            <FitTitle as="span" text={subtitle} maxLines={1} minPx={14} className={styles.rowSubtitle}>
               {subtitle}
-              {subtitle && artists && ' · '}
-              {artists && <span className={styles.rowArtists}><span className={styles.srOnly}>출연 </span>{artists}</span>}
+            </FitTitle>
+          )}
+          {artists && (
+            <FitTitle as="span" text={artists} maxLines={1} minPx={12} className={styles.rowLine}>
+              <span className={styles.rowArtists}><span className={styles.srOnly}>출연 </span>{artists}</span>
             </FitTitle>
           )}
           {/* A narrow row prints its code, time and venue here, on one fitted line. */}
