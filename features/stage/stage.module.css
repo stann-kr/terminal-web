@@ -79,6 +79,22 @@
   transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, 0s, var(--dur-exit);
 }
 
+/* Sub-plates (the sessions' and artists' own cards: cells, rows, index lines) do not travel: a
+   change of page or of shape puts each card straight in its new place, where it fades in while the
+   old one fades out. They ride with their plate, which still travels. */
+.stage[data-ready] .item {
+  transition-property: opacity, visibility, background-color;
+  transition-duration: var(--dur-exit), 0s, var(--dur-exit);
+  transition-timing-function: linear, linear, linear;
+  transition-delay: 0s, 0s, 0s;
+}
+.stage[data-ready] .item[data-visible=false] {
+  transition-delay: 0s, var(--dur-exit), 0s;
+}
+.stage[data-resizing] .item {
+  transition: none;
+}
+
 /* Content layers. The new content arrives partway through the move; the old one only fades. */
 .layer {
   min-width: 0;
@@ -100,6 +116,11 @@
 /* The first appearance has nothing to travel: content only fades in, along the same wave. */
 .stage[data-stage=stage]:not([data-ready]) .layer[data-layer=current] {
   animation-delay: calc(var(--delay, 0ms) * 2);
+}
+/* A sub-plate's content does not rise into place either: its card stands still, so a rise would
+   read as the card twitching. It only fades. */
+.stage[data-stage=stage] .item > .layer[data-layer=current]:not([data-swap=still]) {
+  animation-name: layerFade;
 }
 /* The old content stays at the size it was drawn at and dims slowly at first, so it never blinks
    out; the new content, drawn over it, crossfades in before it has gone. */

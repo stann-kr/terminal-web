@@ -193,11 +193,9 @@
   letter-spacing: .16em;
 }
 /* Lit or pressed, the label follows the key's own text colour. */
-.sessionKeys > a:active small {
-  color: inherit;
-}
 @media (hover: hover) {
-  .sessionKeys > a:hover small {
+  .sessionKeys > a:hover small,
+  .sessionKeys > a:active small {
     color: inherit;
   }
 }
