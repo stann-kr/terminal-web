@@ -3,9 +3,12 @@
  *   out/posters/<piece>.png   every poster; A2 at 300 dpi, plus a vector out/posters/main_a2.pdf
  *   out/motion/<piece>.mp4    every motion piece, H.264 at 30 fps
  *
- *   node promo/export.mjs [posters|motion|all|templates] [--only <text>]
+ *   node promo/export.mjs [posters|motion|all|templates|artboards] [--only <text>] [--font <url>]
  *
  * `templates` writes out/templates/<piece>.png: the pieces that wait for the lineup, with sample names.
+ * `artboards` writes out/artboards/<Name>.dc.html: each poster as a Claude Design artboard — the held
+ * frame with every computed style written inline, so the canvas shows exactly what the kit renders.
+ * `--font` is the canvas's uploaded asset url for the brand face (ProcrastinatingPixie).
  *
  * Chrome is driven over the DevTools protocol; each frame is the composition seeked to an exact time,
  * so the video does not depend on how fast the machine renders. The browser is CHROME_PATH, else
@@ -17,14 +20,15 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startServer } from './serve.mjs';
-import { fileName, formats, motions, pieceQuery, posters, templates } from './pieces.js';
+import { artboards, fileName, formats, motions, pieceQuery, posters, templates } from './pieces.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const CHROME = process.env.CHROME_PATH ?? (await headlessShell()) ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const A2_DPI = 300;
 
 const args = process.argv.slice(2);
-const set = ['posters', 'motion', 'all', 'templates'].includes(args[0]) ? args[0] : 'all';
+const set = ['posters', 'motion', 'all', 'templates', 'artboards'].includes(args[0]) ? args[0] : 'all';
+const fontUrl = args.includes('--font') ? args[args.indexOf('--font') + 1] : '/_blob/e6052b38fc52a20c4b9b1c4c697888e9';
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 const selected = list => list.filter(item => !only || fileName(item).includes(only));
 
@@ -149,7 +153,7 @@ async function openPage(cdp) {
   const seek = t => evaluate(`window.promo.seek(${t})`);
   const shot = async (format = 'png') => Buffer.from((await page('Page.captureScreenshot', format === 'png' ? { format } : { format, quality: 95 })).data, 'base64');
   const pdf = async paper => Buffer.from((await page('Page.printToPDF', { paperWidth: paper.width / 25.4, paperHeight: paper.height / 25.4, marginTop: 0, marginBottom: 0, marginLeft: 0, marginRight: 0, printBackground: true })).data, 'base64');
-  return { load, seek, shot, pdf };
+  return { load, seek, shot, pdf, evaluate };
 }
 
 /** Encodes JPEG frames piped in, in order, to an H.264 file most players and Instagram accept. */
@@ -165,6 +169,96 @@ function encoder(file, fps) {
       return done;
     },
   };
+}
+
+/**
+ * Runs in the page: the poster's held frame as plain markup with its computed styles inline (only the
+ * ones that differ from a browser's defaults), and the dial's SVG with its colours resolved, so the
+ * markup needs none of the kit's stylesheets.
+ */
+function serializePoster() {
+  const PROPS = ['display', 'position', 'top', 'right', 'bottom', 'left', 'flex-direction', 'flex-grow', 'flex-shrink', 'flex-basis', 'align-items', 'justify-content', 'justify-items', 'align-content', 'grid-template-columns', 'grid-auto-columns', 'grid-auto-flow', 'grid-column', 'row-gap', 'column-gap', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left', 'background-color', 'color', 'font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'text-transform', 'white-space', 'text-align', 'overflow', 'box-sizing', 'width', 'height'];
+  const DEFAULTS = new Set(['normal', 'none', 'auto', 'static', 'visible', '0px', 'rgba(0, 0, 0, 0)', 'start', 'stretch', '0', '1', 'row', 'nowrap', 'left', 'content-box', 'disc', '0px 0px']);
+  const ALWAYS = new Set(['display', 'font-family', 'font-size', 'font-weight', 'color', 'line-height', 'letter-spacing', 'text-transform', 'box-sizing']);
+  const srgb = value => value.replace(/color\(srgb ([^)]*)\)/g, (match, inner) => {
+    const parts = inner.replace('/', ' ').split(/\s+/).filter(Boolean);
+    const [r, g, b] = parts.slice(0, 3).map(v => Math.round(Number(v) * 255));
+    return parts[3] ? `rgba(${r}, ${g}, ${b}, ${parts[3]})` : `rgb(${r}, ${g}, ${b})`;
+  });
+  const escape = text => text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const svgMarkup = svg => {
+    const copy = svg.cloneNode(true);
+    const source = [...svg.querySelectorAll('*')];
+    [...copy.querySelectorAll('*')].forEach((node, i) => {
+      const style = getComputedStyle(source[i]);
+      if (['circle', 'line', 'polygon'].includes(node.localName)) {
+        if (node.localName !== 'line') node.setAttribute('fill', style.fill);
+        if (style.stroke !== 'none') node.setAttribute('stroke', style.stroke);
+        const opacity = Number(source[i].getAttribute('opacity') ?? 1) * Number(style.opacity);
+        if (opacity < 0.999) node.setAttribute('opacity', opacity.toFixed(3));
+        else node.removeAttribute('opacity');
+      }
+      for (const name of ['class', 'style', 'pathLength', 'stroke-dasharray']) node.removeAttribute(name);
+    });
+    [...copy.querySelectorAll('[opacity="0.000"]')].forEach(node => node.remove());
+    copy.removeAttribute('class');
+    copy.setAttribute('width', svg.clientWidth);
+    copy.setAttribute('height', svg.clientHeight);
+    copy.setAttribute('style', 'position: absolute; top: 0px; left: 0px; display: block');
+    return srgb(copy.outerHTML);
+  };
+  const markup = (node, root) => {
+    if (node.nodeType === 3) return escape(node.textContent);
+    if (node.nodeType !== 1) return '';
+    if (node.localName === 'svg') return svgMarkup(node);
+    const style = getComputedStyle(node);
+    const keep = root || node.classList.contains('plates') || node.classList.contains('heroPlate');
+    const declarations = PROPS.flatMap(name => {
+      const value = style.getPropertyValue(name);
+      if ((name === 'width' || name === 'height') && !keep) return [];
+      if (name === 'width' && !root) return [];
+      if (['top', 'right', 'bottom', 'left'].includes(name) && style.position === 'static') return [];
+      if (!ALWAYS.has(name) && DEFAULTS.has(value)) return [];
+      return [`${name}: ${srgb(value).replace(/"/g, "'")}`];
+    });
+    const tag = node.localName === 'main' ? 'div' : node.localName;
+    return `<${tag} style="${declarations.join('; ')}">${[...node.childNodes].map(child => markup(child, false)).join('')}</${tag}>`;
+  };
+  return markup(document.querySelector('.poster'), true);
+}
+
+/** A Claude Design artboard file around a serialized poster. */
+function artboard(item, format, body) {
+  const props = JSON.stringify({ $preview: { width: format.width, height: format.height } });
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${item.title}</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
+<style>
+@font-face { font-family: 'ProcrastinatingPixie'; src: url('${fontUrl}') format('truetype'); font-display: block; }
+body { margin: 0; }
+p, h1, h2, ul, ol, li { margin: 0; padding: 0; list-style: none; }
+</style>
+</helmet>
+${body}
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='${props}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
+`;
 }
 
 /**
@@ -227,6 +321,7 @@ function renderer() {
       });
     },
     pdf: paper => attempt(() => page.pdf(paper)),
+    evaluate: expression => attempt(() => page.evaluate(expression)),
     close,
   };
 }
@@ -247,6 +342,17 @@ try {
       await writeFile(`${file}.png`, await page.shot());
       if (item.pdf) await writeFile(`${file}.pdf`, await page.pdf(format.paper));
       console.log(`poster  ${fileName(item)}${item.pdf ? ' (+pdf)' : ''}`);
+    }
+  }
+  if (set === 'artboards') {
+    await mkdir(join(here, 'out/artboards'), { recursive: true });
+    for (const item of selected(artboards)) {
+      const format = formats[item.format];
+      const { hold } = await page.load(base + pieceQuery(item), format);
+      await page.seek(hold);
+      const body = await page.evaluate(`(${serializePoster.toString()})()`);
+      await writeFile(join(here, 'out/artboards', `${item.name}.dc.html`), artboard(item, format, body));
+      console.log(`artboard ${item.name}`);
     }
   }
   if (set === 'motion' || set === 'all') {

@@ -50,6 +50,15 @@ export const templates = confirmed
       { piece: 'lineup', format: 'feed', title: '라인업 공개 · 템플릿', sample: true },
     ];
 
+/** The posters as Claude Design artboards (out/artboards/<name>.dc.html): the canvas's final set. */
+export const artboards = [
+  { name: 'Teaser', piece: 'teaser', format: 'feed', title: 'Teaser — TERMINAL [03]' },
+  { name: 'MainFeed', piece: 'main', format: 'feed', title: 'Main 3:4 — TERMINAL [03]' },
+  { name: 'MainA2', piece: 'main', format: 'a2', title: 'Main A2 — TERMINAL [03]' },
+  { name: 'ArtistTemplate', piece: 'artist', artist: confirmed ? edition.artists[0].id : 'S2', format: 'feed', title: 'Artist template — TERMINAL [03]', sample: !confirmed },
+  { name: 'LineupTemplate', piece: 'lineup', format: 'feed', title: 'Lineup template — TERMINAL [03]', sample: !confirmed },
+];
+
 /** The file name a piece exports to, without extension. */
 export const fileName = ({ piece, artist, format }) => [piece, artist, format].filter(Boolean).join('_');
 

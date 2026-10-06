@@ -12,7 +12,7 @@ export const edition = {
   palette: 'lunar-ceramic',
   code: 'TRM-03',
   number: '03',
-  title: 'Interstellar Junction',
+  title: 'Vulpecula Junction',
   stage: { en: 'Bearing', ko: '방향' },
   log: { en: '204 days past the heliopause. Unidentified signal received.', ko: '헬리오포즈 돌파 후 204일. 미확인 신호 수신.' },
   date: '2026-11-28',
