@@ -78,6 +78,13 @@
 .stage[data-ready] .box[data-visible=false] {
   transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, 0s, var(--dur-exit);
 }
+/* A closing file shrinks back into its line whole, and fades only as it lands there: a fade from
+   the start would leave the window empty (or half see-through over the plates coming in) while the
+   list it returns to is still on its way. */
+.stage[data-ready] .detail[data-visible=false] {
+  transition-duration: var(--dur-move), var(--dur-move), var(--dur-move), var(--dur-move), var(--dur-land), 0s;
+  transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, calc(var(--delay, 0ms) + var(--close-hold)), calc(var(--delay, 0ms) + var(--close-hold) + var(--dur-land));
+}
 
 /* Sub-plates (the sessions' and artists' own cards: cells, rows, index lines) do not travel: a
    change of page or of shape puts each card straight in its new place, where it fades in while the
@@ -126,7 +133,9 @@
    out; the new content, drawn over it, crossfades in before it has gone. */
 .layer[data-layer=leaving] {
   pointer-events: none;
-  animation: layerOut var(--dur-exit) cubic-bezier(.4, 0, .8, .6) forwards;
+  /* It waits for the box's turn in the wave, as the new content does (--enter-delay + --delay), so
+     a box farther from the press is never left empty between the two. */
+  animation: layerOut var(--dur-exit) cubic-bezier(.4, 0, .8, .6) var(--delay, 0ms) forwards;
 }
 .stage:not([data-stage=stage]) .layer[data-layer=leaving] {
   display: none;

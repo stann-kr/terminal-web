@@ -10,7 +10,7 @@ import { Box } from './Box';
 import { BootScreen } from './BootScreen';
 import { Rings } from './Rings';
 import { ScrollHint } from './ScrollHint';
-import { NO_SPILL, computeFlowLayout, computeLayout, stageMetrics, type PlacedItem, type PlateMode, type Rect, type Spill, type StageLayout } from './layout';
+import { NO_SPILL, computeFlowLayout, computeLayout, setOutRect, stageMetrics, type PlacedItem, type PlateMode, type Rect, type Spill, type StageLayout } from './layout';
 import {
   PLATE_ORDER,
   carrierKey,
@@ -43,12 +43,13 @@ const MOVING_MS = 900;
 const BOOT_MAX_MS = 5000;
 /** Shortest time the boot screen stays, counted from the page load, so it reads as a moment (ms). */
 const BOOT_MIN_MS = 1000;
-/** How long a folded detail keeps its full content before it rests as a light row (ms). */
-const DETAIL_REST_MS = 700;
+/** How long a folded detail keeps its full content before it rests as a light row (ms): past its
+ * wave delay, its hold and its fade (--close-hold + --dur-exit). */
+const DETAIL_REST_MS = 900;
 /** Plates whose heads the carriers sit under; their real head heights feed the layout. */
 const HEADED: PlateId[] = ['events', 'artists'];
 
-type SpillState = { key: string; w: number; h: number; spill: Spill };
+type SpillState = { key: string; scope: string; w: number; h: number; spill: Spill };
 type Origin = { item: string; token: number; rect: Rect };
 type Heads = Partial<Record<PlateId, { mode: PlateMode; px: number }>>;
 
@@ -152,8 +153,13 @@ export function Stage({ state: address }: { state: StageState }) {
   }, []);
   const size = viewport ? stageSizeFor(viewport) : null;
   // While the window is being dragged the last spill holds; once it settles, the view starts over
-  // from no spill and escalates again for the new size.
-  const spill = spilled && spilled.key === key && viewport && (viewport.resizing || (spilled.w === viewport.w && spilled.h === viewport.h)) ? spilled.spill : NO_SPILL;
+  // from no spill and escalates again for the new size. Going from file to file of one kind (session
+  // to session, artist to artist) keeps the room the last file was given (its sheet to itself), so
+  // the other plates do not re-tile each time one file needs a sheet alone and the next does not;
+  // how much a sheet grew is measured again for each file.
+  const spillScope = state.view === 'session' || state.view === 'artist' ? state.view : key;
+  const sameWindow = !!spilled && !!viewport && (viewport.resizing || (spilled.w === viewport.w && spilled.h === viewport.h));
+  const spill = spilled && sameWindow && spilled.scope === spillScope ? (spilled.key === key ? spilled.spill : { ...spilled.spill, grow: {} }) : NO_SPILL;
   const sheetGap = 2 * stageConfig.frameY;
   let staged: StageLayout | null = null;
   if (viewport && size && fontsReady && state.view !== 'none') {
@@ -206,13 +212,18 @@ export function Stage({ state: address }: { state: StageState }) {
   // on a phone by a finger's momentum or the sheets settling), and checked once more after the
   // layout has settled.
   const scene = sceneKey(state);
+  // Where the reader was when the scene changed, for the boxes to set out from what was on screen.
+  const leftAt = useRef<{ key: string; y: number } | null>(null);
   useLayoutEffect(() => {
+    leftAt.current = { key, y: window.scrollY };
     const top = () => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     top();
     const frame = requestAnimationFrame(() => {
       if (window.scrollY !== 0) top();
     });
     return () => cancelAnimationFrame(frame);
+    // Only a new scene jumps to the top; `key` is read for that commit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
 
   // Heads are measured at the arrival size right after each change, before the frame paints.
@@ -259,7 +270,7 @@ export function Stage({ state: address }: { state: StageState }) {
         const found = spillOf(element);
         if (!found) return;
         const next = escalate(latest.current.spill, found.leaf, found.short, latest.current.primary);
-        flushSync(() => setSpilled({ key, w: viewport.w, h: viewport.h, spill: next }));
+        flushSync(() => setSpilled({ key, scope: spillScope, w: viewport.w, h: viewport.h, spill: next }));
       }
     };
     const schedule = () => {
@@ -275,28 +286,58 @@ export function Stage({ state: address }: { state: StageState }) {
       cancelAnimationFrame(frame);
       mutations.disconnect();
     };
-  }, [onStage, key, viewport, gap]);
+  }, [onStage, key, spillScope, viewport, gap]);
 
   // ── Carrier origin: a detail opened from elsewhere sets out from where the click was ─────────
   const [origin, setOrigin] = useState<Origin | null>(null);
+  // ── Plate origins: across a jump of the page, boxes set out from what was on screen ─────────
+  const [plateOrigins, setPlateOrigins] = useState<Partial<Record<PlateId, Origin>>>({});
   const settledKey = useRef(key);
   const openBefore = useRef(layout.open);
   useLayoutEffect(() => {
     if (settledKey.current === key) return;
     settledKey.current = key;
+    // A new scene puts the page back at its top at once. A box would then set out from where it
+    // was on the page, not from where it was seen: from far below a phone's window, leaving the
+    // window empty while it travels. So across the jump each box sets out from where it was on
+    // screen; one that comes from off screen sets out from just beyond the window's edge; one that
+    // was off screen and stays off screen does not cross the window at all.
+    const element = root.current;
+    const after = window.scrollY;
+    const before = leftAt.current?.key === key ? leftAt.current.y : after;
+    const shift = before - after;
+    if (onStage && ready && element) {
+      // Where each plate is now (its move has not begun, or is cut short mid-way), on the stage.
+      const stageBox = element.getBoundingClientRect();
+      const stageTop = stageBox.top + after;
+      const now = (id: PlateId): Rect | null => {
+        const box = element.querySelector<HTMLElement>(`:scope > [data-plate="${id}"]`)?.getBoundingClientRect();
+        return box ? { x: box.left - stageBox.left, y: box.top - stageBox.top, w: box.width, h: box.height } : null;
+      };
+      const token = performance.now();
+      const next: Partial<Record<PlateId, Origin>> = {};
+      for (const id of PLATE_ORDER) {
+        const from = now(id);
+        if (!from || layout.plates[id].mode === 'hidden') continue;
+        const start = setOutRect(from, layout.plates[id].rect, before - stageTop, after - stageTop, window.innerHeight);
+        if (start) next[id] = { item: id, token, rect: start };
+      }
+      setPlateOrigins(next);
+    }
     // A detail grows out of where it was opened: the pressed row or plate, else its own index line.
     // A file of the same kind already open (another session from a session, its request form) stays
     // where it is and only trades its content, as every other box does; growing it again out of
     // the pressed line would fold the open file down and back up for nothing.
     const carrier = stageOrigin.take(state);
-    const before = openBefore.current;
+    const openedBefore = openBefore.current;
     openBefore.current = layout.open;
     const opened = layout.open ? layout.items[carrierKey(layout.open.kind, layout.open.id)] : null;
-    const from = carrier?.rect ?? (opened?.visible ? opened.rect : null);
-    const alreadyOpen = !!before && before.kind === layout.open?.kind;
+    // The pressed row was where it was seen: across the page's jump it keeps that place.
+    const pressed = carrier?.rect ? { ...carrier.rect, y: carrier.rect.y - shift } : null;
+    const from = pressed ?? (opened?.visible ? opened.rect : null);
+    const alreadyOpen = !!openedBefore && openedBefore.kind === layout.open?.kind;
     if (layout.open && from && !alreadyOpen) setOrigin({ item: `detail:${layout.open.kind}`, token: performance.now(), rect: from });
     // Focus follows the view: its title, or the stage when the title is not there yet.
-    const element = root.current;
     if (element) (viewTitle(element) ?? element).focus({ preventScroll: true });
     // Only a change of view does this; `state` is described by `key`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -306,7 +347,7 @@ export function Stage({ state: address }: { state: StageState }) {
     const element = root.current;
     if (!element || !onStage) return;
     const stage = element.getBoundingClientRect();
-    setPoint({ x: event.clientX - stage.left, y: event.clientY - stage.top });
+    setPoint({ x: event.clientX - stage.left, y: event.clientY - stage.top, scroll: window.scrollY });
   };
 
   const recordOrigin = (event: MouseEvent<HTMLDivElement>) => {
@@ -360,7 +401,13 @@ export function Stage({ state: address }: { state: StageState }) {
 
   // The arrival wave: boxes set out in order of distance from where you pressed (or from the view's
   // main plate), so a change reads as spreading from one point rather than everything at once.
-  const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
+  const [point, setPoint] = useState<{ x: number; y: number; scroll: number } | null>(null);
+  // A new scene jumps the page to its top: the press is then where it was on screen, so the wave
+  // spreads from there, not from a spot far down the page (every box in the window would wait the
+  // longest, and show its content last).
+  useLayoutEffect(() => {
+    setPoint(press => (press && press.scroll ? { x: press.x, y: press.y - press.scroll, scroll: 0 } : press));
+  }, [scene]);
   const primaryRect = primary === 'detail' ? layout.detail : primary ? layout.plates[primary].rect : null;
   const from = point ?? (primaryRect ? { x: primaryRect.x + primaryRect.w / 2, y: primaryRect.y + primaryRect.h / 2 } : null);
   const reach = size ? Math.hypot(size.w, size.h) : 1;
@@ -528,6 +575,7 @@ export function Stage({ state: address }: { state: StageState }) {
               className={styles.plate}
               surface={plateSurface(id, placed.mode, data)}
               delay={delay}
+              origin={plateOrigins[id] ?? null}
               view={key}
               data={{ plate: id, mode: placed.mode }}
               overlay={subPlates}

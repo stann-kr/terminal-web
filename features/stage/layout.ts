@@ -296,6 +296,21 @@ function primaryOf(tree: LayoutNode): LeafKey | null {
   return hero && 'plate' in hero ? hero.plate : null;
 }
 
+/**
+ * Where a box sets out from when the page jumps between two views (a new scene starts at its top):
+ * from where it was on screen; from just beyond the window's edge when it comes in from off screen;
+ * from where it ends (so it does not cross the window) when it is off screen before and after.
+ * Null when nothing changes. Rects and window tops are in stage coordinates.
+ */
+export function setOutRect(from: Rect, to: Rect, windowBefore: number, windowAfter: number, height: number): Rect | null {
+  const seen = (rect: Rect, top: number) => rect.y + rect.h > top && rect.y < top + height;
+  const shift = windowBefore - windowAfter;
+  const seenBefore = seen(from, windowBefore);
+  if (!seenBefore && !seen(to, windowAfter)) return to;
+  if (!seenBefore) return { ...from, y: from.y - shift > windowAfter ? windowAfter + height + 8 : windowAfter - from.h - 8 };
+  return shift ? { ...from, y: from.y - shift } : null;
+}
+
 /** Below this stage width the tiling does not fit side by side; its columns become sheets. */
 export const NARROW_W = 900;
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PLATE_ORDER, parseCarrierMark, resolveMissing, stageOrigin, stageParentHref, stageStateFromUrl, stateHref, stateKey, type StageState } from '../features/stage/state';
-import { computeFlowLayout, computeLayout, listRowsPerPage, stageMetrics, tile, type LayoutInput, type Rect, type StageLayout } from '../features/stage/layout';
+import { computeFlowLayout, computeLayout, listRowsPerPage, setOutRect, stageMetrics, tile, type LayoutInput, type Rect, type StageLayout } from '../features/stage/layout';
 import { stageConfig } from '../features/stage/config';
 import { fitTitle, packHeights, paginate, wordReserveEm, type Measurer } from '../features/stage/text';
 
@@ -276,6 +276,20 @@ describe('stage layout', () => {
     expect(list.list).toMatchObject({ perPage: 4, page: 2, pages: 3 });
     expect(shownItems(list).map(([key]) => key)).toEqual(['event:TRM-05', 'event:TRM-04', 'event:TRM-03', 'event:TRM-02']);
     expect(computeFlowLayout(stageStateFromUrl('/artists/lucii'), { items: items() }).open).toEqual({ kind: 'artist', id: 'lucii' });
+  });
+
+  it('sets a box out from what was on screen when the page jumps to the top of a new view', () => {
+    const box = (y: number, h = 200): Rect => ({ x: 10, y, w: 370, h });
+    // Seen before the jump (the window was at 1340): it keeps its place on screen.
+    expect(setOutRect(box(1546), box(106, 548), 1340, 0, 664)).toEqual(box(206));
+    // Coming in from far below: it sets out just beyond the window's lower edge.
+    expect(setOutRect(box(2095), box(106, 548), 0, 0, 664)).toEqual(box(672));
+    // Coming in from above: just beyond the upper edge.
+    expect(setOutRect(box(-900, 100), box(10), 0, 0, 664)).toEqual(box(-108, 100));
+    // Off screen before and after: it does not cross the window.
+    expect(setOutRect(box(10), box(674), 1340, 0, 664)).toEqual(box(674));
+    // Seen before and after, no jump: nothing to change.
+    expect(setOutRect(box(100), box(300), 0, 0, 664)).toBeNull();
   });
 
   it('keeps every configured view complete: every plate once each, a detail only on details', () => {
