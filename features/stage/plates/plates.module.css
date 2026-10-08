@@ -1561,9 +1561,10 @@
     margin-left: 0;
   }
 }
-/* Too narrow for the session line beside the wordmark and NEXT (the band of a session on a laptop):
-   the chip keeps the wordmark and NEXT, and the line stays for screen readers as the link's name. */
-@container layer (max-height: 96px) and (max-width: 400px) {
+/* Too narrow for the session line beside NEXT (and the wordmark, when low): the band of a session
+   on a laptop, tablet or half-screen window. The chip keeps the wordmark and NEXT, and the line stays
+   for screen readers as the link's name. */
+@container layer ((max-height: 96px) and (max-width: 400px)) or (max-width: 250px) {
   .next[data-density=chip] .nextChip .chipLine {
     position: absolute;
     width: 1px;
