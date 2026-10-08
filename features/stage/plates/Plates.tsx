@@ -49,8 +49,8 @@ export function plateSurface(id: PlateId, mode: PlateMode, data: StageData): Sur
     return !data.next || status === 'ARCHIVED' ? 'paper' : status === 'LIVE' ? 'alert' : 'feature';
   }
   if (mode === 'hero' && (id === 'log' || id === 'signal' || id === 'about')) return 'inset';
-  if (id === 'signal') return 'alert';
-  if (id === 'instagram') return 'mark';
+  if (id === 'instagram') return 'alert';
+  if (id === 'signal') return 'mark';
   if (id === 'about') return 'calm';
   return 'panel';
 }

@@ -6,7 +6,7 @@ import { CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
-/** The subscription plate: a loud red call on the home, the channel and its form when open. */
+/** The subscription plate: a call on the home, the channel and its form when open. */
 export function SignalPlate({ mode, rings }: PlateProps) {
   if (mode === 'chip' || mode === 'index') return <ChipFace href="/signal" name="SIGNAL" title="소식 신청" meta="CH 01" />;
   if (mode !== 'hero') {
