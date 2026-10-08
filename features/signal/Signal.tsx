@@ -11,7 +11,7 @@ import {
   literalInput,
 } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
-import { instagram } from '@/features/about/About';
+import { instagram } from '@/features/about/instagram';
 import { useSignalSubscription } from './useSignalSubscription';
 import styles from './signal.module.css';
 

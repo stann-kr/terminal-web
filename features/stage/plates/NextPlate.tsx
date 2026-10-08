@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
 import type { TerminalEvent } from '@/lib/events/types';
-import { instagram } from '@/features/about/About';
 import { DataActivity } from '@/features/display/Display';
 import { accessAvailability, dayMark, eventHref, eventSubtitle, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
@@ -14,21 +13,9 @@ import { PlateStatus } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
-/** The one outside link printed on the console: the Instagram handle, readout-sized, in the brand bar. */
-function FollowLink() {
-  return (
-    <a className={styles.follow} href={instagram.url} target="_blank" rel="noopener noreferrer">
-      <span aria-hidden="true">IG</span>
-      {instagram.handle}{' '}
-      <span className={styles.srOnly}>인스타그램 팔로우, 새 탭에서 열기</span>
-    </a>
-  );
-}
-
 /**
  * The console's own plate: the TERMINAL wordmark and the readouts ride on top of it everywhere,
- * over the next session drawn as large as the plate is. The wordmark is a name, not a control; the
- * Instagram handle beside the readouts is the one control, so it is in view wherever the plate is.
+ * over the next session drawn as large as the plate is. The wordmark is a name, not a control.
  */
 function BrandBar({ compact = false }: { compact?: boolean }) {
   return (
@@ -38,7 +25,6 @@ function BrandBar({ compact = false }: { compact?: boolean }) {
       </p>
       {!compact && (
         <div className={styles.brandSystem}>
-          <FollowLink />
           <DataActivity />
           <Clock />
         </div>

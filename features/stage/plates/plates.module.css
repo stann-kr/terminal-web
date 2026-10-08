@@ -611,31 +611,8 @@
   align-items: center;
   gap: 12px;
 }
-/* The handle prints like the clock, in ink, and keeps a 32px target; it stays when the readouts fold. */
-.follow {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  min-height: 32px;
-  color: var(--ink);
-  font: 400 var(--t-md)/1 var(--mono);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: var(--light-motion);
-}
-.follow > span[aria-hidden] {
-  color: var(--muted);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .2em;
-}
-@media (hover: hover) {
-  .follow:hover { color: var(--accent); }
-}
-.follow:focus-visible {
-  outline-offset: 2px;
-}
 @container layer (max-width: 420px) {
-  .brandSystem > :not([role=group]):not(.follow) { display: none; }
+  .brandSystem > :not([role=group]) { display: none; }
 }
 .nextBlock {
   flex: 1 1 auto;

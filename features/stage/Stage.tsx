@@ -105,7 +105,7 @@ function measureHeads(root: HTMLElement, plates: StageLayout['plates'], gap: num
 const sameHeads = (a: Heads, b: Heads) => HEADED.every(id => a[id]?.mode === b[id]?.mode && Math.abs((a[id]?.px ?? 0) - (b[id]?.px ?? 0)) < 1);
 
 /**
- * The stage: six plates, a back card, and one element per event and artist, all living here for
+ * The stage: the plates, a back card, and one element per event and artist, all living here for
  * the whole visit. The address decides the state, the state picks the view's tiling, and every
  * element travels to its new rect with its content redrawn for the size it gets. Content that
  * does not fit spreads the view over sheets (a narrow window gets one per column); the server's
