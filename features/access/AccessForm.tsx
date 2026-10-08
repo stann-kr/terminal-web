@@ -12,6 +12,7 @@ import {
   literalInput,
 } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
+import { instagram } from '@/features/about/About';
 import { useAccessRequest } from './useAccessRequest';
 import styles from './access.module.css';
 
@@ -70,8 +71,10 @@ export function AccessForm({
             ['소식 수신', fields.marketingConsent ? '동의' : '동의 안 함'],
           ]}
         />
+        <p>인스타그램 안내는 팔로워에게만 닿습니다.</p>
         <ActionDeck>
-          <Action primary href={eventHref(eventId)}>이벤트로 돌아가기</Action>
+          <Action primary external href={instagram.url}>{instagram.handle} 팔로우</Action>
+          <Action href={eventHref(eventId)}>이벤트로 돌아가기</Action>
           {!fields.marketingConsent && <Action href="/signal">다음 이벤트 소식 신청</Action>}
         </ActionDeck>
       </FormSuccess>

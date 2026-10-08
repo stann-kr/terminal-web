@@ -11,6 +11,7 @@ import {
   literalInput,
 } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
+import { instagram } from '@/features/about/About';
 import { useSignalSubscription } from './useSignalSubscription';
 import styles from './signal.module.css';
 
@@ -100,7 +101,11 @@ function SignalForm({
         <FormSuccess>
           <p className={ui.eyebrow}>CONTACT SAVED</p>
           <h2>소식 신청을 저장했습니다</h2>
-          <Action href="/">홈으로 돌아가기</Action>
+          <p>인스타그램 소식은 팔로워에게만 닿습니다.</p>
+          <ActionDeck>
+            <Action primary external href={instagram.url}>{instagram.handle} 팔로우</Action>
+            <Action href="/">홈으로 돌아가기</Action>
+          </ActionDeck>
         </FormSuccess>
       ) : (
         <form aria-busy={pending} onSubmit={submit} className={formStyles.form}>
@@ -127,7 +132,7 @@ function SignalForm({
             <Field
               id="signal-instagram"
               label="인스타그램 ID (선택)"
-              hint="적어 두면 인스타그램으로도 소식을 보냅니다."
+              hint="적어 두면 인스타그램으로도 소식을 보냅니다. 팔로워에게만 닿습니다."
               maxLength={31}
               pattern="@?[A-Za-z0-9_.]{1,30}"
               {...literalInput}

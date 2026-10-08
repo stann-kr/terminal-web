@@ -82,6 +82,10 @@ describe('stage shell', () => {
     expect(within(next).getAllByText('TERMINAL').some(word => !word.closest('a'))).toBe(true);
     // The language switch is not a site-wide control: it sits only in the heads of bilingual texts.
     expect(within(next).queryByRole('group', { name: '소개글 언어' })).not.toBeInTheDocument();
+    // The one outside link on the console: the Instagram handle, in the brand bar, not inside the session link.
+    const follow = within(next).getByRole('link', { name: /@terminal\.signal 인스타그램 팔로우/ });
+    expect(follow).toHaveAttribute('href', 'https://www.instagram.com/terminal.signal/');
+    expect(follow.closest('[data-carrier]')).toBeNull();
     go('/events');
     expect(plate(container, 'events')).toHaveAttribute('data-mode', 'hero');
     expect(within(plate(container, 'events')).getByRole('heading', { level: 1, name: /이벤트/ })).toBeInTheDocument();
