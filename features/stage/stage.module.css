@@ -587,9 +587,14 @@
     animation: bootShow 320ms var(--ease-move) 200ms forwards;
   }
 }
+/* Reduced motion stops every animation (globals.css, !important), which would leave the words at
+   their starting opacity: they are simply there. The 6s give-way switches are not motion (they take
+   no time), so they keep running, or a page whose script never took over would stay covered. */
 @media (scripting: enabled) and (prefers-reduced-motion: reduce) {
   .bootMark,
-  .bootLine { animation-duration: 0s; }
+  .bootLine { opacity: 1; }
+  .boot:not([data-done]) { animation: bootGiveWay 0s linear 6s forwards !important; }
+  .stage[data-stage=boot] { animation: bootReveal 0s linear 6s forwards !important; }
 }
 @keyframes bootShow {
   to { opacity: 1; }

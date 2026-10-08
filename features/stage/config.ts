@@ -51,22 +51,24 @@ export const stageConfig: StageConfig = {
     // The directory opens wide on the right; the way back, the next session and the roster step left.
     events: row(
       [30, col([15, BACK], [43, p('next', 'panel')], [42, p('artists', 'panel')])],
-      [70, col([86, p('events', 'hero')], [14, row([1, p('log', 'chip')], [1, p('signal', 'chip')], [1, p('instagram', 'chip')], [1, p('about', 'chip')])])],
+      [70, col([86, p('events', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
     ),
     // The roster mirrors the directory: wide on the left, the rest in a column on the right.
     artists: row(
-      [70, col([86, p('artists', 'hero')], [14, row([1, p('log', 'chip')], [1, p('signal', 'chip')], [1, p('instagram', 'chip')], [1, p('about', 'chip')])])],
+      [70, col([86, p('artists', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
       [30, col([15, BACK], [40, p('next', 'panel')], [45, p('events', 'panel')])],
     ),
-    // A session: the other sessions as an index on the left, the file beside it, a band of plates on top.
+    // A session: the other sessions as an index on the left, the file beside it, a band of plates on
+    // top. The band holds six (a seventh leaves its keys no room); the account heads the index, by the band.
     session: col(
-      [13, row([16, BACK], [20, p('next', 'chip')], [13, p('artists', 'chip')], [13, p('log', 'chip')], [13, p('signal', 'chip')], [16, p('instagram', 'chip')], [13, p('about', 'chip')])],
-      [87, row([21, p('events', 'index')], [79, DETAIL])],
+      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('artists', 'chip')], [15, p('signal', 'chip')], [15, p('log', 'chip')], [15, p('about', 'chip')])],
+      [87, row([21, col([14, p('instagram', 'chip')], [86, p('events', 'index')])], [79, DETAIL])],
     ),
-    // An artist file mirrors it: the file with the roster index on the right, the band below.
+    // An artist file mirrors it: the file with the roster index on the right (the account at its
+    // foot, by the band), the band below.
     artist: col(
-      [87, row([78, DETAIL], [22, p('artists', 'index')])],
-      [13, row([16, BACK], [20, p('next', 'chip')], [13, p('events', 'chip')], [13, p('log', 'chip')], [13, p('signal', 'chip')], [16, p('instagram', 'chip')], [13, p('about', 'chip')])],
+      [87, row([78, DETAIL], [22, col([86, p('artists', 'index')], [14, p('instagram', 'chip')])])],
+      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('events', 'chip')], [15, p('signal', 'chip')], [15, p('log', 'chip')], [15, p('about', 'chip')])],
     ),
     // The log sits in the middle between the session side and the rest.
     log: row(
@@ -78,12 +80,13 @@ export const stageConfig: StageConfig = {
     signal: row(
       [28, col([15, BACK], [85, p('next', 'panel')])],
       [50, p('signal', 'hero')],
-      [22, col([1, p('events', 'chip')], [1, p('artists', 'chip')], [1, p('log', 'chip')], [1, p('instagram', 'chip')], [1, p('about', 'chip')])],
+      [22, col([1, p('events', 'chip')], [1, p('artists', 'chip')], [1, p('instagram', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])],
     ),
-    // About leads wide; the roster and the rest in a column.
+    // About leads wide; the roster and the rest in a column. The next-session tile keeps the height
+    // its name needs; the chips go two by two (four in a row leave INSTAGRAM no room).
     about: row(
       [64, p('about', 'hero')],
-      [36, col([15, BACK], [24, p('next', 'tile')], [29, p('artists', 'panel')], [16, row([1, p('events', 'chip')], [1, p('log', 'chip')])], [16, row([1, p('signal', 'chip')], [1, p('instagram', 'chip')])])],
+      [36, col([13, BACK], [27, p('next', 'tile')], [30, p('artists', 'panel')], [15, row([1, p('events', 'chip')], [1, p('instagram', 'chip')])], [15, row([1, p('signal', 'chip')], [1, p('log', 'chip')])])],
     ),
   },
   rings: {
