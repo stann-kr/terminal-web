@@ -38,10 +38,12 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-@media (max-width: 860px) {
+/* The form answers the width of its own plate (the form plate is a container), not the window's:
+   in a session file's access column it is narrow on a wide window too. */
+@container (max-width: 560px) {
   .contacts { grid-template-columns: minmax(0, 1fr); }
 }
-@media (max-width: 400px) {
+@container (max-width: 360px) {
   .code { grid-template-columns: minmax(0, 1fr); }
 }
 

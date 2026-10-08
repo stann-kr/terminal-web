@@ -46,13 +46,18 @@
     --on-fill: var(--hi);
   }
 }
-.card:active {
-  box-shadow: inset 0 0 0 100vmax var(--on-hi);
-  color: var(--hi);
-  --ink: var(--hi);
-  --muted: var(--hi);
-  --accent: var(--hi);
-  transition: none;
+/* Pressed, a card shows its inverse, like a backlit switch taking the command. Only under a
+   pointer that hovers: on a touch screen a tap is over in an instant, and the inverse would only
+   read as the card blinking before the view changes. */
+@media (hover: hover) {
+  .card:active {
+    box-shadow: inset 0 0 0 100vmax var(--on-hi);
+    color: var(--hi);
+    --ink: var(--hi);
+    --muted: var(--hi);
+    --accent: var(--hi);
+    transition: none;
+  }
 }
 .card:focus-visible {
   outline: 2px solid var(--focus);
@@ -680,14 +685,21 @@
 .next[data-density=tile] .nextSession {
   font-size: clamp(22px, 1.8vw, 40px);
 }
-.nextSubtitle,
 .nextWhen {
   color: var(--muted);
   font: 700 var(--t-md)/1.3 var(--display);
   letter-spacing: .04em;
 }
+/* A session's own subtitle reads as the second line of its name: about two fifths of the name's
+   size, in the plate's ink. */
+.nextSubtitle {
+  font: 700 clamp(18px, 1.3vw, 28px)/1.05 var(--display);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
 .next[data-density=hero] .nextSubtitle {
-  font-size: var(--t-lg);
+  font-size: clamp(22px, 2.2vw, 52px);
 }
 .noUpcoming {
   margin-inline: calc(var(--bleed, 0px) * -1);
@@ -777,6 +789,13 @@
 .rowName {
   font: 800 var(--t-xl)/1 var(--display);
   letter-spacing: .02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.rowSubtitle {
+  min-width: 0;
+  font: 700 var(--t-lg)/1.05 var(--display);
+  letter-spacing: .03em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -898,8 +917,12 @@
   .panelRow { grid-template-columns: minmax(0, 1fr); }
   /* Stacked, a short panel is as tall as it is; the rest of the plate goes to the panel of paged
      text (the introduction), or else to the last panel, instead of being shared out to all. */
-  :global([data-stage=stage]) .panelRow { grid-template-rows: auto auto minmax(0, 1fr); }
-  :global([data-stage=stage]) .panelRow[data-paged=first] { grid-template-rows: minmax(260px, 1fr) auto auto; }
+  /* Rows are sized by their content (`max-content`), never `auto`: the panels clip their overflow, so
+     an `auto` row would shrink them below their content when the plate is short, and cut them,
+     instead of letting the content overflow and the sheet grow. */
+  :global([data-stage=stage]) .panelRow { grid-template-rows: max-content max-content minmax(0, 1fr); }
+  /* Eight lines of the introduction, plus the panel's head, the TERMINAL statement and the pager. */
+  :global([data-stage=stage]) .panelRow[data-paged=first] { grid-template-rows: minmax(calc(var(--text-body) * 1.75 * 8 + 230px), 1fr) max-content max-content; }
 }
 
 .logGrid {
@@ -1050,15 +1073,16 @@
 @container layer (max-width: 760px) {
   .logGrid { grid-template-columns: minmax(0, 1fr); }
   /* Stacked, the write form is as tall as it is and the public log (paged by height) takes the rest. */
-  :global([data-stage=stage]) .logGrid { grid-template-rows: auto minmax(260px, 1fr); }
+  :global([data-stage=stage]) .logGrid { grid-template-rows: max-content minmax(260px, 1fr); }
 }
 
 
 /* ── Session file ────────────────────────────────────────────────────────── */
 .session,
 .artistFile {
-  /* The least height a column of paged text keeps when the file is stacked. */
-  --paged-min: 260px;
+  /* The least height a column of paged text keeps when the file is stacked: eight lines of body
+     text plus the column's head and its pager. */
+  --paged-min: calc(var(--text-body) * 1.75 * 8 + 150px);
 }
 .session {
   display: grid;
@@ -1089,10 +1113,11 @@
   outline: none;
 }
 .sessionSubtitle {
-  margin-top: 6px;
-  color: var(--muted);
-  font: 700 var(--t-md)/1.3 var(--display);
-  letter-spacing: .04em;
+  margin-top: 8px;
+  font: 700 clamp(20px, 1.9vw, 36px)/1.05 var(--display);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  text-wrap: balance;
 }
 /* The slot is bare: nothing shows until the poster has decoded and fades in. */
 .poster {
@@ -1183,14 +1208,17 @@
 }
 /* On the stage the row holding paged text has a height set by the plate, never by its content:
    paged text measures the space it is given, so a row sized by that text would chase its own pages.
-   Stacked in one column, the overview and the running order are as tall as they are (a short
-   lineup no longer takes half the file) and the briefing takes the rest, never less than --paged-min;
-   a file that needs more grows its sheet. */
+   Stacked in one column, the overview and the running order are exactly as tall as their content
+   (`max-content`, so the overview with its poster is never shrunk and cut: they clip their overflow,
+   and an `auto` row would size such a column by its minimum, zero, when the file is short) and the
+   side column takes the rest. The briefing in it keeps --paged-min of height whatever the access
+   panel under it needs; a file that needs more than the plate grows its sheet. */
 @container layer (max-width: 1080px) {
   :global([data-stage=stage]) .session { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
 }
 @container layer (max-width: 700px) {
-  :global([data-stage=stage]) .session { grid-template-rows: auto auto minmax(var(--paged-min), 1fr); }
+  :global([data-stage=stage]) .session { grid-template-rows: max-content max-content minmax(0, 1fr); }
+  :global([data-stage=stage]) .sessionBriefing { min-height: var(--paged-min); }
 }
 
 /* ── Artist file ─────────────────────────────────────────────────────────── */
@@ -1252,7 +1280,7 @@
     grid-template-rows: auto auto auto auto;
   }
   /* The mobile reading order is also the DOM and keyboard order; no visual-only reordering. */
-  :global([data-stage=stage]) .artistFile { grid-template-rows: auto auto minmax(var(--paged-min), 1fr) auto; }
+  :global([data-stage=stage]) .artistFile { grid-template-rows: max-content max-content minmax(var(--paged-min), 1fr) max-content; }
 }
 
 

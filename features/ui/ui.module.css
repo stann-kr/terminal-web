@@ -154,12 +154,15 @@
     color: var(--on-hi);
   }
 }
-/* A pressed key flashes inverse, like a backlit switch taking the command. */
-.action:active,
-.button:active:not(:disabled) {
-  box-shadow: inset 0 0 0 100vmax var(--on-hi);
-  color: var(--hi);
-  transition: none;
+/* A pressed key flashes inverse, like a backlit switch taking the command: under a pointer that
+   hovers only, since on a touch screen the flash would read as a blink before the view changes. */
+@media (hover: hover) {
+  .action:active,
+  .button:active:not(:disabled) {
+    box-shadow: inset 0 0 0 100vmax var(--on-hi);
+    color: var(--hi);
+    transition: none;
+  }
 }
 .action:focus-visible,
 .button:focus-visible {
