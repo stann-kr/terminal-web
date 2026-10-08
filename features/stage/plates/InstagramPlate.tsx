@@ -13,7 +13,7 @@ const handle = instagram.handle.toUpperCase();
 
 /** The Instagram account: the signal card's face (big name, one line, tags); it opens the profile in a new tab. */
 export function InstagramPlate({ mode }: PlateProps) {
-  if (mode === 'chip' || mode === 'index') return <ChipFace external href={instagram.url} name="INSTAGRAM" title="팔로우" meta={handle} label={label} />;
+  if (mode === 'chip' || mode === 'index') return <ChipFace external href={instagram.url} name="INSTAGRAM" title={handle} label={label} />;
   return (
     <CardLink external href={instagram.url} className={styles.signalCard} label={label}>
       <span className={`${styles.signalHead} ${styles.wideHead}`} aria-hidden="true">INSTAGRAM</span>

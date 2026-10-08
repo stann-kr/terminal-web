@@ -298,7 +298,10 @@
   padding: 10px 14px 12px;
 }
 .chipName {
-  font: 800 clamp(20px, 1.6vw, 30px)/1 var(--display);
+  /* Capitals in this face run about half an em each (spacing included): no larger than the chip's
+     inner width allows for the name's length. */
+  --fit: calc((100cqw - 28px) / (var(--len, 6) * .5));
+  font: 800 clamp(20px, min(1.6vw, var(--fit)), 30px)/1 var(--display);
   letter-spacing: .04em;
 }
 .chipLine {
@@ -317,10 +320,22 @@
   }
   .chipName {
     flex: none;
-    font-size: clamp(16px, 36cqh, 30px);
+    font-size: clamp(16px, min(36cqh, var(--fit)), 30px);
   }
   .chipLine {
     flex: 1 1 auto;
+  }
+}
+/* A chip too narrow for its line (beside the name when low, under it when the chip is a sliver)
+   keeps only the name; the line stays for screen readers (it carries the link's name). */
+@container layer ((max-height: 84px) and (max-width: 240px)) or (max-width: 136px) {
+  .chip .chipLine {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 :global([data-stage]:not([data-stage=stage])) .chip {
@@ -329,8 +344,14 @@
   justify-content: center;
   padding: 0 14px;
 }
+/* Off the stage the line is not shown either, but it is still the link's name. */
 :global([data-stage]:not([data-stage=stage])) .chip .chipLine {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* ── Summary cards (a plate with nothing inside to press is one link) ───── */
@@ -346,9 +367,22 @@
   margin-top: 12px;
 }
 .aboutLine {
+  --title-ls: .02em;
   margin-top: 14px;
   font: 700 var(--t-lg)/1.35 var(--display);
   letter-spacing: .02em;
+}
+/* The home's About tile is low: its tags give way first, then its line, so it never spills (a
+   spill would send the tile to a sheet of its own). */
+@container layer (max-height: 150px) {
+  .aboutCard .bandTags {
+    display: none;
+  }
+}
+@container layer (max-height: 130px) {
+  .aboutCard .aboutLine {
+    display: none;
+  }
 }
 .signalCard {
   justify-content: space-between;
@@ -360,6 +394,8 @@
   letter-spacing: .02em;
 }
 .signalText {
+  /* Also the Instagram handle, fitted to one line: its spacing scales with the fit. */
+  --title-ls: .04em;
   font: 700 var(--t-lg)/1.25 var(--display);
   letter-spacing: .04em;
 }

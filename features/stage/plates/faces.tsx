@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { BrandText, type Surface } from '@/features/ui/Ui';
 import { FitTitle } from '../FitTitle';
 import styles from './plates.module.css';
@@ -35,7 +35,8 @@ export function ChipFace({ href, name, title, meta, carrier, label, external = f
   const line = meta ? `${title} · ${meta}` : title;
   const body = (
     <>
-      <span className={styles.chipName} aria-hidden="true">{name}</span>
+      {/* The name's length bounds its size, so a long name (INSTAGRAM) still fits a narrow chip. */}
+      <span className={styles.chipName} aria-hidden="true" style={{ '--len': name.length } as CSSProperties}>{name}</span>
       <FitTitle as="span" text={line} maxLines={1} minPx={12} className={styles.chipLine}>
         <span>{title}</span>
         {meta && <span aria-hidden="true"> · {meta}</span>}
