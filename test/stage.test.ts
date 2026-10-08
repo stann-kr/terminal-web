@@ -134,10 +134,10 @@ describe('stage layout', () => {
     const home = computeLayout({ view: 'home' }, stage);
     expect(home.plates.next.mode).toBe('hero');
     expect(home.plates.next.rect.h).toBe(stage.h);
-    // The Instagram plate sits directly above the subscription call, the same size as it.
+    // The Instagram plate sits directly above the subscription call, a step taller than it.
     const { instagram, signal } = home.plates;
     expect(instagram).toMatchObject({ mode: 'tile', rect: { x: signal.rect.x, w: signal.rect.w } });
-    expect(Math.abs(instagram.rect.h - signal.rect.h)).toBeLessThanOrEqual(1);
+    expect(instagram.rect.h).toBeGreaterThan(signal.rect.h);
     expect(instagram.rect.y).toBeLessThan(signal.rect.y);
   });
 
