@@ -1,8 +1,8 @@
 import { pageNumber } from '@/features/events/model';
 import { instagram } from '@/features/about/instagram';
 
-/** The top-level plates, in the fixed order the rail always shows them. */
-export const PLATE_ORDER = ['next', 'events', 'artists', 'log', 'signal', 'instagram', 'about'] as const;
+/** The top-level plates in document order: the home's reading order (columns left to right, each top to bottom), which keyboard and screen readers follow. */
+export const PLATE_ORDER = ['next', 'events', 'artists', 'instagram', 'signal', 'log', 'about'] as const;
 export type PlateId = (typeof PLATE_ORDER)[number];
 
 /** Where a detail was asked for from, but that id is not in the loaded data. */
