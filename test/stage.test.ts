@@ -101,7 +101,7 @@ const contains = (outer: Rect, inner: Rect) => inner.x >= outer.x && inner.y >= 
 const shownItems = (layout: StageLayout) => Object.entries(layout.items).filter(([, item]) => item.visible);
 
 describe('stage layout', () => {
-  it('tiles every view with every plate, apart, on one screen, carriers inside their plate or the detail', () => {
+  it('tiles every view with all six plates, apart, on one screen, carriers inside their plate or the detail', () => {
     for (const { viewportW, stage } of STAGES) {
       for (const path of PATHS) {
         const layout = computeLayout(stageStateFromUrl(path), stage, { viewportW, items: items() });
@@ -133,12 +133,7 @@ describe('stage layout', () => {
     for (const path of views.slice(1)) expect(computeLayout(stageStateFromUrl(path), stage).back, path).not.toBeNull();
     const home = computeLayout({ view: 'home' }, stage);
     expect(home.plates.next.mode).toBe('hero');
-    // The next session leads its column, the Instagram plate directly under it (the same column, down to the stage's foot).
-    const { next, instagram } = home.plates;
-    expect(next.rect.h).toBeGreaterThan(stage.h * 0.75);
-    expect(instagram).toMatchObject({ mode: 'tile', rect: { x: next.rect.x, w: next.rect.w } });
-    expect(instagram.rect.y).toBeGreaterThan(next.rect.y + next.rect.h);
-    expect(instagram.rect.y + instagram.rect.h).toBe(stage.h);
+    expect(home.plates.next.rect.h).toBe(stage.h);
   });
 
   it('opens a detail as a plate of its own beside an index that keeps the open line, marked current', () => {
@@ -274,7 +269,7 @@ describe('stage layout', () => {
     expect(computeFlowLayout(stageStateFromUrl('/artists/lucii'), { items: items() }).open).toEqual({ kind: 'artist', id: 'lucii' });
   });
 
-  it('keeps every configured view complete: every plate once each, a detail only on details', () => {
+  it('keeps every configured view complete: six plates once each, a detail only on details', () => {
     for (const [view, tree] of Object.entries(stageConfig.layouts)) {
       const leaves = tile(tree, { x: 0, y: 0, w: 1000, h: 1000 }, 0).map(([leaf]) => ('plate' in leaf ? leaf.plate : leaf.slot));
       expect(leaves.filter(key => (PLATE_ORDER as readonly string[]).includes(key)).sort(), view).toEqual([...PLATE_ORDER].sort());

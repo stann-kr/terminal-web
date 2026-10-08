@@ -23,8 +23,7 @@ export function viewName(state: StageState): ViewName | null {
     case 'artist':
       return 'artist';
     case 'plate':
-      // The next-session and Instagram plates have no view of their own: they are only ever seen from the home.
-      return state.plate === 'next' || state.plate === 'instagram' ? 'home' : state.plate;
+      return state.plate === 'next' ? 'home' : state.plate;
     default:
       return null;
   }

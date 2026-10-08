@@ -12,7 +12,7 @@ import {
   literalInput,
 } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
-import { instagram } from '@/features/about/instagram';
+import { instagram } from '@/features/about/About';
 import { useAccessRequest } from './useAccessRequest';
 import styles from './access.module.css';
 

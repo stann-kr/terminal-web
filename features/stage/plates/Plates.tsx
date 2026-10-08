@@ -10,7 +10,6 @@ import { ArtistsPlate } from './ArtistsPlate';
 import { LogPlate } from './LogPlate';
 import { SignalPlate } from './SignalPlate';
 import { AboutPlate } from './AboutPlate';
-import { InstagramPlate } from './InstagramPlate';
 
 export interface PlateProps {
   mode: PlateMode;
@@ -30,7 +29,6 @@ const PLATES: Record<PlateId, (props: PlateProps) => React.ReactNode> = {
   log: LogPlate,
   signal: SignalPlate,
   about: AboutPlate,
-  instagram: InstagramPlate,
 };
 
 export function PlateContent({ id, ...props }: PlateProps & { id: PlateId }) {

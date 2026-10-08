@@ -364,57 +364,6 @@
   letter-spacing: .04em;
 }
 
-/* ── Instagram: the account as a plate, one link out ─────────────────── */
-/* A wide, low card: the big name and its line on the left, the handle in a tone cell that fills the
-   card's right end (a small label over the value, like the readouts). */
-.instagramCard {
-  flex-direction: row;
-  align-items: stretch;
-}
-.instagramName {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 6px;
-  min-width: 0;
-  padding: 12px var(--pad) var(--pad);
-}
-.instagramHead {
-  font: 800 clamp(24px, min(3.4vw, 34cqh, 8cqw), 64px)/.9 var(--display);
-  letter-spacing: .02em;
-  white-space: nowrap;
-}
-.instagramText {
-  font: 700 var(--t-lg)/1.25 var(--display);
-  letter-spacing: .04em;
-}
-.instagramAccount {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  padding: 12px var(--pad);
-  background: var(--well);
-  font: 700 var(--t-lg)/1.1 var(--display);
-  letter-spacing: .02em;
-  white-space: nowrap;
-}
-.instagramAccount small {
-  color: var(--muted);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .2em;
-}
-/* A low card keeps the name alone on the left; a narrow one sets the handle a step smaller. */
-@container layer (max-height: 96px) {
-  .instagramText { display: none; }
-  .instagramName { justify-content: center; padding-block: 8px; }
-}
-@container layer (max-width: 440px) {
-  .instagramAccount { font-size: var(--t-md); }
-}
-
 /* ── Back card ───────────────────────────────────────────────────────────── */
 /* BACK over HOME: two cards, each lit and pressed as a whole. */
 .backStack {
@@ -662,8 +611,31 @@
   align-items: center;
   gap: 12px;
 }
+/* The handle prints like the clock, in ink, and keeps a 32px target; it stays when the readouts fold. */
+.follow {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  min-height: 32px;
+  color: var(--ink);
+  font: 400 var(--t-md)/1 var(--mono);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: var(--light-motion);
+}
+.follow > span[aria-hidden] {
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .2em;
+}
+@media (hover: hover) {
+  .follow:hover { color: var(--accent); }
+}
+.follow:focus-visible {
+  outline-offset: 2px;
+}
 @container layer (max-width: 420px) {
-  .brandSystem > :not([role=group]) { display: none; }
+  .brandSystem > :not([role=group]):not(.follow) { display: none; }
 }
 .nextBlock {
   flex: 1 1 auto;
@@ -1379,7 +1351,6 @@
 /* Padded summary cards publish their inset too, so their lists run flush like an open plate's. */
 .summaryCard,
 .signalCard,
-.instagramCard,
 .plateCard {
   --bleed: var(--pad);
 }

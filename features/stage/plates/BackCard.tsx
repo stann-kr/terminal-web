@@ -12,7 +12,6 @@ const PLATE_NAME: Record<PlateId, [string, string]> = {
   artists: ['ARTISTS', '아티스트'],
   log: ['LOG', '방문자 로그'],
   signal: ['SIGNAL', '소식 신청'],
-  instagram: ['INSTAGRAM', '팔로우'],
   about: ['ABOUT', 'TERMINAL 소개'],
 };
 

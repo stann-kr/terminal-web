@@ -1,8 +1,7 @@
 import { pageNumber } from '@/features/events/model';
-import { instagram } from '@/features/about/instagram';
 
-/** The top-level plates, in the fixed order the rail always shows them. */
-export const PLATE_ORDER = ['next', 'events', 'artists', 'log', 'signal', 'instagram', 'about'] as const;
+/** The six top-level plates, in the fixed order the rail always shows them. */
+export const PLATE_ORDER = ['next', 'events', 'artists', 'log', 'signal', 'about'] as const;
 export type PlateId = (typeof PLATE_ORDER)[number];
 
 /** Where a detail was asked for from, but that id is not in the loaded data. */
@@ -85,7 +84,7 @@ export function resolveMissing(
   return state;
 }
 
-/** Where each plate opens; the Instagram plate opens the profile itself. */
+/** Where each plate opens. */
 export const PLATE_HREF: Record<PlateId, string> = {
   next: '/',
   events: '/events',
@@ -93,7 +92,6 @@ export const PLATE_HREF: Record<PlateId, string> = {
   log: '/transmit',
   signal: '/signal',
   about: '/about',
-  instagram: instagram.url,
 };
 
 /** The address of a state (the inverse of `stageStateFromUrl` for stage views). */

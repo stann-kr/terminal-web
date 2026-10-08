@@ -8,8 +8,8 @@ export const aboutCopy = {
   ko: [content.tagline, ...content.manifesto.ko.split('\n\n'), `Terminal Architect : ${content.architect}`],
   en: [content.tagline, ...content.manifesto.en.split('\n\n'), `Terminal Architect : ${content.architect}`],
 };
-import { instagram } from './instagram';
-export { instagram };
+/** The Instagram account: the handle as printed and its profile address, for every place that links to it. */
+export const instagram = { handle: `@${content.instagram}`, url: `https://www.instagram.com/${content.instagram}/` };
 export const channels = [
   ['TERMINAL INSTAGRAM', instagram.url],
   ['STANN LUMO WEB', 'https://lumo.stann.kr'],

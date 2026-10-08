@@ -82,11 +82,10 @@ describe('stage shell', () => {
     expect(within(next).getAllByText('TERMINAL').some(word => !word.closest('a'))).toBe(true);
     // The language switch is not a site-wide control: it sits only in the heads of bilingual texts.
     expect(within(next).queryByRole('group', { name: '소개글 언어' })).not.toBeInTheDocument();
-    // The account is a plate of its own: one link out of the site, in a new tab, a tile on the home and a chip elsewhere.
-    const follow = () => within(plate(container, 'instagram')).getByRole('link', { name: /@terminal\.signal 팔로우, 새 탭에서 열기/ });
-    expect(plate(container, 'instagram')).toHaveAttribute('data-mode', 'tile');
-    expect(follow()).toHaveAttribute('href', 'https://www.instagram.com/terminal.signal/');
-    expect(follow()).toHaveAttribute('target', '_blank');
+    // The one outside link on the console: the Instagram handle, in the brand bar, not inside the session link.
+    const follow = within(next).getByRole('link', { name: /@terminal\.signal 인스타그램 팔로우/ });
+    expect(follow).toHaveAttribute('href', 'https://www.instagram.com/terminal.signal/');
+    expect(follow.closest('[data-carrier]')).toBeNull();
     go('/events');
     expect(plate(container, 'events')).toHaveAttribute('data-mode', 'hero');
     expect(within(plate(container, 'events')).getByRole('heading', { level: 1, name: /이벤트/ })).toBeInTheDocument();
@@ -94,8 +93,6 @@ describe('stage shell', () => {
     expect(within(plate(container, 'log')).getByRole('link')).toHaveAttribute('href', '/transmit');
     expect(within(plate(container, 'artists')).getByRole('link', { name: /아티스트/ })).toHaveAttribute('href', '/artists');
     expect(within(plate(container, 'next')).getAllByText('TERMINAL').length).toBeGreaterThan(0);
-    expect(plate(container, 'instagram')).toHaveAttribute('data-mode', 'chip');
-    expect(follow()).toHaveAttribute('href', 'https://www.instagram.com/terminal.signal/');
   });
 
   it('gives every view but the home a back card to the view before it, and a home key once away from it', () => {
