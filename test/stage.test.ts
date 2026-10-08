@@ -133,12 +133,12 @@ describe('stage layout', () => {
     for (const path of views.slice(1)) expect(computeLayout(stageStateFromUrl(path), stage).back, path).not.toBeNull();
     const home = computeLayout({ view: 'home' }, stage);
     expect(home.plates.next.mode).toBe('hero');
-    // The next session leads its column, the Instagram plate directly under it (the same column, down to the stage's foot).
-    const { next, instagram } = home.plates;
-    expect(next.rect.h).toBeGreaterThan(stage.h * 0.75);
-    expect(instagram).toMatchObject({ mode: 'tile', rect: { x: next.rect.x, w: next.rect.w } });
-    expect(instagram.rect.y).toBeGreaterThan(next.rect.y + next.rect.h);
-    expect(instagram.rect.y + instagram.rect.h).toBe(stage.h);
+    expect(home.plates.next.rect.h).toBe(stage.h);
+    // The Instagram plate sits directly above the subscription call, the same size as it.
+    const { instagram, signal } = home.plates;
+    expect(instagram).toMatchObject({ mode: 'tile', rect: { x: signal.rect.x, w: signal.rect.w } });
+    expect(Math.abs(instagram.rect.h - signal.rect.h)).toBeLessThanOrEqual(1);
+    expect(instagram.rect.y).toBeLessThan(signal.rect.y);
   });
 
   it('opens a detail as a plate of its own beside an index that keeps the open line, marked current', () => {

@@ -42,11 +42,11 @@ export interface StageConfig {
  */
 export const stageConfig: StageConfig = {
   layouts: {
-    // The next session leads with the account under it; directory and roster in the middle; the call to subscribe high on the right.
+    // The next session leads; directory and roster in the middle; the account and the call to subscribe high on the right.
     home: row(
-      [47, col([84, p('next', 'hero')], [16, p('instagram', 'tile')])],
+      [47, p('next', 'hero')],
       [30, col([50, p('events', 'panel')], [50, p('artists', 'panel')])],
-      [23, col([26, p('signal', 'panel')], [48, p('log', 'panel')], [26, p('about', 'tile')])],
+      [23, col([26, p('instagram', 'tile')], [26, p('signal', 'panel')], [22, p('log', 'panel')], [26, p('about', 'tile')])],
     ),
     // The directory opens wide on the right; the way back, the next session and the roster step left.
     events: row(
