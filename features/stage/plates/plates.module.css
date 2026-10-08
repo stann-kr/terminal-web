@@ -365,27 +365,54 @@
 }
 
 /* ── Instagram: the account as a plate, one link out ─────────────────── */
+/* A wide, low card: the big name and its line on the left, the handle in a tone cell that fills the
+   card's right end (a small label over the value, like the readouts). */
 .instagramCard {
+  flex-direction: row;
+  align-items: stretch;
+}
+.instagramName {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   justify-content: space-between;
-  gap: 8px;
-  padding: 0 var(--pad) var(--pad);
-}
-.instagramHandle {
+  gap: 6px;
   min-width: 0;
-  overflow-wrap: anywhere;
-  font: 800 clamp(22px, 2vw, 40px)/1 var(--display);
+  padding: 12px var(--pad) var(--pad);
+}
+.instagramHead {
+  font: 800 clamp(24px, min(3.4vw, 34cqh, 8cqw), 64px)/.9 var(--display);
   letter-spacing: .02em;
+  white-space: nowrap;
 }
-.instagramNote {
-  opacity: .9;
-  font: 600 var(--t-sm)/1.3 var(--sans);
+.instagramText {
+  font: 700 var(--t-lg)/1.25 var(--display);
+  letter-spacing: .04em;
 }
-/* A low card keeps its band and the handle. */
-@container layer (max-height: 150px) {
-  .instagramCard .instagramNote,
-  .instagramCard .bandTags {
-    display: none;
-  }
+.instagramAccount {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px var(--pad);
+  background: var(--well);
+  font: 700 var(--t-lg)/1.1 var(--display);
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.instagramAccount small {
+  color: var(--muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .2em;
+}
+/* A low card keeps the name alone on the left; a narrow one sets the handle a step smaller. */
+@container layer (max-height: 96px) {
+  .instagramText { display: none; }
+  .instagramName { justify-content: center; padding-block: 8px; }
+}
+@container layer (max-width: 440px) {
+  .instagramAccount { font-size: var(--t-md); }
 }
 
 /* ── Back card ───────────────────────────────────────────────────────────── */
