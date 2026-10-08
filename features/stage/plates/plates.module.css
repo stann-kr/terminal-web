@@ -364,6 +364,30 @@
   letter-spacing: .04em;
 }
 
+/* ── Instagram: the account as a plate, one link out ─────────────────── */
+.instagramCard {
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 var(--pad) var(--pad);
+}
+.instagramHandle {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font: 800 clamp(22px, 2vw, 40px)/1 var(--display);
+  letter-spacing: .02em;
+}
+.instagramNote {
+  opacity: .9;
+  font: 600 var(--t-sm)/1.3 var(--sans);
+}
+/* A low card keeps its band and the handle. */
+@container layer (max-height: 150px) {
+  .instagramCard .instagramNote,
+  .instagramCard .bandTags {
+    display: none;
+  }
+}
+
 /* ── Back card ───────────────────────────────────────────────────────────── */
 /* BACK over HOME: two cards, each lit and pressed as a whole. */
 .backStack {
@@ -611,31 +635,8 @@
   align-items: center;
   gap: 12px;
 }
-/* The handle prints like the clock, in ink, and keeps a 32px target; it stays when the readouts fold. */
-.follow {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  min-height: 32px;
-  color: var(--ink);
-  font: 400 var(--t-md)/1 var(--mono);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: var(--light-motion);
-}
-.follow > span[aria-hidden] {
-  color: var(--muted);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .2em;
-}
-@media (hover: hover) {
-  .follow:hover { color: var(--accent); }
-}
-.follow:focus-visible {
-  outline-offset: 2px;
-}
 @container layer (max-width: 420px) {
-  .brandSystem > :not([role=group]):not(.follow) { display: none; }
+  .brandSystem > :not([role=group]) { display: none; }
 }
 .nextBlock {
   flex: 1 1 auto;
@@ -1351,6 +1352,7 @@
 /* Padded summary cards publish their inset too, so their lists run flush like an open plate's. */
 .summaryCard,
 .signalCard,
+.instagramCard,
 .plateCard {
   --bleed: var(--pad);
 }
