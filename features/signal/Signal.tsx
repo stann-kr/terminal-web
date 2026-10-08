@@ -103,7 +103,7 @@ function SignalForm({
           <h2>소식 신청을 저장했습니다</h2>
           <p>인스타그램 소식은 팔로워에게만 닿습니다.</p>
           <ActionDeck>
-            <Action primary external href={instagram.url}>{instagram.handle} 팔로우</Action>
+            <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>
             <Action href="/">홈으로 돌아가기</Action>
           </ActionDeck>
         </FormSuccess>

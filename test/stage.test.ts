@@ -219,6 +219,10 @@ describe('stage layout', () => {
     const layout = computeLayout(stageStateFromUrl('/events'), narrow, { viewportW: 390, items: items() });
     expect(layout.sheets.length).toBeGreaterThan(1);
     expect(layout.sheetOf.events).toBe(0);
+    // A phone's home reads the next session, then the account and the call to subscribe, then the directory.
+    const home = computeLayout({ view: 'home' }, narrow, { viewportW: 390, items: items() });
+    expect(home.sheetOf).toMatchObject({ next: 0, instagram: 1, signal: 1, log: 1, about: 1, events: 2, artists: 2 });
+    expect(home.plates.instagram.rect.y).toBeLessThan(home.plates.signal.rect.y);
     expect(PLATE_ORDER.every(id => layout.plates[id].rect.w === narrow.w)).toBe(true);
     // Secondary sheets are as tall as their plates, not a whole window: chips stay chip-sized, and
     // the back card keeps its own height over the open plate.
@@ -275,7 +279,7 @@ describe('stage layout', () => {
   });
 
   it('keeps every configured view complete: every plate once each, a detail only on details', () => {
-    for (const [view, tree] of Object.entries(stageConfig.layouts)) {
+    for (const [view, tree] of [...Object.entries(stageConfig.layouts), ...Object.entries(stageConfig.narrow)]) {
       const leaves = tile(tree, { x: 0, y: 0, w: 1000, h: 1000 }, 0).map(([leaf]) => ('plate' in leaf ? leaf.plate : leaf.slot));
       expect(leaves.filter(key => (PLATE_ORDER as readonly string[]).includes(key)).sort(), view).toEqual([...PLATE_ORDER].sort());
       expect(leaves.includes('detail'), view).toBe(view === 'session' || view === 'artist');

@@ -73,7 +73,7 @@ export function AccessForm({
         />
         <p>인스타그램 안내는 팔로워에게만 닿습니다.</p>
         <ActionDeck>
-          <Action primary external href={instagram.url}>{instagram.handle} 팔로우</Action>
+          <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>
           <Action href={eventHref(eventId)}>이벤트로 돌아가기</Action>
           {!fields.marketingConsent && <Action href="/signal">다음 이벤트 소식 신청</Action>}
         </ActionDeck>

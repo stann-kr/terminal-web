@@ -21,6 +21,12 @@ export interface StageConfig {
   /** One tiling per view. Every view places every plate; details add the detail, others the back card. */
   layouts: Record<ViewName, LayoutNode>;
   /**
+   * A view's order on a narrow stage (a phone), where each top-level part of the tiling becomes a
+   * sheet, the open plate's first: the same leaves, parts in the order to read them. Views without
+   * one keep their own order.
+   */
+  narrow: Partial<Record<ViewName, LayoutNode>>;
+  /**
    * Each view's focal plate carries the concentric rings (an ambient drift that leans after the
    * pointer): where they sit (`plate`, or the open `detail`) and their home centre as fractions of it.
    */
@@ -40,14 +46,14 @@ export interface StageConfig {
  * The stage's design decisions, in one place. Each view has its own arrangement, so moving between
  * views re-tiles every plate; try another arrangement by editing its tree here.
  */
+const homeNext: [number, LayoutLeaf] = [47, p('next', 'hero')];
+const homeDirectory: [number, LayoutNode] = [30, col([50, p('events', 'panel')], [50, p('artists', 'panel')])];
+const homeCalls: [number, LayoutNode] = [23, col([26, p('instagram', 'tile')], [20, p('signal', 'panel')], [37, p('log', 'panel')], [17, p('about', 'tile')])];
+
 export const stageConfig: StageConfig = {
   layouts: {
     // The next session leads; directory and roster in the middle; the account and the call to subscribe high on the right.
-    home: row(
-      [47, p('next', 'hero')],
-      [30, col([50, p('events', 'panel')], [50, p('artists', 'panel')])],
-      [23, col([26, p('instagram', 'tile')], [20, p('signal', 'panel')], [37, p('log', 'panel')], [17, p('about', 'tile')])],
-    ),
+    home: row(homeNext, homeDirectory, homeCalls),
     // The directory opens wide on the right; the way back, the next session and the roster step left.
     events: row(
       [30, col([15, BACK], [43, p('next', 'panel')], [42, p('artists', 'panel')])],
@@ -88,6 +94,11 @@ export const stageConfig: StageConfig = {
       [64, p('about', 'hero')],
       [36, col([13, BACK], [27, p('next', 'tile')], [30, p('artists', 'panel')], [15, row([1, p('events', 'chip')], [1, p('instagram', 'chip')])], [15, row([1, p('signal', 'chip')], [1, p('log', 'chip')])])],
     ),
+  },
+  narrow: {
+    // On a phone the account and the call to subscribe come right after the next session, before
+    // the directory and the roster: most visitors arrive by phone (the event's QR stickers).
+    home: row(homeNext, homeCalls, homeDirectory),
   },
   rings: {
     home: { plate: 'next', at: { x: 0.86, y: 0.3 } },

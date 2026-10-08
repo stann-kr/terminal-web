@@ -396,7 +396,8 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
     counts: { event: input.items?.event?.order.length, artist: input.items?.artist?.order.length },
     heads: input.heads ?? {},
   };
-  sheetTrees(config.layouts[view ?? 'home'], stage, spill, m, natural).forEach(({ tree, h: natural }, index) => {
+  const tiling = (stage.w < NARROW_W && config.narrow[view ?? 'home']) || config.layouts[view ?? 'home'];
+  sheetTrees(tiling, stage, spill, m, natural).forEach(({ tree, h: natural }, index) => {
     // A sheet with a single leaf grows by what that leaf still needs.
     const only = leavesOf(tree).filter(leaf => leafKey(leaf) !== 'back');
     const grow = only.length === 1 ? spill.grow[leafKey(only[0]) as PlateId | 'detail'] ?? 0 : 0;

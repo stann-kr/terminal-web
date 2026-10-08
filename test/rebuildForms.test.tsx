@@ -122,7 +122,7 @@ describe('guest request UI',()=>{
     await user.keyboard('Example');await user.type(screen.getByLabelText(/^이메일/),'example@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     const saved=await screen.findByRole('status');
     expect(saved).toHaveTextContent('INVITER');expect(saved).toHaveTextContent('example@example.test');expect(saved).toHaveTextContent('@example');
-    expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');expect(screen.getByRole('link',{name:'@terminal.signal 팔로우'})).toHaveAttribute('href','https://www.instagram.com/terminal.signal/');
+    expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');expect(screen.getByRole('link',{name:'@TERMINAL.SIGNAL 팔로우'})).toHaveAttribute('href','https://www.instagram.com/terminal.signal/');
   });
 });
 describe('transmit UI',()=>{
@@ -180,7 +180,7 @@ describe('signal UI',()=>{
     expect(screen.getByRole('button',{name:'저장 중…'})).toBeDisabled();
     await act(async()=>{resolve(saved?json({ok:true}):json({error:'UNAVAILABLE'},503));});
     if(saved) {
-      expect(await screen.findByRole('heading',{name:'소식 신청을 저장했습니다'})).toBeInTheDocument();expect(screen.getByRole('link',{name:'@terminal.signal 팔로우'})).toHaveAttribute('href','https://www.instagram.com/terminal.signal/');
+      expect(await screen.findByRole('heading',{name:'소식 신청을 저장했습니다'})).toBeInTheDocument();expect(screen.getByRole('link',{name:'@TERMINAL.SIGNAL 팔로우'})).toHaveAttribute('href','https://www.instagram.com/terminal.signal/');
       expect(matrix).toHaveAttribute('data-state','saved');
       expect(screen.getByRole('status')).toHaveFocus();
     } else {
