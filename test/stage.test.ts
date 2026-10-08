@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { PLATE_ORDER, parseCarrierMark, resolveMissing, stageOrigin, stageParentHref, stageStateFromUrl, stateHref, stateKey, type StageState } from '../features/stage/state';
 import { computeFlowLayout, computeLayout, listRowsPerPage, stageMetrics, tile, type LayoutInput, type Rect, type StageLayout } from '../features/stage/layout';
 import { stageConfig } from '../features/stage/config';
-import { fitTitle, packHeights, paginate, type Measurer } from '../features/stage/text';
+import { fitTitle, packHeights, paginate, wordReserveEm, type Measurer } from '../features/stage/text';
 
 describe('stage state from the address', () => {
   it('maps every stage route to its state', () => {
@@ -337,6 +337,27 @@ describe('text pages', () => {
     expect(fitTitle('ab', title, fake)).toBe(40);
     expect(fitTitle('ten chars!', { ...title, maxLines: 2 }, fake)).toBe(16); // 'chars!' alone must fit 100px
     expect(fitTitle('ten chars!', title, null)).toBe(40);
+    // A word set in a wider face than the measured one keeps its extra width free (two chars here).
+    expect(fitTitle('ten chars!', { ...title, reserveEm: 2 }, fake)).toBe(8);
+    // A layout that splits an overlong word over lines (as CSS overflow-wrap does) would fit 'abcdefgh'
+    // on two lines at 25px; a title never breaks inside a word, so it is set where the word fits whole.
+    const breaking: Measurer = {
+      wrap: (text, font, width) => {
+        const px = parseFloat(font.split(' ')[1]);
+        const per = Math.max(1, Math.floor(width / px));
+        const lines: { text: string; width: number }[] = [];
+        for (let at = 0; at < text.length; at += per) lines.push({ text: text.slice(at, at + per), width: Math.min(per, text.length - at) * px });
+        return lines;
+      },
+    };
+    expect(fitTitle('abcdefgh', { ...title, maxLines: 2 }, breaking)).toBe(12);
+  });
+
+  it('reserves what a word in a wider face takes beyond the measured face, so a title never breaks inside it', () => {
+    // The brand word is set in its own face: half again as wide here.
+    const faces: Measurer = { wrap: (text, font, _width, options = {}) => [{ text, width: text.length * (parseFloat(font) * (font.includes('Wide') ? 1.5 : 1) + (options.letterSpacing ?? 0)) }] };
+    expect(wordReserveEm('ab', px => `${px}px Narrow`, 0, px => `${px}px Wide`, 0, faces)).toBe(1);
+    expect(wordReserveEm('ab', px => `${px}px Wide`, 0, px => `${px}px Narrow`, 0, faces)).toBe(0);
   });
 
   it('packs measured entries into pages of a height, in order', () => {

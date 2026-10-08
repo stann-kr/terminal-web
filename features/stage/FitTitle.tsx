@@ -1,7 +1,11 @@
 'use client';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { defaultMeasurer, fitTitle, fontOf, whenFontsReady } from './text';
+import { defaultMeasurer, fitTitle, fontOf, whenFontsReady, wordReserveEm } from './text';
 import styles from './stage.module.css';
+
+/** The word BrandText sets in the brand face, and that face's letter spacing (ui.module.css `.brandWord`). */
+const BRAND_WORD = 'TERMINAL';
+const BRAND_SPACING_EM = 0.02;
 
 /**
  * A title set as large as its box allows: the CSS size is the ceiling, and pretext finds the
@@ -40,15 +44,22 @@ export function FitTitle({
       // Letter spacing is given as `--title-ls` in em on the inner line, so it scales with the fit.
       const spacing = parseFloat(style.getPropertyValue('--title-ls')) || 0;
       const shown = style.textTransform === 'uppercase' ? text.toUpperCase() : text;
-      // A little slack: the brand word is set in another face than the one measured.
-      const width = element.clientWidth * (text.includes('TERMINAL') ? 0.94 : 0.99);
+      const font = (px: number) => fontOf(style, px);
+      // The brand word is set in its own, wider face (BrandText), not the one measured: each line
+      // keeps free what it takes beyond the title's face, so a title never breaks inside it.
+      const brand = style.getPropertyValue('--brand').trim();
+      const brandWords = shown.split(BRAND_WORD).length - 1;
+      const reserveEm = brand && brandWords
+        ? brandWords * wordReserveEm(BRAND_WORD, font, spacing, px => `400 ${px}px ${brand}`, BRAND_SPACING_EM, measurer)
+        : 0;
       setSize(fitTitle(shown, {
-        font: px => fontOf(style, px),
-        width,
+        font,
+        width: element.clientWidth * 0.99,
         maxLines,
         minPx: Math.min(minPx, ceiling),
         maxPx: ceiling,
         letterSpacingEm: spacing,
+        reserveEm,
       }, measurer));
     };
     run();

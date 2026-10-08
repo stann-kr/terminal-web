@@ -1578,9 +1578,10 @@
 .signalHead {
   font-size: clamp(28px, min(3.4vw, 30cqh), 72px);
 }
-/* INSTAGRAM is half again as long as SIGNAL: on the same card its name also follows the card's width. */
+/* INSTAGRAM is half again as long as SIGNAL: on the same card it is as large as SIGNAL while it
+   fits the card's inner width (its capitals run under half an em each, spacing included). */
 .signalHead.wideHead {
-  font-size: clamp(22px, min(3.4vw, 30cqh, 12cqw), 72px);
+  font-size: clamp(22px, min(3.4vw, 30cqh, calc((100cqw - 2 * var(--pad)) / 4.8)), 72px);
 }
 @container layer (max-height: 170px) {
   .signalCard .bandTags {

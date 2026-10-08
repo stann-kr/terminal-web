@@ -54,7 +54,7 @@ function SignalInformation({
 }) {
   const { pending, done, error } = request;
   return (
-    <Panel title="수신 안내" label="Signal" code="CH 01" surface="alert">
+    <Panel title="수신 안내" label="Signal" code="CH 01" surface="mark">
       <p className={styles.lead}>TERMINAL의 새로운 이벤트와 소식을 안내합니다.</p>
       <p
         className={styles.signalMatrix}
