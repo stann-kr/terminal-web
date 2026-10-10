@@ -18,6 +18,9 @@ for(const route of routes) {
   const response=await fetch(`${baseUrl}${route}`);
   const html=await response.text();
   assert.equal(response.status,details.has(route) ? detailStatus : 200,route);
+  // A 404 is Next's error document: the browser draws the stage from its data, so only the status
+  // and the noindex mark are on the server's page.
+  if(response.status===404) { assert.match(html,/<meta name="robots" content="noindex"/,`${route}: noindex`); continue; }
   assert.equal((html.match(/<main(?:\s|>)/g)??[]).length,1,`${route}: main landmark`);
   assert.ok(html.includes('href="#main"') && html.includes('id="main"'),`${route}: skip navigation`);
   assert.ok(html.includes('<title>'),`${route}: title`);
