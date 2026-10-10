@@ -16,6 +16,7 @@ import {
 import type { EventStatus, TerminalEvent } from '../lib/events/types';
 import { dayMark, eventSubtitle, sessionShort, venueMapHref } from '../features/events/model';
 import { calendarSubscribeHref, sessionsCalendar } from '../features/events/calendar';
+import { eventStructuredData, jsonLd } from '../features/events/metadata';
 
 function event(id: string, date: string, time: string, status: EventStatus): TerminalEvent {
   return {
@@ -260,6 +261,42 @@ describe('session marks and hand-offs', () => {
     const ended = sessionsCalendar([{ ...event('TRM-04', '2026-12-31', '23:00 KST', 'UPCOMING'), endTime: '06:00' }], 'https://terminal.stann.kr', new Date('2026-10-01T00:00:00Z'));
     expect(ended.split('\r\n')).toContain('DTEND:20261231T210000Z');
     expect(lines.every((line) => new TextEncoder().encode(line).length <= 75)).toBe(true);
+  });
+
+  it('describes a session to search engines with only what its record says', () => {
+    const night: TerminalEvent = {
+      ...event('TRM-03', '2026-11-28', '23:00 KST', 'UPCOMING'),
+      session: 'TERMINAL [03] : Vulpecula Junction',
+      venue: 'FAUST SEOUL',
+      district: 'YONGSAN-GU // ITAEWON',
+      endTime: '05:00',
+      description: { ko: '첫 문단.\n\n둘째 문단.', en: 'First.' },
+      artists: [
+        { id: 'A', name: 'STANN LUMO', origin: 'KR', dock: '1', time: '23:00 - 01:00', status: 'CONFIRMED' },
+        { id: 'B', name: 'SECRET GUEST', origin: 'KR', dock: '1', time: 'TBA', status: 'CLASSIFIED' },
+      ],
+    };
+    expect(eventStructuredData(night)).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'MusicEvent',
+      name: 'TERMINAL [03] : Vulpecula Junction',
+      url: 'https://terminal.stann.kr/events/TRM-03',
+      startDate: '2026-11-28T23:00:00+09:00',
+      endDate: '2026-11-29T05:00:00+09:00',
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      location: { '@type': 'Place', name: 'FAUST SEOUL', address: { '@type': 'PostalAddress', addressLocality: 'YONGSAN-GU, ITAEWON', addressCountry: 'KR' } },
+      description: '첫 문단.',
+      performer: [{ '@type': 'Person', name: 'STANN LUMO' }],
+      organizer: { '@type': 'Organization', name: 'TERMINAL', url: 'https://terminal.stann.kr' },
+    });
+    // No end, lineup, poster or text in the record: none in the data either.
+    const bare = eventStructuredData(event('TRM-04', '2026-12-31', '23:00', 'UPCOMING'));
+    expect(bare).not.toHaveProperty('endDate');
+    expect(bare).not.toHaveProperty('performer');
+    expect(bare).not.toHaveProperty('image');
+    // A value cannot close the script tag it is printed in.
+    expect(jsonLd({ name: '</script><script>alert(1)</script>' })).toBe('{"name":"\\u003c/script>\\u003cscript>alert(1)\\u003c/script>"}');
   });
 
   it('subscribes Apple calendars by webcal and others through Google Calendar', () => {

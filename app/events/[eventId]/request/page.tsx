@@ -1,15 +1,20 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { eventMetadata } from '@/features/events/metadata';
+import { readPublicEvents } from '@/lib/events/requestEvents';
 import { findEvent } from '../../findEvent';
 
+/** The guest form of a session: a 404 for an id the events do not have, as the session page. */
 export default async function Page({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
+  let id: string;
   try {
-    decodeURIComponent(eventId);
+    id = decodeURIComponent(eventId);
   } catch {
     notFound();
   }
+  const events = await readPublicEvents();
+  if (events && !events.some((item) => item.id === id)) notFound();
   return null;
 }
 

@@ -10,6 +10,7 @@ import { useTransmitRange } from '../features/transmit/useTransmit';
 import { stageOrigin } from '../features/stage/state';
 import { NodeActivity } from '../features/transmit/NodeActivity';
 import siteContent from '../features/about/content.json';
+import NotFound from '../app/not-found';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
@@ -341,6 +342,19 @@ describe('stage views', () => {
     act(() => client.setQueryData(['events'], [{ ...event, posterUrl: 'https://example.test/revised.jpg' }]));
     await waitFor(() => expect(within(poster()).getByRole('img')).toHaveAttribute('src', 'https://example.test/revised.jpg'));
     expect(poster()).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('leaves a missing session or artist to the stage, and gives other unknown addresses the not-found page', () => {
+    navigation.pathname = '/events/NOPE';
+    const { container, rerender } = render(<NotFound />);
+    expect(container).toBeEmptyDOMElement();
+    navigation.pathname = '/artists/nobody';
+    rerender(<NotFound />);
+    expect(container).toBeEmptyDOMElement();
+    navigation.pathname = '/not-a-terminal-page';
+    rerender(<NotFound />);
+    expect(screen.getByRole('heading', { name: '이 주소의 기록을 찾을 수 없습니다' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/');
   });
 
   it('shows an unknown session as an error inside the open directory', () => {
