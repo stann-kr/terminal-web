@@ -14,7 +14,7 @@ import { edition } from './data.js';
 import { sampleArtists } from './pieces.js';
 
 const params = new URLSearchParams(location.search);
-const format = ['feed', 'story', 'a2'].includes(params.get('format')) ? params.get('format') : 'feed';
+const format = ['feed', 'story', 'a2', 'og'].includes(params.get('format')) ? params.get('format') : 'feed';
 document.documentElement.dataset.format = format;
 document.documentElement.dataset.palette = params.get('palette') || edition.palette;
 
@@ -345,6 +345,61 @@ function main() {
   };
 }
 
+/**
+ * The site's link-preview image (format og, 1200 × 630): the brand on the dark plate with the dial,
+ * and no edition facts, so it holds between sessions — `plates` keeps the wordmark on its own plate
+ * above, `wordmark` sets it large in the dark. `edition` is the teaser laid out on the same canvas.
+ */
+function share() {
+  const variant = params.get('variant');
+  const label = 'TERMINAL 링크 미리보기';
+  if (variant === 'edition') {
+    return {
+      label: `${label}: Session ${edition.number}`,
+      tone: 'field',
+      duration: pulses(6),
+      nodes: [
+        plates(
+          brandPlate(0.3),
+          heroPlate(
+            0.6,
+            chart({ compass: { x: 0.86, y: 0.58, r: 0.075 }, signal: { x: 0.6, y: 0.22 } }),
+            h('div', { class: 'heroText atTop shareText' }, h('p', { class: 'heroSub' }, cue(fitLine(edition.title, 'sub', 5.6), 1.2, 1.2, 'rise')), h('p', { class: 'heroDate' }, cue(fitLine(dateShort, 'date', 15), 1.4, 1.3, 'rise'))),
+          ),
+          infoRow(1.6, [['Doors', `${edition.time} KST`], ['Venue', edition.venue], [null, edition.site]]),
+        ),
+      ],
+    };
+  }
+  if (variant === 'wordmark') {
+    return {
+      label,
+      tone: 'field',
+      duration: pulses(6),
+      nodes: [
+        plates(
+          heroPlate(
+            0.3,
+            chart({ compass: { x: 0.85, y: 0.6, r: 0.085 }, signal: { x: 0.56, y: 0.2 } }),
+            h('div', { class: 'heroText shareText wide' }, h('p', { class: 'shareWord' }, cue(fitLine('TERMINAL', 'mark', 13), 1.2, 1.2, 'rise')), cue(mono(edition.site, 'strong'), 1.5, 1)),
+          ),
+        ),
+      ],
+    };
+  }
+  return {
+    label,
+    tone: 'field',
+    duration: pulses(6),
+    nodes: [
+      plates(
+        cue(h('header', { class: 'brandPlate', 'data-surface': 'panel' }, wordmark(), h('p', { class: 'shareSite' }, mono(edition.site, 'strong'))), 0.3, 0.9, 'plate'),
+        heroPlate(0.6, chart({ compass: { x: 0.2, y: 0.52, r: 0.1 }, signal: { x: 0.74, y: 0.42 } })),
+      ),
+    ],
+  };
+}
+
 /* ── Layout passes ──────────────────────────────────────────────────────────────────────────── */
 async function fontsReady() {
   await Promise.all(
@@ -402,7 +457,7 @@ function apply({ element, kind }, progress) {
 }
 
 async function start() {
-  const make = { teaser, artist, lineup, main }[params.get('piece')] ?? main;
+  const make = { teaser, artist, lineup, main, share }[params.get('piece')] ?? main;
   const composition = make();
   const poster = document.querySelector('.poster');
   poster.dataset.tone = composition.tone;

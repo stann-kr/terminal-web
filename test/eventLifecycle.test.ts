@@ -286,15 +286,17 @@ describe('session marks and hand-offs', () => {
       eventStatus: 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       location: { '@type': 'Place', name: 'FAUST SEOUL', address: { '@type': 'PostalAddress', addressLocality: 'YONGSAN-GU, ITAEWON', addressCountry: 'KR' } },
+      image: ['https://terminal.stann.kr/og/terminal.png'],
       description: '첫 문단.',
       performer: [{ '@type': 'Person', name: 'STANN LUMO' }],
       organizer: { '@type': 'Organization', name: 'TERMINAL', url: 'https://terminal.stann.kr' },
     });
-    // No end, lineup, poster or text in the record: none in the data either.
+    // No end, lineup or text in the record: none in the data either. A poster stands in for the site's image.
     const bare = eventStructuredData(event('TRM-04', '2026-12-31', '23:00', 'UPCOMING'));
     expect(bare).not.toHaveProperty('endDate');
     expect(bare).not.toHaveProperty('performer');
-    expect(bare).not.toHaveProperty('image');
+    expect(bare).not.toHaveProperty('description');
+    expect(eventStructuredData({ ...night, posterUrl: 'https://media.stann.kr/p.jpg' }).image).toEqual(['https://media.stann.kr/p.jpg']);
     // A value cannot close the script tag it is printed in.
     expect(jsonLd({ name: '</script><script>alert(1)</script>' })).toBe('{"name":"\\u003c/script>\\u003cscript>alert(1)\\u003c/script>"}');
   });

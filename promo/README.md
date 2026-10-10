@@ -27,3 +27,4 @@ node promo/export.mjs posters --only main   # 일부만
 - 단일 조각: `poster.html?piece=teaser|artist|lineup|main&format=feed|story|a2` (`&artist=<id>`, `&play`).
 - 내보내기는 로컬 Chrome(또는 Playwright의 `chrome-headless-shell`, `CHROME_PATH`로 지정 가능)과 `ffmpeg`가 필요합니다. A2는 벡터 PDF와 300dpi PNG로 나옵니다.
 - 이름·제목이 판을 넘치면 내보내기 중 `content overflows` 경고가 나옵니다.
+- 사이트 공유 이미지(링크 미리보기, 1200×630): `node promo/export.mjs share`가 `out/share/`에 후보(`plates`·`wordmark`는 회차 정보 없이 늘 쓰는 구성, `edition`은 이번 회차 티저)를 뽑습니다. 고른 것을 `public/og/terminal.png`로 복사하면 사이트가 포스터 없는 페이지의 공유 이미지로 씁니다. 단일 조각은 `poster.html?piece=share&format=og&variant=plates|wordmark|edition`.

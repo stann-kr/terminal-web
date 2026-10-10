@@ -5,6 +5,7 @@ export const formats = {
   feed: { label: '3:4 · 1080×1440', width: 1080, height: 1440 },
   story: { label: '9:16 · 1080×1920', width: 1080, height: 1920 },
   a2: { label: 'A2 · 420×594mm', width: 1588, height: 2245, paper: { width: 420, height: 594 } },
+  og: { label: '링크 미리보기 · 1200×630', width: 1200, height: 630 },
 };
 
 /** Stand-in names for previewing the artist and lineup pieces before the lineup is out. */
@@ -50,6 +51,17 @@ export const templates = confirmed
       { piece: 'lineup', format: 'feed', title: '라인업 공개 · 템플릿', sample: true },
     ];
 
+/**
+ * The site's link-preview image (out/share/<name>.png): what a shared TERMINAL link shows before a
+ * session has a poster of its own. `plates` and `wordmark` name no edition, so they hold between
+ * sessions; `edition` is this edition's teaser, and goes out of date with it.
+ */
+export const shares = [
+  { piece: 'share', variant: 'plates', format: 'og', title: '공유 이미지 · 판' },
+  { piece: 'share', variant: 'wordmark', format: 'og', title: '공유 이미지 · 워드마크' },
+  { piece: 'share', variant: 'edition', format: 'og', title: `공유 이미지 · ${edition.code}` },
+];
+
 /** The posters as Claude Design artboards (out/artboards/<name>.dc.html): the canvas's final set. */
 export const artboards = [
   { name: 'Teaser', piece: 'teaser', format: 'feed', title: 'Teaser — TERMINAL [03]' },
@@ -60,10 +72,10 @@ export const artboards = [
 ];
 
 /** The file name a piece exports to, without extension. */
-export const fileName = ({ piece, artist, format }) => [piece, artist, format].filter(Boolean).join('_');
+export const fileName = ({ piece, artist, variant, format }) => [piece, artist, variant, format].filter(Boolean).join('_');
 
 /** The poster page's query for a piece. */
-export function pieceQuery({ piece, artist, format, sample }, extra = {}) {
-  const query = new URLSearchParams({ piece, format, ...(artist ? { artist } : {}), ...(sample ? { sample: '' } : {}), ...extra });
+export function pieceQuery({ piece, artist, variant, format, sample }, extra = {}) {
+  const query = new URLSearchParams({ piece, format, ...(artist ? { artist } : {}), ...(variant ? { variant } : {}), ...(sample ? { sample: '' } : {}), ...extra });
   return `poster.html?${query}`;
 }

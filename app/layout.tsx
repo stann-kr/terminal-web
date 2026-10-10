@@ -4,10 +4,17 @@ import { Providers } from '@/features/shell/Providers';
 import { activePalette } from '@/features/shell/palette';
 import { Shell } from '@/features/shell/Shell';
 import siteContent from '@/features/about/content.json';
-import { SITE_ORIGIN } from '@/features/events/metadata';
+import { SHARE_IMAGE, SITE_ORIGIN } from '@/features/events/metadata';
 import './palettes.css';
 import './globals.css';
-export const metadata: Metadata = { metadataBase: new URL(SITE_ORIGIN), title: { default: 'TERMINAL', template: '%s / TERMINAL' }, description: `${siteContent.tagline} ${siteContent.manifesto.ko.split('\n\n')[0]}` };
+const description = `${siteContent.tagline} ${siteContent.manifesto.ko.split('\n\n')[0]}`;
+// A page that names no picture of its own is shared with the site's image (sessions with a poster use the poster).
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_ORIGIN),
+  title: { default: 'TERMINAL', template: '%s / TERMINAL' },
+  description,
+  openGraph: { type: 'website', siteName: 'TERMINAL', title: 'TERMINAL', description, images: [SHARE_IMAGE] },
+};
 /** The faces the first screen is set in (app/globals.css), fetched with the document so they are in before it paints. */
 const FONTS = [
   ['/fonts/ProcrastinatingPixie-WyVOO.ttf', 'font/ttf'],
