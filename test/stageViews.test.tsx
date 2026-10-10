@@ -635,7 +635,7 @@ describe('directory and roster contracts', () => {
     expect(within(detail(container, 'event:TRM-03')).getByText('기록', { selector: '[data-event-state]' })).toHaveAttribute('data-event-state', 'ARCHIVED');
   });
 
-  it('keeps the home clock after a session starts, then counts down to the next one registered', () => {
+  it('keeps the home clock after a session starts, leads with it while it runs, then counts down to the next one', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
     const soon = { ...upcoming, date: '2026-11-28', time: '23:00 KST' };
@@ -648,8 +648,16 @@ describe('directory and roster contracts', () => {
     expect(within(next().getByRole('timer')).getByText('초').nextElementSibling).toHaveTextContent('02');
     const registered = { ...soon, id: 'TRM-04', session: 'TERMINAL [04]', date: '2026-12-28' };
     act(() => {
-      client.setQueryData(['events'], [past, { ...soon, status: 'LIVE' }, registered]);
+      client.setQueryData(['events'], [past, { ...soon, status: 'LIVE', endTime: '05:00' }, registered]);
       vi.advanceTimersByTime(1);
+    });
+    // While it runs, the live session leads the home even with the next one announced.
+    expect(next().getByRole('heading', { name: 'TERMINAL [03]' })).toBeInTheDocument();
+    expect(next().getByRole('link', { name: /^진행 중인 이벤트 TERMINAL \[03\]/ })).toBeInTheDocument();
+    // Once it ends, the plate counts down to the next one.
+    act(() => {
+      vi.setSystemTime(new Date('2026-11-29T05:00:00+09:00'));
+      vi.advanceTimersByTime(60_000);
     });
     expect(next().getByRole('heading', { name: 'TERMINAL [04]' })).toBeInTheDocument();
     expect(next().getByRole('timer', { name: '이벤트 시작까지 남은 시간' })).toHaveTextContent('T- COUNTDOWN');
