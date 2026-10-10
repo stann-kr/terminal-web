@@ -24,6 +24,17 @@ database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
 remote = true
 
+# 공개 쓰기 API(초대 코드 확인·게스트 신청·소식 신청·방문자 로그)의 시도 제한. lib/api/abuseControl.ts가
+# `<작업>:<접속 IP>` 키로 부른다(초대 코드 확인과 게스트 신청은 한 예산). 바인딩은 환경마다 다시 선언하고,
+# namespace가 환경마다 달라 카운터를 함께 쓰지 않는다.
+[[ratelimits]]
+name = "PUBLIC_RATE_LIMITER"
+namespace_id = "2026101003"
+
+  [ratelimits.simple]
+  limit = 20
+  period = 60
+
 [env.production]
 name = "terminal-web"
 
@@ -36,6 +47,15 @@ binding = "DB"
 database_name = "terminal-db"
 database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
+
+# 공개 쓰기 API 시도 제한(맨 위 설명 참고).
+[[env.production.ratelimits]]
+name = "PUBLIC_RATE_LIMITER"
+namespace_id = "2026101001"
+
+  [env.production.ratelimits.simple]
+  limit = 20
+  period = 60
 
 [env.development]
 name = "terminal-web-dev"
@@ -52,3 +72,12 @@ binding = "DB"
 database_name = "terminal-db"
 database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
+
+# 공개 쓰기 API 시도 제한(맨 위 설명 참고).
+[[env.development.ratelimits]]
+name = "PUBLIC_RATE_LIMITER"
+namespace_id = "2026101002"
+
+  [env.development.ratelimits.simple]
+  limit = 20
+  period = 60
