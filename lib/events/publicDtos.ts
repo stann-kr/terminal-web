@@ -1,5 +1,5 @@
 import { isJsonObject, isString } from '@/lib/api/validation';
-import { isValidEventDateTime } from './lifecycle';
+import { getEventEndTime, isValidEventDateTime } from './lifecycle';
 import type {
   Artist,
   ArtistDescription,
@@ -125,6 +125,7 @@ export function parsePublicEventRow(
   const log = parseLocalizedText(data.log, MAX_TEXT);
   const date = parseBoundedString(data.date, 10);
   const time = parseBoundedString(data.time, 20);
+  const endTime = data.endTime === undefined ? undefined : parseBoundedString(data.endTime, 20);
   const venue = parseBoundedString(data.venue, 200);
   const district = parseBoundedString(data.district, 200);
   const coords = parseBoundedString(data.coords, 100);
@@ -138,6 +139,7 @@ export function parsePublicEventRow(
     !session || !subtitle || !date
     || !time || !venue || !district || !coords || !capacity || !sound
     || !isValidEventDateTime({ date, time })
+    || endTime === null || (endTime !== undefined && !getEventEndTime({ date, time, endTime }))
     || !isString(data.status) || !EVENT_STATUSES.has(data.status as EventStatus)
     || invitationLines === null || description === null || posterUrl === null
     || stage === null || log === null
@@ -153,6 +155,7 @@ export function parsePublicEventRow(
     ...(log === undefined ? {} : { log }),
     date,
     time,
+    ...(endTime === undefined ? {} : { endTime }),
     venue,
     district,
     coords,

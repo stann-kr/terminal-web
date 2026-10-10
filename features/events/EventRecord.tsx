@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useSyncExternalStore, type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
+import { getSlotTimes } from '@/lib/events/lifecycle';
 import { Action, ActionDeck, BrandText, Facts, ui } from '@/features/ui/Ui';
 import { CALENDAR_FEED_PATH, calendarSubscribeHref } from './calendar';
 import {
@@ -150,13 +151,22 @@ export function Lineup({
   event,
   events,
   stages = false,
+  now,
 }: {
   event: TerminalEvent;
   events: TerminalEvent[];
   stages?: boolean;
+  now?: Date;
 }) {
   const profiles = buildArtistArchive(events);
   const visible = publicArtists(event);
+  // While the session runs, the slot the published timetable is on. It is the timetable, not what
+  // is playing: the dock band says so, and a slot without times (TBA) is never marked.
+  const onNow = (artist: Artist) => {
+    if (event.status !== 'LIVE' || !now) return false;
+    const slot = getSlotTimes(event, artist.time);
+    return !!slot && slot.start <= now && now < slot.end;
+  };
   function identity(artist: Artist) {
     const profile = profileForAppearance(profiles, event.id, artist.id);
     return (
@@ -184,17 +194,26 @@ export function Lineup({
               >
                 <h3 className={ui.band}>
                   <span>DOCK {dock}</span>
-                  <span>공개 공연표</span>
+                  <span>
+                    {visible.some((artist) => (artist.dock || 'TBA') === dock && onNow(artist))
+                      ? '시간표 기준 지금 순서'
+                      : '공개 공연표'}
+                  </span>
                 </h3>
                 <ul className={styles.stageSlots}>
                   {visible
                     .filter((artist) => (artist.dock || 'TBA') === dock)
                     .map((artist) => (
-                      <li key={artist.id} data-origin="">
+                      <li key={artist.id} data-origin="" data-now={onNow(artist) || undefined}>
                         <div className={styles.slotCode}>
                           {artist.id}
                           <span>
-                            {artist.status === 'ARCHIVED'
+                            {onNow(artist) ? (
+                              <>
+                                NOW
+                                <span className={ui.srOnly}> (시간표 기준 지금 순서)</span>
+                              </>
+                            ) : artist.status === 'ARCHIVED'
                               ? 'ARCHIVE'
                               : 'CONFIRMED'}
                           </span>

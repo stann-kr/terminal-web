@@ -72,13 +72,14 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
   // Guest requests open 30 days ahead; the home plate says so, so nobody has to open the file to find out.
   const accessOpen = accessAvailability(event, events, now).canRequest;
   const subtitle = eventSubtitle(event);
-  const label = event.status === 'ARCHIVED' ? 'Last session' : 'Next session';
+  const label = { LIVE: 'Live session', UPCOMING: 'Next session', ARCHIVED: 'Last session' }[event.status];
+  const spoken = { LIVE: '진행 중인 이벤트', UPCOMING: '다음 이벤트', ARCHIVED: '지난 이벤트' }[event.status];
   if (mode === 'chip' || mode === 'index') {
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextChip}`} data-carrier={carrier} scroll={false}>
         <span className={styles.chipName} aria-hidden="true">NEXT</span>
         <FitTitle as="span" text={`${sessionShort(event.session)} · ${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine}>
-          <span className={styles.srOnly}>다음 이벤트 </span>
+          <span className={styles.srOnly}>{spoken} </span>
           <BrandText text={sessionShort(event.session)} />
           <span aria-hidden="true"> · {event.id} · {dayMark(event, now)}</span>
         </FitTitle>
@@ -98,7 +99,7 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
       href={eventHref(event.id)}
       className={`${styles.card} ${styles.nextBlock}`}
       data-carrier={carrier}
-      aria-label={`${label === 'Last session' ? '지난 이벤트' : '다음 이벤트'} ${sessionShort(event.session)}${subtitle ? ` ${subtitle}` : ''}${accessOpen ? ', 게스트 신청 접수 중' : ''} 상세 보기`}
+      aria-label={`${spoken} ${sessionShort(event.session)}${subtitle ? ` ${subtitle}` : ''}${accessOpen ? ', 게스트 신청 접수 중' : ''} 상세 보기`}
       scroll={false}
     >
       {rings && <Rings at={rings} under />}

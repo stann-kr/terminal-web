@@ -29,6 +29,14 @@
 .stageSlots li:nth-child(odd) {
   background: var(--well);
 }
+/* While the session runs, the slot the timetable is on carries the accent bar the index uses for
+   the open file, and NOW in the plate's ink (the dock band says it is the timetable). */
+.stageSlots li[data-now] {
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+.stageSlots li[data-now] .slotCode span {
+  color: var(--ink);
+}
 .slotCode {
   display: grid;
   gap: 3px;

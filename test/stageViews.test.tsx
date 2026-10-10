@@ -561,6 +561,37 @@ describe('directory and roster contracts', () => {
     expect(order()).toEqual(['event:LATER', 'event:NEXT', 'event:OLD']);
   });
 
+  it('runs a session with an end live, marks the timetable slot on now, and archives it at the end', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
+    const night = { ...upcoming, date: '2026-11-28', time: '23:00 KST', endTime: '05:00', artists: [
+      artist('03-A', 'FIRST ARTIST', { status: 'CONFIRMED', time: '23:00 - 01:00' }),
+      artist('03-B', 'SECOND ARTIST', { status: 'CONFIRMED', time: '01:00 - 05:00' }),
+    ] };
+    const { container, go } = shell([past, night]);
+    const at = (time: string) => act(() => {
+      vi.setSystemTime(new Date(`${time}+09:00`));
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(within(plate(container, 'next')).getByRole('link', { name: /^다음 이벤트 TERMINAL \[03\]/ })).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1000));
+    expect(within(plate(container, 'next')).getByRole('link', { name: /^진행 중인 이벤트 TERMINAL \[03\]/ })).toBeInTheDocument();
+    go('/events/TRM-03');
+    const dock = () => within(detail(container, 'event:TRM-03')).getByRole('region', { name: '무대 1' });
+    const line = (name: string) => within(dock()).getByText(name).closest('li');
+    expect(dock()).toHaveTextContent('시간표 기준 지금 순서');
+    expect(line('FIRST ARTIST')).toHaveAttribute('data-now');
+    expect(line('FIRST ARTIST')).toHaveTextContent('NOW');
+    expect(line('SECOND ARTIST')).not.toHaveAttribute('data-now');
+    at('2026-11-29T01:30:00');
+    expect(line('FIRST ARTIST')).not.toHaveAttribute('data-now');
+    expect(line('SECOND ARTIST')).toHaveAttribute('data-now');
+    at('2026-11-29T05:00:00');
+    expect(dock()).toHaveTextContent('공개 공연표');
+    expect(container.querySelector('[data-now]')).toBeNull();
+    expect(within(detail(container, 'event:TRM-03')).getByText('기록', { selector: '[data-event-state]' })).toHaveAttribute('data-event-state', 'ARCHIVED');
+  });
+
   it('keeps the home clock after a session starts, then counts down to the next one registered', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));

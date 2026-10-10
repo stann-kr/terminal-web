@@ -4,10 +4,12 @@ import {
   getDefaultEvent,
   getEventBoundaryTimes,
   getEventDateTime,
+  getEventEndTime,
   getEffectiveEventStatus,
   getFutureUpcomingEvent,
   getLiveEvents,
   getRequestWindowState,
+  getSlotTimes,
   isValidEventDateTime,
   selectEvent,
 } from '../lib/events/lifecycle';
@@ -144,6 +146,65 @@ describe('event lifecycle', () => {
   });
 });
 
+describe('event end and running order', () => {
+  const kst = (value: string) => new Date(`${value}+09:00`);
+  const slot = (id: string, time: string, status: TerminalEvent['artists'][number]['status'] = 'CONFIRMED') =>
+    ({ id, name: id, origin: 'KR', dock: '1', time, status });
+  const night = { ...event('TRM-03', '2026-11-28', '23:00 KST', 'UPCOMING'), endTime: '05:00' };
+
+  it('runs an event from its start to its end time, then archives it', () => {
+    expect(getEffectiveEventStatus(night, kst('2026-11-28T22:59:59'))).toBe('UPCOMING');
+    expect(getEffectiveEventStatus(night, kst('2026-11-28T23:00:00'))).toBe('LIVE');
+    expect(getEffectiveEventStatus(night, kst('2026-11-29T04:59:59'))).toBe('LIVE');
+    expect(getEffectiveEventStatus(night, kst('2026-11-29T05:00:00'))).toBe('ARCHIVED');
+    // The home plate shows the night as it runs, not as the last session.
+    expect(getDefaultEvent([night], kst('2026-11-29T00:30:00'))).toMatchObject({ id: 'TRM-03', status: 'LIVE' });
+    // Guest requests still close at the start.
+    expect(getRequestWindowState(night, 30, kst('2026-11-28T23:00:00')).isActive).toBe(false);
+  });
+
+  it('archives a stored LIVE event once its end has passed', () => {
+    const live = { ...night, status: 'LIVE' as const };
+    expect(getEffectiveEventStatus(live, kst('2026-11-28T21:00:00'))).toBe('LIVE');
+    expect(getEffectiveEventStatus(live, kst('2026-11-29T05:00:00'))).toBe('ARCHIVED');
+  });
+
+  it('takes the end from the last published slot when every published slot has its times', () => {
+    const order = { ...event('TRM-02', '2026-05-08', '23:00 KST', 'UPCOMING'), artists: [
+      slot('A', '23:00 - 01:00'), slot('B', '01:00 - 03:00'), slot('C', '03:00 - 05:00'),
+      slot('D', '00:00 - 02:00'), slot('E', '02:00–04:00'), slot('HIDDEN', 'TBA', 'CLASSIFIED'),
+    ] };
+    expect(getEventEndTime(order)?.toISOString()).toBe(kst('2026-05-09T05:00:00').toISOString());
+    expect(getEffectiveEventStatus(order, kst('2026-05-09T04:00:00'))).toBe('LIVE');
+    // An end time in the data wins over the running order.
+    expect(getEventEndTime({ ...order, endTime: '06:00 KST' })?.toISOString()).toBe(kst('2026-05-09T06:00:00').toISOString());
+    // One published slot still TBA: the end is not known, so the start archives it as before.
+    const partial = { ...order, artists: [...order.artists, slot('F', 'TBA')] };
+    expect(getEventEndTime(partial)).toBeNull();
+    expect(getEffectiveEventStatus(partial, kst('2026-05-09T00:00:00'))).toBe('ARCHIVED');
+  });
+
+  it('places each slot in the night of its event', () => {
+    const at = (time: string) => {
+      const times = getSlotTimes(night, time);
+      return times && [times.start.toISOString(), times.end.toISOString()];
+    };
+    expect(at('23:30 - 00:30')).toEqual([kst('2026-11-28T23:30:00').toISOString(), kst('2026-11-29T00:30:00').toISOString()]);
+    expect(at('05:00 - 07:00')).toEqual([kst('2026-11-29T05:00:00').toISOString(), kst('2026-11-29T07:00:00').toISOString()]);
+    // A set before the doors stays on the same evening.
+    expect(at('22:00 - 23:00')).toEqual([kst('2026-11-28T22:00:00').toISOString(), kst('2026-11-28T23:00:00').toISOString()]);
+    expect(at('TBA')).toBeNull();
+    expect(at('23:00')).toBeNull();
+  });
+
+  it('wakes the page when an event ends and when each slot starts and ends', () => {
+    const live = { ...night, status: 'LIVE' as const, artists: [slot('A', '23:00 - 01:00'), slot('B', '01:00 - 03:00')] };
+    expect(getEventBoundaryTimes([live], 30)).toEqual(
+      ['2026-11-28T23:00:00', '2026-11-29T01:00:00', '2026-11-29T03:00:00', '2026-11-29T05:00:00'].map((time) => kst(time).getTime()),
+    );
+  });
+});
+
 describe('session marks and hand-offs', () => {
   it('counts D-day in KST calendar days, not hours left', () => {
     const night = event('A', '2026-11-28', '23:00 KST', 'UPCOMING');
@@ -196,6 +257,8 @@ describe('session marks and hand-offs', () => {
     expect(lines).toContain('LOCATION:FAUST SEOUL\\, YONGSAN-GU\\, ITAEWON');
     expect(ics).toContain('DESCRIPTION:A\\\\B\\nhttps://terminal.stann.kr/events/TRM-03');
     expect(ics).not.toMatch(/^(DTEND|DURATION)[:;]/m);
+    const ended = sessionsCalendar([{ ...event('TRM-04', '2026-12-31', '23:00 KST', 'UPCOMING'), endTime: '06:00' }], 'https://terminal.stann.kr', new Date('2026-10-01T00:00:00Z'));
+    expect(ended.split('\r\n')).toContain('DTEND:20261231T210000Z');
     expect(lines.every((line) => new TextEncoder().encode(line).length <= 75)).toBe(true);
   });
 

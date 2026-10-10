@@ -1,6 +1,6 @@
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getEventDateTime } from '@/lib/events/lifecycle';
-import { isPublicArtist } from '@/features/events/model';
+import { isPublicArtist } from '@/lib/events/lifecycle';
 import { artistIdentities, type ArtistIdentity } from './identities';
 export type Appearance = { event: TerminalEvent; artist: Artist };
 export interface ArtistProfile { key: string; name: string; origin: string; verified: boolean; appearances: Appearance[]; eventCount: number }

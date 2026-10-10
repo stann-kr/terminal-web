@@ -1,9 +1,8 @@
-import type { Artist, TerminalEvent } from '@/lib/events/types';
-import { getArchivedOrElapsedEvents, getEventDateTime, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, withEffectiveEventStatus } from '@/lib/events/lifecycle';
+import type { TerminalEvent } from '@/lib/events/types';
+import { getArchivedOrElapsedEvents, getEventDateTime, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, isPublicArtist, withEffectiveEventStatus } from '@/lib/events/lifecycle';
 import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
 import aboutContent from '@/features/about/content.json';
 
-export const isPublicArtist = (artist: Artist) => artist.status === 'CONFIRMED' || artist.status === 'ARCHIVED';
 export const publicArtists = (event: TerminalEvent) => event.artists.filter(isPublicArtist);
 export const eventHref = (id: string) => `/events/${encodeURIComponent(id)}`;
 /** `TERMINAL [03] : Interstellar Junction` → `TERMINAL [03]`: the name narrow slots (chips, index lines, cells, BACK) print in full. */
