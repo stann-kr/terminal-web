@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getSlotTimes } from '@/lib/events/lifecycle';
 import { Action, ActionDeck, BrandText, Facts, ui } from '@/features/ui/Ui';
@@ -92,22 +92,65 @@ function KeyFace({ label, children }: { label: string; children: ReactNode }) {
 function SessionKeys({ event }: { event: TerminalEvent }) {
   const subscribe = useSubscribeHref();
   const map = event.status === 'ARCHIVED' ? null : venueMapHref(event);
+  const [shared, share] = useShare(event);
   return (
-    <ActionDeck className={styles.sessionKeys}>
-      <Action primary href={subscribe} external={subscribe.startsWith('https:')}>
-        <KeyFace label="CALENDAR">
-          <BrandText text="TERMINAL" /> 일정 구독
-        </KeyFace>
-      </Action>
-      {map && (
-        <Action primary external href={map}>
-          <KeyFace label="MAP">
-            지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span>
+    <>
+      <ActionDeck className={styles.sessionKeys}>
+        <Action primary href={subscribe} external={subscribe.startsWith('https:')}>
+          <KeyFace label="CALENDAR">
+            <BrandText text="TERMINAL" /> 일정 구독
           </KeyFace>
         </Action>
-      )}
-    </ActionDeck>
+        {map && (
+          <Action primary external href={map}>
+            <KeyFace label="MAP">
+              지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span>
+            </KeyFace>
+          </Action>
+        )}
+        <button type="button" className={`${ui.button} ${ui.primary}`} onClick={() => void share()}>
+          <KeyFace label="SHARE">{SHARE_TEXT[shared]}</KeyFace>
+        </button>
+      </ActionDeck>
+      <span className={ui.srOnly} role="status">{shared === 'idle' ? '' : SHARE_TEXT[shared]}</span>
+    </>
   );
+}
+
+type ShareState = 'idle' | 'copied' | 'failed';
+/** Short, so the key keeps its size when its text changes. */
+const SHARE_TEXT: Record<ShareState, string> = { idle: '링크 공유', copied: '링크 복사됨', failed: '복사 실패' };
+
+/**
+ * The session's address, handed on: a phone opens its share sheet (a messenger, a DM), elsewhere the
+ * link is copied. What happened shows in the key itself for a moment; nothing else moves.
+ */
+function useShare(event: TerminalEvent) {
+  const [state, setState] = useState<ShareState>('idle');
+  useEffect(() => {
+    if (state === 'idle') return;
+    const timer = window.setTimeout(() => setState('idle'), 2000);
+    return () => window.clearTimeout(timer);
+  }, [state]);
+  async function share() {
+    const url = new URL(eventHref(event.id), location.origin).href;
+    if (window.matchMedia?.('(pointer: coarse)').matches && navigator.share) {
+      try {
+        await navigator.share({ title: event.session, url });
+        return;
+      } catch (error) {
+        // Closing the sheet is a choice, not a failure; anything else falls back to copying.
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setState('copied');
+    } catch {
+      setState('failed');
+    }
+  }
+  return [state, share] as const;
 }
 
 export function EventActions({

@@ -175,21 +175,29 @@
 .accessDeck {
   margin-top: auto;
 }
-/* Calendar and map keys sit under the date and venue facts, a gap apart like the facts under the
-   title. They are filled keys, so they never read as one more fact line. Two neighbours sit flush,
-   parted by tone as tone bars are: the second is the fill lifted a step toward its label colour.
-   Each names its kind in a small label above what it does. */
-.sessionKeys {
+/* Calendar, map and share keys sit under the date and venue facts, a gap apart like the facts under
+   the title. They are filled keys, so they never read as one more fact line. Neighbours sit flush,
+   parted by tone as tone bars are: every other key is the fill lifted a step toward its label
+   colour. They stand all in one row or all stacked, never two over one, so no two keys of one tone
+   meet. Each names its kind in a small label above what it does. */
+div.sessionKeys {
+  --keys-row: 480px;
+  display: flex;
+  flex-wrap: wrap;
   gap: 0;
   margin-top: 14px;
 }
-.sessionKeys > a + a {
-  background: color-mix(in srgb, var(--fill) 84%, var(--on-fill));
+div.sessionKeys:has(> :nth-child(3)) {
+  --keys-row: 510px;
 }
-.sessionKeys > a {
+div.sessionKeys > * {
+  flex: 1 1 calc((var(--keys-row) - 100%) * 999);
   min-height: 64px;
   padding-block: 10px;
   white-space: normal;
+}
+.sessionKeys > :nth-child(even) {
+  background: color-mix(in srgb, var(--fill) 84%, var(--on-fill));
 }
 .keyText {
   display: grid;
@@ -202,8 +210,8 @@
 }
 /* Lit or pressed, the label follows the key's own text colour. */
 @media (hover: hover) {
-  .sessionKeys > a:hover small,
-  .sessionKeys > a:active small {
+  .sessionKeys > :hover small,
+  .sessionKeys > :active small {
     color: inherit;
   }
 }

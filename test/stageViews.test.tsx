@@ -214,6 +214,35 @@ describe('stage views', () => {
     expect(within(file).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
   });
 
+  it('hands the session link on: a phone share sheet, otherwise a copy, said in the key itself', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const shareSheet = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    Object.defineProperty(navigator, 'share', { configurable: true, value: shareSheet });
+    try {
+      const { container, go } = shell();
+      go('/events/OLD');
+      const file = detail(container, 'event:OLD');
+      const key = within(file).getByRole('button', { name: /SHARE/ });
+      expect(key).toHaveTextContent('링크 공유');
+      // A desktop pointer copies the address, even where a share sheet exists.
+      fireEvent.click(key);
+      await waitFor(() => expect(key).toHaveTextContent('링크 복사됨'));
+      expect(writeText).toHaveBeenCalledWith(`${location.origin}/events/OLD`);
+      expect(shareSheet).not.toHaveBeenCalled();
+      expect(within(file).getByText('링크 복사됨', { selector: '[role="status"]' })).toBeInTheDocument();
+      // A phone opens its share sheet with the session's name and address.
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({ matches: query === '(pointer: coarse)' }) });
+      fireEvent.click(key);
+      await waitFor(() => expect(shareSheet).toHaveBeenCalledWith({ title: 'Past event', url: `${location.origin}/events/OLD` }));
+      expect(writeText).toHaveBeenCalledTimes(1);
+    } finally {
+      delete (navigator as { clipboard?: unknown }).clipboard;
+      delete (navigator as { share?: unknown }).share;
+      delete (window as { matchMedia?: unknown }).matchMedia;
+    }
+  });
+
   it('offers the language only where a text comes in two, and reads the browser’s language first', () => {
     const bilingualEvent = { ...past, subtitle: 'A Voyage to the Unknown Sector.', stage: { ko: '방향', en: 'Bearing' }, description: { ko: '한국어 소개\n둘째 줄\n\n다음 문단', en: 'English briefing\nSecond line\n\nNext paragraph' } };
     const { container, go } = shell([bilingualEvent]);
