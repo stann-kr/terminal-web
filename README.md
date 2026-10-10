@@ -16,13 +16,14 @@ npm run dev
 
 ## 화면
 
-- `/`: 대표 행사, 기록 요약과 최근 방문자 로그
+- `/`: 대표 행사, 인스타그램·소식 신청·최근 방문자 로그·소개 판
 - `/events`, `/events/:eventId`: 예정·진행·지난 행사를 모은 카드 목록과 상세
 - `/artists`, `/artists/:artistKey`: 아티스트 명부와 출연 이력
 - `/transmit`: 공개 글 작성과 5건 단위 목록
 - `/signal`: 행사 소식 수신 연락처 저장
 - `/about`: 소개와 공식 채널
 - `/events/:eventId/request`: 선택 행사 게스트 신청
+- `/calendar.ics`: 공개 세션 일정 구독 피드, `/robots.txt`·`/sitemap.xml`: 검색엔진용
 
 기존 `/home`, `/gate`, `/gate/request`, `/lineup`, `/archive`, `/status`, `/link` 주소는 새 화면으로 연결됩니다.
 
