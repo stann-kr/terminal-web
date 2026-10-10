@@ -71,13 +71,16 @@
   letter-spacing: .2em;
 }
 /* The language of a bilingual text, printed in its head: KO · EN as small caps, the one in use in
-   the plate's ink, the other muted; pressing lights it like any key. Each key keeps a 32px target. */
+   the plate's ink, the other muted; pressing lights it like any key. Each key draws 32px tall, level
+   with the title line, but answers a 44 × 44px target: the reach runs above and below it and out
+   past the pair's ends, so nothing around the keys moves and the two never overlap. */
 .language {
   display: inline-flex;
   align-items: center;
   margin-left: auto;
 }
 .language button {
+  position: relative;
   min-width: 36px;
   min-height: 32px;
   padding: 0 6px;
@@ -87,6 +90,17 @@
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .16em;
   transition: var(--light-motion);
+}
+.language button::after {
+  content: '';
+  position: absolute;
+  inset: -6px 0;
+}
+.language button:first-child::after {
+  left: -8px;
+}
+.language button:last-child::after {
+  right: -8px;
 }
 .language button + button::before {
   content: '·';

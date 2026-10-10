@@ -18,8 +18,14 @@ const DETAIL: LayoutLeaf = { slot: 'detail' };
 const BACK: LayoutLeaf = { slot: 'back' };
 
 export interface StageConfig {
-  /** One tiling per view. Every view places all six plates; details add the detail, others the back card. */
+  /** One tiling per view. Every view places every plate; details add the detail, others the back card. */
   layouts: Record<ViewName, LayoutNode>;
+  /**
+   * A view's order on a narrow stage (a phone), where each top-level part of the tiling becomes a
+   * sheet, the open plate's first: the same leaves, parts in the order to read them. Views without
+   * one keep their own order.
+   */
+  narrow: Partial<Record<ViewName, LayoutNode>>;
   /**
    * Each view's focal plate carries the concentric rings (an ambient drift that leans after the
    * pointer): where they sit (`plate`, or the open `detail`) and their home centre as fractions of it.
@@ -40,51 +46,59 @@ export interface StageConfig {
  * The stage's design decisions, in one place. Each view has its own arrangement, so moving between
  * views re-tiles every plate; try another arrangement by editing its tree here.
  */
+const homeNext: [number, LayoutLeaf] = [47, p('next', 'hero')];
+const homeDirectory: [number, LayoutNode] = [30, col([50, p('events', 'panel')], [50, p('artists', 'panel')])];
+const homeCalls: [number, LayoutNode] = [23, col([26, p('instagram', 'tile')], [20, p('signal', 'panel')], [37, p('log', 'panel')], [17, p('about', 'tile')])];
+
 export const stageConfig: StageConfig = {
   layouts: {
-    // The next session leads; directory and roster in the middle; the call to subscribe high on the right.
-    home: row(
-      [47, p('next', 'hero')],
-      [30, col([50, p('events', 'panel')], [50, p('artists', 'panel')])],
-      [23, col([26, p('signal', 'panel')], [48, p('log', 'panel')], [26, p('about', 'tile')])],
-    ),
+    // The next session leads; directory and roster in the middle; the account and the call to subscribe high on the right.
+    home: row(homeNext, homeDirectory, homeCalls),
     // The directory opens wide on the right; the way back, the next session and the roster step left.
     events: row(
       [30, col([15, BACK], [43, p('next', 'panel')], [42, p('artists', 'panel')])],
-      [70, col([86, p('events', 'hero')], [14, row([1, p('log', 'chip')], [1, p('signal', 'chip')], [1, p('about', 'chip')])])],
+      [70, col([86, p('events', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
     ),
     // The roster mirrors the directory: wide on the left, the rest in a column on the right.
     artists: row(
-      [70, col([86, p('artists', 'hero')], [14, row([1, p('log', 'chip')], [1, p('signal', 'chip')], [1, p('about', 'chip')])])],
+      [70, col([86, p('artists', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
       [30, col([15, BACK], [40, p('next', 'panel')], [45, p('events', 'panel')])],
     ),
-    // A session: the other sessions as an index on the left, the file beside it, a band of plates on top.
+    // A session: the other sessions as an index on the left, the file beside it, a band of plates on
+    // top. The band holds six (a seventh leaves its keys no room); the account heads the index, by the band.
     session: col(
-      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('artists', 'chip')], [15, p('log', 'chip')], [15, p('signal', 'chip')], [15, p('about', 'chip')])],
-      [87, row([21, p('events', 'index')], [79, DETAIL])],
+      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('artists', 'chip')], [15, p('signal', 'chip')], [15, p('log', 'chip')], [15, p('about', 'chip')])],
+      [87, row([21, col([14, p('instagram', 'chip')], [86, p('events', 'index')])], [79, DETAIL])],
     ),
-    // An artist file mirrors it: the file with the roster index on the right, the band below.
+    // An artist file mirrors it: the file with the roster index on the right (the account at its
+    // foot, by the band), the band below.
     artist: col(
-      [87, row([78, DETAIL], [22, p('artists', 'index')])],
-      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('events', 'chip')], [15, p('log', 'chip')], [15, p('signal', 'chip')], [15, p('about', 'chip')])],
+      [87, row([78, DETAIL], [22, col([86, p('artists', 'index')], [14, p('instagram', 'chip')])])],
+      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('events', 'chip')], [15, p('signal', 'chip')], [15, p('log', 'chip')], [15, p('about', 'chip')])],
     ),
     // The log sits in the middle between the session side and the rest.
     log: row(
       [25, col([15, BACK], [35, p('next', 'tile')], [50, p('events', 'panel')])],
       [50, p('log', 'hero')],
-      [25, col([40, p('signal', 'panel')], [30, p('artists', 'chip')], [30, p('about', 'chip')])],
+      [25, col([37, p('signal', 'panel')], [21, p('artists', 'chip')], [21, p('instagram', 'chip')], [21, p('about', 'chip')])],
     ),
     // Subscribing sits beside the session it is about.
     signal: row(
       [28, col([15, BACK], [85, p('next', 'panel')])],
       [50, p('signal', 'hero')],
-      [22, col([1, p('events', 'chip')], [1, p('artists', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])],
+      [22, col([1, p('events', 'chip')], [1, p('artists', 'chip')], [1, p('instagram', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])],
     ),
-    // About leads wide; the roster and the rest in a column.
+    // About leads wide; the roster and the rest in a column. The next-session tile keeps the height
+    // its name needs; the chips go two by two (four in a row leave INSTAGRAM no room).
     about: row(
       [64, p('about', 'hero')],
-      [36, col([15, BACK], [27, p('next', 'tile')], [38, p('artists', 'panel')], [20, row([1, p('events', 'chip')], [1, p('log', 'chip')], [1, p('signal', 'chip')])])],
+      [36, col([13, BACK], [27, p('next', 'tile')], [30, p('artists', 'panel')], [15, row([1, p('events', 'chip')], [1, p('instagram', 'chip')])], [15, row([1, p('signal', 'chip')], [1, p('log', 'chip')])])],
     ),
+  },
+  narrow: {
+    // On a phone the account and the call to subscribe come right after the next session, before
+    // the directory and the roster: most visitors arrive by phone (the event's QR stickers).
+    home: row(homeNext, homeCalls, homeDirectory),
   },
   rings: {
     home: { plate: 'next', at: { x: 0.86, y: 0.3 } },

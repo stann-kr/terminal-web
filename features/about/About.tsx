@@ -8,8 +8,10 @@ export const aboutCopy = {
   ko: [content.tagline, ...content.manifesto.ko.split('\n\n'), `Terminal Architect : ${content.architect}`],
   en: [content.tagline, ...content.manifesto.en.split('\n\n'), `Terminal Architect : ${content.architect}`],
 };
+import { instagram } from './instagram';
+export { instagram };
 export const channels = [
-  ['TERMINAL INSTAGRAM', 'https://www.instagram.com/terminal_hub/'],
+  ['TERMINAL INSTAGRAM', instagram.url],
   ['STANN LUMO WEB', 'https://lumo.stann.kr'],
   ['STANN LUMO INSTAGRAM', 'https://www.instagram.com/stannlumo/'],
 ] as const;

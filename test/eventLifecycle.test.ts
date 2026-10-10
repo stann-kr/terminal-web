@@ -4,16 +4,19 @@ import {
   getDefaultEvent,
   getEventBoundaryTimes,
   getEventDateTime,
+  getEventEndTime,
   getEffectiveEventStatus,
   getFutureUpcomingEvent,
   getLiveEvents,
   getRequestWindowState,
+  getSlotTimes,
   isValidEventDateTime,
   selectEvent,
 } from '../lib/events/lifecycle';
 import type { EventStatus, TerminalEvent } from '../lib/events/types';
 import { dayMark, eventSubtitle, sessionShort, venueMapHref } from '../features/events/model';
 import { calendarSubscribeHref, sessionsCalendar } from '../features/events/calendar';
+import { eventStructuredData, jsonLd } from '../features/events/metadata';
 
 function event(id: string, date: string, time: string, status: EventStatus): TerminalEvent {
   return {
@@ -144,6 +147,65 @@ describe('event lifecycle', () => {
   });
 });
 
+describe('event end and running order', () => {
+  const kst = (value: string) => new Date(`${value}+09:00`);
+  const slot = (id: string, time: string, status: TerminalEvent['artists'][number]['status'] = 'CONFIRMED') =>
+    ({ id, name: id, origin: 'KR', dock: '1', time, status });
+  const night = { ...event('TRM-03', '2026-11-28', '23:00 KST', 'UPCOMING'), endTime: '05:00' };
+
+  it('runs an event from its start to its end time, then archives it', () => {
+    expect(getEffectiveEventStatus(night, kst('2026-11-28T22:59:59'))).toBe('UPCOMING');
+    expect(getEffectiveEventStatus(night, kst('2026-11-28T23:00:00'))).toBe('LIVE');
+    expect(getEffectiveEventStatus(night, kst('2026-11-29T04:59:59'))).toBe('LIVE');
+    expect(getEffectiveEventStatus(night, kst('2026-11-29T05:00:00'))).toBe('ARCHIVED');
+    // The home plate shows the night as it runs, not as the last session.
+    expect(getDefaultEvent([night], kst('2026-11-29T00:30:00'))).toMatchObject({ id: 'TRM-03', status: 'LIVE' });
+    // Guest requests still close at the start.
+    expect(getRequestWindowState(night, 30, kst('2026-11-28T23:00:00')).isActive).toBe(false);
+  });
+
+  it('archives a stored LIVE event once its end has passed', () => {
+    const live = { ...night, status: 'LIVE' as const };
+    expect(getEffectiveEventStatus(live, kst('2026-11-28T21:00:00'))).toBe('LIVE');
+    expect(getEffectiveEventStatus(live, kst('2026-11-29T05:00:00'))).toBe('ARCHIVED');
+  });
+
+  it('takes the end from the last published slot when every published slot has its times', () => {
+    const order = { ...event('TRM-02', '2026-05-08', '23:00 KST', 'UPCOMING'), artists: [
+      slot('A', '23:00 - 01:00'), slot('B', '01:00 - 03:00'), slot('C', '03:00 - 05:00'),
+      slot('D', '00:00 - 02:00'), slot('E', '02:00–04:00'), slot('HIDDEN', 'TBA', 'CLASSIFIED'),
+    ] };
+    expect(getEventEndTime(order)?.toISOString()).toBe(kst('2026-05-09T05:00:00').toISOString());
+    expect(getEffectiveEventStatus(order, kst('2026-05-09T04:00:00'))).toBe('LIVE');
+    // An end time in the data wins over the running order.
+    expect(getEventEndTime({ ...order, endTime: '06:00 KST' })?.toISOString()).toBe(kst('2026-05-09T06:00:00').toISOString());
+    // One published slot still TBA: the end is not known, so the start archives it as before.
+    const partial = { ...order, artists: [...order.artists, slot('F', 'TBA')] };
+    expect(getEventEndTime(partial)).toBeNull();
+    expect(getEffectiveEventStatus(partial, kst('2026-05-09T00:00:00'))).toBe('ARCHIVED');
+  });
+
+  it('places each slot in the night of its event', () => {
+    const at = (time: string) => {
+      const times = getSlotTimes(night, time);
+      return times && [times.start.toISOString(), times.end.toISOString()];
+    };
+    expect(at('23:30 - 00:30')).toEqual([kst('2026-11-28T23:30:00').toISOString(), kst('2026-11-29T00:30:00').toISOString()]);
+    expect(at('05:00 - 07:00')).toEqual([kst('2026-11-29T05:00:00').toISOString(), kst('2026-11-29T07:00:00').toISOString()]);
+    // A set before the doors stays on the same evening.
+    expect(at('22:00 - 23:00')).toEqual([kst('2026-11-28T22:00:00').toISOString(), kst('2026-11-28T23:00:00').toISOString()]);
+    expect(at('TBA')).toBeNull();
+    expect(at('23:00')).toBeNull();
+  });
+
+  it('wakes the page when an event ends and when each slot starts and ends', () => {
+    const live = { ...night, status: 'LIVE' as const, artists: [slot('A', '23:00 - 01:00'), slot('B', '01:00 - 03:00')] };
+    expect(getEventBoundaryTimes([live], 30)).toEqual(
+      ['2026-11-28T23:00:00', '2026-11-29T01:00:00', '2026-11-29T03:00:00', '2026-11-29T05:00:00'].map((time) => kst(time).getTime()),
+    );
+  });
+});
+
 describe('session marks and hand-offs', () => {
   it('counts D-day in KST calendar days, not hours left', () => {
     const night = event('A', '2026-11-28', '23:00 KST', 'UPCOMING');
@@ -196,7 +258,47 @@ describe('session marks and hand-offs', () => {
     expect(lines).toContain('LOCATION:FAUST SEOUL\\, YONGSAN-GU\\, ITAEWON');
     expect(ics).toContain('DESCRIPTION:A\\\\B\\nhttps://terminal.stann.kr/events/TRM-03');
     expect(ics).not.toMatch(/^(DTEND|DURATION)[:;]/m);
+    const ended = sessionsCalendar([{ ...event('TRM-04', '2026-12-31', '23:00 KST', 'UPCOMING'), endTime: '06:00' }], 'https://terminal.stann.kr', new Date('2026-10-01T00:00:00Z'));
+    expect(ended.split('\r\n')).toContain('DTEND:20261231T210000Z');
     expect(lines.every((line) => new TextEncoder().encode(line).length <= 75)).toBe(true);
+  });
+
+  it('describes a session to search engines with only what its record says', () => {
+    const night: TerminalEvent = {
+      ...event('TRM-03', '2026-11-28', '23:00 KST', 'UPCOMING'),
+      session: 'TERMINAL [03] : Vulpecula Junction',
+      venue: 'FAUST SEOUL',
+      district: 'YONGSAN-GU // ITAEWON',
+      endTime: '05:00',
+      description: { ko: '첫 문단.\n\n둘째 문단.', en: 'First.' },
+      artists: [
+        { id: 'A', name: 'STANN LUMO', origin: 'KR', dock: '1', time: '23:00 - 01:00', status: 'CONFIRMED' },
+        { id: 'B', name: 'SECRET GUEST', origin: 'KR', dock: '1', time: 'TBA', status: 'CLASSIFIED' },
+      ],
+    };
+    expect(eventStructuredData(night)).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'MusicEvent',
+      name: 'TERMINAL [03] : Vulpecula Junction',
+      url: 'https://terminal.stann.kr/events/TRM-03',
+      startDate: '2026-11-28T23:00:00+09:00',
+      endDate: '2026-11-29T05:00:00+09:00',
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      location: { '@type': 'Place', name: 'FAUST SEOUL', address: { '@type': 'PostalAddress', addressLocality: 'YONGSAN-GU, ITAEWON', addressCountry: 'KR' } },
+      image: ['https://terminal.stann.kr/og/terminal.png'],
+      description: '첫 문단.',
+      performer: [{ '@type': 'Person', name: 'STANN LUMO' }],
+      organizer: { '@type': 'Organization', name: 'TERMINAL', url: 'https://terminal.stann.kr' },
+    });
+    // No end, lineup or text in the record: none in the data either. A poster stands in for the site's image.
+    const bare = eventStructuredData(event('TRM-04', '2026-12-31', '23:00', 'UPCOMING'));
+    expect(bare).not.toHaveProperty('endDate');
+    expect(bare).not.toHaveProperty('performer');
+    expect(bare).not.toHaveProperty('description');
+    expect(eventStructuredData({ ...night, posterUrl: 'https://media.stann.kr/p.jpg' }).image).toEqual(['https://media.stann.kr/p.jpg']);
+    // A value cannot close the script tag it is printed in.
+    expect(jsonLd({ name: '</script><script>alert(1)</script>' })).toBe('{"name":"\\u003c/script>\\u003cscript>alert(1)\\u003c/script>"}');
   });
 
   it('subscribes Apple calendars by webcal and others through Google Calendar', () => {

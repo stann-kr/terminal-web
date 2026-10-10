@@ -9,6 +9,7 @@
 html[data-format=feed] { --w: 1080px; --h: 1440px; }
 html[data-format=story] { --w: 1080px; --h: 1920px; }
 html[data-format=a2] { --w: 420mm; --h: 594mm; }
+html[data-format=og] { --w: 1200px; --h: 630px; }
 @page { size: 420mm 594mm; margin: 0; }
 
 html,
@@ -224,4 +225,25 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
   color: var(--on-fill);
   font-weight: 700;
   text-transform: uppercase;
+}
+
+/* ── Link preview (og): a landscape canvas, so the type sits in the dark plate's left part ──── */
+.shareText {
+  right: 46%;
+}
+/* Grid items keep their content's width unless told otherwise; the fit has to see the real box. */
+.shareText > * {
+  min-width: 0;
+}
+.shareText.wide {
+  right: 28%;
+}
+.shareWord .fit {
+  font-family: var(--brand);
+  font-weight: 400;
+  line-height: .82;
+  letter-spacing: .01em;
+}
+.shareSite {
+  margin-left: auto;
 }

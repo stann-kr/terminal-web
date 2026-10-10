@@ -154,7 +154,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
         <p className={styles.columnHead}><b aria-hidden="true">Running order</b><span>공연표</span></p>
         <div className={styles.fitColumn} data-fit="">
           {hasOrder && data.events ? (
-            <Lineup event={event} events={data.events} stages />
+            <Lineup event={event} events={data.events} stages now={data.now} />
           ) : (
             <StateNotice title="공연표 공개 전입니다" className={styles.columnNotice}>출연진과 시간표는 공개되는 대로 이곳에 표시됩니다.</StateNotice>
           )}

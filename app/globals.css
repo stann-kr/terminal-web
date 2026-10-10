@@ -53,6 +53,8 @@
   --dur-enter: 360ms;
   --enter-delay: 200ms;
   --dur-exit: 260ms;
+  --close-hold: 440ms;   /* a closing file stays whole this long, then fades as it lands (--dur-land) */
+  --dur-land: 180ms;
   --stagger: 30ms;
   /* Ambient rings: they flow outward by one 18px spacing each period, unrelated to any beat. */
   --ring-period: 2.4s;

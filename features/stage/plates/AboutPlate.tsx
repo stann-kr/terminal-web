@@ -3,6 +3,7 @@ import { aboutCopy, aboutTagline, NodeFacts, OfficialChannels } from '@/features
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { BrandText, Panel } from '@/features/ui/Ui';
+import { FitTitle } from '../FitTitle';
 import { TextPages } from '../TextPages';
 import { CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
@@ -14,7 +15,7 @@ export function AboutPlate({ mode }: PlateProps) {
   if (mode === 'chip' || mode === 'index') return <ChipFace href="/about" name="ABOUT" title="소개" meta="SEOUL / KST" />;
   if (mode !== 'hero') {
     return (
-      <CardLink href="/about" className={styles.summaryCard}>
+      <CardLink href="/about" className={`${styles.summaryCard} ${styles.aboutCard}`}>
         <span className={styles.band}>
           <span className={styles.bandTitle}>
             <span className={styles.bandLabel} aria-hidden="true">About</span>
@@ -22,7 +23,9 @@ export function AboutPlate({ mode }: PlateProps) {
           </span>
           <span className={styles.bandTags} aria-hidden="true"><Tags items={['SEOUL', 'KST']} /></span>
         </span>
-        <span className={styles.aboutLine} lang="en">{aboutTagline}</span>
+        <FitTitle as="span" text={aboutTagline} maxLines={1} minPx={14} className={styles.aboutLine}>
+          <span lang="en">{aboutTagline}</span>
+        </FitTitle>
       </CardLink>
     );
   }

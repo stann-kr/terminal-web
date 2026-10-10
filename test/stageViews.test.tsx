@@ -10,6 +10,7 @@ import { useTransmitRange } from '../features/transmit/useTransmit';
 import { stageOrigin } from '../features/stage/state';
 import { NodeActivity } from '../features/transmit/NodeActivity';
 import siteContent from '../features/about/content.json';
+import NotFound from '../app/not-found';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
@@ -82,6 +83,11 @@ describe('stage shell', () => {
     expect(within(next).getAllByText('TERMINAL').some(word => !word.closest('a'))).toBe(true);
     // The language switch is not a site-wide control: it sits only in the heads of bilingual texts.
     expect(within(next).queryByRole('group', { name: '소개글 언어' })).not.toBeInTheDocument();
+    // The account is a plate of its own: one link out of the site, in a new tab, a tile on the home and a chip elsewhere.
+    const follow = () => within(plate(container, 'instagram')).getByRole('link', { name: /@terminal\.signal 팔로우, 새 탭에서 열기/ });
+    expect(plate(container, 'instagram')).toHaveAttribute('data-mode', 'tile');
+    expect(follow()).toHaveAttribute('href', 'https://www.instagram.com/terminal.signal/');
+    expect(follow()).toHaveAttribute('target', '_blank');
     go('/events');
     expect(plate(container, 'events')).toHaveAttribute('data-mode', 'hero');
     expect(within(plate(container, 'events')).getByRole('heading', { level: 1, name: /이벤트/ })).toBeInTheDocument();
@@ -89,6 +95,8 @@ describe('stage shell', () => {
     expect(within(plate(container, 'log')).getByRole('link')).toHaveAttribute('href', '/transmit');
     expect(within(plate(container, 'artists')).getByRole('link', { name: /아티스트/ })).toHaveAttribute('href', '/artists');
     expect(within(plate(container, 'next')).getAllByText('TERMINAL').length).toBeGreaterThan(0);
+    expect(plate(container, 'instagram')).toHaveAttribute('data-mode', 'chip');
+    expect(follow()).toHaveAttribute('href', 'https://www.instagram.com/terminal.signal/');
   });
 
   it('gives every view but the home a back card to the view before it, and a home key once away from it', () => {
@@ -204,6 +212,35 @@ describe('stage views', () => {
     expect(within(file).getByRole('region', { name: '무대 2' })).toHaveTextContent('02:00–03:00');
     expect(container).not.toHaveTextContent('PRIVATE NAME');
     expect(within(file).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
+  });
+
+  it('hands the session link on: a phone share sheet, otherwise a copy, said in the key itself', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const shareSheet = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    Object.defineProperty(navigator, 'share', { configurable: true, value: shareSheet });
+    try {
+      const { container, go } = shell();
+      go('/events/OLD');
+      const file = detail(container, 'event:OLD');
+      const key = within(file).getByRole('button', { name: /SHARE/ });
+      expect(key).toHaveTextContent('링크 공유');
+      // A desktop pointer copies the address, even where a share sheet exists.
+      fireEvent.click(key);
+      await waitFor(() => expect(key).toHaveTextContent('링크 복사됨'));
+      expect(writeText).toHaveBeenCalledWith(`${location.origin}/events/OLD`);
+      expect(shareSheet).not.toHaveBeenCalled();
+      expect(within(file).getByText('링크 복사됨', { selector: '[role="status"]' })).toBeInTheDocument();
+      // A phone opens its share sheet with the session's name and address.
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({ matches: query === '(pointer: coarse)' }) });
+      fireEvent.click(key);
+      await waitFor(() => expect(shareSheet).toHaveBeenCalledWith({ title: 'Past event', url: `${location.origin}/events/OLD` }));
+      expect(writeText).toHaveBeenCalledTimes(1);
+    } finally {
+      delete (navigator as { clipboard?: unknown }).clipboard;
+      delete (navigator as { share?: unknown }).share;
+      delete (window as { matchMedia?: unknown }).matchMedia;
+    }
   });
 
   it('offers the language only where a text comes in two, and reads the browser’s language first', () => {
@@ -336,6 +373,19 @@ describe('stage views', () => {
     expect(poster()).toHaveAttribute('aria-busy', 'true');
   });
 
+  it('leaves a missing session or artist to the stage, and gives other unknown addresses the not-found page', () => {
+    navigation.pathname = '/events/NOPE';
+    const { container, rerender } = render(<NotFound />);
+    expect(container).toBeEmptyDOMElement();
+    navigation.pathname = '/artists/nobody';
+    rerender(<NotFound />);
+    expect(container).toBeEmptyDOMElement();
+    navigation.pathname = '/not-a-terminal-page';
+    rerender(<NotFound />);
+    expect(screen.getByRole('heading', { name: '이 주소의 기록을 찾을 수 없습니다' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/');
+  });
+
   it('shows an unknown session as an error inside the open directory', () => {
     const { container, go } = shell();
     go('/events/NOPE');
@@ -408,12 +458,12 @@ describe('home plates', () => {
   it('shows node activity without times, visitor handles or messages', async () => {
     const { container, client } = shell();
     act(() => client.setQueryData(['transmit', 1], { logs: [
-      { id: 'log-2', ts: '2026.05.09 / 00:20', handle: 'NODE-K7Q2M', message: 'node text', createdAt: '2026-05-08T15:20:00.000Z' },
       { id: 'log-1', ts: '2026.05.09 / 00:10', handle: 'SECRET_HANDLE', message: 'free text', createdAt: '2026-05-08T15:10:00.000Z' },
+      { id: 'log-2', ts: '2026.05.09 / 00:20', handle: 'NODE-K7Q2M', message: 'node text', createdAt: '2026-05-08T15:20:00.000Z' },
     ], total: 2, page: 1, totalPages: 1 }));
-    await waitFor(() => expect(plate(container, 'log')).toHaveTextContent('NODE-K7Q2M'));
-    const tags = [...plate(container, 'log').querySelectorAll('li b')].map(tag => tag.textContent);
-    expect(tags[1]).toMatch(/^NODE-[A-HJ-NP-Z2-9]{5}$/);
+    // The home log is short: its first row is enough to show a free handle printed as a node tag.
+    await waitFor(() => expect(plate(container, 'log').querySelector('li b')).not.toBeNull());
+    expect(plate(container, 'log').querySelector('li b')?.textContent).toMatch(/^NODE-[A-HJ-NP-Z2-9]{5}$/);
     expect(container).not.toHaveTextContent('05.09');
     expect(container).not.toHaveTextContent('SECRET_HANDLE');
     expect(container).not.toHaveTextContent('free text');
@@ -554,7 +604,38 @@ describe('directory and roster contracts', () => {
     expect(order()).toEqual(['event:LATER', 'event:NEXT', 'event:OLD']);
   });
 
-  it('keeps the home clock after a session starts, then counts down to the next one registered', () => {
+  it('runs a session with an end live, marks the timetable slot on now, and archives it at the end', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
+    const night = { ...upcoming, date: '2026-11-28', time: '23:00 KST', endTime: '05:00', artists: [
+      artist('03-A', 'FIRST ARTIST', { status: 'CONFIRMED', time: '23:00 - 01:00' }),
+      artist('03-B', 'SECOND ARTIST', { status: 'CONFIRMED', time: '01:00 - 05:00' }),
+    ] };
+    const { container, go } = shell([past, night]);
+    const at = (time: string) => act(() => {
+      vi.setSystemTime(new Date(`${time}+09:00`));
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(within(plate(container, 'next')).getByRole('link', { name: /^다음 이벤트 TERMINAL \[03\]/ })).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1000));
+    expect(within(plate(container, 'next')).getByRole('link', { name: /^진행 중인 이벤트 TERMINAL \[03\]/ })).toBeInTheDocument();
+    go('/events/TRM-03');
+    const dock = () => within(detail(container, 'event:TRM-03')).getByRole('region', { name: '무대 1' });
+    const line = (name: string) => within(dock()).getByText(name).closest('li');
+    expect(dock()).toHaveTextContent('시간표 기준 지금 순서');
+    expect(line('FIRST ARTIST')).toHaveAttribute('data-now');
+    expect(line('FIRST ARTIST')).toHaveTextContent('NOW');
+    expect(line('SECOND ARTIST')).not.toHaveAttribute('data-now');
+    at('2026-11-29T01:30:00');
+    expect(line('FIRST ARTIST')).not.toHaveAttribute('data-now');
+    expect(line('SECOND ARTIST')).toHaveAttribute('data-now');
+    at('2026-11-29T05:00:00');
+    expect(dock()).toHaveTextContent('공개 공연표');
+    expect(container.querySelector('[data-now]')).toBeNull();
+    expect(within(detail(container, 'event:TRM-03')).getByText('기록', { selector: '[data-event-state]' })).toHaveAttribute('data-event-state', 'ARCHIVED');
+  });
+
+  it('keeps the home clock after a session starts, leads with it while it runs, then counts down to the next one', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
     const soon = { ...upcoming, date: '2026-11-28', time: '23:00 KST' };
@@ -567,8 +648,16 @@ describe('directory and roster contracts', () => {
     expect(within(next().getByRole('timer')).getByText('초').nextElementSibling).toHaveTextContent('02');
     const registered = { ...soon, id: 'TRM-04', session: 'TERMINAL [04]', date: '2026-12-28' };
     act(() => {
-      client.setQueryData(['events'], [past, { ...soon, status: 'LIVE' }, registered]);
+      client.setQueryData(['events'], [past, { ...soon, status: 'LIVE', endTime: '05:00' }, registered]);
       vi.advanceTimersByTime(1);
+    });
+    // While it runs, the live session leads the home even with the next one announced.
+    expect(next().getByRole('heading', { name: 'TERMINAL [03]' })).toBeInTheDocument();
+    expect(next().getByRole('link', { name: /^진행 중인 이벤트 TERMINAL \[03\]/ })).toBeInTheDocument();
+    // Once it ends, the plate counts down to the next one.
+    act(() => {
+      vi.setSystemTime(new Date('2026-11-29T05:00:00+09:00'));
+      vi.advanceTimersByTime(60_000);
     });
     expect(next().getByRole('heading', { name: 'TERMINAL [04]' })).toBeInTheDocument();
     expect(next().getByRole('timer', { name: '이벤트 시작까지 남은 시간' })).toHaveTextContent('T- COUNTDOWN');

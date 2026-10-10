@@ -29,6 +29,8 @@ export interface TerminalEvent {
   log?: { en: string; ko: string };
   date: string;
   time: string;
+  /** When the night ends, `HH:MM` KST: the first such time after the start (`05:00` is the next morning). */
+  endTime?: string;
   venue: string;
   district: string;
   coords: string;

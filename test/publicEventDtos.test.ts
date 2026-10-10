@@ -49,9 +49,15 @@ describe('public event DTOs', () => {
     )).toBeNull();
   });
 
+  it('keeps a valid end time and rejects one the runtime cannot read', () => {
+    expect(parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, endTime: '05:00' }) }, [])).toMatchObject({ endTime: '05:00' });
+    expect(parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, endTime: 'late' }) }, [])).toBeNull();
+  });
+
   it.each([
     { date: '2026-02-31' },
     { time: '24:00 KST' },
+    { endTime: '24:00' },
   ])('rejects event calendar and time values the runtime cannot use: %j', (invalid) => {
     expect(parsePublicEventRow(
       { id: 'invalid', data: JSON.stringify({ ...eventData, ...invalid }) },

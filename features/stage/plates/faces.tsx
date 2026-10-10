@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { BrandText, type Surface } from '@/features/ui/Ui';
 import { FitTitle } from '../FitTitle';
 import styles from './plates.module.css';
@@ -12,7 +12,14 @@ import styles from './plates.module.css';
  */
 
 /** A whole face that is a single link: chips, the back card, summary plates with nothing inside to press. */
-export function CardLink({ href, className = '', label, carrier, surface, children }: { href: string; className?: string; label?: string; carrier?: string; surface?: Surface; children: ReactNode }) {
+/** `external`: another site, a plain link in a new tab (middle click and copied address still work). */
+export function CardLink({ href, className = '', label, carrier, surface, external = false, children }: { href: string; className?: string; label?: string; carrier?: string; surface?: Surface; external?: boolean; children: ReactNode }) {
+  if (external)
+    return (
+      <a href={href} className={`${styles.card} ${className}`} aria-label={label} data-surface={surface} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    );
   return (
     <Link href={href} className={`${styles.card} ${className}`} aria-label={label} data-carrier={carrier} data-surface={surface} scroll={false}>
       {children}
@@ -24,11 +31,12 @@ export function CardLink({ href, className = '', label, carrier, surface, childr
  * A chip: the plate's name large over one line with its Korean name and meta. The line is set as
  * large as the chip's width allows (pretext), never cut short.
  */
-export function ChipFace({ href, name, title, meta, carrier }: { href: string | null; name: string; title: string; meta?: string; carrier?: string }) {
+export function ChipFace({ href, name, title, meta, carrier, label, external = false }: { href: string | null; name: string; title: string; meta?: string; carrier?: string; label?: string; external?: boolean }) {
   const line = meta ? `${title} · ${meta}` : title;
   const body = (
     <>
-      <span className={styles.chipName} aria-hidden="true">{name}</span>
+      {/* The name's length bounds its size, so a long name (INSTAGRAM) still fits a narrow chip. */}
+      <span className={styles.chipName} aria-hidden="true" style={{ '--len': name.length } as CSSProperties}>{name}</span>
       <FitTitle as="span" text={line} maxLines={1} minPx={12} className={styles.chipLine}>
         <span>{title}</span>
         {meta && <span aria-hidden="true"> · {meta}</span>}
@@ -37,7 +45,7 @@ export function ChipFace({ href, name, title, meta, carrier }: { href: string | 
   );
   if (!href) return <div className={`${styles.card} ${styles.chip}`}>{body}</div>;
   return (
-    <CardLink href={href} className={styles.chip} carrier={carrier}>
+    <CardLink href={href} className={styles.chip} carrier={carrier} label={label} external={external}>
       {body}
     </CardLink>
   );

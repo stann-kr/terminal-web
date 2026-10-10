@@ -3,9 +3,11 @@
  *   out/posters/<piece>.png   every poster; A2 at 300 dpi, plus a vector out/posters/main_a2.pdf
  *   out/motion/<piece>.mp4    every motion piece, H.264 at 30 fps
  *
- *   node promo/export.mjs [posters|motion|all|templates|artboards] [--only <text>] [--font <url>]
+ *   node promo/export.mjs [posters|motion|all|templates|artboards|share] [--only <text>] [--font <url>]
  *
  * `templates` writes out/templates/<piece>.png: the pieces that wait for the lineup, with sample names.
+ * `share` writes out/share/<piece>.png: the site's link-preview candidates at 1200 × 630; the chosen one
+ * is copied to public/og/terminal.png, which the site names as its share image.
  * `artboards` writes out/artboards/<Name>.dc.html: each poster as a Claude Design artboard — the held
  * frame with every computed style written inline, so the canvas shows exactly what the kit renders.
  * `--font` is the canvas's uploaded asset url for the brand face (ProcrastinatingPixie).
@@ -20,14 +22,14 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startServer } from './serve.mjs';
-import { artboards, fileName, formats, motions, pieceQuery, posters, templates } from './pieces.js';
+import { artboards, fileName, formats, motions, pieceQuery, posters, shares, templates } from './pieces.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const CHROME = process.env.CHROME_PATH ?? (await headlessShell()) ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const A2_DPI = 300;
 
 const args = process.argv.slice(2);
-const set = ['posters', 'motion', 'all', 'templates', 'artboards'].includes(args[0]) ? args[0] : 'all';
+const set = ['posters', 'motion', 'all', 'templates', 'artboards', 'share'].includes(args[0]) ? args[0] : 'all';
 const fontUrl = args.includes('--font') ? args[args.indexOf('--font') + 1] : '/_blob/e6052b38fc52a20c4b9b1c4c697888e9';
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 const selected = list => list.filter(item => !only || fileName(item).includes(only));
@@ -342,6 +344,15 @@ try {
       await writeFile(`${file}.png`, await page.shot());
       if (item.pdf) await writeFile(`${file}.pdf`, await page.pdf(format.paper));
       console.log(`poster  ${fileName(item)}${item.pdf ? ' (+pdf)' : ''}`);
+    }
+  }
+  if (set === 'share') {
+    await mkdir(join(here, 'out/share'), { recursive: true });
+    for (const item of selected(shares)) {
+      const { hold } = await page.load(base + pieceQuery(item), formats[item.format]);
+      await page.seek(hold);
+      await writeFile(join(here, 'out/share', `${fileName(item)}.png`), await page.shot());
+      console.log(`share   ${fileName(item)}`);
     }
   }
   if (set === 'artboards') {

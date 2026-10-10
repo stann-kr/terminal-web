@@ -1,6 +1,6 @@
 'use client';
 import { useLayoutEffect, useMemo, useState } from 'react';
-import { getDefaultEvent, getFutureUpcomingEvent } from '@/lib/events/lifecycle';
+import { getDefaultEvent } from '@/lib/events/lifecycle';
 import type { TerminalEvent } from '@/lib/events/types';
 import { useEvents } from '@/features/events/data';
 import { orderEventDirectory } from '@/features/events/model';
@@ -16,7 +16,7 @@ export interface StageData {
   profiles: ArtistProfile[];
   eventIds: ReadonlySet<string> | null;
   artistKeys: ReadonlySet<string> | null;
-  /** The session the next-session plate shows: the next upcoming one, or the latest. */
+  /** The session the next-session plate shows: the one running, else the next upcoming one, else the latest. */
   next: TerminalEvent | null;
 }
 
@@ -37,7 +37,9 @@ export function useStageData() {
       profiles,
       eventIds: new Set(ordered.map(event => event.id)),
       artistKeys: new Set(profiles.map(profile => profile.key)),
-      next: getFutureUpcomingEvent(events, now) ?? getDefaultEvent(events, now),
+      // A running session leads the home even when the next one is already announced: the people
+      // who scan the code at the venue land on it.
+      next: getDefaultEvent(events, now),
     };
   }, [events, now]);
   return { data, query };
