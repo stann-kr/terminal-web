@@ -19,3 +19,15 @@
 ## 아티스트가 같은 이름으로 여러 번 보일 때
 
 출연 행 ID는 인물 ID가 아닙니다. 출연 연결이 확인된 경우에만 `features/artists/identities.ts`에 안정적인 key와 eventId/artistRowId를 등록합니다.
+
+## 방문자 로그에 내려야 할 글이 올라왔을 때
+
+`npm run transmit:remove -- list 20 --remote`로 최근 글의 ID를 찾고, `npm run transmit:remove -- remove <ID> --remote`로 내립니다. 지우기 전에 글 전체를 git이 무시하는 `backups/transmit/`에 백업하며, `npm run transmit:remove -- restore <백업 파일> --remote`로 그대로 되돌릴 수 있습니다. `--remote`는 운영 DB이므로 대상 ID를 확인한 뒤 실행합니다. 빼면 로컬 시뮬레이션에서 동작합니다.
+
+## 요청이 많다는 안내(429)가 뜰 때
+
+쓰기 API 네 곳은 접속 IP·작업마다 60초에 20회까지 받습니다(`wrangler.toml`의 `PUBLIC_RATE_LIMITER`). 같은 와이파이·통신사 주소를 여럿이 함께 쓰면 일찍 걸릴 수 있으므로, 현장에서 자주 보이면 `limit`를 올려 다시 배포합니다.
+
+## 이벤트가 시작하자마자 기록으로 넘어갈 때
+
+끝 시각을 알 수 없는 이벤트는 시작과 함께 기록이 됩니다. 이벤트 데이터에 `endTime`(`HH:MM`, KST)을 넣거나 공개 공연표의 모든 슬롯에 `HH:MM - HH:MM` 시간을 넣으면 그 끝까지 진행 중으로 보입니다.

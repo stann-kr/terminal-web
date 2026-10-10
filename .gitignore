@@ -67,3 +67,5 @@ migrations/seed_*.sql
 
 # promo kit exports (node promo/export.mjs)
 /promo/out/
+# Posts taken down from the visitor log (scripts/transmit-remove.mjs)
+/backups/

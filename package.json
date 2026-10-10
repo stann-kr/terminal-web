@@ -65,6 +65,7 @@
     "smoke:http": "node scripts/http-smoke.mjs",
     "test": "vitest run",
     "test:d1": "node scripts/verify-local-d1.mjs",
+    "transmit:remove": "node scripts/transmit-remove.mjs",
     "typecheck": "tsc --noEmit",
     "postinstall": "patch-package --error-on-fail && node scripts/verify-use-scramble-patch.mjs",
     "promo": "node promo/serve.mjs",
