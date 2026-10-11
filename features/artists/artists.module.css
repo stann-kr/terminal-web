@@ -140,13 +140,7 @@
     color: inherit !important;
   }
 }
-/* Touch: a card or a line with a link keeps the bottom edge of its light on; a press fills it. */
-@media (hover: none) {
-  .sharedCells li:has(a),
-  .timeline li:has(a) {
-    box-shadow: inset 0 calc(-1 * var(--press-edge)) 0 0 var(--hi);
-  }
-}
+/* Touch: a press fills the card or line up from its bottom edge and keeps it lit (useTouchPress). */
 .sharedCells li:has(a[data-pressed]),
 .timeline li:has(a[data-pressed]) {
   box-shadow: inset 0 var(--rise, -100vmax) 0 0 var(--hi);

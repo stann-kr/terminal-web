@@ -100,15 +100,7 @@
     color: inherit !important;
   }
 }
-/* Touch: a line with a link keeps the bottom edge of its light on; a press fills it from there. */
-@media (hover: none) {
-  .stageSlots li:has(a) {
-    box-shadow: inset 0 calc(-1 * var(--press-edge)) 0 0 var(--hi);
-  }
-  .stageSlots li[data-now]:has(a) {
-    box-shadow: inset 4px 0 0 var(--accent), inset 0 calc(-1 * var(--press-edge)) 0 0 var(--hi);
-  }
-}
+/* Touch: a press fills the line up from its bottom edge and keeps it lit (useTouchPress). */
 .stageSlots li:has(a[data-pressed]) {
   box-shadow: inset 0 var(--rise, -100vmax) 0 0 var(--hi);
   color: var(--on-hi);
@@ -159,11 +151,6 @@
   .lineup a:hover {
     box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
     color: var(--on-hi);
-  }
-}
-@media (hover: none) {
-  .lineup a {
-    box-shadow: inset 0 calc(-1 * var(--press-edge)) 0 0 var(--hi);
   }
 }
 .lineup a[data-pressed] {

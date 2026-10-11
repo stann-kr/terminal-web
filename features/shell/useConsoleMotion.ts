@@ -31,7 +31,7 @@ export const PRESS_HOLD_MS = 900;
 
 /**
  * A touch screen has no hover, so a press shows instead: the link under a resting finger gets
- * `data-pressed` (and its row `--rise`, the height the fill climbs from the lit bottom edge). It
+ * `data-pressed` (and its row `--rise`, the height the fill climbs from the bottom edge). It
  * is not taken back when the finger lifts, which would read as a blink before the view changes;
  * it stays lit through the change and goes out once the boxes have landed. A finger that slides
  * or is taken over by scrolling lets the press go at once. Mouse pointers keep hover and `:active`.
