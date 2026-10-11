@@ -4,6 +4,7 @@ import { act,cleanup,render,screen } from '@testing-library/react';
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
 import { useDisplayPolicy } from '../features/display/useDisplayPolicy';
 import { DataActivity } from '../features/display/Display';
+import { PRESS_DELAY_MS,PRESS_HOLD_MS,PRESS_SLOP_PX,useTouchPress } from '../features/shell/useConsoleMotion';
 
 class Media extends EventTarget {
   matches=false;
@@ -59,5 +60,62 @@ describe('display motion policy',()=>{
     expect(await screen.findByRole('img',{name:'기록을 불러오는 중'})).toBeInTheDocument();
     await act(async()=>{resolve([]);await request;});
     expect(await screen.findByRole('img',{name:'조회 대기'})).toBeInTheDocument();
+  });
+});
+
+function Links() {
+  useTouchPress();
+  return <a href="https://www.instagram.com/terminal.signal/">INSTAGRAM</a>;
+}
+function pointer(target:Element,type:string,init:{pointerType?:string;x?:number;y?:number}={}) {
+  const event=new Event(type,{bubbles:true});
+  Object.defineProperties(event,{
+    pointerType:{value:init.pointerType ?? 'touch'},isPrimary:{value:true},
+    clientX:{value:init.x ?? 0},clientY:{value:init.y ?? 0},
+  });
+  act(()=>{ target.dispatchEvent(event); });
+}
+describe('touch press',()=>{
+  beforeEach(()=>{ vi.useFakeTimers(); });
+  afterEach(()=>{ vi.useRealTimers(); });
+  it('lights a link under a resting finger and keeps it lit through the change of view',()=>{
+    render(<Links/>);
+    const link=screen.getByRole('link');
+    pointer(link,'pointerdown');
+    expect(link).not.toHaveAttribute('data-pressed');
+    act(()=>{ vi.advanceTimersByTime(PRESS_DELAY_MS); });
+    expect(link).toHaveAttribute('data-pressed');
+    pointer(link,'pointerup');
+    act(()=>{ vi.advanceTimersByTime(PRESS_HOLD_MS-1); });
+    expect(link).toHaveAttribute('data-pressed');
+    act(()=>{ vi.advanceTimersByTime(1); });
+    expect(link).not.toHaveAttribute('data-pressed');
+  });
+  it('lights a quick tap on lift, without waiting for the hold',()=>{
+    render(<Links/>);
+    const link=screen.getByRole('link');
+    pointer(link,'pointerdown');pointer(link,'pointerup');
+    expect(link).toHaveAttribute('data-pressed');
+  });
+  it('lets the press go when the finger slides or the browser takes over to scroll',()=>{
+    render(<Links/>);
+    const link=screen.getByRole('link');
+    pointer(link,'pointerdown');
+    act(()=>{ vi.advanceTimersByTime(PRESS_DELAY_MS); });
+    pointer(link,'pointermove',{y:PRESS_SLOP_PX+1});
+    expect(link).not.toHaveAttribute('data-pressed');
+    pointer(link,'pointerup');
+    expect(link).not.toHaveAttribute('data-pressed');
+    pointer(link,'pointerdown');
+    pointer(link,'pointercancel');
+    act(()=>{ vi.advanceTimersByTime(PRESS_DELAY_MS); });
+    expect(link).not.toHaveAttribute('data-pressed');
+  });
+  it('leaves a mouse to hover and :active',()=>{
+    render(<Links/>);
+    const link=screen.getByRole('link');
+    pointer(link,'pointerdown',{pointerType:'mouse'});pointer(link,'pointerup',{pointerType:'mouse'});
+    act(()=>{ vi.advanceTimersByTime(PRESS_DELAY_MS); });
+    expect(link).not.toHaveAttribute('data-pressed');
   });
 });

@@ -59,6 +59,30 @@
     transition: none;
   }
 }
+/* Without hover (a touch screen), a link card says it presses by keeping the bottom edge of its
+   light on. The left edge is taken: there the accent bar marks the open file. */
+@media (hover: none) {
+  a.card {
+    box-shadow: inset 0 calc(-1 * var(--press-edge)) 0 0 var(--hi);
+  }
+  .indexLine[aria-current=page] {
+    box-shadow: inset 4px 0 0 var(--accent), inset 0 calc(-1 * var(--press-edge)) 0 0 var(--hi);
+  }
+}
+/* A press (touch) fills the card up from that edge and keeps it lit through the change of view,
+   so it never blinks off before the view changes (useTouchPress lets it go once boxes land). */
+.card[data-pressed] {
+  box-shadow: inset 0 var(--rise, -100vmax) 0 0 var(--hi);
+  color: var(--on-hi);
+  --ink: var(--on-hi);
+  --muted: var(--on-hi);
+  --accent: var(--on-hi);
+  --line: var(--on-hi);
+  --well: color-mix(in srgb, var(--on-hi) 12%, transparent);
+  --fill: var(--on-hi);
+  --on-fill: var(--hi);
+  transition: var(--light-motion-in);
+}
 .card:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: -4px;

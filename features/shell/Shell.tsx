@@ -7,7 +7,7 @@ import { stageConfig } from '@/features/stage/config';
 import { Stage } from '@/features/stage/Stage';
 import { stageStateFromUrl } from '@/features/stage/state';
 import { ConsoleCursor } from './ConsoleCursor';
-import { useSweepDirection } from './useConsoleMotion';
+import { useSweepDirection, useTouchPress } from './useConsoleMotion';
 import styles from './shell.module.css';
 
 /**
@@ -34,6 +34,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const previousPath = useRef(pathname);
   useDisplayPolicy(frame);
   useSweepDirection();
+  useTouchPress();
 
   useEffect(() => {
     if (previousPath.current === pathname) return;
