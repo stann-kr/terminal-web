@@ -145,6 +145,18 @@ describe('artist access data validation', () => {
     expect(event && isGateRequestWindowActive(event, now)).toBe(true);
   });
 
+  it('opens an event earlier than the default window only by its own stored accessWindowDays', () => {
+    const now = new Date('2026-10-16T12:00:00+09:00');
+    const night = { date: '2026-11-28', time: '23:00 KST', status: 'UPCOMING' };
+    const gate = (data: object) => findUpcomingGateEvent([{ id: 'TRM-03', data: JSON.stringify(data) }], now)!;
+    expect(isGateRequestWindowActive(gate(night), now)).toBe(false);
+    expect(isGateRequestWindowActive(gate({ ...night, accessWindowDays: 60 }), now)).toBe(true);
+    // A malformed window falls back to the default instead of opening the gate.
+    for (const accessWindowDays of [0, 1.5, '60', 10_000]) {
+      expect(isGateRequestWindowActive(gate({ ...night, accessWindowDays }), now)).toBe(false);
+    }
+  });
+
   it('uses one access-code resolution for Gate request and code-info consumers', () => {
     expect(resolveArtistAccessCode([
       {

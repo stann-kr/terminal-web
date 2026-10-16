@@ -49,6 +49,12 @@ describe('public event DTOs', () => {
     )).toBeNull();
   });
 
+  it('passes the request window the gate uses, never an unchecked stored value', () => {
+    const row = (accessWindowDays?: unknown) => parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, accessWindowDays }) }, []);
+    expect(row(60)).toMatchObject({ accessWindowDays: 60 });
+    expect(row('60')).toMatchObject({ accessWindowDays: 30 });
+    expect(row()).not.toHaveProperty('accessWindowDays');
+  });
   it('keeps a valid end time and rejects one the runtime cannot read', () => {
     expect(parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, endTime: '05:00' }) }, [])).toMatchObject({ endTime: '05:00' });
     expect(parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, endTime: 'late' }) }, [])).toBeNull();

@@ -192,16 +192,17 @@ export function selectEvent(
  */
 export function getEventBoundaryTimes(
   events: readonly TerminalEvent[],
-  accessWindowDays?: number,
+  accessWindowDays?: number | ((event: TerminalEvent) => number),
 ): number[] {
   const times = events
     .filter((event) => event.status !== 'ARCHIVED')
     .flatMap((event) => {
       const startsAt = getEventDateTime(event).getTime();
       if (Number.isNaN(startsAt)) return [];
+      const days = typeof accessWindowDays === 'function' ? accessWindowDays(event) : accessWindowDays;
       const opens = event.status === 'UPCOMING'
-        && accessWindowDays !== undefined && Number.isFinite(accessWindowDays) && accessWindowDays >= 0
-        ? [startsAt - accessWindowDays * MILLISECONDS_PER_DAY]
+        && days !== undefined && Number.isFinite(days) && days >= 0
+        ? [startsAt - days * MILLISECONDS_PER_DAY]
         : [];
       const end = getEventEndTime(event);
       const slots = event.artists.filter(isPublicArtist).flatMap((artist) => {
