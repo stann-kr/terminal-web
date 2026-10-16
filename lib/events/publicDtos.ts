@@ -1,4 +1,5 @@
 import { isJsonObject, isString } from '@/lib/api/validation';
+import { accessWindowDays } from '@/lib/gate/requestPolicy';
 import { getEventEndTime, isValidEventDateTime } from './lifecycle';
 import type {
   Artist,
@@ -162,6 +163,7 @@ export function parsePublicEventRow(
     capacity,
     sound,
     status: data.status as EventStatus,
+    ...(data.accessWindowDays === undefined ? {} : { accessWindowDays: accessWindowDays(data) }),
     artists: eventArtists,
     ...(invitationLines === undefined ? {} : { invitationLines }),
     ...(description === undefined ? {} : { description }),

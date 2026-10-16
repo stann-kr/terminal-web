@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
 import { AccessForm, AccessRequest } from '../features/access/Access';
 import { AccessDraftProvider } from '../features/access/AccessDraftProvider';
+import { inviteHref } from '../features/access/invite';
 import { TransmitForm } from '../features/transmit/TransmitForm';
 import { SignalBody } from '../features/signal/Signal';
 
@@ -123,6 +124,26 @@ describe('guest request UI',()=>{
     const saved=await screen.findByRole('status');
     expect(saved).toHaveTextContent('INVITER');expect(saved).toHaveTextContent('example@example.test');expect(saved).toHaveTextContent('@example');
     expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');expect(screen.getByRole('link',{name:'@TERMINAL.SIGNAL 팔로우'})).toHaveAttribute('href','https://www.instagram.com/terminal.signal/');
+  });
+  it('fills in and checks the code an invite link carries, so the guest only writes their details',async()=>{
+    window.history.replaceState(null,'',inviteHref('A','AB12'));
+    const fetch=vi.fn().mockResolvedValueOnce(json({name:'TERMINAL'}));vi.stubGlobal('fetch',fetch);
+    render(<AccessForm eventId="A"/>);
+    expect(await screen.findByText('초대 코드를 확인했습니다.')).toBeInTheDocument();
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({eventId:'A',code:'AB12'});
+    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('AB12');
+    expect(screen.getByText('TERMINAL')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^이름/)).toHaveFocus();
+    window.history.replaceState(null,'','/');
+  });
+  it('waits for requests to open before checking an invite',async()=>{
+    window.history.replaceState(null,'','/events/A/request?invite=AB12');
+    const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
+    const {rerender}=render(<AccessForm eventId="A" availability={{canRequest:false,message:'closed'}}/>);
+    expect(fetch).not.toHaveBeenCalled();
+    rerender(<AccessForm eventId="A" availability={{canRequest:true,message:''}}/>);
+    await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(1));
+    window.history.replaceState(null,'','/');
   });
 });
 describe('transmit UI',()=>{
