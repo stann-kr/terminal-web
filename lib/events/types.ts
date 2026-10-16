@@ -37,6 +37,8 @@ export interface TerminalEvent {
   capacity: string;
   sound: string;
   status: EventStatus;
+  /** Days before the start that guest requests open; the default window when absent. */
+  accessWindowDays?: number;
   artists: Artist[];
   invitationLines?: {
     en: string[];

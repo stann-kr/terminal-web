@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ApiError, postJson } from '@/features/ui/http';
 import { useAccessDraft, type AccessDraft } from './AccessDraftProvider';
+import { inviteCodeFrom } from './invite';
 
 export type AccessAvailability = { canRequest: boolean; message: string };
 
@@ -39,13 +40,13 @@ export function useAccessRequest(
     setCodeMessage('');
     setError(null);
   };
-  async function verifyCode() {
-    if (!code.trim() || checking || !availability.canRequest) return;
+  async function verifyCode(requested = code) {
+    if (!requested.trim() || checking || !availability.canRequest) return;
     controller.current?.abort();
     const abort = new AbortController();
     controller.current = abort;
     const current = ++revision.current;
-    const submittedCode = code.trim();
+    const submittedCode = requested.trim();
     setChecking(true);
     setVerified(null);
     setError(null);
@@ -72,6 +73,20 @@ export function useAccessRequest(
       if (current === revision.current) setChecking(false);
     }
   }
+  // An invite link (`?invite=CODE`) fills in its code and checks it as soon as requests are open,
+  // so a friend never types it. Once per visit, and never over a code the guest already typed.
+  const invited = useRef(false);
+  const latest = useRef({ code, changeCode, verifyCode });
+  latest.current = { code, changeCode, verifyCode };
+  useEffect(() => {
+    if (invited.current || !availability.canRequest) return;
+    invited.current = true;
+    const invite = inviteCodeFrom(window.location.search);
+    const { code: typed, changeCode: fill, verifyCode: check } = latest.current;
+    if (!invite || (typed.trim() && typed.trim() !== invite)) return;
+    fill(invite);
+    void check(invite);
+  }, [availability.canRequest]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (
