@@ -48,9 +48,10 @@
 }
 /* Pressed, a card shows its inverse, like a backlit switch taking the command. Only under a
    pointer that hovers: on a touch screen a tap is over in an instant, and the inverse would only
-   read as the card blinking before the view changes. */
+   read as the card blinking before the view changes. A card within the site goes straight to the
+   loading cover instead (globals.css): an inverse let go just before it would read as a blink. */
 @media (hover: hover) {
-  .card:active {
+  .card:not([href^="/"]):active {
     box-shadow: inset 0 0 0 100vmax var(--on-hi);
     color: var(--hi);
     --ink: var(--hi);

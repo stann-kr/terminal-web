@@ -229,7 +229,7 @@ div.sessionKeys > * {
 /* Lit or pressed, the label follows the key's own text colour. */
 @media (hover: hover) {
   .sessionKeys > :hover small,
-  .sessionKeys > :active small {
+  .sessionKeys > :not([href^="/"]):active small {
     color: inherit;
   }
 }

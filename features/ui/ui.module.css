@@ -155,9 +155,11 @@
   }
 }
 /* A pressed key flashes inverse, like a backlit switch taking the command: under a pointer that
-   hovers only, since on a touch screen the flash would read as a blink before the view changes. */
+   hovers only, since on a touch screen the flash would read as a blink before the view changes.
+   A link within the site does not: the loading cover takes the press at once (globals.css), and
+   an inverse let go just before it would read as a blink. */
 @media (hover: hover) {
-  .action:active,
+  .action:not([href^="/"]):active,
   .button:active:not(:disabled) {
     box-shadow: inset 0 0 0 100vmax var(--on-hi);
     color: var(--hi);
