@@ -220,9 +220,10 @@ details[open] > summary { margin-bottom: 6px; }
 :root :is(a, button):active { transition: none; }
 /* A link on its way to a view that has not arrived yet (useNavigationPending) shows the first
    visit's loading screen inside itself, in its colours whatever the plate: the field covers the
-   control (::before) and a blinking lamp reads LOADING over it (::after). A quick change ends
-   before the cover comes in. A link that stretches its ::after over its row keeps itself static
-   (its module says so), so the cover spreads over the whole row. */
+   control (::before) and a blinking lamp reads LOADING over it (::after). It comes in at once with
+   the press, so the press never reads as a blink before the loading shows. A link that stretches
+   its ::after over its row keeps itself static (its module says so), so the cover spreads over the
+   whole row. */
 :where(a[data-pending]) { position: relative; }
 a[data-pending] { cursor: progress; }
 /* :root outranks a module's own stretched ::after. */
@@ -231,7 +232,6 @@ a[data-pending] { cursor: progress; }
   position: absolute;
   inset: 0;
   z-index: 2;
-  animation: pendingCover 160ms var(--ease-move) 150ms both;
 }
 :root a[data-pending]::before {
   content: '';
@@ -252,9 +252,8 @@ a[data-pending] { cursor: progress; }
   letter-spacing: .24em;
   text-transform: uppercase;
   white-space: nowrap;
-  animation: pendingCover 160ms var(--ease-move) 150ms both, pendingLamp 1s steps(1, end) 310ms infinite;
+  animation: pendingLamp 1s steps(1, end) infinite;
 }
-@keyframes pendingCover { from { opacity: 0; } }
 @keyframes pendingLamp { 50% { background-size: 0 0; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }
