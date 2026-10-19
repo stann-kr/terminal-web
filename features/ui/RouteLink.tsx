@@ -31,7 +31,8 @@ export default function RouteLink({ href, replace, scroll, onNavigate, ...props 
         if (held?.href === href) return;
         if (held) window.clearTimeout(held.timer);
         const from = window.location.href;
-        router.prefetch(href);
+        // A full prefetch: a detail is dynamic, and the default would fetch only its shell.
+        router.prefetch(href, { kind: 'full' } as Parameters<typeof router.prefetch>[1]);
         held = {
           href,
           timer: window.setTimeout(() => {

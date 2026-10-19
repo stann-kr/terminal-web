@@ -17,7 +17,7 @@ describe('route link',()=>{
     render(<RouteLink href="/events/TRM-03" scroll={false}>TRM-03</RouteLink>);
     const link=screen.getByRole('link');
     act(()=>{ link.click();link.click(); });
-    expect(router.prefetch).toHaveBeenCalledWith('/events/TRM-03');
+    expect(router.prefetch).toHaveBeenCalledWith('/events/TRM-03',{kind:'full'});
     act(()=>{ vi.advanceTimersByTime(ROUTE_HOLD_MS-1); });
     expect(router.push).not.toHaveBeenCalled();
     act(()=>{ vi.advanceTimersByTime(1); });
