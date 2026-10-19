@@ -71,6 +71,10 @@
   position: absolute;
   inset: 0;
 }
+/* Pending, the loading cover spreads over the row too (globals.css). */
+.slotArtist[data-linked] a[data-pending] {
+  position: static;
+}
 .slotArtist small {
   color: var(--muted);
   font: 700 var(--t-xs)/1.2 var(--display);

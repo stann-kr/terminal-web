@@ -41,6 +41,10 @@
   position: absolute;
   inset: 0;
 }
+/* Pending, the loading cover spreads over the row too (globals.css). */
+.timeline a[data-pending] {
+  position: static;
+}
 .timeline p {
   color: var(--muted);
   font-size: var(--t-sm);
@@ -96,6 +100,10 @@
   content: '';
   position: absolute;
   inset: 0;
+}
+/* Pending, the loading cover spreads over the row too (globals.css). */
+.sharedCells a[data-pending] {
+  position: static;
 }
 .sharedCells small {
   color: var(--muted);

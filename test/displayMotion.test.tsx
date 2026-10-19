@@ -4,7 +4,7 @@ import { act,cleanup,render,screen } from '@testing-library/react';
 import { QueryClient,QueryClientProvider } from '@tanstack/react-query';
 import { useDisplayPolicy } from '../features/display/useDisplayPolicy';
 import { DataActivity } from '../features/display/Display';
-import { PRESS_DELAY_MS,PRESS_HOLD_MS,PRESS_SLOP_PX,useTouchPress } from '../features/shell/useConsoleMotion';
+import { PENDING_LIMIT_MS,PRESS_DELAY_MS,PRESS_HOLD_MS,PRESS_SLOP_PX,useNavigationPending,useTouchPress } from '../features/shell/useConsoleMotion';
 
 class Media extends EventTarget {
   matches=false;
@@ -116,6 +116,58 @@ describe('touch press',()=>{
     const link=screen.getByRole('link');
     pointer(link,'pointerdown',{pointerType:'mouse'});pointer(link,'pointerup',{pointerType:'mouse'});
     act(()=>{ vi.advanceTimersByTime(PRESS_DELAY_MS); });
+    expect(link).not.toHaveAttribute('data-pressed');
+  });
+});
+
+/* eslint-disable @next/next/no-html-link-for-pages -- plain anchors stand in for next/link here */
+function Routed({ location }:{ location:string }) {
+  useTouchPress();useNavigationPending(location);
+  // Stands in for next/link: the router prevents the default of the clicks it takes over.
+  const route=(event:React.MouseEvent)=>event.preventDefault();
+  return <>
+    <a href="/events/TRM-03" onClick={route}>TRM-03</a>
+    <a href="/" onClick={route}>HERE</a>
+    <a href="https://www.instagram.com/terminal.signal/">INSTAGRAM</a>
+  </>;
+}
+/* eslint-enable @next/next/no-html-link-for-pages */
+describe('navigation pending',()=>{
+  beforeEach(()=>{ vi.useFakeTimers(); });
+  afterEach(()=>{ vi.useRealTimers(); });
+  it('marks a routed link until the address changes',()=>{
+    const view=render(<Routed location="/?"/>);
+    const link=screen.getByRole('link',{name:'TRM-03'});
+    act(()=>{ link.click(); });
+    expect(link).toHaveAttribute('data-pending');
+    expect(document.documentElement).toHaveAttribute('data-navigating');
+    view.rerender(<Routed location="/events/TRM-03?"/>);
+    expect(link).not.toHaveAttribute('data-pending');
+    expect(document.documentElement).not.toHaveAttribute('data-navigating');
+  });
+  it('leaves links the router does not take, or that stay where they are, and gives up in time',()=>{
+    render(<Routed location="/?"/>);
+    const outside=screen.getByRole('link',{name:'INSTAGRAM'});
+    outside.addEventListener('click',event=>event.preventDefault());
+    act(()=>{ outside.click(); });
+    expect(outside).not.toHaveAttribute('data-pending');
+    const here=screen.getByRole('link',{name:'HERE'});
+    act(()=>{ here.click(); });
+    expect(here).not.toHaveAttribute('data-pending');
+    const link=screen.getByRole('link',{name:'TRM-03'});
+    act(()=>{ link.click(); });
+    act(()=>{ vi.advanceTimersByTime(PENDING_LIMIT_MS); });
+    expect(link).not.toHaveAttribute('data-pending');
+  });
+  it('keeps a touch press lit while its view is still on the way',()=>{
+    const view=render(<Routed location="/?"/>);
+    const link=screen.getByRole('link',{name:'TRM-03'});
+    pointer(link,'pointerdown');pointer(link,'pointerup');
+    act(()=>{ link.click(); });
+    act(()=>{ vi.advanceTimersByTime(PRESS_HOLD_MS*3); });
+    expect(link).toHaveAttribute('data-pressed');
+    view.rerender(<Routed location="/events/TRM-03?"/>);
+    act(()=>{ vi.advanceTimersByTime(PRESS_HOLD_MS); });
     expect(link).not.toHaveAttribute('data-pressed');
   });
 });

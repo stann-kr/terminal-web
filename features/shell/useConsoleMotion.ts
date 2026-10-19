@@ -69,11 +69,17 @@ export function useTouchPress() {
       if (!pressed || hold || !event.isPrimary) return;
       if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > PRESS_SLOP_PX) release();
     };
+    // On a slow line the view has not changed yet when the hold is up: the link is still pending
+    // (useNavigationPending), so it stays lit for another hold rather than going dark on nothing.
+    const settle = () => {
+      if (pressed?.hasAttribute('data-pending')) hold = window.setTimeout(settle, PRESS_HOLD_MS);
+      else release();
+    };
     const up = (event: PointerEvent) => {
       if (!pressed || hold || !event.isPrimary) return;
       window.clearTimeout(delay);
       light(pressed);
-      hold = window.setTimeout(release, PRESS_HOLD_MS);
+      hold = window.setTimeout(settle, PRESS_HOLD_MS);
     };
     document.addEventListener('pointerdown', down, { passive: true });
     document.addEventListener('pointermove', move, { passive: true });
@@ -87,4 +93,46 @@ export function useTouchPress() {
       document.removeEventListener('pointercancel', release);
     };
   }, []);
+}
+
+/** A view that has not arrived by now will not: the link stops claiming it is on its way. */
+export const PENDING_LIMIT_MS = 15000;
+
+/**
+ * Until the address changes, a link the router took over to go somewhere else gets
+ * `data-pending` (and the page `data-navigating`): on a slow line the view can take seconds
+ * to change, and without this the press would read as having missed. `location` is the
+ * current path and query; when it changes the view has arrived and the marks go.
+ */
+export function useNavigationPending(location: string) {
+  useEffect(() => {
+    let pending: HTMLElement | null = null;
+    let limit = 0;
+    const clear = () => {
+      window.clearTimeout(limit);
+      pending?.removeAttribute('data-pending');
+      pending = null;
+      document.documentElement.removeAttribute('data-navigating');
+    };
+    const click = (event: MouseEvent) => {
+      // The router prevents the default of the clicks it handles itself; anything else is the
+      // browser's own navigation (new tab, download, outside link), which shows its own progress.
+      if (!event.defaultPrevented) return;
+      const link = (event.target as Element | null)?.closest?.('a[href]');
+      if (!(link instanceof HTMLAnchorElement) || (link.target && link.target !== '_self')) return;
+      const to = new URL(link.href);
+      if (to.origin !== window.location.origin) return;
+      if (to.pathname + to.search === window.location.pathname + window.location.search) return;
+      clear();
+      pending = link;
+      link.setAttribute('data-pending', '');
+      document.documentElement.setAttribute('data-navigating', '');
+      limit = window.setTimeout(clear, PENDING_LIMIT_MS);
+    };
+    document.addEventListener('click', click);
+    return () => {
+      clear();
+      document.removeEventListener('click', click);
+    };
+  }, [location]);
 }
