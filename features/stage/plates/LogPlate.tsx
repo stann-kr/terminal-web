@@ -8,7 +8,7 @@ import { NodeActivity } from '@/features/transmit/NodeActivity';
 import { TransmitForm } from '@/features/transmit/TransmitForm';
 import { Loading, Panel, StateNotice, ui } from '@/features/ui/Ui';
 import { packHeights } from '../text';
-import { pageAnnouncement, pageKey, pageReadout, useStageMode, useWheelPaging } from '../usePaging';
+import { pageAnnouncement, pageKey, pageReadout, useStageMode } from '../usePaging';
 import { CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
@@ -208,7 +208,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
   const shown = pages ? pages[index].map(i => logs![i]) : logs ?? [];
   const prev = index > 0 ? () => setSub({ key: logKey, index: index - 1 }) : page > 1 ? () => router.push(logHref(page - 1), { scroll: false }) : undefined;
   const next = index < subCount - 1 ? () => setSub({ key: logKey, index: index + 1 }) : page < totalPages ? () => router.push(logHref(page + 1), { scroll: false }) : undefined;
-  useWheelPaging(region, { prev, next }, stageMode === 'stage');
+  // No wheel paging here: over the log the wheel scrolls the page (its keys and PREV/NEXT turn it).
 
   const state = query.isFetching ? 'loading' : query.isError ? 'error' : query.data ? 'ready' : 'idle';
   return (

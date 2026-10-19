@@ -41,6 +41,10 @@
   position: absolute;
   inset: 0;
 }
+/* Pending, the loading cover spreads over the row too (globals.css). */
+.timeline a[data-pending] {
+  position: static;
+}
 .timeline p {
   color: var(--muted);
   font-size: var(--t-sm);
@@ -97,6 +101,10 @@
   position: absolute;
   inset: 0;
 }
+/* Pending, the loading cover spreads over the row too (globals.css). */
+.sharedCells a[data-pending] {
+  position: static;
+}
 .sharedCells small {
   color: var(--muted);
   font: 700 var(--t-xs)/1 var(--display);
@@ -139,6 +147,17 @@
   .timeline li:hover * {
     color: inherit !important;
   }
+}
+/* Touch: a press fills the card or line up from its bottom edge and keeps it lit (useTouchPress). */
+.sharedCells li:has(a[data-pressed]),
+.timeline li:has(a[data-pressed]) {
+  box-shadow: inset 0 var(--rise, -100vmax) 0 0 var(--hi);
+  color: var(--on-hi);
+  transition: var(--light-motion-in);
+}
+.sharedCells li:has(a[data-pressed]) small,
+.timeline li:has(a[data-pressed]) * {
+  color: inherit !important;
 }
 .timeline li:has(a:focus-visible) {
   outline: 2px solid var(--focus);

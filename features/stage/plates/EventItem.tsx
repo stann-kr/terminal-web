@@ -1,6 +1,6 @@
 'use client';
 /* eslint-disable @next/next/no-img-element -- Posters retain their source aspect ratio without invented dimensions. */
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import { useRef, useState } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { AccessRequest } from '@/features/access/Access';

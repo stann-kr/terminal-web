@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import { getArchivedOrElapsedEvents, getLiveEvents } from '@/lib/events/lifecycle';
 import { eventHref, sessionShort, statusLabel } from '@/features/events/model';
 import { LiveValue } from '@/features/display/Display';

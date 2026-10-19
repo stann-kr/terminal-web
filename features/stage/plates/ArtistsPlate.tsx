@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import { artistHref } from '@/features/artists/model';
 import { LiveValue } from '@/features/display/Display';
 import { Loading, StateNotice } from '@/features/ui/Ui';

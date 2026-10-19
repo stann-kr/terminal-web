@@ -9,6 +9,8 @@ import { inviteHref } from '../features/access/invite';
 import { TransmitForm } from '../features/transmit/TransmitForm';
 import { SignalBody } from '../features/signal/Signal';
 
+// Site links (RouteLink) take the router; these forms render without an app router mounted.
+vi.mock('next/navigation',async importOriginal=>({...await importOriginal<typeof import('next/navigation')>(),useRouter:()=>({push:vi.fn(),replace:vi.fn(),prefetch:vi.fn()})}));
 afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}});
 const log={id:'log-1',handle:'VISITOR',message:'hello',ts:'2026.09.24 / 04:00',createdAt:'2026-09-23T19:00:00.000Z'};

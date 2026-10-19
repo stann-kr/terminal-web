@@ -1,10 +1,11 @@
 'use client';
-import Link from 'next/link';
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
+import Link from '@/features/ui/RouteLink';
+import { useEffect, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getSlotTimes } from '@/lib/events/lifecycle';
 import { Action, ActionDeck, BrandText, Facts, ui } from '@/features/ui/Ui';
 import { CALENDAR_FEED_PATH, calendarSubscribeHref } from './calendar';
+import { SITE_ORIGIN } from './metadata';
 import {
   buildArtistArchive,
   profileForAppearance,
@@ -65,13 +66,16 @@ export function EventFacts({
   );
 }
 const noSubscribe = () => () => {};
-/** The subscribe link for this browser: `webcal:` on Apple devices, Google Calendar elsewhere. */
+/**
+ * The subscribe link for this browser: `webcal:` on Apple devices, Google Calendar elsewhere. It
+ * always names the public site, so a preview or development address never ends up subscribed.
+ */
 function useSubscribeHref() {
   return useSyncExternalStore(
     noSubscribe,
-    () => calendarSubscribeHref(location.origin, /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)),
+    () => calendarSubscribeHref(SITE_ORIGIN, /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)),
     // The server cannot know the device; the feed itself stands in until hydration.
-    () => CALENDAR_FEED_PATH,
+    () => `${SITE_ORIGIN}${CALENDAR_FEED_PATH}`,
   );
 }
 
@@ -93,14 +97,21 @@ function SessionKeys({ event }: { event: TerminalEvent }) {
   const subscribe = useSubscribeHref();
   const map = event.status === 'ARCHIVED' ? null : venueMapHref(event);
   const [shared, share] = useShare(event);
+  const [calendar, openCalendar] = useCalendarOpen(subscribe);
   return (
     <>
       <ActionDeck className={styles.sessionKeys}>
-        <Action primary href={subscribe} external={subscribe.startsWith('https:')}>
+        <a
+          className={`${ui.action} ${ui.primary}`}
+          href={subscribe}
+          {...(subscribe.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          data-pending={calendar === 'opening' ? '' : undefined}
+          onClick={openCalendar}
+        >
           <KeyFace label="CALENDAR">
-            <BrandText text="TERMINAL" /> 일정 구독
+            {calendar === 'blocked' ? CALENDAR_BLOCKED : <><BrandText text="TERMINAL" /> 일정 구독</>}
           </KeyFace>
-        </Action>
+        </a>
         {map && (
           <Action primary external href={map}>
             <KeyFace label="MAP">
@@ -112,9 +123,53 @@ function SessionKeys({ event }: { event: TerminalEvent }) {
           <KeyFace label="SHARE">{SHARE_TEXT[shared]}</KeyFace>
         </button>
       </ActionDeck>
-      <span className={ui.srOnly} role="status">{shared === 'idle' ? '' : SHARE_TEXT[shared]}</span>
+      <span className={ui.srOnly} role="status">{shared === 'idle' ? (calendar === 'blocked' ? CALENDAR_BLOCKED : '') : SHARE_TEXT[shared]}</span>
     </>
   );
+}
+
+/** Browsers inside an app (Instagram, Facebook, KakaoTalk, LINE, NAVER) that drop a `webcal:` link without a word. */
+const IN_APP = /Instagram|FBAN|FBAV|FB_IAB|KAKAOTALK|Line\/|NAVER\(inapp|DaumApps/i;
+/** Longest the calendar key shows LOADING while the calendar app or the new tab takes over. */
+export const CALENDAR_OPEN_MS = 2500;
+/** Short, so the key keeps its size. */
+const CALENDAR_BLOCKED = 'Safari에서 열어 주세요';
+type CalendarState = 'idle' | 'opening' | 'blocked';
+
+/**
+ * The calendar key hands off to another app (the calendar, or a new tab), which can take seconds and
+ * shows nothing on the page meanwhile. So the key shows the loading cover until the page loses
+ * focus or is hidden, or CALENDAR_OPEN_MS passes. A browser inside an app drops `webcal:` silently:
+ * there the key says to open the page in Safari instead, for a moment, like the share key's result.
+ */
+function useCalendarOpen(href: string) {
+  const [state, setState] = useState<CalendarState>('idle');
+  useEffect(() => {
+    if (state === 'idle') return;
+    const done = () => setState('idle');
+    const hidden = () => document.visibilityState === 'hidden' && done();
+    const timer = window.setTimeout(done, state === 'blocked' ? 4000 : CALENDAR_OPEN_MS);
+    if (state === 'opening') {
+      window.addEventListener('blur', done);
+      window.addEventListener('pagehide', done);
+      document.addEventListener('visibilitychange', hidden);
+    }
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('blur', done);
+      window.removeEventListener('pagehide', done);
+      document.removeEventListener('visibilitychange', hidden);
+    };
+  }, [state]);
+  function open(event: MouseEvent<HTMLAnchorElement>) {
+    if (href.startsWith('webcal:') && IN_APP.test(navigator.userAgent)) {
+      event.preventDefault();
+      setState('blocked');
+      return;
+    }
+    setState('opening');
+  }
+  return [state, open] as const;
 }
 
 type ShareState = 'idle' | 'copied' | 'failed';

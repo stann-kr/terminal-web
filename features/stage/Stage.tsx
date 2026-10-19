@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';

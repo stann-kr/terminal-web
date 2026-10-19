@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import { ArtistChronology } from '@/features/artists/ArtistChronology';
 import { artistHref, type ArtistProfile } from '@/features/artists/model';
 import { SignalText } from '@/features/display/Display';

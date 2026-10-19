@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import type { TerminalEvent } from '@/lib/events/types';
 import { DataActivity } from '@/features/display/Display';
 import { accessAvailability, dayMark, eventHref, eventSubtitle, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
