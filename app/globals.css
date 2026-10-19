@@ -255,6 +255,13 @@ a[data-pending] { cursor: progress; }
   white-space: nowrap;
   animation: pendingCover 200ms var(--ease-move) 80ms both, pendingLamp 1s steps(1, end) 280ms infinite;
 }
+/* Too small a box for the word (loadingFits): the lamp alone, blinking in the middle. */
+:root a[data-pending=compact]::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  padding: 0;
+}
 @keyframes pendingCover { from { opacity: 0; } }
 @keyframes pendingLamp { 50% { background-size: 0 0; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

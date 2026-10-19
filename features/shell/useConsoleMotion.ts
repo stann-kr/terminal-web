@@ -95,6 +95,24 @@ export function useTouchPress() {
   }, []);
 }
 
+/**
+ * Whether the pending cover's LOADING line fits the box it covers: the link, or the row a static
+ * link stretches its cover over. Read once the cover is on, from its own font; a box too small for
+ * it shows the lamp alone (`data-pending=compact`) rather than a clipped word.
+ */
+export function loadingFits(link: HTMLElement) {
+  const host = getComputedStyle(link).position === 'static' ? link.offsetParent : link;
+  if (!(host instanceof HTMLElement)) return true;
+  const label = getComputedStyle(link, '::after');
+  const context = document.createElement('canvas').getContext('2d');
+  if (!context) return true;
+  context.font = label.font;
+  const text = label.content.replace(/^["']|["']$/g, '');
+  const spacing = (parseFloat(label.letterSpacing) || 0) * text.length;
+  const needed = context.measureText(text).width + spacing + (parseFloat(label.paddingLeft) || 0);
+  return needed + 8 <= host.clientWidth;
+}
+
 /** A view that has not arrived by now will not: the link stops claiming it is on its way. */
 export const PENDING_LIMIT_MS = 15000;
 
@@ -126,6 +144,7 @@ export function useNavigationPending(location: string) {
       clear();
       pending = link;
       link.setAttribute('data-pending', '');
+      if (!loadingFits(link)) link.setAttribute('data-pending', 'compact');
       document.documentElement.setAttribute('data-navigating', '');
       limit = window.setTimeout(clear, PENDING_LIMIT_MS);
     };
