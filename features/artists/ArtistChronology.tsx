@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import type { ReactNode } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref, publicArtists, sessionShort, statusLabel } from '@/features/events/model';

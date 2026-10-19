@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import type { CSSProperties, ReactNode } from 'react';
 import { BrandText, type Surface } from '@/features/ui/Ui';
 import { FitTitle } from '../FitTitle';

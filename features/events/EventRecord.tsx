@@ -1,5 +1,5 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getSlotTimes } from '@/lib/events/lifecycle';
