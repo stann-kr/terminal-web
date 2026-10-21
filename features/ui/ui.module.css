@@ -122,7 +122,9 @@
 .brandWord {
   font-family: var(--brand);
   font-weight: 400;
-  letter-spacing: .02em;
+  /* The face spaces its own letters (kerning); no tracking on top. */
+  letter-spacing: 0;
+  font-kerning: normal;
   text-transform: none;
 }
 

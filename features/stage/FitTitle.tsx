@@ -5,7 +5,7 @@ import styles from './stage.module.css';
 
 /** The word BrandText sets in the brand face, and that face's letter spacing (ui.module.css `.brandWord`). */
 const BRAND_WORD = 'TERMINAL';
-const BRAND_SPACING_EM = 0.02;
+const BRAND_SPACING_EM = 0;
 
 /**
  * A title set as large as its box allows: the CSS size is the ceiling, and pretext finds the

@@ -90,7 +90,7 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
 /* ── Type ───────────────────────────────────────────────────────────────── */
 .wordmark {
   font: 400 5.6cqw/.82 var(--brand);
-  letter-spacing: .01em;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 .mono {
@@ -242,7 +242,7 @@ html[data-format=a2] .grain { --grain-scale: 1.5; }
   font-family: var(--brand);
   font-weight: 400;
   line-height: .82;
-  letter-spacing: .01em;
+  letter-spacing: 0;
 }
 .shareSite {
   margin-left: auto;

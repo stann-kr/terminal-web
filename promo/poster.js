@@ -403,7 +403,7 @@ function share() {
 /* ── Layout passes ──────────────────────────────────────────────────────────────────────────── */
 async function fontsReady() {
   await Promise.all(
-    ['400 100px ProcrastinatingPixie', '700 100px "Barlow Condensed"', '800 100px "Barlow Condensed"', '400 100px "Share Tech Mono"'].map(font => document.fonts.load(font).catch(() => null)),
+    ['400 100px "TERMINAL Lettering"', '700 100px "Barlow Condensed"', '800 100px "Barlow Condensed"', '400 100px "Share Tech Mono"'].map(font => document.fonts.load(font).catch(() => null)),
   );
   await document.fonts.ready;
 }
