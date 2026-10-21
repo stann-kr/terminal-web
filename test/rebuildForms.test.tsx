@@ -135,7 +135,8 @@ describe('guest request UI',()=>{
     expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({eventId:'A',code:'AB12'});
     expect(screen.getByLabelText(/초대 코드/)).toHaveValue('AB12');
     expect(screen.getByText('TERMINAL')).toBeInTheDocument();
-    expect(screen.getByLabelText(/^이름/)).toHaveFocus();
+    // The name field takes focus in an effect after the notice renders; on a slow runner that lands a moment later.
+    await waitFor(()=>expect(screen.getByLabelText(/^이름/)).toHaveFocus());
     window.history.replaceState(null,'','/');
   });
   it('waits for requests to open before checking an invite',async()=>{
