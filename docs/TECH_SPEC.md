@@ -16,7 +16,7 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 - `lib/events`, `lib/gate`, `lib/signal`, `lib/transmit`: 서버 domain과 repository. 이벤트 수명(시작·끝·공연표 슬롯 시각)은 `lib/events/lifecycle.ts`가 소유합니다.
 - `lib/api`: 요청 본문 검증, 시도 제한(`abuseControl.ts`), PII 없는 로그, no-store 응답
 
-스타일과 판별 전용 표현은 각 capability의 CSS Module이 소유하고, `app/globals.css`는 token·font·reset·`data-surface` 색 plate만 포함합니다. 색 값은 `app/palettes.css`의 팔레트 블록에만 있습니다. 화면이 바뀌면 무대가 새 판·상세 판의 제목(h1)으로 focus를 옮기고, 무대 밖 페이지는 Shell이 `main`으로 옮깁니다. 모션 감소·고대비·save-data·숨겨진 탭 조건에서 `useDisplayPolicy`가 Shell에 `data-display-paused`를 붙이고 전역 CSS가 애니메이션·전환을 제거합니다. 조회·전송 표식은 실제 query·요청 상태에 연결합니다. 글꼴은 `public/fonts/instrument`의 Barlow·Barlow Condensed·Share Tech Mono(OFL, Latin 서브셋)와 TERMINAL 단어 전용 ProcrastinatingPixie이며 한글은 시스템 산세리프로 표시합니다. STANN OS 공용 원본 token과 patch verifier는 별도로 유지합니다.
+스타일과 판별 전용 표현은 각 capability의 CSS Module이 소유하고, `app/globals.css`는 token·font·reset·`data-surface` 색 plate만 포함합니다. 색 값은 `app/palettes.css`의 팔레트 블록에만 있습니다. 화면이 바뀌면 무대가 새 판·상세 판의 제목(h1)으로 focus를 옮기고, 무대 밖 페이지는 Shell이 `main`으로 옮깁니다. 모션 감소·고대비·save-data·숨겨진 탭 조건에서 `useDisplayPolicy`가 Shell에 `data-display-paused`를 붙이고 전역 CSS가 애니메이션·전환을 제거합니다. 조회·전송 표식은 실제 query·요청 상태에 연결합니다. 글꼴은 `public/fonts/instrument`의 Barlow·Barlow Condensed·Share Tech Mono(OFL, Latin 서브셋)와 TERMINAL 단어 전용 레터링 글꼴 TERMINAL Lettering(woff2, 커닝 내장)이며 한글은 시스템 산세리프로 표시합니다. STANN OS 공용 원본 token과 patch verifier는 별도로 유지합니다.
 
 ## 공개 API
 

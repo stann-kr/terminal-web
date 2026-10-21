@@ -5,7 +5,8 @@
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: block; }
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: block; }
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: block; }
-@font-face { font-family: 'ProcrastinatingPixie'; src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype'); font-weight: 400 800; font-display: block; }
+/* TERMINAL Lettering: the wordmark's own letters (T E R M I N A L, lowercase maps to them) with its spacing built in as kerning; one weight, declared across 400–800 so no bold is faked. */
+@font-face { font-family: 'TERMINAL Lettering'; src: url('/fonts/TERMINAL-Lettering.woff2') format('woff2'); font-weight: 400 800; font-display: block; }
 @font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
 /*
  * Hypnotic console: plates on a workspace field, a few loud solid plates among them. Concentric rings
@@ -27,7 +28,7 @@
   --sans: 'Barlow', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   --mono: 'Share Tech Mono', 'Apple SD Gothic Neo', 'Noto Sans KR', monospace;
   /* The word TERMINAL is always set in the brand face. */
-  --brand: 'ProcrastinatingPixie', 'Barlow Condensed', sans-serif;
+  --brand: 'TERMINAL Lettering', 'Barlow Condensed', sans-serif;
 
   /* Seven fluid type steps, 1280px → 1920px. Nothing on screen is smaller than --t-xs. */
   --t-xs: clamp(12px, .78vw, 14px);   /* chips, meta labels, codes */

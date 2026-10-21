@@ -10,7 +10,7 @@
  * is copied to public/og/terminal.png, which the site names as its share image.
  * `artboards` writes out/artboards/<Name>.dc.html: each poster as a Claude Design artboard — the held
  * frame with every computed style written inline, so the canvas shows exactly what the kit renders.
- * `--font` is the canvas's uploaded asset url for the brand face (ProcrastinatingPixie).
+ * `--font` is the canvas's uploaded asset url for the brand face (TERMINAL Lettering, woff2); artboards need it.
  *
  * Chrome is driven over the DevTools protocol; each frame is the composition seeked to an exact time,
  * so the video does not depend on how fast the machine renders. The browser is CHROME_PATH, else
@@ -30,7 +30,7 @@ const A2_DPI = 300;
 
 const args = process.argv.slice(2);
 const set = ['posters', 'motion', 'all', 'templates', 'artboards', 'share'].includes(args[0]) ? args[0] : 'all';
-const fontUrl = args.includes('--font') ? args[args.indexOf('--font') + 1] : '/_blob/e6052b38fc52a20c4b9b1c4c697888e9';
+const fontUrl = args.includes('--font') ? args[args.indexOf('--font') + 1] : null;
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 const selected = list => list.filter(item => !only || fileName(item).includes(only));
 
@@ -244,7 +244,7 @@ function artboard(item, format, body) {
 <helmet>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Share+Tech+Mono&amp;display=swap" rel="stylesheet">
 <style>
-@font-face { font-family: 'ProcrastinatingPixie'; src: url('${fontUrl}') format('truetype'); font-display: block; }
+@font-face { font-family: 'TERMINAL Lettering'; src: url('${fontUrl}') format('woff2'); font-display: block; }
 body { margin: 0; }
 p, h1, h2, ul, ol, li { margin: 0; padding: 0; list-style: none; }
 </style>
@@ -356,6 +356,7 @@ try {
     }
   }
   if (set === 'artboards') {
+    if (!fontUrl) throw new Error('artboards need --font <the canvas asset url of TERMINAL-Lettering.woff2>');
     await mkdir(join(here, 'out/artboards'), { recursive: true });
     for (const item of selected(artboards)) {
       const format = formats[item.format];

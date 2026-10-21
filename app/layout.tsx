@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 /** The faces the first screen is set in (app/globals.css), fetched with the document so they are in before it paints. */
 const FONTS = [
-  ['/fonts/ProcrastinatingPixie-WyVOO.ttf', 'font/ttf'],
+  ['/fonts/TERMINAL-Lettering.woff2', 'font/woff2'],
   ...['BarlowCondensed-Medium', 'BarlowCondensed-SemiBold', 'BarlowCondensed-Bold', 'Barlow-Regular', 'Barlow-Medium', 'ShareTechMono-Regular']
     .map(name => [`/fonts/instrument/${name}.woff2`, 'font/woff2']),
 ] as const;

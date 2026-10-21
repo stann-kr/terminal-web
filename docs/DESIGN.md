@@ -14,7 +14,7 @@
 
 ## 글꼴과 크기
 
-- "TERMINAL"이라는 단어는 어디서든 `ProcrastinatingPixie`(`public/fonts`)로 씁니다(`BrandText`). 워드마크도 이미지 없이 같은 글꼴의 텍스트 "TERMINAL"이며 판의 글자색으로 찍힙니다.
+- "TERMINAL"이라는 단어는 어디서든 레터링 글꼴 `TERMINAL Lettering`(`public/fonts/TERMINAL-Lettering.woff2`)으로 씁니다(`BrandText`). 글꼴에는 T E R M I N A L 여덟 글자만 그려져 있고(소문자도 같은 글자), 글자 사이 간격은 글꼴 안의 커닝이 맡아 워드마크 SVG와 같은 모양으로 그려지므로 자간을 더하지 않습니다(`letter-spacing: 0`). 워드마크도 이미지 없이 같은 글꼴의 텍스트 "TERMINAL"이며 판의 글자색으로 찍힙니다.
 - 표제·라벨·버튼은 `Barlow Condensed` 600–800 대문자, 본문은 `Barlow`, 숫자·코드는 `Share Tech Mono`(OFL, Latin woff2). 한글은 시스템 산세리프입니다.
 - 크기는 1280→1920px에 따라 커지는 7단계입니다: `--t-xs` 12–14px(칩·메타) · `--t-sm` 14–16 · `--t-md` 16–18(본문·값) · `--t-lg` 19–24(셀 이름·버튼) · `--t-xl` 26–38(판 표제·행 제목) · `--t-2xl` 36–60(카운터·큰 숫자) · `--t-3xl` 56–124(대표 세션명). 12px 미만 글자는 쓰지 않습니다. 여백 `--pad`와 간격 `--gap`도 화면 폭에 따라 커집니다.
 
