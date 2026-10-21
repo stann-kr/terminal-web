@@ -1,6 +1,8 @@
-/* Each step of the form opens on a band across the plate (the fieldset already runs flush). */
+/* Each step of the form opens on a band across the plate. The fieldset already runs flush, so the
+   band does not bleed again (`ui.band` would pull it a second bleed to the left). */
 .legend {
   width: 100%;
+  margin-inline: 0;
 }
 /* The code field and its check key share one line; the key is as tall as the input. */
 .code {
