@@ -4,13 +4,19 @@
   width: 100%;
   margin-inline: 0;
 }
-/* The code field and its check key share one line; the key is as tall as the input. */
+/* The code field and its check key share one line; the key is as tall as the input. The field's
+   own box steps aside (its children join this grid), so the label line runs over the key to the
+   plate's edge as every other label line does, with "필수" at the same inset. */
 .code {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
 }
+.code > div { display: contents; }
+.code > div > :first-child { grid-column: 1 / -1; }
 .code > button {
+  grid-row: 2;
+  grid-column: 2;
   min-height: 44px;
   padding-inline: 16px var(--bleed);
 }
@@ -45,8 +51,16 @@
 @container (max-width: 560px) {
   .contacts { grid-template-columns: minmax(0, 1fr); }
 }
+/* Too narrow for both on one line: the key drops under the input, a rule apart so it never reads
+   as a second empty input, its words starting where the label's do. */
 @container (max-width: 360px) {
   .code { grid-template-columns: minmax(0, 1fr); }
+  .code > button {
+    grid-row: auto;
+    grid-column: 1;
+    margin-top: var(--rule);
+    padding-inline: var(--bleed);
+  }
 }
 
 /* Short labels, codes and times never break mid-phrase. */

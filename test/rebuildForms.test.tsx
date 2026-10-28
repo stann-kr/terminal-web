@@ -1,4 +1,6 @@
 import { afterEach,describe,expect,it,vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { act,cleanup,render,screen,waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -15,6 +17,21 @@ afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}});
 const log={id:'log-1',handle:'VISITOR',message:'hello',ts:'2026.09.24 / 04:00',createdAt:'2026-09-23T19:00:00.000Z'};
 describe('guest request UI',()=>{
+  it('lays the code row out so the label line spans the check key and the key drops under the input when narrow', () => {
+    render(<AccessDraftProvider><AccessForm eventId="A" /></AccessDraftProvider>);
+    // The selectors in access.module.css lean on this shape: row > [field div > label line, input] + key.
+    const field = screen.getByLabelText(/초대 코드/).parentElement!;
+    const row = field.parentElement!;
+    const key = screen.getByRole('button', { name: '코드 확인' });
+    expect(field.tagName).toBe('DIV');
+    expect(field.firstElementChild!.contains(screen.getByText('초대 코드', { selector: 'label' }))).toBe(true);
+    expect([...row.children]).toEqual([field, key]);
+    const css = readFileSync(join(process.cwd(), 'features/access/access.module.css'), 'utf8').replace(/\s+/g, ' ');
+    expect(css).toContain('.code > div { display: contents; }');
+    expect(css).toContain('.code > div > :first-child { grid-column: 1 / -1; }');
+    expect(css).toMatch(/\.code > button \{ grid-row: 2; grid-column: 2;/);
+    expect(css).toMatch(/@container \(max-width: 360px\) \{[^@]*\.code > button \{ grid-row: auto; grid-column: 1; margin-top: var\(--rule\); padding-inline: var\(--bleed\);/);
+  });
   it('isolates visit drafts by event, clears a saved draft, and drops unsaved details with the visit', async () => {
     const fetch = vi.fn().mockImplementation((url: string) => Promise.resolve(json(url.endsWith('code-info') ? { name: 'INVITER' } : { ok: true })));
     vi.stubGlobal('fetch', fetch);
