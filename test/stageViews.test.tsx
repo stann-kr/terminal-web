@@ -340,7 +340,7 @@ describe('stage views', () => {
   });
 
   it('restores a guest draft after leaving the session, with the code awaiting verification again', async () => {
-    const openEvent = { ...upcoming, date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) };
+    const openEvent = { ...upcoming, date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10), guestAccess: true };
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(new Response(JSON.stringify(
       url.startsWith('/api/transmit') ? { logs: [], total: 0, page: 1, totalPages: 0 }
         : url === '/api/events' ? [openEvent] : { name: 'INVITER' },

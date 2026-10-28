@@ -71,7 +71,7 @@ describe('guest request UI',()=>{
   });
 
   it.each([true,false])('preserves a pending request through event closure and handles its result (saved=%s)',async(saved)=>{
-    const event:TerminalEvent={id:'A',session:'Test event',subtitle:'',date:new Date(Date.now()+7*86400000).toISOString().slice(0,10),time:'23:00',venue:'Local',district:'',coords:'',capacity:'',sound:'',status:'UPCOMING',artists:[]};
+    const event:TerminalEvent={id:'A',session:'Test event',subtitle:'',date:new Date(Date.now()+7*86400000).toISOString().slice(0,10),time:'23:00',venue:'Local',district:'',coords:'',capacity:'',sound:'',status:'UPCOMING',guestAccess:true,artists:[]};
     const client=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:Infinity}}});client.setQueryData(['events'],[event]);
     let resolve!:(value:Response)=>void;
     const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockReturnValueOnce(new Promise<Response>(r=>{resolve=r;}));vi.stubGlobal('fetch',fetch);

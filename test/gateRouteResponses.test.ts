@@ -169,6 +169,25 @@ describe('opaque public success responses', () => {
     if (error === 'REQUEST_PERIOD_INACTIVE') expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
   });
 
+  it.each(['request', 'code-info'])('closes %s for an open-window event with no guest code before any write', async (route) => {
+    const { POST } = route === 'request'
+      ? await import('../app/api/gate/request/route')
+      : await import('../app/api/gate/code-info/route');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-01T12:00:00+09:00'));
+    mocks.listGateArtistRowsByEvent.mockResolvedValue([{
+      id: 'artist-1', data: JSON.stringify({ name: 'Artist Name', status: 'CONFIRMED' }),
+    }]);
+    const body = route === 'request' ? requestBody : { code: 'ARTIST-01', eventId: 'event-1' };
+
+    const response = await responseDetails(await POST(new Request(`https://terminal.test/api/gate/${route}`, {
+      method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json' },
+    })));
+
+    expect(response).toEqual({ status: 403, cacheControl: 'no-store', body: { error: 'ACCESS_NOT_OPEN' } });
+    expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
+  });
+
   it('returns only the matched artist name from the code-info route', async () => {
     const { POST } = await import('../app/api/gate/code-info/route');
     vi.useFakeTimers();

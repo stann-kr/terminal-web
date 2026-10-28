@@ -45,7 +45,10 @@ export function accessAvailability(event: TerminalEvent, events: TerminalEvent[]
   if (target?.id !== event.id) return { canRequest: false, message: '현재는 가장 가까운 예정 이벤트만 접수합니다.' };
   const days = accessWindowDays(event);
   const window = getRequestWindowState(event, days,now);
-  return { canRequest: window.isActive, message: window.isActive ? '게스트 신청을 접수하고 있습니다.' : `이벤트 시작 ${days}일 전부터 신청할 수 있습니다. ${window.opensInDays ?? 0}일 후 열립니다.` };
+  if (!window.isActive) return { canRequest: false, message: `이벤트 시작 ${days}일 전부터 신청할 수 있습니다. ${window.opensInDays ?? 0}일 후 열립니다.` };
+  // Requests run on invite codes: an event none of whose artists has one yet stays closed.
+  if (event.guestAccess !== true) return { canRequest: false, message: '초대 코드가 준비되면 게스트 신청을 받습니다.' };
+  return { canRequest: true, message: '게스트 신청을 접수하고 있습니다.' };
 }
 export function pageNumber(value: string | null, max = 1000) { return value && /^[1-9]\d*$/.test(value) && Number(value) <= max ? Number(value) : 1; }
 

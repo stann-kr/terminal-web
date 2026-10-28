@@ -118,6 +118,7 @@ export function useAccessRequest(
           'EVENT_MISMATCH',
           'NO_UPCOMING_EVENT',
           'REQUEST_PERIOD_INACTIVE',
+          'ACCESS_NOT_OPEN',
         ].includes(error.code)
       ) {
         setVerified(null);

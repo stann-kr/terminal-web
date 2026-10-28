@@ -39,6 +39,8 @@ export interface TerminalEvent {
   status: EventStatus;
   /** Days before the start that guest requests open; the default window when absent. */
   accessWindowDays?: number;
+  /** Some artist row carries a guest code; only the boolean leaves the server, never a code. */
+  guestAccess?: boolean;
   artists: Artist[];
   invitationLines?: {
     en: string[];

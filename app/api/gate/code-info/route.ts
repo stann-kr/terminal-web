@@ -74,6 +74,9 @@ export async function POST(request: Request) {
     if (accessCodeResult.kind === 'unavailable') {
       return json({ error: "VERIFICATION_UNAVAILABLE" }, 503);
     }
+    if (accessCodeResult.kind === 'closed') {
+      return json({ error: "ACCESS_NOT_OPEN" }, 403);
+    }
     if (accessCodeResult.kind === 'not_found') {
       return json({ name: null });
     }

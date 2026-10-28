@@ -55,6 +55,9 @@ export async function POST(request: Request) {
     if (accessCodeResult.kind === 'unavailable') {
       return noStoreJson({ error: "DATA_UNAVAILABLE" }, 503);
     }
+    if (accessCodeResult.kind === 'closed') {
+      return noStoreJson({ error: "ACCESS_NOT_OPEN" }, 403);
+    }
     if (accessCodeResult.kind === 'not_found') {
       return noStoreJson({ error: "INVALID_ACCESS_CODE" }, 401);
     }
