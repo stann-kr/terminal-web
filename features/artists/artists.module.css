@@ -37,6 +37,14 @@
   text-decoration: none;
   text-transform: uppercase;
 }
+/* The session name is one run of text in the link: the brand word, the rest of the name and the
+   arrow flow and wrap together instead of standing as separate boxes. */
+.recordName {
+  min-width: 0;
+}
+.nameTail {
+  white-space: nowrap;
+}
 .timeline a::after {
   content: '';
   position: absolute;

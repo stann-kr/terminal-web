@@ -144,6 +144,13 @@
   min-height: 56px;
   padding-inline: max(12px, var(--bleed, 0px));
 }
+/* A deck key that is narrower than its words wraps between words instead of being cut. */
+.deck > .action,
+.deck > .button {
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 /* The first key of a group; it wears the same key as the rest. */
 .primary {
   background: var(--control);

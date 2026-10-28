@@ -126,8 +126,20 @@ export function Action({
     </Link>
   );
 }
-export function ActionDeck({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`${styles.deck} ${className}`}>{children}</div>;
+export function ActionDeck({
+  children,
+  className = '',
+  surface,
+}: {
+  children: ReactNode;
+  className?: string;
+  surface?: Surface;
+}) {
+  return (
+    <div className={`${styles.deck} ${className}`} data-surface={surface}>
+      {children}
+    </div>
+  );
 }
 export function Facts({
   rows,

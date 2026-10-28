@@ -100,7 +100,7 @@ function SessionKeys({ event }: { event: TerminalEvent }) {
   const [calendar, openCalendar] = useCalendarOpen(subscribe);
   return (
     <>
-      <ActionDeck className={styles.sessionKeys}>
+      <ActionDeck className={styles.sessionKeys} surface="paper">
         <a
           className={`${ui.action} ${ui.primary}`}
           href={subscribe}
