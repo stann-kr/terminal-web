@@ -98,8 +98,6 @@
     box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
     color: var(--on-hi);
   }
-}
-@media (hover: hover) {
   .stageSlots li:has(a:hover) * {
     color: inherit !important;
   }
@@ -147,8 +145,6 @@
   color: var(--ink);
   font-weight: 700;
   text-decoration: none;
-}
-.lineup a {
   transition: var(--light-motion);
 }
 @media (hover: hover) {
