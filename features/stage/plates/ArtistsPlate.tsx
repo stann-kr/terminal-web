@@ -2,7 +2,7 @@
 import Link from '@/features/ui/RouteLink';
 import { artistHref } from '@/features/artists/model';
 import { LiveValue } from '@/features/display/Display';
-import { Loading, StateNotice } from '@/features/ui/Ui';
+import { Arrow, Loading, StateNotice } from '@/features/ui/Ui';
 import { useStageMode } from '../usePaging';
 import { ChipFace, FocusHead, PlateCard, PlateStatus, Tags } from './faces';
 import type { PlateProps } from './Plates';
@@ -41,7 +41,7 @@ export function ArtistsPlate({ mode, state, data, query }: PlateProps) {
             {profiles.slice(0, 10).map(profile => (
               <li key={profile.key}>
                 <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.artistCell}`} data-featured={profile.key === 'stann-lumo' || undefined}>
-                  <span className={styles.cellName}>{profile.name}</span>
+                  <span className={styles.cellName}>{profile.name}<Arrow /></span>
                   <span className={styles.cellMeta} aria-hidden="true">{profile.origin} · {pad(profile.appearances.length, 2)} REC</span>
                 </Link>
               </li>

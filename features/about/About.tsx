@@ -1,5 +1,5 @@
 'use client';
-import { Bay, Facts, Panel } from '@/features/ui/Ui';
+import { Arrow, Bay, Facts, Panel } from '@/features/ui/Ui';
 import styles from './about.module.css';
 import content from './content.json';
 /** The home About plate's one line; the same in every language. */
@@ -39,7 +39,7 @@ export function OfficialChannels() {
           <li key={href}>
             <a href={href} target="_blank" rel="noopener noreferrer">
               <span>0{index + 1}</span>
-              <strong>{label}</strong>
+              <strong>{label}<Arrow external /></strong>
               <span className={styles.host} aria-hidden="true">{new URL(href).host}</span>
               <span className={styles.srOnly}>새 탭에서 열기</span>
             </a>

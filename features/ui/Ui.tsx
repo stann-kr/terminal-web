@@ -17,6 +17,19 @@ function brand(children: ReactNode) {
   return typeof children === 'string' ? <BrandText text={children} /> : children;
 }
 
+/**
+ * A link's arrow, printed right after its name in the name's colour: `→` to a view of this site,
+ * `↗` to another site. Drawn, not a glyph, so it reads the same in every face; hidden from
+ * assistive technology (the link's name says where it goes).
+ */
+export function Arrow({ external = false }: { external?: boolean }) {
+  return (
+    <svg className={styles.arrow} viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+      <path d={external ? 'M4 10 10 4M5 4h5v5' : 'M2 7h9M7 3l4 4-4 4'} />
+    </svg>
+  );
+}
+
 export function PageHeading({ title }: { title: string }) {
   return <h1 className={styles.srOnly}>{title}</h1>;
 }
@@ -113,8 +126,20 @@ export function Action({
     </Link>
   );
 }
-export function ActionDeck({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`${styles.deck} ${className}`}>{children}</div>;
+export function ActionDeck({
+  children,
+  className = '',
+  surface,
+}: {
+  children: ReactNode;
+  className?: string;
+  surface?: Surface;
+}) {
+  return (
+    <div className={`${styles.deck} ${className}`} data-surface={surface}>
+      {children}
+    </div>
+  );
 }
 export function Facts({
   rows,

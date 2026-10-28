@@ -98,8 +98,10 @@
   letter-spacing: .2em;
 }
 
-/* ── Keys: a tinted key, or a solid ink key for the one primary action. Hover lights either up
-   in the plate's highlight colour; nothing moves and no frame appears. ── */
+/* ── Keys: every button is one solid key in the plate's control colour (--control), primary or not;
+   the order of the keys tells which comes first. A state is never a solid cell: it is printed, with
+   a small lamp. Hover lights a key up in --control-hi; nothing moves and no
+   frame appears. ── */
 .action,
 .button {
   display: inline-flex;
@@ -109,8 +111,8 @@
   min-height: 52px;
   padding: 0 22px;
   border: 0;
-  background: var(--well);
-  color: var(--ink);
+  background: var(--control);
+  color: var(--on-control);
   font: 700 var(--t-lg)/1.2 var(--display);
   letter-spacing: .1em;
   text-align: left;
@@ -128,13 +130,13 @@
   text-transform: none;
 }
 
-/* Deck: a panel's keys as full-width bars across the plate, flush to its sides (--bleed). The one
-   primary key is solid; the others are tinted, a neighbouring tinted key one step deeper. Wide
-   plates put the bars side by side. */
+/* Deck: a panel's keys as full-width bars across the plate, flush to its sides (--bleed), parted by
+   a hairline of the plate. Wide plates put the bars side by side. */
 .deck {
   display: grid;
   justify-self: stretch;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 2px;
   margin-inline: calc(var(--bleed, 0px) * -1);
 }
 .deck > * {
@@ -142,29 +144,34 @@
   min-height: 56px;
   padding-inline: max(12px, var(--bleed, 0px));
 }
-.deck > :not(.primary):nth-child(even) {
-  background: linear-gradient(var(--well), var(--well)) var(--well);
+/* A deck key that is narrower than its words wraps between words instead of being cut. */
+.deck > .action,
+.deck > .button {
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
+/* The first key of a group; it wears the same key as the rest. */
 .primary {
-  background: var(--fill);
-  color: var(--on-fill);
+  background: var(--control);
+  color: var(--on-control);
 }
 @media (hover: hover) {
   .action:hover,
   .button:hover:not(:disabled) {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-    color: var(--on-hi);
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
+    color: var(--on-control-hi);
   }
 }
-/* A pressed key flashes inverse, like a backlit switch taking the command: under a pointer that
-   hovers only, since on a touch screen the flash would read as a blink before the view changes.
-   A link within the site does not: the loading cover takes the press at once (globals.css), and
-   an inverse let go just before it would read as a blink. */
+/* A pressed key lights up whole at once, without the sweep, in the colour that still stands off its
+   plate: under a pointer that hovers only, since on a touch screen the flash would read as a blink
+   before the view changes. A link within the site does not: the loading cover takes the press at
+   once (globals.css), and a light let go just before it would read as a blink. */
 @media (hover: hover) {
   .action:not([href^="/"]):active,
   .button:active:not(:disabled) {
-    box-shadow: inset 0 0 0 100vmax var(--on-hi);
-    color: var(--hi);
+    box-shadow: inset 0 0 0 100vmax var(--control-hi);
+    color: var(--on-control-hi);
     transition: none;
   }
 }
@@ -172,6 +179,17 @@
 .button:focus-visible {
   outline-offset: -5px;
   outline-color: currentColor;
+}
+.arrow {
+  display: inline-block;
+  flex-shrink: 0;
+  width: .62em;
+  height: .62em;
+  margin-left: .32em;
+  vertical-align: .02em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
 }
 .button[aria-busy='true']::after {
   content: '';

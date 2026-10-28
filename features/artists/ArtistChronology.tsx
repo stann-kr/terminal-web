@@ -3,7 +3,7 @@ import Link from '@/features/ui/RouteLink';
 import type { ReactNode } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
-import { Bay, BrandText, Panel } from '@/features/ui/Ui';
+import { Arrow, Bay, BrandText, Panel } from '@/features/ui/Ui';
 import { artistHref, buildArtistArchive, profileForAppearance, type ArtistProfile } from './model';
 import styles from './artists.module.css';
 
@@ -12,6 +12,17 @@ import styles from './artists.module.css';
  * shared a lineup with them. The biography sits between them in document order, at every width.
  * Session and artist links open their files, growing from the row.
  */
+/** A linked name and its arrow: the last word and the arrow wrap together, never the arrow alone. */
+function NameWithArrow({ text }: { text: string }) {
+  const cut = text.lastIndexOf(' ') + 1;
+  return (
+    <>
+      {cut > 0 && <BrandText text={text.slice(0, cut)} />}
+      <span className={styles.nameTail}><BrandText text={text.slice(cut)} /><Arrow /></span>
+    </>
+  );
+}
+
 export function ArtistChronology({
   profile,
   events,
@@ -47,7 +58,7 @@ export function ArtistChronology({
                 <time dateTime={event.date}>{event.date}</time>
                 <div className={styles.recordBody}>
                   <span className={styles.state}>{statusLabel(event.status)}</span>
-                  <Link href={eventHref(event.id)} data-carrier={`event:${event.id}`} scroll={false}><BrandText text={event.session} /></Link>
+                  <Link href={eventHref(event.id)} data-carrier={`event:${event.id}`} scroll={false}><span className={styles.recordName}><NameWithArrow text={event.session} /></span></Link>
                   <p>{event.venue}</p>
                 </div>
                 <p className={styles.slot}>
@@ -66,7 +77,7 @@ export function ArtistChronology({
             <ul className={styles.sharedCells}>
               {[...shared.entries()].map(([key, other]) => (
                 <SharedCell key={key}>
-                  {other.href ? <Link href={other.href} data-carrier={`artist:${key}`} scroll={false}>{other.name}</Link> : <span>{other.name}</span>}
+                  {other.href ? <Link href={other.href} data-carrier={`artist:${key}`} scroll={false}>{other.name}<Arrow /></Link> : <span>{other.name}</span>}
                   <small aria-hidden="true">{other.session}</small>
                 </SharedCell>
               ))}

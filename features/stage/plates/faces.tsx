@@ -1,6 +1,6 @@
 import Link from '@/features/ui/RouteLink';
 import type { CSSProperties, ReactNode } from 'react';
-import { BrandText, type Surface } from '@/features/ui/Ui';
+import { Arrow, BrandText, type Surface } from '@/features/ui/Ui';
 import { FitTitle } from '../FitTitle';
 import styles from './plates.module.css';
 
@@ -36,9 +36,13 @@ export function ChipFace({ href, name, title, meta, carrier, label, external = f
   const body = (
     <>
       {/* The name's length bounds its size, so a long name (INSTAGRAM) still fits a narrow chip. */}
-      <span className={styles.chipName} aria-hidden="true" style={{ '--len': name.length } as CSSProperties}>{name}</span>
-      <FitTitle as="span" text={line} maxLines={1} minPx={12} className={styles.chipLine}>
-        <span>{title}</span>
+      {/* When the chip is too narrow for its line, the name carries the link's colour and arrow. */}
+      <span className={styles.chipName} aria-hidden="true" style={{ '--len': name.length } as CSSProperties}>
+        {name}
+        {href && <Arrow external={external} />}
+      </span>
+      <FitTitle as="span" text={line} maxLines={1} minPx={12} className={styles.chipLine} arrow={href ? (external ? 'out' : 'in') : undefined}>
+        <span className={styles.linkName}>{title}</span>
         {meta && <span aria-hidden="true"> · {meta}</span>}
       </FitTitle>
     </>
@@ -51,16 +55,29 @@ export function ChipFace({ href, name, title, meta, carrier, label, external = f
   );
 }
 
-/** The printed name of a plate over its rule: English station name, Korean title, tags. */
-function BandBody({ label, title, tags }: { label: string; title: string; tags?: ReactNode }) {
+/**
+ * The printed name of a plate over its rule: English station name, Korean title, tags. `link`: the
+ * band names a link, so its title is printed in the link colour with an arrow after it.
+ */
+function BandBody({ label, title, tags, link = false }: { label: string; title: string; tags?: ReactNode; link?: boolean }) {
   return (
     <>
       <span className={styles.bandTitle}>
         <span className={styles.bandLabel} aria-hidden="true">{label}</span>
-        <span className={styles.bandKo}><BrandText text={title} /></span>
+        <BandName title={title} link={link} />
       </span>
       {tags && <span className={styles.bandTags} aria-hidden="true">{tags}</span>}
     </>
+  );
+}
+
+/** A band's Korean title; inside a link it is the link's name, in the link colour with its arrow. */
+export function BandName({ title, link = false }: { title: string; link?: boolean }) {
+  return (
+    <span className={styles.bandKo} data-link={link || undefined}>
+      <BrandText text={title} />
+      {link && <Arrow />}
+    </span>
   );
 }
 
@@ -72,7 +89,7 @@ export function PlateCard({ href, label, title, tags, children }: { href: string
   return (
     <CardLink href={href} className={styles.plateCard}>
       <span className={styles.band} data-head="">
-        <BandBody label={label} title={title} tags={tags} />
+        <BandBody label={label} title={title} tags={tags} link />
       </span>
       {children}
     </CardLink>
@@ -86,7 +103,7 @@ export function FocusHead({ label, title, tags, children }: { label: string; tit
       <div className={styles.band}>
         <h1 className={styles.bandTitle} tabIndex={-1} data-stage-title="">
           <span className={`${styles.bandLabel} ${styles.heroLabel}`} aria-hidden="true">{label}</span>
-          <span className={styles.bandKo}><BrandText text={title} /></span>
+          <BandName title={title} />
         </h1>
         {tags && <span className={styles.bandTags} aria-hidden="true">{tags}</span>}
       </div>

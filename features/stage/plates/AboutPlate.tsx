@@ -2,10 +2,10 @@
 import { aboutCopy, aboutTagline, NodeFacts, OfficialChannels } from '@/features/about/About';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
-import { BrandText, Panel } from '@/features/ui/Ui';
+import { Panel } from '@/features/ui/Ui';
 import { FitTitle } from '../FitTitle';
 import { TextPages } from '../TextPages';
-import { CardLink, ChipFace, FocusHead, Tags } from './faces';
+import { BandName, CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
@@ -19,7 +19,7 @@ export function AboutPlate({ mode }: PlateProps) {
         <span className={styles.band}>
           <span className={styles.bandTitle}>
             <span className={styles.bandLabel} aria-hidden="true">About</span>
-            <span className={styles.bandKo}><BrandText text="TERMINAL 소개" /></span>
+            <BandName title="TERMINAL 소개" link />
           </span>
           <span className={styles.bandTags} aria-hidden="true"><Tags items={['SEOUL', 'KST']} /></span>
         </span>

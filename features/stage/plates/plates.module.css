@@ -44,6 +44,7 @@
     --well: color-mix(in srgb, var(--on-hi) 12%, transparent);
     --fill: var(--on-hi);
     --on-fill: var(--hi);
+    --link: var(--on-hi);
   }
 }
 /* Pressed, a card shows its inverse, like a backlit switch taking the command. Only under a
@@ -57,6 +58,7 @@
     --ink: var(--hi);
     --muted: var(--hi);
     --accent: var(--hi);
+    --link: var(--hi);
     transition: none;
   }
 }
@@ -72,6 +74,7 @@
   --well: color-mix(in srgb, var(--on-hi) 12%, transparent);
   --fill: var(--on-hi);
   --on-fill: var(--hi);
+  --link: var(--on-hi);
   transition: var(--light-motion-in);
 }
 .card:focus-visible {
@@ -92,6 +95,19 @@
     --well: inherit;
     --fill: inherit;
     --on-fill: inherit;
+    --link: inherit;
+  }
+  /* The HOME key wears its own plate (feature): it keeps its own print rather than its parent's. */
+  :global([data-moving]) .homeKey:hover {
+    color: var(--feature-ink);
+    --ink: var(--feature-ink);
+    --muted: var(--feature-muted);
+    --accent: var(--feature-accent);
+    --line: color-mix(in srgb, var(--feature-ink) 38%, transparent);
+    --well: color-mix(in srgb, var(--feature-ink) 8%, transparent);
+    --fill: var(--feature-fill);
+    --on-fill: var(--feature-on-fill);
+    --link: var(--feature-link);
   }
 }
 
@@ -149,6 +165,39 @@
   color: var(--ink);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .1em;
+}
+/* A link in a column's head that closes what the column opened: its name in the link colour and a
+   small cross; no fill (a solid cell is a key). */
+.closeKey {
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  gap: .5em;
+  min-height: 44px;
+  margin-block: -8px;
+  margin-left: auto;
+  color: var(--link);
+  font: 700 var(--t-sm)/1 var(--display);
+  letter-spacing: .12em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.closeMark {
+  flex: none;
+  width: .62em;
+  height: .62em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+@media (hover: hover) {
+  .closeKey:hover {
+    text-decoration: underline;
+  }
+}
+.closeKey:focus-visible {
+  outline-color: currentColor;
+  outline-offset: 2px;
 }
 /* A column that may not spill: it is measured (data-fit) and a spill moves or grows its sheet. It
    reaches the column's edges (its padding stands in for the column's), so the flush lines inside
@@ -241,6 +290,16 @@
   color: var(--ink);
   font: 700 var(--t-md)/1.25 var(--display);
   letter-spacing: .04em;
+}
+/* In a link's band the title is the link's name: the link colour, its arrow after it. */
+.bandKo[data-link] {
+  color: var(--link);
+}
+/* A link's name inside a longer line (a chip's line): the name and the arrow at the line's end
+   are printed in the link colour; the rest of the line keeps the plate's ink. */
+.linkName,
+.chipLine > span > svg {
+  color: var(--link);
 }
 .bandTags {
   display: flex;
@@ -347,7 +406,18 @@
 }
 /* A chip too narrow for its line (beside the name when low, under it when the chip is a sliver)
    keeps only the name; the line stays for screen readers (it carries the link's name). */
+/* The arrow after a chip's name shows only when the name stands alone (below). */
+.chipName > svg {
+  display: none;
+}
 @container layer ((max-height: 84px) and (max-width: 280px)) or (max-width: 136px) {
+  .chip .chipName {
+    --fit: calc((100cqw - 28px) / ((var(--len, 6) + 2) * .5));
+    color: var(--link);
+  }
+  .chip .chipName > svg {
+    display: inline-block;
+  }
   .chip .chipLine {
     position: absolute;
     width: 1px;
@@ -364,6 +434,12 @@
   padding: 0 14px;
 }
 /* Off the stage the line is not shown either, but it is still the link's name. */
+:global([data-stage]:not([data-stage=stage])) .chip .chipName {
+  color: var(--link);
+}
+:global([data-stage]:not([data-stage=stage])) .chip .chipName > svg {
+  display: inline-block;
+}
 :global([data-stage]:not([data-stage=stage])) .chip .chipLine {
   position: absolute;
   width: 1px;
@@ -419,6 +495,7 @@
 .signalText {
   /* Also the Instagram handle, fitted to one line: its spacing scales with the fit. */
   --title-ls: .04em;
+  color: var(--link);
   font: 700 var(--t-lg)/1.25 var(--display);
   letter-spacing: .04em;
 }
@@ -442,6 +519,12 @@
   border-left: 4px solid var(--accent);
   font: 700 var(--t-sm)/1 var(--display);
   letter-spacing: .24em;
+}
+.homeName {
+  display: inline-flex;
+  align-items: center;
+  color: var(--link);
+  white-space: nowrap;
 }
 .back {
   justify-content: space-between;
@@ -467,10 +550,11 @@
 }
 .backName {
   --title-ls: .06em;
+  color: var(--link);
   font: 800 var(--t-lg)/1 var(--display);
 }
 .backTitle {
-  color: var(--muted);
+  color: var(--link);
   font: 600 var(--t-sm)/1.2 var(--sans);
 }
 /* The back card answers its own height and shape, never cutting a line:
@@ -590,28 +674,46 @@
 .cellName {
   --title-ls: .03em;
   min-width: 0;
+  color: var(--link);
   font: 800 var(--t-lg)/1.1 var(--display);
   text-transform: uppercase;
 }
-/* A cell's or row's state is a column at its right edge, as tall as the card. */
-.cellState {
+/* A cell's or row's state is a column at its right edge, as tall as the card: printed, not filled
+   (a solid cell is a key), a small square lamp in the state's colour before the word. */
+.cellState,
+.rowState {
+  --lamp: var(--muted);
   display: flex;
   align-items: center;
+  gap: 7px;
   align-self: stretch;
-  margin: -6px calc(var(--pad) * -1) -6px 0;
   padding: 0 var(--pad);
-  background: var(--well);
+  color: var(--muted);
   font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .1em;
   white-space: nowrap;
 }
-.eventCell[data-state=UPCOMING] .cellState {
-  background: var(--mark);
-  color: var(--mark-ink);
+.cellState::before,
+.rowState::before,
+.sessionState > [data-event-state]::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--lamp, currentColor);
 }
-.eventCell[data-state=LIVE] .cellState {
-  background: var(--alert);
-  color: var(--alert-ink);
+.cellState {
+  margin: -6px calc(var(--pad) * -1) -6px 0;
+  letter-spacing: .1em;
+}
+.eventCell[data-state=UPCOMING] .cellState,
+.eventRow[data-event-state=UPCOMING] .rowState {
+  --lamp: var(--accent);
+  color: var(--ink);
+}
+.eventCell[data-state=LIVE] .cellState,
+.eventRow[data-event-state=LIVE] .rowState {
+  --lamp: var(--alert);
+  color: var(--ink);
 }
 .cellMeta {
   color: var(--muted);
@@ -715,7 +817,7 @@
   gap: 0;
   padding-block: 0;
 }
-/* The open key: a solid bar along the plate's foot. */
+/* The link's cue along the plate's foot: its name, printed in the link colour with its arrow. */
 .partEnd {
   margin-top: auto;
   padding: 0;
@@ -725,8 +827,7 @@
   align-items: center;
   min-height: 52px;
   padding: 0 var(--pad);
-  background: var(--fill);
-  color: var(--on-fill);
+  color: var(--link);
   font: 700 var(--t-md)/1 var(--display);
   letter-spacing: .16em;
 }
@@ -744,6 +845,7 @@
   text-transform: uppercase;
 }
 .nextSession {
+  color: var(--link);
   font: 800 clamp(26px, 2.4vw, 52px)/.92 var(--display);
   text-transform: uppercase;
   text-wrap: balance;
@@ -862,6 +964,7 @@
   min-width: 0;
 }
 .rowName {
+  color: var(--link);
   font: 800 var(--t-xl)/1 var(--display);
   letter-spacing: .02em;
   text-transform: uppercase;
@@ -906,23 +1009,8 @@
   font: 700 var(--t-md)/1.2 var(--display);
 }
 .rowState {
-  display: flex;
-  align-items: center;
-  align-self: stretch;
   margin: -8px calc(var(--pad) * -1) -8px 0;
-  padding: 0 var(--pad);
-  background: var(--well);
-  font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .12em;
-  white-space: nowrap;
-}
-.eventRow[data-event-state=UPCOMING] .rowState {
-  background: var(--mark);
-  color: var(--mark-ink);
-}
-.eventRow[data-event-state=LIVE] .rowState {
-  background: var(--alert);
-  color: var(--alert-ink);
 }
 /* A narrow row: name, subtitle and one fitted summary line (code · time · venue) beside its state. */
 @container layer (max-width: 760px) {
@@ -958,6 +1046,7 @@
   letter-spacing: .04em;
 }
 .cardName {
+  color: var(--link);
   font: 800 var(--t-lg)/1.05 var(--display);
   letter-spacing: .02em;
   text-transform: uppercase;
@@ -1092,7 +1181,8 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* The pager: a flush bar across the plate (--bleed) in its well; the keys are a step deeper. */
+/* The pager: a flush bar across the plate (--bleed) in its well; the keys are solid control keys,
+   a page past either end is printed (muted) where its key would be. */
 .logPager {
   display: flex;
   flex: none;
@@ -1118,18 +1208,27 @@
   font-family: var(--mono);
 }
 .logPager button {
-  background: var(--well);
+  background: var(--control);
   cursor: pointer;
-  color: var(--ink);
+  color: var(--on-control);
   font: inherit;
   letter-spacing: inherit;
   transition: var(--light-motion);
 }
 @media (hover: hover) {
   .logPager button:hover {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-    color: var(--on-hi);
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
+    color: var(--on-control-hi);
   }
+  .logPager button:active {
+    box-shadow: inset 0 0 0 100vmax var(--control-hi);
+    color: var(--on-control-hi);
+    transition: none;
+  }
+}
+.logPager button:focus-visible {
+  outline-color: currentColor;
+  outline-offset: -4px;
 }
 .feedRule {
   display: flex;
@@ -1185,9 +1284,31 @@
 :global([data-stage=stage]) .sessionMain {
   overflow: hidden;
 }
-/* The file's head band: its state, and its code on the right. */
+/* The file's head line: its state (a lamp and the word, printed, not filled: a solid cell is a
+   key), and its code on the right. */
+.sessionState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 12px;
+  min-height: 36px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 6px max(12px, var(--bleed, 0px));
+  color: var(--ink);
+  font: 700 var(--t-sm)/1.1 var(--display);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sessionState > [data-event-state] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 .sessionState > span:last-child {
-  font-family: var(--mono);
+  color: var(--muted);
+  font: 600 var(--t-xs)/1.2 var(--mono);
   letter-spacing: .04em;
 }
 .sessionTitle {
@@ -1203,8 +1324,11 @@
   text-transform: uppercase;
   text-wrap: balance;
 }
-/* The slot is bare: nothing shows until the poster has decoded and fades in. */
+/* The slot is bare: nothing shows until the poster has decoded and fades in. On the stage the slot
+   takes the height left in the overview, and answers it (`poster`): a slot too low to spare the cue's
+   line gives it all to the poster. */
 .poster {
+  container: poster / size;
   display: flex;
   flex: 1 1 0;
   justify-content: center;
@@ -1213,10 +1337,27 @@
 }
 .posterLink {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   min-width: 0;
   min-height: 0;
   max-width: 100%;
+  color: var(--link);
+  text-decoration: none;
+}
+/* The link's cue under the poster: what it opens, in the link colour with the arrow out. */
+.posterCue {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 28px;
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+}
+@media (hover: hover) {
+  .posterLink:hover .posterCue {
+    text-decoration: underline;
+  }
 }
 .posterError {
   width: 100%;
@@ -1224,8 +1365,10 @@
 }
 .poster img {
   display: block;
+  flex: 0 1 auto;
+  min-height: 0;
   max-width: 100%;
-  max-height: 100%;
+  max-height: calc(100% - 28px);
   object-fit: contain;
   opacity: 0;
   transition: opacity var(--dur-enter) var(--ease-move);
@@ -1233,8 +1376,20 @@
 .poster[data-loaded] img {
   opacity: 1;
 }
+/* A low slot sets the cue beside the poster, at its foot, so the poster keeps the slot's height. */
+@container poster (max-height: 260px) {
+  .posterLink {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  .poster img {
+    max-height: 100%;
+  }
+}
 :global([data-stage]:not([data-stage=stage])) .poster {
   flex: none;
+  container-type: normal;
 }
 :global([data-stage]:not([data-stage=stage])) .poster img {
   max-height: 420px;
@@ -1245,6 +1400,7 @@
 @container layer (max-width: 700px) {
   .poster {
     flex: none;
+    container-type: normal;
   }
   .poster img {
     width: min(100%, 440px);
@@ -1465,21 +1621,39 @@
   background: var(--alert);
   color: var(--alert-ink);
 }
+/* The retry key is a control key; on the failed line (the alert plate's colours) it wears the
+   alert role's key. */
 .status button {
+  --key: var(--control);
+  --on-key: var(--on-control);
+  --key-hi: var(--control-hi);
+  --on-key-hi: var(--on-control-hi);
   flex: none;
+  min-height: 44px;
   padding: 0 max(12px, var(--bleed, 0px));
   border: 0;
-  background: color-mix(in srgb, currentColor 16%, transparent);
-  color: inherit;
+  background: var(--key);
+  color: var(--on-key);
   font: inherit;
   letter-spacing: .1em;
   text-transform: uppercase;
   transition: var(--light-motion);
 }
+.status[data-state=error] button {
+  --key: var(--alert-control);
+  --on-key: var(--alert-on-control);
+  --key-hi: var(--alert-control-hi);
+  --on-key-hi: var(--alert-on-control-hi);
+}
 @media (hover: hover) {
   .status button:hover {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--alert-ink);
-    color: var(--alert);
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--key-hi);
+    color: var(--on-key-hi);
+  }
+  .status button:active {
+    box-shadow: inset 0 0 0 100vmax var(--key-hi);
+    color: var(--on-key-hi);
+    transition: none;
   }
 }
 .status button:focus-visible {
@@ -1498,6 +1672,11 @@
 }
 @media (forced-colors: active) {
   .status, .status button { border: 1px solid CanvasText; }
+  .cellState::before, .rowState::before, .sessionState > [data-event-state]::before {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+  .logPager button { border: 1px solid ButtonText; }
   .band, .columnHead { border-bottom: 1px solid CanvasText; }
 }
 
@@ -1522,6 +1701,12 @@
    on a laptop, tablet or half-screen window. The chip keeps the wordmark and NEXT, and the line stays
    for screen readers as the link's name. */
 @container layer ((max-height: 96px) and (max-width: 400px)) or (max-width: 250px) {
+  .next[data-density=chip] .nextChip .chipName {
+    color: var(--link);
+  }
+  .next[data-density=chip] .nextChip .chipName > svg {
+    display: inline-block;
+  }
   .next[data-density=chip] .nextChip .chipLine {
     position: absolute;
     width: 1px;

@@ -106,12 +106,40 @@ describe('palette contract', () => {
     }
   });
 
+  it('marks what can be pressed: every button a key that stands off its plate, every link name readable', async () => {
+    for (const [id, token] of await readPalettes()) {
+      const color = (name: string) => {
+        const value = token(name);
+        expect(value, `${id}: --${name}`).toMatch(/^#[0-9a-f]{6}$/i);
+        return hex(value!);
+      };
+      for (const role of ROLES) {
+        const plate = color(role);
+        const control = color(`${role}-control`);
+        const controlHi = color(`${role}-control-hi`);
+        // Text on a key and a link's name read at 4.5:1.
+        expect(contrast(color(`${role}-on-control`), control), `${id} ${role}: on-control`).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(color(`${role}-on-control-hi`), controlHi), `${id} ${role}: on-control-hi`).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(color(`${role}-link`), plate), `${id} ${role}: link`).toBeGreaterThanOrEqual(4.5);
+        // Rows run in turns of tone (--well: ink at 8% over the plate, globals.css); a name in its own
+        // colour reads on both. A name that keeps the plate's ink reads as the ink does.
+        if (token(`${role}-link`) !== token(`${role}-ink`))
+          expect(contrast(color(`${role}-link`), mix(color(`${role}-ink`), plate, 0.08)), `${id} ${role}: link on a tinted row`).toBeGreaterThanOrEqual(4.5);
+        // A key is a shape: its edge stands 3:1 off the plate it sits on.
+        expect(contrast(control, plate), `${id} ${role}: control on plate`).toBeGreaterThanOrEqual(3);
+        // Under the pointer (and pressed) the key visibly changes and still stands off the plate.
+        expect(contrast(controlHi, control), `${id} ${role}: control-hi against control`).toBeGreaterThanOrEqual(1.3);
+        expect(contrast(controlHi, plate), `${id} ${role}: control-hi on plate`).toBeGreaterThanOrEqual(3);
+      }
+    }
+  });
+
   it('maps every role to plate tokens, so a nested plate reads its own ink', async () => {
     const css = await readFile('app/globals.css', 'utf8');
     for (const role of ROLES) {
       const block = css.match(new RegExp(`\\[data-surface=${role}\\]\\s*\\{([^}]*)\\}`));
       expect(block, `${role} mapping`).not.toBeNull();
-      for (const name of ['ink', 'muted', 'accent', 'fill', 'on-fill', 'hi', 'on-hi', 'danger']) {
+      for (const name of ['ink', 'muted', 'accent', 'fill', 'on-fill', 'hi', 'on-hi', 'danger', 'control', 'on-control', 'control-hi', 'on-control-hi', 'link']) {
         expect(block![1]).toContain(`--${name}: var(--${role}-${name})`);
       }
     }

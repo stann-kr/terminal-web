@@ -16,7 +16,7 @@ export function InstagramPlate({ mode }: PlateProps) {
     <CardLink external href={instagram.url} className={styles.signalCard} label={label}>
       <span className={`${styles.signalHead} ${styles.wideHead}`} aria-hidden="true">INSTAGRAM</span>
       {/* One line, set down to fit a narrow column (a handle has no place to break). */}
-      <FitTitle as="span" text={instagram.printed} maxLines={1} minPx={12} className={styles.signalText} />
+      <FitTitle as="span" text={instagram.printed} maxLines={1} minPx={12} className={styles.signalText} arrow="out" />
       <span className={styles.bandTags} aria-hidden="true">
         <Chip>FOLLOW</Chip>
       </span>
