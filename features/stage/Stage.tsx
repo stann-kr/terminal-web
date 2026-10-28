@@ -1,6 +1,7 @@
 'use client';
 import Link from '@/features/ui/RouteLink';
 import { useRouter } from 'next/navigation';
+import { useRouteHold } from '@/features/ui/useRouteHold';
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { Loading, StateNotice, type Surface } from '@/features/ui/Ui';
@@ -114,6 +115,7 @@ const sameHeads = (a: Heads, b: Heads) => HEADED.every(id => a[id]?.mode === b[i
  */
 export function Stage({ state: address }: { state: StageState }) {
   const router = useRouter();
+  const go = useRouteHold();
   const root = useRef<HTMLDivElement>(null);
   const { data, query } = useStageData();
   const state = resolveMissing(address, data);
@@ -375,14 +377,17 @@ export function Stage({ state: address }: { state: StageState }) {
     keysState.current = { list, backHref };
   });
   useEffect(() => {
+    // The on-screen key a keyboard move stands for: the link to the same place inside `scope`.
+    const keyFor = (scope: string, href: string) =>
+      [...(root.current?.querySelectorAll<HTMLAnchorElement>(`${scope} a[href]`) ?? [])].find(link => link.getAttribute('href') === href) ?? null;
     const keydown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || typing(event.target)) return;
       const now = keysState.current;
-      // Escape does what the back card does.
+      // Escape does what the back card does, and shows its loading cover on the card.
       if (event.key === 'Escape') {
         if (!now.backHref) return;
         event.preventDefault();
-        router.push(now.backHref, { scroll: false });
+        go(now.backHref, { control: keyFor('[data-back]', now.backHref), scroll: false });
         return;
       }
       const direction = pageKey(event);
@@ -391,11 +396,13 @@ export function Stage({ state: address }: { state: StageState }) {
       const page = now.list.page + (direction === 'next' ? 1 : -1);
       if (page < 1 || page > now.list.pages) return;
       event.preventDefault();
-      router.push(listHref(now.list.kind, page), { scroll: false });
+      const href = listHref(now.list.kind, page);
+      // The cover shows on the pager key the arrow stands for.
+      go(href, { control: keyFor('[data-pager]', href), scroll: false });
     };
     document.addEventListener('keydown', keydown);
     return () => document.removeEventListener('keydown', keydown);
-  }, [router]);
+  }, [go]);
 
   const [goOn, setGoOn] = useState(false);
 

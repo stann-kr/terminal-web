@@ -116,22 +116,47 @@ export function loadingFits(link: HTMLElement) {
 /** A view that has not arrived by now will not: the link stops claiming it is on its way. */
 export const PENDING_LIMIT_MS = 15000;
 
+/** The move on its way: the control showing it (if any is on screen) and where it goes. */
+let pending: { control: HTMLElement | null; href: string } | null = null;
+let limit = 0;
+
+/** Takes the marks of markPending away: the view arrived, or will not. */
+export function clearPending() {
+  window.clearTimeout(limit);
+  pending?.control?.removeAttribute('data-pending');
+  pending = null;
+  document.documentElement.removeAttribute('data-navigating');
+}
+
+/** Where the move on its way goes (markPending), until the address changes or it is given up. */
+export const navigatingTo = () => pending?.href ?? null;
+
+/**
+ * Marks a move to `href` as on its way to another view: the page gets `data-navigating`, and
+ * `control` (the link pressed, or a button or key's on-screen control, useRouteHold) `data-pending`,
+ * until the address changes (useNavigationPending) or PENDING_LIMIT_MS passes. One move at a time:
+ * a new mark takes over.
+ */
+export function markPending(control: HTMLElement | null, href: string) {
+  clearPending();
+  pending = { control, href };
+  if (control) {
+    control.setAttribute('data-pending', '');
+    if (!loadingFits(control)) control.setAttribute('data-pending', 'compact');
+  }
+  document.documentElement.setAttribute('data-navigating', '');
+  limit = window.setTimeout(clearPending, PENDING_LIMIT_MS);
+}
+
 /**
  * Until the address changes, a link the router took over to go somewhere else gets
  * `data-pending` (and the page `data-navigating`): on a slow line the view can take seconds
  * to change, and without this the press would read as having missed. `location` is the
- * current path and query; when it changes the view has arrived and the marks go.
+ * current path and query; when it changes the view has arrived and the marks go, whichever
+ * control set them (a link here, a button or key through markPending).
  */
 export function useNavigationPending(location: string) {
   useEffect(() => {
-    let pending: HTMLElement | null = null;
-    let limit = 0;
-    const clear = () => {
-      window.clearTimeout(limit);
-      pending?.removeAttribute('data-pending');
-      pending = null;
-      document.documentElement.removeAttribute('data-navigating');
-    };
     const click = (event: MouseEvent) => {
       // The router prevents the default of the clicks it handles itself; anything else is the
       // browser's own navigation (new tab, download, outside link), which shows its own progress.
@@ -141,16 +166,11 @@ export function useNavigationPending(location: string) {
       const to = new URL(link.href);
       if (to.origin !== window.location.origin) return;
       if (to.pathname + to.search === window.location.pathname + window.location.search) return;
-      clear();
-      pending = link;
-      link.setAttribute('data-pending', '');
-      if (!loadingFits(link)) link.setAttribute('data-pending', 'compact');
-      document.documentElement.setAttribute('data-navigating', '');
-      limit = window.setTimeout(clear, PENDING_LIMIT_MS);
+      markPending(link, link.getAttribute('href') ?? to.pathname + to.search);
     };
     document.addEventListener('click', click);
     return () => {
-      clear();
+      clearPending();
       document.removeEventListener('click', click);
     };
   }, [location]);

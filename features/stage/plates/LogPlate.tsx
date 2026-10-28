@@ -7,6 +7,7 @@ import { useTransmit, useTransmitRange } from '@/features/transmit/useTransmit';
 import { NodeActivity } from '@/features/transmit/NodeActivity';
 import { TransmitForm } from '@/features/transmit/TransmitForm';
 import { Loading, Panel, StateNotice, ui } from '@/features/ui/Ui';
+import { useRouteHold } from '@/features/ui/useRouteHold';
 import { packHeights } from '../text';
 import { pageAnnouncement, pageKey, pageReadout, useStageMode } from '../usePaging';
 import { CardLink, ChipFace, FocusHead, Tags } from './faces';
@@ -125,6 +126,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
   onCapacity: (capacity: number) => void;
 }) {
   const router = useRouter();
+  const go = useRouteHold();
   const stageMode = useStageMode();
   const list = useRef<HTMLOListElement>(null);
   const region = useRef<HTMLDivElement>(null);
@@ -206,8 +208,11 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
   }, [read, page, totalPages, router]);
 
   const shown = pages ? pages[index].map(i => logs![i]) : logs ?? [];
-  const prev = index > 0 ? () => setSub({ key: logKey, index: index - 1 }) : page > 1 ? () => router.push(logHref(page - 1), { scroll: false }) : undefined;
-  const next = index < subCount - 1 ? () => setSub({ key: logKey, index: index + 1 }) : page < totalPages ? () => router.push(logHref(page + 1), { scroll: false }) : undefined;
+  // A sub-page turns at once; a server page is a move, and shows the loading cover on `control`, its
+  // key (pressed, or stood for by an arrow key) until it arrives.
+  type Turn = (control?: HTMLElement | null) => void;
+  const prev: Turn | undefined = index > 0 ? () => setSub({ key: logKey, index: index - 1 }) : page > 1 ? control => go(logHref(page - 1), { control, scroll: false }) : undefined;
+  const next: Turn | undefined = index < subCount - 1 ? () => setSub({ key: logKey, index: index + 1 }) : page < totalPages ? control => go(logHref(page + 1), { control, scroll: false }) : undefined;
   // No wheel paging here: over the log the wheel scrolls the page (its keys and PREV/NEXT turn it).
 
   const state = query.isFetching ? 'loading' : query.isError ? 'error' : query.data ? 'ready' : 'idle';
@@ -221,7 +226,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
         const turn = key === 'prev' ? prev : key === 'next' ? next : undefined;
         if (!turn) return;
         event.preventDefault();
-        turn();
+        turn(event.currentTarget.querySelector<HTMLElement>(`[data-turn=${key}]`));
       }}
     >
       {!query.data ? (
@@ -253,7 +258,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
             </ol>
           )}
           <nav className={styles.logPager} aria-label="로그 쪽 이동">
-            {prev ? <button type="button" onClick={prev}>PREV</button> : <span>PREV</span>}
+            {prev ? <button type="button" data-turn="prev" onClick={event => prev(event.currentTarget)}>PREV</button> : <span>PREV</span>}
             <span aria-hidden="true">
               {pageReadout(page, Math.max(totalPages, 1))}
               {subCount > 1 && ` · ${index + 1}/${subCount}`}
@@ -262,7 +267,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
               {pageAnnouncement(page, Math.max(totalPages, 1))}
               {subCount > 1 ? `, 나눈 쪽 ${subCount}쪽 중 ${index + 1}쪽` : ''}
             </span>
-            {next ? <button type="button" onClick={next}>NEXT</button> : <span>NEXT</span>}
+            {next ? <button type="button" data-turn="next" onClick={event => next(event.currentTarget)}>NEXT</button> : <span>NEXT</span>}
           </nav>
         </>
       )}

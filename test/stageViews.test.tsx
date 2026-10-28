@@ -11,9 +11,10 @@ import { stageOrigin } from '../features/stage/state';
 import { NodeActivity } from '../features/transmit/NodeActivity';
 import siteContent from '../features/about/content.json';
 import NotFound from '../app/not-found';
+import { ROUTE_HOLD_MS } from '../features/ui/useRouteHold';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
-const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }));
 vi.mock('next/navigation', () => ({ useSearchParams: () => navigation.search, usePathname: () => navigation.pathname, useRouter: () => router }));
 
 const artist = (id: string, name: string, extra: Partial<TerminalEvent['artists'][number]> = {}): TerminalEvent['artists'][number] => ({ id, name, origin: 'KR', dock: '1', time: 'TBA', status: 'ARCHIVED', ...extra });
@@ -52,6 +53,7 @@ afterEach(() => {
   navigation.pathname = '/';
   router.push.mockReset();
   router.replace.mockReset();
+  router.prefetch.mockReset();
   vi.useRealTimers();
   vi.restoreAllMocks();
   delete document.documentElement.dataset.stageMode;
@@ -194,13 +196,43 @@ describe('stage views', () => {
     expect(detail(container, 'event:OLD')).toHaveAttribute('data-visible', 'false');
   });
 
-  it('goes back on Escape like the back card, but not while typing', () => {
+  it('goes back on Escape like the back card, with its loading cover, but not while typing', () => {
+    vi.useFakeTimers();
     const { go } = shell();
     go('/events');
     go('/events/OLD');
     fireEvent.keyDown(screen.getByRole('textbox', { name: '초안' }), { key: 'Escape' });
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
     expect(router.push).not.toHaveBeenCalled();
     fireEvent.keyDown(document.body, { key: 'Escape' });
+    const back = screen.getByRole('link', { name: /이전 화면으로/ });
+    expect(back).toHaveAttribute('data-pending');
+    expect(router.push).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
+    expect(router.push).toHaveBeenCalledWith('/events', { scroll: false });
+    go('/events');
+    expect(back).not.toHaveAttribute('data-pending');
+  });
+
+  it('turns a list page by arrow key with the loading cover on the pager key it stands for', () => {
+    vi.useFakeTimers();
+    const events = Array.from({ length: 40 }, (_, index) => ({ ...past, id: `EVENT ${String(index).padStart(2, '0')}`, session: `EVENT ${index}` }));
+    const { container, go } = shell(events);
+    go('/events', 'page=2');
+    const pager = within(screen.getByRole('navigation', { name: '목록 쪽 이동' }));
+    const prev = pager.getByRole('link', { name: 'PREV' });
+    container.querySelector<HTMLElement>('#stage')!.focus();
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowLeft' });
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowLeft' });
+    expect(prev).toHaveAttribute('data-pending');
+    expect(router.push).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowLeft' });
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
     expect(router.push).toHaveBeenCalledWith('/events', { scroll: false });
   });
 
@@ -759,6 +791,50 @@ describe('public log window', () => {
     await waitFor(() => expect(result.current.data).toBeDefined());
     expect(result.current.data!.logs.map(entry => entry.id)).toEqual(['L8', 'L9', 'L10', 'L11', 'L12', 'L13']);
     expect(result.current.data!.total).toBe(14);
+  });
+});
+
+describe('visitor log pager', () => {
+  const log = (n: number) => ({ id: `L${n}`, handle: `h${n}`, message: 'm', ts: '09.30 12:00', createdAt: '2026-09-30T03:00:00.000Z' });
+  function logShell(search: string) {
+    const { client, go } = shell();
+    for (const page of [1, 2, 3]) {
+      client.setQueryData(['transmit', page], { logs: [1, 2, 3, 4, 5].map(i => log((page - 1) * 5 + i)), total: 14, page, totalPages: 3 });
+    }
+    go('/transmit', search);
+    return within(screen.getByRole('navigation', { name: '로그 쪽 이동' }));
+  }
+
+  it('covers the pressed PREV/NEXT key until the page arrives and moves once however often it is pressed', () => {
+    vi.useFakeTimers();
+    const pager = logShell('page=2');
+    const next = pager.getByRole('button', { name: 'NEXT' });
+    next.focus();
+    fireEvent.click(next);
+    fireEvent.click(next);
+    expect(next).toHaveAttribute('data-pending');
+    expect(next).toHaveFocus();
+    expect(router.push).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    fireEvent.click(next);
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
+    expect(router.push).toHaveBeenCalledWith('/transmit?page=3', { scroll: false });
+  });
+
+  it('shows an arrow key’s turn on the PREV/NEXT key it stands for', () => {
+    vi.useFakeTimers();
+    const pager = logShell('page=2');
+    const next = pager.getByRole('button', { name: 'NEXT' });
+    const prev = pager.getByRole('button', { name: 'PREV' });
+    next.focus();
+    fireEvent.keyDown(next, { key: 'ArrowLeft' });
+    expect(prev).toHaveAttribute('data-pending');
+    expect(next).not.toHaveAttribute('data-pending');
+    expect(next).toHaveFocus();
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
+    expect(router.push).toHaveBeenCalledWith('/transmit', { scroll: false });
   });
 });
 
