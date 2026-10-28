@@ -6,6 +6,7 @@ export const artistIdentities: readonly ArtistIdentity[] = [
     appearances: [
       { eventId: 'TRM-01', artistRowId: '01-A' },
       { eventId: 'TRM-02', artistRowId: '02-A' },
+      { eventId: 'TRM-03', artistRowId: '03-A' },
     ],
   },
   { key: 'marcus-l', appearances: [{ eventId: 'TRM-01', artistRowId: '01-B' }] },
