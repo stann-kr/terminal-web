@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       return json({ name: null });
     }
 
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const abuseDecision = await enforceRateLimit(env, 'code-info', request);
     if (!abuseDecision.ok) return json({ error: abuseDecision.error }, abuseDecision.status);
     const db = getDb(env.DB);

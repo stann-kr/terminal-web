@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const page = parseTransmitPage(new URL(request.url).searchParams.get('page'));
     if (page === null) return noStoreJson({ error: 'INVALID_PAGE' }, 400);
 
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const logPage = await listTransmitLogs(getDb(env.DB), page);
     return noStoreJson(logPage);
   } catch (error) {
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     );
     if (!parsedInput.ok) return noStoreJson({ error: parsedInput.error }, 400);
 
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const abuseDecision = await enforceRateLimit(env, 'transmit', request);
     if (!abuseDecision.ok) {
       return noStoreJson({ error: abuseDecision.error }, abuseDecision.status);

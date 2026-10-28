@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const db = getDb(env.DB);
     const rows = await listStoredArtistRowsByEvent(db, eventId);
     const result = rows.map(parsePublicArtistRow);

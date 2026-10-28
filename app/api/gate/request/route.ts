@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return noStoreJson({ error: requestInput.error }, 400);
     }
 
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const abuseDecision = await enforceRateLimit(env, 'gate-request', request);
     if (!abuseDecision.ok) {
       return noStoreJson({ error: abuseDecision.error }, abuseDecision.status);
