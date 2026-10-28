@@ -201,19 +201,24 @@
   font-family: var(--mono);
 }
 .pager a {
-  background: var(--well);
-  color: var(--ink);
+  background: var(--control);
+  color: var(--on-control);
   text-decoration: none;
   transition: var(--light-motion);
 }
+/* A page past either end is printed, not keyed: no fill, muted (above). */
+.pager > span:not([aria-hidden]):not(.srOnly) {
+  background: transparent;
+}
 @media (hover: hover) {
   .pager a:hover {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-    color: var(--on-hi);
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
+    color: var(--on-control-hi);
   }
 }
 .pager a:focus-visible {
   outline-offset: -4px;
+  outline-color: currentColor;
 }
 
 /* ── The server's first markup (and pages without script): document order ── */
@@ -335,8 +340,8 @@
 @keyframes pageBack {
   from { opacity: 0; transform: translateX(-12px); }
 }
-/* Page turns: a flush bar across the column (--bleed) in its well; the keys are a step deeper and
-   as tall as the bar. */
+/* Page turns: a flush bar across the column (--bleed) in its well; the keys are control keys as
+   tall as the bar, and a turn that cannot be taken prints as text. */
 .textPager {
   display: flex;
   flex: none;
@@ -359,21 +364,33 @@
   min-height: 44px;
   padding: 0 max(14px, var(--bleed, 0px));
   border: 0;
-  background: var(--well);
-  color: var(--ink);
+  background: var(--control);
+  color: var(--on-control);
   font: inherit;
   letter-spacing: inherit;
   transition: var(--light-motion);
 }
 @media (hover: hover) {
   .textPager button:hover:not(:disabled) {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-    color: var(--on-hi);
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
+    color: var(--on-control-hi);
+  }
+  .textPager button:active:not(:disabled) {
+    box-shadow: inset 0 0 0 100vmax var(--control-hi);
+    color: var(--on-control-hi);
+    transition: none;
   }
 }
+.textPager button:focus-visible {
+  outline-offset: -4px;
+  outline-color: currentColor;
+}
+/* A page turn past either end is printed, not keyed. */
 .textPager button:disabled {
   cursor: default;
-  opacity: .4;
+  background: transparent;
+  color: var(--muted);
+  opacity: .55;
 }
 
 /* ── Fitted titles: the inner line carries the fitted size ────────────────── */
@@ -414,21 +431,31 @@
   min-height: 48px;
   padding: 0 22px;
   border: 0;
-  background: var(--fill);
-  color: var(--on-fill);
+  background: var(--control);
+  color: var(--on-control);
   font: 700 var(--t-lg)/1 var(--display);
   letter-spacing: .12em;
   transition: var(--light-motion);
 }
 @media (hover: hover) {
   .enlarge button:hover {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-    color: var(--on-hi);
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
+    color: var(--on-control-hi);
   }
+  .enlarge button:active {
+    box-shadow: inset 0 0 0 100vmax var(--control-hi);
+    color: var(--on-control-hi);
+    transition: none;
+  }
+}
+.enlarge button:focus-visible {
+  outline-offset: -5px;
+  outline-color: currentColor;
 }
 
 @media (forced-colors: active) {
-  .pager a, .textPager button { border: 1px solid CanvasText; }
+  .pager a { border: 1px solid CanvasText; }
+  .textPager button, .enlarge button { border: 1px solid ButtonText; }
 }
 
 /* The place of a file whose records are not read yet: the state, flush across the top. */

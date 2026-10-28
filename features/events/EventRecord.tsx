@@ -3,7 +3,7 @@ import Link from '@/features/ui/RouteLink';
 import { useEffect, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getSlotTimes } from '@/lib/events/lifecycle';
-import { Action, ActionDeck, BrandText, Facts, ui } from '@/features/ui/Ui';
+import { Action, ActionDeck, Arrow, BrandText, Facts, ui } from '@/features/ui/Ui';
 import { CALENDAR_FEED_PATH, calendarSubscribeHref } from './calendar';
 import { SITE_ORIGIN } from './metadata';
 import {
@@ -270,7 +270,7 @@ export function Lineup({
     return (
       <>
         {profile ? (
-          <Link href={artistHref(profile.key)} data-carrier={`artist:${profile.key}`} scroll={false}>{artist.name}</Link>
+          <Link href={artistHref(profile.key)} data-carrier={`artist:${profile.key}`} scroll={false}>{artist.name}<Arrow /></Link>
         ) : (
           artist.name
         )}

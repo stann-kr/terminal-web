@@ -37,7 +37,7 @@ export function ArtistItem({ profile, shape, current = false }: { profile: Artis
   if (shape === 'cell') {
     return (
       <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.artistCell}`} data-carrier={carrier} scroll={false}>
-        <FitTitle as="span" text={profile.name} maxLines={1} minPx={12} className={styles.cellName}>{profile.name}</FitTitle>
+        <FitTitle as="span" text={profile.name} maxLines={1} minPx={12} className={styles.cellName} arrow="in">{profile.name}</FitTitle>
         <span className={styles.cellMeta} aria-hidden="true">{profile.origin} · {records} REC</span>
       </Link>
     );
@@ -46,7 +46,7 @@ export function ArtistItem({ profile, shape, current = false }: { profile: Artis
     return (
       <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} aria-current={current ? 'page' : undefined} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{profile.origin || '—'}</span>
-        <FitTitle as="span" text={profile.name} maxLines={1} minPx={12} className={styles.cellName}>{profile.name}</FitTitle>
+        <FitTitle as="span" text={profile.name} maxLines={1} minPx={12} className={styles.cellName} arrow="in">{profile.name}</FitTitle>
       </Link>
     );
   }
@@ -66,7 +66,7 @@ export function ArtistItem({ profile, shape, current = false }: { profile: Artis
           <span>ARTIST / {profile.origin}</span>
           <SignalText active={upcoming(profile)}>{live ? 'LIVE 출연' : next ? '예정 출연' : '출연 기록'}</SignalText>
         </span>
-        <FitTitle as="h2" text={profile.name} maxLines={2} minPx={18} className={styles.cardName} />
+        <FitTitle as="h2" text={profile.name} maxLines={2} minPx={18} className={styles.cardName} arrow="in" />
         <span className={styles.cardFoot} aria-hidden="true">
           <span>{profile.origin}-{records} REC</span>
           <span>{serial(profile.key)}</span>

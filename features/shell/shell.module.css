@@ -70,13 +70,14 @@
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .2em;
 }
-/* The language of a bilingual text, printed in its head: KO · EN as small caps, the one in use in
-   the plate's ink, the other muted; pressing lights it like any key. Each key draws 32px tall, level
+/* The language of a bilingual text, printed in its head: KO and EN as small caps, the one in use
+   printed in the plate's ink, the other a control key, the one to press. Each key draws 32px tall, level
    with the title line, but answers a 44 × 44px target: the reach runs above and below it and out
    past the pair's ends, so nothing around the keys moves and the two never overlap. */
 .language {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   margin-left: auto;
 }
 .language button {
@@ -85,8 +86,8 @@
   min-height: 32px;
   padding: 0 6px;
   border: 0;
-  background: none;
-  color: var(--muted);
+  background: var(--control);
+  color: var(--on-control);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .16em;
   transition: var(--light-motion);
@@ -102,21 +103,19 @@
 .language button:last-child::after {
   right: -8px;
 }
-.language button + button::before {
-  content: '·';
-  margin-right: 10px;
-  color: var(--muted);
-}
+/* The language being read is printed, not a key: only the other one can be pressed. */
 .language button[aria-pressed=true] {
+  background: none;
   color: var(--ink);
 }
 @media (hover: hover) {
   .language button:not([aria-pressed=true]):hover {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-    color: var(--on-hi);
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
+    color: var(--on-control-hi);
   }
 }
 .language button:focus-visible {
+  outline-color: currentColor;
   outline-offset: -4px;
 }
 @media (forced-colors: active) {

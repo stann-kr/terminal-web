@@ -16,7 +16,7 @@ export function SignalPlate({ mode, rings }: PlateProps) {
         {rings && <Rings at={rings} under />}
         <span className={styles.signalHead} aria-hidden="true">SIGNAL</span>
         {/* One line, set down to fit a narrow card: a second line would not fit a low home card. */}
-        <FitTitle as="span" text="다음 이벤트 소식 받기" maxLines={1} minPx={14} className={styles.signalText} />
+        <FitTitle as="span" text="다음 이벤트 소식 받기" maxLines={1} minPx={14} className={styles.signalText} arrow="in" />
         <span className={styles.bandTags} aria-hidden="true">
           <Chip>CH 01</Chip>
           <Chip>MAIL</Chip>

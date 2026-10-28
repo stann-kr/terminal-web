@@ -10,7 +10,7 @@ import { Loading, Panel, StateNotice, ui } from '@/features/ui/Ui';
 import { useRouteHold } from '@/features/ui/useRouteHold';
 import { packHeights } from '../text';
 import { pageAnnouncement, pageKey, pageReadout, useStageMode } from '../usePaging';
-import { CardLink, ChipFace, FocusHead, Tags } from './faces';
+import { BandName, CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
@@ -40,7 +40,7 @@ export function LogPlate({ mode, state, size }: PlateProps) {
         <span className={styles.band}>
           <span className={styles.bandTitle}>
             <span className={styles.bandLabel}>Log</span>
-            <span className={styles.bandKo}>방문자 로그</span>
+            <BandName title="방문자 로그" link />
           </span>
           <span className={styles.bandTags}><Tags items={['NODE ACTIVITY']} /></span>
         </span>

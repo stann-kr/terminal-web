@@ -8,7 +8,7 @@ import { EventActions, EventFacts, Lineup } from '@/features/events/EventRecord'
 import { bilingual, eventHref, eventSubtitle, isRuleLine, paragraphs, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
-import { Action, ActionDeck, BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
+import { Action, ActionDeck, Arrow, BrandText, StateNotice, ui, type Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import { FitTitle } from '../FitTitle';
 import type { ItemMode } from '../layout';
@@ -31,7 +31,7 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventCell}`} data-state={event.status} data-carrier={carrier} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
-        <FitTitle as="span" text={sessionShort(event.session)} maxLines={1} minPx={12} className={styles.cellName}><BrandText text={sessionShort(event.session)} /></FitTitle>
+        <FitTitle as="span" text={sessionShort(event.session)} maxLines={1} minPx={12} className={styles.cellName} arrow="in"><BrandText text={sessionShort(event.session)} /></FitTitle>
         <span className={styles.cellState}>{statusLabel(event.status)}</span>
       </Link>
     );
@@ -40,7 +40,7 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.indexLine}`} data-carrier={carrier} aria-current={current ? 'page' : undefined} scroll={false}>
         <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
-        <FitTitle as="span" text={sessionShort(event.session)} maxLines={1} minPx={12} className={styles.cellName}><BrandText text={sessionShort(event.session)} /></FitTitle>
+        <FitTitle as="span" text={sessionShort(event.session)} maxLines={1} minPx={12} className={styles.cellName} arrow="in"><BrandText text={sessionShort(event.session)} /></FitTitle>
       </Link>
     );
   }
@@ -52,7 +52,7 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventRow}`} data-event-state={event.status} data-carrier={carrier} scroll={false}>
         <span className={styles.rowId}>{event.id}</span>
         <span className={styles.rowMain}>
-          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={1} minPx={16} className={styles.rowName}>
+          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={1} minPx={16} className={styles.rowName} arrow="in">
             <BrandText text={sessionShort(event.session)} />
           </FitTitle>
           {subtitle && (
@@ -118,6 +118,7 @@ function Poster({ src, alt }: { src: string; alt: string }) {
             onLoad={() => setStatus('loaded')}
             onError={() => setStatus('error')}
           />
+          <span className={styles.posterCue} aria-hidden="true">포스터 원본<Arrow external /></span>
         </a>
       )}
     </div>
@@ -139,7 +140,7 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
   return (
     <article className={styles.session} data-request={request || undefined} aria-labelledby={`session-${event.id}`}>
       <div className={styles.sessionMain} data-fit="">
-        <p className={`${ui.band} ${styles.sessionState}`} aria-hidden="true">
+        <p className={styles.sessionState} aria-hidden="true">
           <span data-event-state={event.status}>{statusLabel(event.status)}</span>
           <span>{event.id}</span>
         </p>
@@ -178,7 +179,10 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
               <p className={styles.columnHead}>
                 <b aria-hidden="true">Access</b>
                 <span>게스트 신청</span>
-                <Link href={eventHref(event.id)} className={styles.closeKey} scroll={false}>신청 닫기</Link>
+                <Link href={eventHref(event.id)} className={styles.closeKey} scroll={false}>
+                  신청 닫기
+                  <svg className={styles.closeMark} viewBox="0 0 14 14" aria-hidden="true" focusable="false"><path d="M3 3l8 8M11 3l-8 8" /></svg>
+                </Link>
               </p>
               <div className={styles.fitColumn} data-fit="">
                 <AccessRequest eventId={event.id} />

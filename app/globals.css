@@ -15,6 +15,8 @@
  * every plate:
  *   --ink / --muted: text   --line / --faint: rules   --fill / --on-fill: solid cells   --accent: numbers
  *   --well: a tinted cell   --hi / --on-hi: hover     --danger: errors                   --focus: focus ring
+ *   --control / --on-control: every button (--control-hi / --on-control-hi under the pointer)
+ *   --link: the name of a link plate, card or row, followed by its arrow (Ui.tsx Arrow)
  */
 @property --ring-phase {
   syntax: '<length>';
@@ -88,6 +90,11 @@
   --hi: var(--panel-hi);
   --on-hi: var(--panel-on-hi);
   --danger: var(--panel-danger);
+  --control: var(--panel-control);
+  --on-control: var(--panel-on-control);
+  --control-hi: var(--panel-control-hi);
+  --on-control-hi: var(--panel-on-control-hi);
+  --link: var(--panel-link);
 }
 [data-surface=inset] {
   --plate: var(--inset);
@@ -100,6 +107,11 @@
   --hi: var(--inset-hi);
   --on-hi: var(--inset-on-hi);
   --danger: var(--inset-danger);
+  --control: var(--inset-control);
+  --on-control: var(--inset-on-control);
+  --control-hi: var(--inset-control-hi);
+  --on-control-hi: var(--inset-on-control-hi);
+  --link: var(--inset-link);
 }
 [data-surface=paper] {
   --plate: var(--paper);
@@ -112,6 +124,11 @@
   --hi: var(--paper-hi);
   --on-hi: var(--paper-on-hi);
   --danger: var(--paper-danger);
+  --control: var(--paper-control);
+  --on-control: var(--paper-on-control);
+  --control-hi: var(--paper-control-hi);
+  --on-control-hi: var(--paper-on-control-hi);
+  --link: var(--paper-link);
 }
 [data-surface=feature] {
   --plate: var(--feature);
@@ -124,6 +141,11 @@
   --hi: var(--feature-hi);
   --on-hi: var(--feature-on-hi);
   --danger: var(--feature-danger);
+  --control: var(--feature-control);
+  --on-control: var(--feature-on-control);
+  --control-hi: var(--feature-control-hi);
+  --on-control-hi: var(--feature-on-control-hi);
+  --link: var(--feature-link);
 }
 [data-surface=mark] {
   --plate: var(--mark);
@@ -136,6 +158,11 @@
   --hi: var(--mark-hi);
   --on-hi: var(--mark-on-hi);
   --danger: var(--mark-danger);
+  --control: var(--mark-control);
+  --on-control: var(--mark-on-control);
+  --control-hi: var(--mark-control-hi);
+  --on-control-hi: var(--mark-on-control-hi);
+  --link: var(--mark-link);
 }
 [data-surface=alert] {
   --plate: var(--alert);
@@ -148,6 +175,11 @@
   --hi: var(--alert-hi);
   --on-hi: var(--alert-on-hi);
   --danger: var(--alert-danger);
+  --control: var(--alert-control);
+  --on-control: var(--alert-on-control);
+  --control-hi: var(--alert-control-hi);
+  --on-control-hi: var(--alert-on-control-hi);
+  --link: var(--alert-link);
 }
 [data-surface=calm] {
   --plate: var(--calm);
@@ -160,6 +192,11 @@
   --hi: var(--calm-hi);
   --on-hi: var(--calm-on-hi);
   --danger: var(--calm-danger);
+  --control: var(--calm-control);
+  --on-control: var(--calm-on-control);
+  --control-hi: var(--calm-control-hi);
+  --on-control-hi: var(--calm-on-control-hi);
+  --link: var(--calm-link);
 }
 [data-surface=fresh] {
   --plate: var(--fresh);
@@ -172,6 +209,11 @@
   --hi: var(--fresh-hi);
   --on-hi: var(--fresh-on-hi);
   --danger: var(--fresh-danger);
+  --control: var(--fresh-control);
+  --on-control: var(--fresh-on-control);
+  --control-hi: var(--fresh-control-hi);
+  --on-control-hi: var(--fresh-on-control-hi);
+  --link: var(--fresh-link);
 }
 /* Rules, tinted cells and focus follow the plate's own ink. */
 :root,

@@ -3,7 +3,7 @@ import Link from '@/features/ui/RouteLink';
 import { getArchivedOrElapsedEvents, getLiveEvents } from '@/lib/events/lifecycle';
 import { eventHref, sessionShort, statusLabel } from '@/features/events/model';
 import { LiveValue } from '@/features/display/Display';
-import { Action, BrandText, Loading, StateNotice } from '@/features/ui/Ui';
+import { Action, Arrow, BrandText, Loading, StateNotice } from '@/features/ui/Ui';
 import { useStageMode } from '../usePaging';
 import { ChipFace, FocusHead, PlateCard, PlateStatus, Tags } from './faces';
 import type { PlateProps } from './Plates';
@@ -47,7 +47,7 @@ export function EventsPlate({ mode, state, data, query }: PlateProps) {
               <li key={event.id}>
                 <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventCell}`} data-state={event.status}>
                   <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
-                  <span className={styles.cellName}><BrandText text={sessionShort(event.session)} /></span>
+                  <span className={styles.cellName}><BrandText text={sessionShort(event.session)} /><Arrow /></span>
                   <span className={styles.cellState}>{statusLabel(event.status)}</span>
                 </Link>
               </li>

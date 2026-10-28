@@ -5,7 +5,7 @@ import { DataActivity } from '@/features/display/Display';
 import { accessAvailability, dayMark, eventHref, eventSubtitle, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
-import { Action, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
+import { Action, Arrow, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
 import { FitStack } from '../FitStack';
 import { FitTitle } from '../FitTitle';
 import { Rings } from '../Rings';
@@ -77,10 +77,10 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
   if (mode === 'chip' || mode === 'index') {
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextChip}`} data-carrier={carrier} scroll={false}>
-        <span className={styles.chipName} aria-hidden="true">NEXT</span>
-        <FitTitle as="span" text={`${sessionShort(event.session)} · ${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine}>
+        <span className={styles.chipName} aria-hidden="true">NEXT<Arrow /></span>
+        <FitTitle as="span" text={`${sessionShort(event.session)} · ${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine} arrow="in">
           <span className={styles.srOnly}>{spoken} </span>
-          <BrandText text={sessionShort(event.session)} />
+          <span className={styles.linkName}><BrandText text={sessionShort(event.session)} /></span>
           <span aria-hidden="true"> · {event.id} · {dayMark(event, now)}</span>
         </FitTitle>
       </Link>
@@ -115,7 +115,7 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
             </span>
           </span>
           {event.status === 'ARCHIVED' && mode === 'hero' && <span className={styles.noUpcoming}>다음 이벤트 미정</span>}
-          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession}>
+          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession} arrow="in">
             <BrandText text={sessionShort(event.session)} />
           </FitTitle>
         </span>
@@ -155,7 +155,7 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
         )}
         {mode === 'hero' && (
           <span className={`${styles.part} ${styles.partEnd}`} data-priority="3">
-            <span className={styles.nextCta} aria-hidden="true">OPEN SESSION FILE</span>
+            <span className={styles.nextCta} aria-hidden="true">세션 파일 열기<Arrow /></span>
           </span>
         )}
       </FitStack>
