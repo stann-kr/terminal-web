@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
-import { markPending, navigatingTo } from '@/features/shell/useConsoleMotion';
+import { markPending, markSent, navigatingTo, sentTo } from '@/features/shell/useConsoleMotion';
 
 type Router = ReturnType<typeof useRouter>;
 
@@ -17,12 +17,13 @@ let held: { href: string; timer: number } | null = null;
 
 /**
  * Moves to `href` after ROUTE_HOLD_MS, fetching the view in the meantime. A second call for the same
- * place while it waits does not start it again; a call for another place takes over. If the address
+ * place while it waits, or after it went and before it arrived, does not start it again; a call for another place takes over. If the address
  * changed some other way while it waited (Escape, the back button), it stays put. Every site move
  * goes through here (RouteLink, and the keys and buttons of useRouteHold), so one takes over another.
  */
 export function holdRoute(router: Router, href: string, { replace = false, scroll }: { replace?: boolean; scroll?: boolean } = {}) {
-  if (held?.href === href) return;
+  // Waiting out its hold, or handed to the router and not arrived: once is enough.
+  if (held?.href === href || sentTo() === href) return;
   if (held) window.clearTimeout(held.timer);
   const from = window.location.href;
   // A full prefetch: a detail is dynamic, and the default would fetch only its shell.
@@ -32,6 +33,7 @@ export function holdRoute(router: Router, href: string, { replace = false, scrol
     timer: window.setTimeout(() => {
       held = null;
       if (window.location.href !== from) return;
+      markSent(href);
       (replace ? router.replace : router.push)(href, { scroll: scroll ?? true });
     }, ROUTE_HOLD_MS),
   };

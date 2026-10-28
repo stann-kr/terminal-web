@@ -70,6 +70,20 @@ describe('route hold for buttons and keys',()=>{
     act(()=>{ vi.advanceTimersByTime(ROUTE_HOLD_MS); });
     expect(router.push).toHaveBeenCalledTimes(1);
   });
+  it('does not send a move again when its link is pressed after the key handed it over, and before it arrived',()=>{
+    render(<Pager/>);
+    act(()=>{ key('KEY').click(); });
+    act(()=>{ vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
+    act(()=>{ screen.getByRole('link').click(); });
+    act(()=>{ vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
+    // Once the view arrived (the marks go with the address), the same link moves again.
+    act(()=>{ clearPending(); });
+    act(()=>{ screen.getByRole('link').click(); });
+    act(()=>{ vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(2);
+  });
   it('moves without a cover when the key’s control is not on screen, and gives up the mark in time',()=>{
     // jsdom has no checkVisibility; a browser's answers for a hidden element.
     Object.defineProperty(HTMLElement.prototype,'checkVisibility',{configurable:true,value(this:HTMLElement){ return !this.hidden; }});

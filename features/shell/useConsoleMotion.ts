@@ -116,8 +116,11 @@ export function loadingFits(link: HTMLElement) {
 /** A view that has not arrived by now will not: the link stops claiming it is on its way. */
 export const PENDING_LIMIT_MS = 15000;
 
-/** The move on its way: the control showing it (if any is on screen) and where it goes. */
-let pending: { control: HTMLElement | null; href: string } | null = null;
+/**
+ * The move on its way: the control showing it (if any is on screen), where it goes, and whether
+ * the router has been given it already (markSent).
+ */
+let pending: { control: HTMLElement | null; href: string; sent?: boolean } | null = null;
 let limit = 0;
 
 /** Takes the marks of markPending away: the view arrived, or will not. */
@@ -131,6 +134,14 @@ export function clearPending() {
 /** Where the move on its way goes (markPending), until the address changes or it is given up. */
 export const navigatingTo = () => pending?.href ?? null;
 
+/** The move on its way has been handed to the router (holdRoute): pressing for it again does nothing. */
+export function markSent(href: string) {
+  if (pending?.href === href) pending.sent = true;
+}
+
+/** Where the move handed to the router goes, until the address changes or it is given up. */
+export const sentTo = () => (pending?.sent ? pending.href : null);
+
 /**
  * Marks a move to `href` as on its way to another view: the page gets `data-navigating`, and
  * `control` (the link pressed, or a button or key's on-screen control, useRouteHold) `data-pending`,
@@ -138,8 +149,10 @@ export const navigatingTo = () => pending?.href ?? null;
  * a new mark takes over.
  */
 export function markPending(control: HTMLElement | null, href: string) {
+  // Marking the same move again (its link pressed once more) keeps it handed over.
+  const sent = pending?.href === href && pending.sent;
   clearPending();
-  pending = { control, href };
+  pending = { control, href, sent };
   if (control) {
     control.setAttribute('data-pending', '');
     if (!loadingFits(control)) control.setAttribute('data-pending', 'compact');
