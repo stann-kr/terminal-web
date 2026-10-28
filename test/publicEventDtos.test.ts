@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parsePublicArtistRow, parsePublicEventRow } from '../lib/events/publicDtos';
+import { toPublicEvents } from '../lib/events/publicEvents';
 
 const artistData = {
   name: 'ARTIST',
@@ -92,5 +93,20 @@ describe('public event DTOs', () => {
     { log: { ko: '수신', en: 'x'.repeat(501) } },
   ])('rejects malformed narrative fields: %j', (invalid) => {
     expect(parsePublicEventRow({ id: 'invalid', data: JSON.stringify({ ...eventData, ...invalid }) }, [])).toBeNull();
+  });
+
+  it('tells whether an event takes guest codes, from hidden rows too, without exposing any code', () => {
+    const now = new Date('2026-08-01T00:00:00Z');
+    const events = toPublicEvents(
+      [{ id: 'coded', data: JSON.stringify(eventData) }, { id: 'uncoded', data: JSON.stringify(eventData) }],
+      [
+        { id: 'host', eventId: 'coded', data: JSON.stringify({ ...artistData, status: 'PENDING', guestCode: 'HOST-CODE', guestLimit: 30 }) },
+        { id: 'a1', eventId: 'uncoded', data: JSON.stringify(artistData) },
+      ],
+      now,
+    );
+    expect(events.map((event) => [event.id, event.guestAccess])).toEqual([['coded', true], ['uncoded', false]]);
+    expect(JSON.stringify(events)).not.toContain('HOST-CODE');
+    expect(JSON.stringify(events)).not.toContain('guestLimit');
   });
 });

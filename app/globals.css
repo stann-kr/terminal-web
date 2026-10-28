@@ -219,27 +219,28 @@ details[open] > summary { margin-bottom: 6px; }
   :where(a:hover, button:hover, li:hover) :where(*) { transition: color var(--dur-light-in) linear, background-color var(--dur-light-in) linear; }
 }
 :root :is(a, button):active { transition: none; }
-/* A link on its way to a view that has not arrived yet (useNavigationPending) shows the first
-   visit's loading screen inside itself, in its colours whatever the plate: the field covers the
-   control (::before) and a blinking lamp reads LOADING over it (::after). It starts with the press,
-   so the press never reads as a blink before the loading shows, and comes in the way the loading
-   screen does: the field fades up first, the words just after. A link that stretches its ::after
-   over its row keeps itself static (its module says so), so the cover spreads over the whole row. */
-:where(a[data-pending]) { position: relative; }
-a[data-pending] { cursor: progress; }
+/* A link (or a button or key's control, useRouteHold) on its way to a view that has not arrived
+   yet (useNavigationPending) shows the first visit's loading screen inside itself, in its colours
+   whatever the plate: the field covers the control (::before) and a blinking lamp reads LOADING
+   over it (::after). It starts with the press, so the press never reads as a blink before the
+   loading shows, and comes in the way the loading screen does: the field fades up first, the
+   words just after. A link that stretches its ::after over its row keeps itself static (its module
+   says so), so the cover spreads over the whole row. */
+:where(:is(a, button)[data-pending]) { position: relative; }
+:is(a, button)[data-pending] { cursor: progress; }
 /* :root outranks a module's own stretched ::after. */
-:root a[data-pending]::before,
-:root a[data-pending]::after {
+:root :is(a, button)[data-pending]::before,
+:root :is(a, button)[data-pending]::after {
   position: absolute;
   inset: 0;
   z-index: 2;
 }
-:root a[data-pending]::before {
+:root :is(a, button)[data-pending]::before {
   content: '';
   background: var(--field);
   animation: pendingCover 200ms var(--ease-move) both;
 }
-:root a[data-pending]::after {
+:root :is(a, button)[data-pending]::after {
   content: 'LOADING';
   z-index: 3;
   width: max-content;
@@ -257,7 +258,7 @@ a[data-pending] { cursor: progress; }
   animation: pendingCover 200ms var(--ease-move) 80ms both, pendingLamp 1s steps(1, end) 280ms infinite;
 }
 /* Too small a box for the word (loadingFits): the lamp alone, blinking in the middle. */
-:root a[data-pending=compact]::after {
+:root :is(a, button)[data-pending=compact]::after {
   content: '';
   width: 9px;
   height: 9px;

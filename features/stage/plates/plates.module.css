@@ -180,6 +180,7 @@
 
 /* ── Faces and their head band ───────────────────────────────────────────── */
 .face {
+  --bleed: var(--pad);
   display: flex;
   flex-direction: column;
   gap: var(--gap);
@@ -201,6 +202,9 @@
 }
 /* A summary plate that is one link: the band on top, the plate's carriers float over the rest. */
 .plateCard {
+  /* Padded summary cards (this, .summaryCard, .signalCard) publish their inset too, so their lists
+     run flush like an open plate's. */
+  --bleed: var(--pad);
   padding: 0 var(--pad) var(--pad);
 }
 /* A summary plate is one link, and its cells fill the rest of it: the band is where the plate itself
@@ -371,6 +375,7 @@
 
 /* ── Summary cards (a plate with nothing inside to press is one link) ───── */
 .summaryCard {
+  --bleed: var(--pad);
   padding: 0 var(--pad) var(--pad);
 }
 .cardBody {
@@ -400,12 +405,15 @@
   }
 }
 .signalCard {
+  --bleed: var(--pad);
   justify-content: space-between;
   gap: 10px;
   padding: 12px var(--pad) var(--pad);
+  /* Cards that carry the rings isolate, so the rings sit over their hover fill and under their print. */
+  isolation: isolate;
 }
 .signalHead {
-  font: 800 clamp(34px, 3.4vw, 72px)/.9 var(--display);
+  font: 800 clamp(28px, min(3.4vw, 30cqh), 72px)/.9 var(--display);
   letter-spacing: .02em;
 }
 .signalText {
@@ -562,14 +570,14 @@
   align-items: center;
   gap: 12px;
   min-height: 48px;
-  padding: 6px 12px;
+  padding: 6px var(--pad);
 }
 .artistCell,
 .indexLine {
   justify-content: center;
   gap: 2px;
   min-height: 44px;
-  padding: 6px 12px;
+  padding: 6px var(--pad);
 }
 /* A roster cell stacks name and meta in a 52px line (panelCellH): its padding gives way first. */
 .artistCell {
@@ -630,16 +638,11 @@
     box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
   }
 }
-.eventRow,
-.eventCell,
-.artistCell,
-.indexLine,
-.artistCard {
-  padding-inline: var(--pad);
-}
 
 /* ── Next session: the console's own plate ───────────────────────────────── */
 .next {
+  /* The next-session plate publishes its inset like other plates, so notices in it run flush. */
+  --bleed: var(--pad);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -683,6 +686,8 @@
   min-height: 0;
   margin-inline: calc(var(--pad) * -1);
   margin-bottom: calc(var(--pad) * -1);
+  /* Cards that carry the rings isolate, so the rings sit over their hover fill and under their print. */
+  isolation: isolate;
 }
 /* The next session's sub-plates: flush, full width, told apart by a hairline. The stack folds the
    least important ones away when the plate is short (FitStack), so nothing is ever cut. */
@@ -800,25 +805,31 @@
 }
 
 
+/* Lineup columns follow the plate's width (cells at least ~120px), set explicitly so a short last
+   row can be filled: its last cell spans the columns left in that row, and a lone cell runs the
+   whole row. (Ending a cell at the last line without a start would drop it into the last column.) */
 .lineupCells {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(var(--lineup-cols, 1), minmax(0, 1fr));
+  gap: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
 }
 .lineupCells li {
   display: grid;
+  align-content: center;
   gap: 3px;
-  padding: 7px 10px;
-  background: var(--fill);
-  color: var(--on-fill);
+  padding: 7px max(10px, var(--bleed, 0px));
+  background: none;
+  color: var(--ink);
 }
 .lineupCells b {
   font: 700 var(--t-lg)/1.05 var(--display);
   letter-spacing: .04em;
   text-transform: uppercase;
+  word-break: keep-all;
 }
 .lineupCells small {
-  color: var(--on-fill-muted);
+  color: var(--muted);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .14em;
 }
@@ -954,12 +965,16 @@
 
 
 /* ── Plates holding panels (log, signal, about) ─────────────────────────── */
+/* Panels in a row carry their own inset; the row itself publishes none, so a column wrapper in it
+   does not reach into its neighbours. */
 .panelRow {
+  --bleed: 0px;
   display: grid;
   flex: 1 1 auto;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--gap);
+  gap: 0;
   min-height: 0;
+  margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
 }
 .panelRow > * {
   min-height: 0;
@@ -989,12 +1004,15 @@
   :global([data-stage=stage]) .panelRow[data-paged=first] { grid-template-rows: minmax(calc(var(--text-body) * 1.75 * 8 + 230px), 1fr) max-content max-content; }
 }
 
+/* As in .panelRow, the grid publishes no inset of its own. */
 .logGrid {
+  --bleed: 0px;
   display: grid;
   flex: 1 1 auto;
   grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr);
-  gap: var(--gap);
+  gap: 0;
   min-height: 0;
+  margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
 }
 .logWrite,
 .logPublic {
@@ -1035,8 +1053,9 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   min-height: 0;
+  margin-inline: calc(var(--bleed, 0px) * -1);
 }
 :global([data-stage=stage]) .logList {
   overflow: hidden;
@@ -1047,15 +1066,15 @@
 .logList header {
   display: flex;
   flex-wrap: wrap;
-  background: var(--fill);
-  color: var(--on-fill);
+  background: none;
+  color: var(--ink);
 }
 .logList time {
   display: flex;
   align-items: center;
   padding: 4px 10px;
-  border-right: 1px solid var(--on-fill-muted);
-  color: var(--on-fill-muted);
+  border-right: 0;
+  color: var(--accent);
   font: 400 var(--t-xs)/1.2 var(--mono);
 }
 .logList strong {
@@ -1065,7 +1084,7 @@
 }
 .logList p {
   padding: 8px 10px 10px;
-  background: var(--well);
+  background: none;
   color: var(--ink);
   font-size: var(--text-body);
   font-weight: 500;
@@ -1151,16 +1170,17 @@
 .session {
   display: grid;
   grid-template-columns: minmax(260px, .95fr) minmax(0, 1.2fr) minmax(280px, 1fr);
-  gap: var(--gap);
+  gap: 0;
   min-width: 0;
-  padding: var(--gap);
+  padding: 0;
 }
 .sessionMain {
+  --bleed: var(--pad);
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding: 6px calc(var(--pad) - var(--gap)) calc(var(--pad) - var(--gap));
+  padding: 0 var(--pad) var(--pad);
 }
 :global([data-stage=stage]) .sessionMain {
   overflow: hidden;
@@ -1236,6 +1256,7 @@
 .sessionBriefing,
 .sessionAccess,
 .fileBio {
+  --bleed: var(--pad);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -1246,9 +1267,10 @@
 .sessionSide {
   display: flex;
   flex-direction: column;
-  gap: var(--gap);
+  gap: 0;
   min-width: 0;
   min-height: 0;
+  padding: 0;
 }
 .sessionBriefing {
   flex: 1 1 0;
@@ -1263,13 +1285,6 @@
 .sessionAccess :global(section[data-surface=paper]) {
   padding: 0;
 }
-@container layer (max-width: 1080px) {
-  .session { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .sessionSide { grid-column: 1 / -1; }
-}
-@container layer (max-width: 700px) {
-  .session { grid-template-columns: minmax(0, 1fr); }
-}
 /* On the stage the row holding paged text has a height set by the plate, never by its content:
    paged text measures the space it is given, so a row sized by that text would chase its own pages.
    Stacked in one column, the overview and the running order are exactly as tall as their content
@@ -1278,9 +1293,12 @@
    side column takes the rest. The briefing in it keeps --paged-min of height whatever the access
    panel under it needs; a file that needs more than the plate grows its sheet. */
 @container layer (max-width: 1080px) {
+  .session { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sessionSide { grid-column: 1 / -1; }
   :global([data-stage=stage]) .session { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
 }
 @container layer (max-width: 700px) {
+  .session { grid-template-columns: minmax(0, 1fr); }
   :global([data-stage=stage]) .session { grid-template-rows: max-content max-content minmax(0, 1fr); }
   :global([data-stage=stage]) .sessionBriefing { min-height: var(--paged-min); }
 }
@@ -1291,19 +1309,20 @@
   grid-template-columns: minmax(240px, .8fr) minmax(0, 1.3fr) minmax(260px, 1fr);
   grid-template-areas: 'identity records bio' 'identity shared bio';
   grid-template-rows: minmax(0, 1fr) auto;
-  gap: var(--gap);
+  gap: 0;
   min-width: 0;
-  padding: var(--gap);
+  padding: 0;
 }
 :global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) auto; }
 .fileMain {
+  --bleed: var(--pad);
   grid-area: identity;
   display: flex;
   flex-direction: column;
   gap: 12px;
   min-width: 0;
   min-height: 0;
-  padding: 8px calc(var(--pad) - var(--gap)) calc(var(--pad) - var(--gap));
+  padding: 0 var(--pad) var(--pad);
 }
 .fileOrigin > span:last-child {
   font-family: var(--mono);
@@ -1318,9 +1337,10 @@
 .fileShared {
   display: flex;
   flex-direction: column;
-  gap: var(--gap);
+  gap: 0;
   min-width: 0;
   min-height: 0;
+  padding: 0;
 }
 .fileRecords { grid-area: records; }
 .fileRecords > :first-child { flex: 1; }
@@ -1357,65 +1377,8 @@
    The panels of an open plate and the columns of a file meet flush, edge to edge; neighbouring
    surfaces differ (an inset panel beside a standard one), so no line is needed. Lists inside pull out to
    the edges by --bleed and part by turns of tone. */
-.face,
-.sessionMain,
-.sessionOrder,
-.sessionBriefing,
-.sessionAccess,
-.fileMain,
-.fileBio {
-  --bleed: var(--pad);
-}
-.panelRow,
-.logGrid {
-  gap: 0;
-  margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
-}
-.session,
-.artistFile,
-.sessionSide,
-.fileRecords,
-.fileShared {
-  gap: 0;
-  padding: 0;
-}
-.sessionMain,
-.fileMain {
-  padding: 0 var(--pad) var(--pad);
-}
-/* Panels in a row carry their own inset; the row itself publishes none, so a column wrapper in it
-   does not reach into its neighbours. */
-.panelRow,
-.logGrid {
-  --bleed: 0px;
-}
-/* Padded summary cards publish their inset too, so their lists run flush like an open plate's. */
-.summaryCard,
-.signalCard,
-.plateCard {
-  --bleed: var(--pad);
-}
-.lineupCells,
-.logList {
-  gap: 0;
-  margin-inline: calc(var(--bleed, 0px) * -1);
-}
-.lineupCells li {
-  padding-inline: max(10px, var(--bleed, 0px));
-  background: none;
-  color: var(--ink);
-}
 .lineupCells li:nth-child(odd) {
   background: var(--well);
-}
-/* Lineup columns follow the plate's width (cells at least ~120px), set explicitly so a short last
-   row can be filled: its last cell spans the columns left in that row, and a lone cell runs the
-   whole row. (Ending a cell at the last line without a start would drop it into the last column.) */
-.lineupCells {
-  grid-template-columns: repeat(var(--lineup-cols, 1), minmax(0, 1fr));
-}
-.lineupCells b {
-  word-break: keep-all;
 }
 .lineupCells li[data-empty] b {
   white-space: nowrap;
@@ -1469,25 +1432,8 @@
   grid-auto-rows: minmax(auto, 104px);
   align-content: start;
 }
-.lineupCells li {
-  align-content: center;
-}
-.lineupCells small {
-  color: var(--muted);
-}
 .logList li:nth-child(odd) {
   background: var(--well);
-}
-.logList header {
-  background: none;
-  color: var(--ink);
-}
-.logList time {
-  border-right: 0;
-  color: var(--accent);
-}
-.logList p {
-  background: none;
 }
 .logList li > * {
   padding-inline: max(10px, var(--bleed, 0px));
@@ -1550,10 +1496,6 @@
 :global([data-stage=stage]) .face > .plateCard {
   height: auto;
 }
-/* The next-session plate publishes its inset like other plates, so notices in it run flush. */
-.next {
-  --bleed: var(--pad);
-}
 @media (forced-colors: active) {
   .status, .status button { border: 1px solid CanvasText; }
   .band, .columnHead { border-bottom: 1px solid CanvasText; }
@@ -1591,9 +1533,6 @@
 }
 /* The home subscription card: its big name follows the card's height as well as the window's
    width, and the decorative tags give way on a low card. */
-.signalHead {
-  font-size: clamp(28px, min(3.4vw, 30cqh), 72px);
-}
 /* INSTAGRAM is half again as long as SIGNAL: on the same card it is as large as SIGNAL while it
    fits the card's inner width (its capitals run under half an em each, spacing included). */
 .signalHead.wideHead {
@@ -1613,10 +1552,4 @@
   .signalCard .bandTags {
     display: none;
   }
-}
-
-/* Cards that carry the rings isolate, so the rings sit over their hover fill and under their print. */
-.nextBlock,
-.signalCard {
-  isolation: isolate;
 }

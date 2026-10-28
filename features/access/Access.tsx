@@ -22,7 +22,8 @@ export function AccessRequest({ eventId }: { eventId: string }) {
               : '신청할 이벤트를 찾을 수 없습니다.',
         };
   return (
-    <FormPanel title="게스트 신청서" code="ACCESS">
+    // The session file's access column already heads it "ACCESS · 게스트 신청".
+    <FormPanel title="게스트 신청서" code="ACCESS" titled={false}>
       <AccessForm key={eventId} eventId={eventId} event={event} availability={availability} />
     </FormPanel>
   );

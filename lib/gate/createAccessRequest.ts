@@ -251,11 +251,21 @@ export function parseArtistAccessData(rawData: string): ArtistAccessData | null 
 export type ArtistAccessCodeResolution =
   | { kind: 'match'; artistId: string; data: ArtistAccessData }
   | { kind: 'not_found' }
+  | { kind: 'closed' }
   | { kind: 'unavailable' };
 
 /**
+ * Whether any artist row of an event carries a guest code. Guest requests run only on invite
+ * codes, so an event without one stays closed whatever its request window says.
+ */
+export function hasConfiguredAccessCode(rows: readonly { data: string }[]): boolean {
+  return rows.some((row) => inspectArtistAccessData(row.data).kind === 'configured');
+}
+
+/**
  * Evaluates every artist record before returning a match so malformed stored
- * access configuration cannot silently alter verification results.
+ * access configuration cannot silently alter verification results. An event with no guest code
+ * at all is `closed`, not a wrong code.
  */
 export function resolveArtistAccessCode(
   rows: StoredGateArtistRow[],
@@ -265,6 +275,9 @@ export function resolveArtistAccessCode(
   const accessRecords = rows.map((row) => ({ row, access: inspectArtistAccessData(row.data) }));
   if (accessRecords.some(({ access }) => access.kind === 'invalid')) {
     return { kind: 'unavailable' };
+  }
+  if (!accessRecords.some(({ access }) => access.kind === 'configured')) {
+    return { kind: 'closed' };
   }
 
   const matches = accessRecords.flatMap(({ row, access }) => (

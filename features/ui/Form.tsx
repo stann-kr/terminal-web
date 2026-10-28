@@ -6,25 +6,32 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
-import { Bay } from './Ui';
+import { Bay, ui } from './Ui';
 import styles from './form.module.css';
 export function FormPanel({
   title,
   code,
   children,
+  titled = true,
 }: {
   title: string;
   code: string;
   children: ReactNode;
+  /** False where the column around the form already shows its title: the heading stays for screen readers only. */
+  titled?: boolean;
 }) {
   return (
     <section className={styles.terminalForm} data-surface="paper">
-      <header className={styles.formHeading}>
-        <p className={styles.formCode} aria-hidden="true">
-          {code}
-        </p>
-        <h2>{title}</h2>
-      </header>
+      {titled ? (
+        <header className={styles.formHeading}>
+          <p className={styles.formCode} aria-hidden="true">
+            {code}
+          </p>
+          <h2>{title}</h2>
+        </header>
+      ) : (
+        <h2 className={ui.srOnly}>{title}</h2>
+      )}
       <div className={styles.formInterior}>
         {children}
         <Bay label={`${code} / FORM`} />

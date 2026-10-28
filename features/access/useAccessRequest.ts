@@ -77,7 +77,9 @@ export function useAccessRequest(
   // so a friend never types it. Once per visit, and never over a code the guest already typed.
   const invited = useRef(false);
   const latest = useRef({ code, changeCode, verifyCode });
-  latest.current = { code, changeCode, verifyCode };
+  useEffect(() => {
+    latest.current = { code, changeCode, verifyCode };
+  });
   useEffect(() => {
     if (invited.current || !availability.canRequest) return;
     invited.current = true;
@@ -118,6 +120,7 @@ export function useAccessRequest(
           'EVENT_MISMATCH',
           'NO_UPCOMING_EVENT',
           'REQUEST_PERIOD_INACTIVE',
+          'ACCESS_NOT_OPEN',
         ].includes(error.code)
       ) {
         setVerified(null);

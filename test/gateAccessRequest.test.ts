@@ -7,6 +7,7 @@ import {
   parseUpcomingEventCandidate,
   findUpcomingGateEvent,
   isGateRequestWindowActive,
+  hasConfiguredAccessCode,
   resolveArtistAccessCode,
 } from '../lib/gate/createAccessRequest';
 import {
@@ -171,6 +172,25 @@ describe('artist access data validation', () => {
     expect(resolveArtistAccessCode([
       { id: 'artist-1', data: JSON.stringify({ guestCode: 'CODE-1', name: 'Broken' }) },
     ], 'code-1')).toEqual({ kind: 'unavailable' });
+  });
+
+  it('closes an event none of whose artist rows carries a guest code, apart from a wrong code', () => {
+    const lineupOnly = [
+      { id: 'artist-1', data: JSON.stringify({ name: 'Artist One', status: 'CONFIRMED' }) },
+    ];
+    expect(hasConfiguredAccessCode(lineupOnly)).toBe(false);
+    expect(hasConfiguredAccessCode([])).toBe(false);
+    expect(resolveArtistAccessCode(lineupOnly, 'code-1')).toEqual({ kind: 'closed' });
+    expect(resolveArtistAccessCode([], 'code-1')).toEqual({ kind: 'closed' });
+
+    // A hidden host row (PENDING, not on the public lineup) with a code keeps the event open.
+    const hostRow = {
+      id: 'host-row',
+      data: JSON.stringify({ name: 'HOST', status: 'PENDING', guestCode: 'HOST-CODE', guestLimit: 30 }),
+    };
+    expect(hasConfiguredAccessCode([...lineupOnly, hostRow])).toBe(true);
+    expect(resolveArtistAccessCode([...lineupOnly, hostRow], 'host-code')).toMatchObject({ kind: 'match', artistId: 'host-row' });
+    expect(resolveArtistAccessCode([...lineupOnly, hostRow], 'other')).toEqual({ kind: 'not_found' });
   });
 });
 

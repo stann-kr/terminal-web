@@ -1,15 +1,15 @@
 {
   "dependencies": {
     "@chenglou/pretext": "0.0.9",
-    "@opennextjs/cloudflare": "^1.18.1",
+    "@opennextjs/cloudflare": "^1.20.13",
     "@tanstack/react-query": "^5.99.2",
     "cross-env": "^7.0.3",
     "drizzle-orm": "^0.45.2",
-    "next": "^16.3.3",
+    "next": "^16.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "use-scramble": "^2.2.15",
-    "wrangler": "^4.121.0"
+    "wrangler": "^4.154.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260812.1",
@@ -22,7 +22,7 @@
     "autoprefixer": "^10.4.21",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.16.0",
-    "eslint-config-next": "^16.3.3",
+    "eslint-config-next": "^16.4.3",
     "jsdom": "^30.0.1",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.26",
@@ -65,6 +65,9 @@
     "sharp": "0.35.5",
     "next": {
       "postcss": "8.5.26"
+    },
+    "@node-minify/core": {
+      "glob": "^10.5.0"
     }
   }
 }

@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       return json({ name: null });
     }
 
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const abuseDecision = await enforceRateLimit(env, 'code-info', request);
     if (!abuseDecision.ok) return json({ error: abuseDecision.error }, abuseDecision.status);
     const db = getDb(env.DB);
@@ -73,6 +73,9 @@ export async function POST(request: Request) {
     const accessCodeResult = resolveArtistAccessCode(artistRows, code);
     if (accessCodeResult.kind === 'unavailable') {
       return json({ error: "VERIFICATION_UNAVAILABLE" }, 503);
+    }
+    if (accessCodeResult.kind === 'closed') {
+      return json({ error: "ACCESS_NOT_OPEN" }, 403);
     }
     if (accessCodeResult.kind === 'not_found') {
       return json({ name: null });

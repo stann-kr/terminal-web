@@ -22,6 +22,7 @@ const messages: Record<string,string> = {
   EVENT_MISMATCH: '현재 접수 대상 이벤트가 바뀌었습니다. 이벤트 목록에서 대상을 다시 확인해 주세요.',
   NO_UPCOMING_EVENT: '현재 접수할 예정 이벤트가 없습니다.',
   REQUEST_PERIOD_INACTIVE: '현재는 게스트 신청 기간이 아닙니다.',
+  ACCESS_NOT_OPEN: '이 이벤트는 아직 게스트 신청을 받지 않습니다.',
   GUEST_LIMIT_REACHED: '이 초대인의 접수 한도에 도달했습니다.',
   VERIFICATION_UNAVAILABLE: '지금은 코드를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
   DATA_UNAVAILABLE: '이벤트 정보를 확인할 수 없습니다. 입력을 유지한 채 다시 시도해 주세요.',

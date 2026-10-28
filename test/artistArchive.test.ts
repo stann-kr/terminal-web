@@ -37,10 +37,22 @@ describe('public artist archive',()=>{
 });
 describe('event access availability',()=>{
   it('only opens the server-selected nearest future event within its 30-day window',()=>{
-    const early=event('A',[],'2026-10-01'),later=event('B',[],'2026-10-02');
+    const early={...event('A',[],'2026-10-01'),guestAccess:true},later={...event('B',[],'2026-10-02'),guestAccess:true};
     expect(accessAvailability(early,[later,early],new Date('2026-09-01T14:00:00Z')).canRequest).toBe(true);
     expect(accessAvailability(later,[later,early],new Date('2026-09-24T00:00:00Z')).canRequest).toBe(false);
     expect(accessAvailability(early,[early],new Date('2026-09-01T13:59:59Z')).canRequest).toBe(false);
     expect(accessAvailability({...early,status:'ARCHIVED'},[early],new Date('2026-10-01T14:00:00Z')).canRequest).toBe(false);
+  });
+  it('keeps an event without any guest code closed inside its window, and says so',()=>{
+    const open=new Date('2026-09-01T14:00:00Z');
+    for(const guestAccess of [false,undefined]){
+      const uncoded={...event('A',[],'2026-10-01'),guestAccess};
+      const availability=accessAvailability(uncoded,[uncoded],open);
+      expect(availability.canRequest).toBe(false);
+      expect(availability.message).toBe('초대 코드가 준비되면 게스트 신청을 받습니다.');
+    }
+    // Before the window the date still decides the message.
+    const early={...event('A',[],'2026-10-01'),guestAccess:false};
+    expect(accessAvailability(early,[early],new Date('2026-08-01T00:00:00Z')).message).toMatch(/일 후 열립니다/);
   });
 });
