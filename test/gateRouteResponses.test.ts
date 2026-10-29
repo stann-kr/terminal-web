@@ -264,13 +264,13 @@ describe('opaque public success responses', () => {
     mocks.createSignalSubscription.mockResolvedValueOnce({ status: 'created' });
     const created = await responseDetails(await POST(new Request('https://terminal.test/api/signal', {
       method: 'POST',
-      body: JSON.stringify({ name: 'Guest', instagram: '@guest.name', consent: true }),
+      body: JSON.stringify({ email: 'guest@example.com', instagram: '@guest.name', consent: true }),
       headers: { 'content-type': 'application/json' },
     })));
     mocks.createSignalSubscription.mockResolvedValueOnce({ status: 'duplicate' });
     const duplicate = await responseDetails(await POST(new Request('https://terminal.test/api/signal', {
       method: 'POST',
-      body: JSON.stringify({ name: 'Guest', instagram: '@guest.name', consent: true }),
+      body: JSON.stringify({ email: 'guest@example.com', instagram: '@guest.name', consent: true }),
       headers: { 'content-type': 'application/json' },
     })));
 

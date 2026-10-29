@@ -8,33 +8,35 @@ import {
 import { validateSignalSubscriptionInput } from '../lib/signal/subscriptionPolicy';
 
 describe('Signal subscription input policy', () => {
-  const valid = { name: '  Guest Name  ', instagram: '  @guest.name  ', consent: true };
-
-  it('takes a name and an Instagram id; an email only when one is left', () => {
-    expect(validateSignalSubscriptionInput(valid)).toEqual({
+  it('normalizes one valid payload for client and server consumers', () => {
+    expect(validateSignalSubscriptionInput({
+      email: '  GUEST@EXAMPLE.COM  ',
+      instagram: '  @guest.name  ',
+      consent: true,
+    })).toEqual({
       ok: true,
-      input: { name: 'Guest Name', email: null, instagram: '@guest.name', consent: true },
+      input: {
+        email: 'guest@example.com',
+        instagram: '@guest.name',
+        consent: true,
+      },
       fieldErrors: {},
     });
-    const withEmail = validateSignalSubscriptionInput({ ...valid, email: '  GUEST@EXAMPLE.COM  ' });
-    expect(withEmail.ok && withEmail.input.email).toBe('guest@example.com');
-    const blankEmail = validateSignalSubscriptionInput({ ...valid, email: '  ' });
-    expect(blankEmail.ok && blankEmail.input.email).toBeNull();
   });
 
   it('stores an Instagram id lowercase with its @, typed with or without one', () => {
     for (const typed of ['Guest.Name', '@Guest.Name']) {
-      const result = validateSignalSubscriptionInput({ ...valid, instagram: typed });
+      const result = validateSignalSubscriptionInput({ email: 'guest@example.com', instagram: typed, consent: true });
       expect(result.ok && result.input.instagram).toBe('@guest.name');
     }
+    const blank = validateSignalSubscriptionInput({ email: 'guest@example.com', instagram: '', consent: true });
+    expect(blank.ok && blank.input.instagram).toBe('');
   });
 
   it.each([
-    ['unknown key', { ...valid, role: 'admin' }],
-    ['string consent', { ...valid, consent: 'true' }],
-    ['numeric Instagram handle', { ...valid, instagram: 123 }],
-    ['numeric email', { ...valid, email: 123 }],
-    ['missing name', { instagram: '@guest', consent: true }],
+    ['unknown key', { email: 'guest@example.com', instagram: '@guest', consent: true, role: 'admin' }],
+    ['string consent', { email: 'guest@example.com', instagram: '@guest', consent: 'true' }],
+    ['numeric Instagram handle', { email: 'guest@example.com', instagram: 123, consent: true }],
   ])('rejects structurally invalid input: %s', (_label, input) => {
     expect(validateSignalSubscriptionInput(input)).toEqual({
       ok: false,
@@ -43,22 +45,8 @@ describe('Signal subscription input policy', () => {
     });
   });
 
-  it('requires a name and an Instagram id', () => {
-    expect(validateSignalSubscriptionInput({ ...valid, name: ' ' })).toMatchObject({
-      ok: false,
-      error: 'ALL_FIELDS_REQUIRED',
-      fieldErrors: { name: 'ALL_FIELDS_REQUIRED' },
-    });
-    expect(validateSignalSubscriptionInput({ ...valid, instagram: '', email: 'guest@example.com' })).toMatchObject({
-      ok: false,
-      error: 'ALL_FIELDS_REQUIRED',
-      fieldErrors: { instagram: 'ALL_FIELDS_REQUIRED' },
-    });
-  });
-
   it('returns field-level errors while preserving the public API error priority', () => {
     expect(validateSignalSubscriptionInput({
-      name: 'Guest',
       email: 'invalid',
       instagram: '@@invalid',
       consent: false,
@@ -71,17 +59,34 @@ describe('Signal subscription input policy', () => {
         consent: 'CONSENT_REQUIRED',
       },
     });
+
+    expect(validateSignalSubscriptionInput({ email: '', instagram: '', consent: false })).toMatchObject({
+      ok: false,
+      error: 'ALL_FIELDS_REQUIRED',
+    });
+  });
+
+  it('takes an email alone; the Instagram handle is optional', () => {
+    expect(validateSignalSubscriptionInput({ email: 'Guest@Example.com', instagram: '  ', consent: true })).toEqual({
+      ok: true,
+      input: { email: 'guest@example.com', instagram: '', consent: true },
+      fieldErrors: {},
+    });
+    expect(validateSignalSubscriptionInput({ email: '', instagram: '@guest', consent: true })).toMatchObject({
+      ok: false,
+      error: 'ALL_FIELDS_REQUIRED',
+      fieldErrors: { email: 'ALL_FIELDS_REQUIRED' },
+    });
   });
 
   it('applies the same public field bounds before any I/O', () => {
     expect(validateSignalSubscriptionInput({
-      name: 'Guest',
       email: `${'a'.repeat(250)}@x.io`,
       instagram: `@${'a'.repeat(31)}`,
       consent: true,
     })).toMatchObject({
       ok: false,
-      error: 'INVALID_INSTAGRAM_FORMAT',
+      error: 'INVALID_EMAIL_FORMAT',
       fieldErrors: {
         email: 'INVALID_EMAIL_FORMAT',
         instagram: 'INVALID_INSTAGRAM_FORMAT',
@@ -121,7 +126,7 @@ describe('Signal D1 statement contract', () => {
     createdAt: '2026-08-23T00:00:00.000Z',
   };
 
-  it('skips a subscriber already on the list by Instagram id or email', async () => {
+  it('uses the unique email index as the duplicate boundary', async () => {
     const created = createDatabaseStub(1);
     const duplicate = createDatabaseStub(0);
 
@@ -140,11 +145,9 @@ describe('Signal D1 statement contract', () => {
         subscription.instagram,
         subscription.source,
         subscription.createdAt,
-        'guest',
       ],
     });
-    expect(SIGNAL_SUBSCRIPTION_INSERT_SQL).toMatch(/WHERE NOT EXISTS[\s\S]*lower\(ltrim\(instagram, '@'\)\) = \?/);
-    expect(SIGNAL_SUBSCRIPTION_INSERT_SQL).toContain('ON CONFLICT DO NOTHING');
+    expect(SIGNAL_SUBSCRIPTION_INSERT_SQL).toContain('ON CONFLICT(email) DO NOTHING');
   });
 
   it('prepares the Gate marketing insert without executing outside its D1 batch', () => {

@@ -4,11 +4,9 @@ import { ApiError, postJson } from '@/features/ui/http';
 
 export function useSignalSubscription() {
   const [fields, setFields] = useState({
-    name: '',
+    email: '',
     instagram: '',
     consent: false,
-    wantsEmail: false,
-    email: '',
   });
   const [pending, setPending] = useState(false),
     [done, setDone] = useState(false),
@@ -21,12 +19,7 @@ export function useSignalSubscription() {
     setPending(true);
     setError(null);
     try {
-      const { wantsEmail, email, ...required } = fields;
-      // An email typed and then un-ticked stays in the form but is never sent.
-      const result = await postJson<{ ok: boolean }>('/api/signal', {
-        ...required,
-        email: wantsEmail ? email : undefined,
-      });
+      const result = await postJson<{ ok: boolean }>('/api/signal', fields);
       if (result.ok !== true) throw new ApiError('INVALID_RESPONSE', 200);
       setDone(true);
     } catch (error) {

@@ -1,7 +1,7 @@
 export interface StoredSignalSubscription {
   id: string;
   name: string | null;
-  email: string | null;
+  email: string;
   instagram: string;
   source: 'signal' | 'gate';
   createdAt: string;
@@ -21,7 +21,6 @@ export type SignalSubscriptionInsertResult =
   | { status: 'created' }
   | { status: 'duplicate' };
 
-/** One subscriber per Instagram id (case and a leading @ aside), and per email when one is left. */
 export const SIGNAL_SUBSCRIPTION_INSERT_SQL = `
   INSERT INTO signal (
     id,
@@ -31,13 +30,8 @@ export const SIGNAL_SUBSCRIPTION_INSERT_SQL = `
     source,
     created_at
   )
-  SELECT ?, ?, ?, ?, ?, ?
-  WHERE NOT EXISTS (
-    SELECT 1
-    FROM signal
-    WHERE instagram <> '' AND lower(ltrim(instagram, '@')) = ?
-  )
-  ON CONFLICT DO NOTHING
+  VALUES (?, ?, ?, ?, ?, ?)
+  ON CONFLICT(email) DO NOTHING
 `;
 
 export const GATE_SIGNAL_SUBSCRIPTION_INSERT_SQL = `
@@ -70,7 +64,6 @@ export function prepareSignalSubscriptionInsert(
     subscription.instagram,
     subscription.source,
     subscription.createdAt,
-    subscription.instagram.trim().replace(/^@+/, '').toLowerCase(),
   );
 }
 

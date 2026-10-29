@@ -76,7 +76,7 @@ const wrangler = (rest, { oauth = false } = {}) => {
 };
 
 function subscribers() {
-  const out = wrangler(['d1', 'execute', DATABASE, '--env', 'production', '--remote', '--json', '--command', 'SELECT id, lower(trim(email)) AS email FROM signal WHERE email IS NOT NULL']);
+  const out = wrangler(['d1', 'execute', DATABASE, '--env', 'production', '--remote', '--json', '--command', 'SELECT id, lower(trim(email)) AS email FROM signal']);
   const rows = JSON.parse(out.slice(out.indexOf('[')))[0].results;
   const deliverable = row => EMAIL.test(row.email) && !UNDELIVERABLE.test(row.email);
   return { valid: rows.filter(deliverable), skipped: rows.filter(row => !deliverable(row)) };
