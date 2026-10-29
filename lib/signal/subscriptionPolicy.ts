@@ -86,8 +86,7 @@ export function validateSignalSubscriptionInput(body: unknown): SignalSubscripti
 
   return {
     ok: true,
-    // Same stored spelling as a guest request: lowercase with its @, or empty when left out.
-    input: { email, instagram: instagram && `@${cleanInstagram.toLowerCase()}`, consent: true },
+    input: { email, instagram, consent: true },
     fieldErrors: {},
   };
 }
