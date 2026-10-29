@@ -286,7 +286,7 @@ describe('session marks and hand-offs', () => {
       eventStatus: 'https://schema.org/EventScheduled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       location: { '@type': 'Place', name: 'FAUST SEOUL', address: { '@type': 'PostalAddress', addressLocality: 'YONGSAN-GU, ITAEWON', addressCountry: 'KR' } },
-      image: ['https://terminal.stann.kr/og/terminal.png'],
+      image: ['https://terminal.stann.kr/og/terminal-share.png'],
       description: '첫 문단.',
       performer: [{ '@type': 'Person', name: 'STANN LUMO' }],
       organizer: { '@type': 'Organization', name: 'TERMINAL', url: 'https://terminal.stann.kr' },
