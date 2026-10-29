@@ -53,3 +53,12 @@ describe('POST /api/signal/unsubscribe', () => {
     expect(mocks.bind).not.toHaveBeenCalled();
   });
 });
+
+describe('GET /calendar/subscribe', () => {
+  it('sends Apple devices to the webcal feed and others to Google Calendar', async () => {
+    const { GET: subscribe } = await import('../app/calendar/subscribe/route');
+    const go = (ua: string) => subscribe(new Request('https://terminal.stann.kr/calendar/subscribe', { headers: { 'user-agent': ua } })).headers.get('location');
+    expect(go('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)')).toBe('webcal://terminal.stann.kr/calendar.ics');
+    expect(go('Mozilla/5.0 (Linux; Android 15)')).toBe(`https://calendar.google.com/calendar/render?cid=${encodeURIComponent('webcal://terminal.stann.kr/calendar.ics')}`);
+  });
+});

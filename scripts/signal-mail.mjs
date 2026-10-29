@@ -12,7 +12,7 @@ import path from 'node:path';
  *   npm run signal:mail -- <mail.html> <mail.txt> --subject "<subject>" --send
  *
  * Without --send or --only it only prints how many would receive it. Mail goes out through
- * Cloudflare Email Sending from terminal@terminal.stann.kr, replies go to REPLY_TO. Each message
+ * Cloudflare Email Sending from stann@terminal.stann.kr, replies go to REPLY_TO. Each message
  * gets its own unsubscribe link ({{UNSUBSCRIBE_URL}} in the html and text), signed with
  * SIGNAL_UNSUBSCRIBE_SECRET (the Worker's secret; read from the environment or .env), and the
  * List-Unsubscribe / List-Unsubscribe-Post headers that give mail apps a one-click button. Sending uses the wrangler OAuth
@@ -21,7 +21,7 @@ import path from 'node:path';
  * of the same log skips those addresses.
  */
 const DATABASE = 'terminal-db';
-const FROM = 'terminal@terminal.stann.kr';
+const FROM = 'stann@terminal.stann.kr';
 const REPLY_TO = 'ilsny7@gmail.com';
 const SITE = 'https://terminal.stann.kr';
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,7 +71,7 @@ function sendTo({ id, email }) {
   const link = unsubscribeUrl(id);
   const fill = body => body.replaceAll('{{UNSUBSCRIBE_URL}}', link.replaceAll('&', body === html ? '&amp;' : '&'));
   wrangler(['email', 'sending', 'send',
-    '--from', FROM, '--from-name', 'TERMINAL', '--reply-to', REPLY_TO, '--reply-to-name', 'Stann',
+    '--from', FROM, '--from-name', 'Stann · TERMINAL', '--reply-to', REPLY_TO, '--reply-to-name', 'Stann',
     '--to', email, '--subject', subject, '--html', fill(html), '--text', fill(text),
     '--header', `List-Unsubscribe:<${link}>, <mailto:${REPLY_TO}?subject=unsubscribe>`,
     '--header', 'List-Unsubscribe-Post:List-Unsubscribe=One-Click'], { oauth: true });

@@ -1,7 +1,7 @@
 'use client';
 import { Fragment, Suspense, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Action, ActionDeck, Bay, Facts, Panel, ui } from '@/features/ui/Ui';
+import { Action, ActionDeck, Bay, Panel, ui } from '@/features/ui/Ui';
 import {
   Consent,
   Field,
@@ -17,8 +17,8 @@ import { useSignalSubscription } from './useSignalSubscription';
 import styles from './signal.module.css';
 
 /**
- * The channel, the form and the channel state around one subscription request, so all three read
- * the same state. `wrap` places each part (the stage puts each in its own column).
+ * The note on the channel and the form around one subscription request, so both read the same
+ * state. `wrap` places each part (the stage puts each in its own column).
  */
 export function SignalBody({ wrap = node => node }: { wrap?: (node: ReactNode) => ReactNode }) {
   const request = useSignalSubscription();
@@ -27,27 +27,10 @@ export function SignalBody({ wrap = node => node }: { wrap?: (node: ReactNode) =
       {[
         <SignalInformation key="info" request={request} />,
         <SignalForm key="form" request={request} />,
-        <SignalChannel key="channel" request={request} />,
       ].map(part => <Fragment key={part.key}>{wrap(part)}</Fragment>)}
     </>
   );
 }
-function SignalChannel({ request }: { request: ReturnType<typeof useSignalSubscription> }) {
-  return (
-    <Panel title="채널 정보" label="Channel" surface="panel" className={styles.channel}>
-      <Facts
-        rows={[
-          ['채널', 'CH 01'],
-          ['수신', '이메일 · 인스타그램'],
-          ['대상', '다음 이벤트 소식'],
-          ['상태', request.pending ? '전송 중' : request.done ? '등록 완료' : request.error ? '전송 실패' : '대기'],
-        ]}
-      />
-      <Bay label="OUTBOUND / KST" />
-    </Panel>
-  );
-}
-
 function SignalInformation({
   request,
 }: {
@@ -110,7 +93,7 @@ function SignalSubscribeForm({
     errorCode,
   } = request;
   return (
-    <FormPanel title="소식 신청서" code="SIGNAL">
+    <FormPanel title="소식 신청서" code="SIGNAL" label="Form">
       {done ? (
         <FormSuccess>
           <p className={ui.eyebrow}>CONTACT SAVED</p>
@@ -205,7 +188,7 @@ function SignalUnsubscribe({ link }: { link: { s: string; t: string } }) {
     }
   }
   return (
-    <FormPanel title="수신 거부" code="SIGNAL">
+    <FormPanel title="수신 거부" code="SIGNAL" label="Form">
       {done ? (
         <FormSuccess>
           <p className={ui.eyebrow}>UNSUBSCRIBED</p>
@@ -220,9 +203,11 @@ function SignalUnsubscribe({ link }: { link: { s: string; t: string } }) {
           <FormError message={error ? errorMessage(error) : ''} />
           <p>이 메일 주소로 TERMINAL 이벤트 소식을 더 받지 않으려면 아래 키를 눌러 주세요. 저장된 연락처도 함께 지웁니다.</p>
           <p className={ui.muted}>Press the key below to stop receiving TERMINAL news at this address.</p>
-          <button type="button" aria-busy={pending} disabled={pending} onClick={submit} className={`${ui.button} ${ui.primary}`}>
-            {pending ? '처리 중…' : '수신 거부 · Unsubscribe'}
-          </button>
+          <ActionDeck>
+            <button type="button" aria-busy={pending} disabled={pending} onClick={submit} className={`${ui.button} ${ui.primary}`}>
+              {pending ? '처리 중…' : '수신 거부 · Unsubscribe'}
+            </button>
+          </ActionDeck>
         </div>
       )}
     </FormPanel>

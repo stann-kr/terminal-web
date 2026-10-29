@@ -1,6 +1,3 @@
-.channel {
-  min-width: 0;
-}
 .lead {
   font: 700 var(--t-lg)/1.4 var(--sans);
 }
@@ -42,10 +39,6 @@
     animation: signalLamp .6s steps(1, end) infinite;
   }
 }
-@media (max-width: 1280px) {
-  .channel { grid-column: 1 / -1; }
-}
-
 .deck {
   margin-top: 12px;
 }

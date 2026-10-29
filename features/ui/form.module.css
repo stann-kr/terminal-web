@@ -7,28 +7,6 @@
   container-type: inline-size;
   padding: calc(var(--pad) * .7) var(--pad) var(--pad);
 }
-.formHeading {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px 12px;
-  margin-bottom: 14px;
-  /* No rule under the title: the form's cells below are told apart by tone. The rule's width stays
-     as space, so the heading keeps its height. */
-  padding-bottom: calc(6px + var(--rule));
-}
-@media (forced-colors: active) {
-  .formHeading { border-bottom: 1px solid CanvasText; }
-}
-.formCode {
-  color: var(--ink);
-  font: 700 var(--t-xl)/1 var(--display);
-  letter-spacing: .02em;
-}
-.formHeading h2 {
-  color: var(--muted);
-  font: 600 var(--t-md)/1.3 var(--sans);
-}
 .formInterior {
   display: flex;
   flex-direction: column;
@@ -167,7 +145,6 @@
 }
 
 /* Short labels, codes and times never break mid-phrase. */
-.formCode,
 .field label,
 .field label > span {
   white-space: nowrap;
@@ -177,10 +154,6 @@
    plate's tone over its input in the well; the next field's label line is the only separation. ── */
 .terminalForm {
   --bleed: var(--pad);
-}
-.formHeading {
-  margin-inline: calc(var(--bleed) * -1);
-  padding-inline: var(--bleed);
 }
 .fields {
   gap: 0;

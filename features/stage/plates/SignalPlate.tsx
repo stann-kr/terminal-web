@@ -32,7 +32,7 @@ function SignalFocus() {
   return (
     <div className={styles.face}>
       <FocusHead label="Signal" title="소식 신청" tags={<Tags items={['CH 01', 'MAIL', 'INSTAGRAM']} />} />
-      <div className={styles.panelRow} data-columns="3">
+      <div className={styles.panelRow} data-columns="2">
         <SignalBody wrap={part => <div className={styles.fitColumn} data-fit="">{part}</div>} />
       </div>
     </div>
