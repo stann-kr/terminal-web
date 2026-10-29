@@ -45,6 +45,10 @@ const normalizeTransmitMigration = path.join(
   'migrations',
   '0009_normalize_transmit_created_at.sql',
 );
+const optionalEmailMigration = path.join(
+  'migrations',
+  '0010_access_request_email_optional.sql',
+);
 
 function assertFinalTransmitSchema(persistTo, label) {
   const [tableInfoResult, indexListResult] = execute(persistTo, `
@@ -116,7 +120,7 @@ try {
   for (const name of ['events', 'artists', 'access_requests', 'signal', 'transmit_logs', 'access_requests_event_email_idx', 'signal_email_idx']) {
     if (!objects.has(name)) throw new Error(`missing D1 object: ${name}`);
   }
-  if (results[1].results[0]?.count !== 10) throw new Error('expected all 10 Wrangler migrations');
+  if (results[1].results[0]?.count !== 11) throw new Error('expected all 11 Wrangler migrations');
   if (results[2].results.length !== 0) throw new Error('foreign key check failed');
   if (results[3].results.map((row) => row.name).join(',') !== 'event_id,email') {
     throw new Error('access request unique index columns drifted');
@@ -139,14 +143,15 @@ try {
       'no@example.com', '@no', 1, 0, '2026-08-23T00:00:00.000Z'
     WHERE NOT EXISTS (
       SELECT 1 FROM access_requests
-      WHERE event_id = 'event-test' AND email = 'no@example.com'
+      WHERE event_id = 'event-test'
+        AND (lower(ltrim(instagram, '@')) = 'no' OR (email IS NOT NULL AND email = 'no@example.com'))
     )
     AND (
       1 IS NULL
       OR (SELECT COUNT(*) FROM access_requests
           WHERE event_id = 'event-test' AND artist_id = 'artist-test') < 1
     )
-    ON CONFLICT(event_id, email) DO NOTHING;
+    ON CONFLICT DO NOTHING;
     INSERT INTO signal (id, name, email, instagram, source, created_at)
     SELECT 'sig-no-marketing', 'Guest', 'no@example.com', '@no', 'gate',
            '2026-08-23T00:00:00.000Z'
@@ -163,14 +168,15 @@ try {
       'capacity@example.com', '@capacity', 1, 1, '2026-08-23T00:01:00.000Z'
     WHERE NOT EXISTS (
       SELECT 1 FROM access_requests
-      WHERE event_id = 'event-test' AND email = 'capacity@example.com'
+      WHERE event_id = 'event-test'
+        AND (lower(ltrim(instagram, '@')) = 'capacity' OR (email IS NOT NULL AND email = 'capacity@example.com'))
     )
     AND (
       1 IS NULL
       OR (SELECT COUNT(*) FROM access_requests
           WHERE event_id = 'event-test' AND artist_id = 'artist-test') < 1
     )
-    ON CONFLICT(event_id, email) DO NOTHING;
+    ON CONFLICT DO NOTHING;
     INSERT INTO signal (id, name, email, instagram, source, created_at)
     SELECT 'sig-capacity', 'Guest', 'capacity@example.com', '@capacity', 'gate',
            '2026-08-23T00:01:00.000Z'
@@ -187,10 +193,11 @@ try {
       'yes@example.com', '@yes', 1, 1, '2026-08-23T00:02:00.000Z'
     WHERE NOT EXISTS (
       SELECT 1 FROM access_requests
-      WHERE event_id = 'event-test' AND email = 'yes@example.com'
+      WHERE event_id = 'event-test'
+        AND (lower(ltrim(instagram, '@')) = 'yes' OR (email IS NOT NULL AND email = 'yes@example.com'))
     )
     AND NULL IS NULL
-    ON CONFLICT(event_id, email) DO NOTHING;
+    ON CONFLICT DO NOTHING;
     INSERT INTO signal (id, name, email, instagram, source, created_at)
     SELECT 'sig-marketing', 'Guest', 'yes@example.com', '@yes', 'gate',
            '2026-08-23T00:02:00.000Z'
@@ -207,16 +214,46 @@ try {
       'yes@example.com', '@yes', 1, 1, '2026-08-23T00:03:00.000Z'
     WHERE NOT EXISTS (
       SELECT 1 FROM access_requests
-      WHERE event_id = 'event-test' AND email = 'yes@example.com'
+      WHERE event_id = 'event-test'
+        AND (lower(ltrim(instagram, '@')) = 'yes' OR (email IS NOT NULL AND email = 'yes@example.com'))
     )
     AND NULL IS NULL
-    ON CONFLICT(event_id, email) DO NOTHING;
+    ON CONFLICT DO NOTHING;
     INSERT INTO signal (id, name, email, instagram, source, created_at)
     SELECT 'sig-duplicate', 'Guest', 'yes@example.com', '@yes', 'gate',
            '2026-08-23T00:03:00.000Z'
     WHERE 1 = 1
       AND EXISTS (SELECT 1 FROM access_requests WHERE id = 'req-duplicate')
     ON CONFLICT(email) DO NOTHING;
+
+    INSERT INTO access_requests (
+      id, event_id, artist_id, invited_by, name, email, instagram,
+      privacy_consent, marketing_consent, created_at
+    )
+    SELECT
+      'req-no-email', 'event-test', NULL, NULL, 'Guest',
+      NULL, '@NoEmail', 1, 0, '2026-08-23T00:03:30.000Z'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM access_requests
+      WHERE event_id = 'event-test'
+        AND (lower(ltrim(instagram, '@')) = 'noemail' OR (email IS NOT NULL AND email = NULL))
+    )
+    AND NULL IS NULL
+    ON CONFLICT DO NOTHING;
+    INSERT INTO access_requests (
+      id, event_id, artist_id, invited_by, name, email, instagram,
+      privacy_consent, marketing_consent, created_at
+    )
+    SELECT
+      'req-instagram-duplicate', 'event-test', NULL, NULL, 'Guest',
+      'other@example.com', 'noemail', 1, 1, '2026-08-23T00:03:40.000Z'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM access_requests
+      WHERE event_id = 'event-test'
+        AND (lower(ltrim(instagram, '@')) = 'noemail' OR (email IS NOT NULL AND email = 'other@example.com'))
+    )
+    AND NULL IS NULL
+    ON CONFLICT DO NOTHING;
 
     INSERT INTO signal (id, name, email, instagram, source, created_at)
     VALUES ('sig-direct', NULL, 'direct@example.com', '@direct', 'signal',
@@ -243,7 +280,9 @@ try {
     SELECT
       COUNT(*) AS total,
       SUM(id = 'req-capacity') AS capacity_inserted,
-      SUM(id = 'req-duplicate') AS duplicate_inserted
+      SUM(id = 'req-duplicate') AS duplicate_inserted,
+      SUM(id = 'req-no-email' AND email IS NULL) AS no_email_inserted,
+      SUM(id = 'req-instagram-duplicate') AS instagram_duplicate_inserted
     FROM access_requests WHERE event_id = 'event-test';
     SELECT
       COUNT(*) AS total,
@@ -268,9 +307,11 @@ try {
   `);
   const accessResult = behavior[0].results[0];
   if (
-    accessResult?.total !== 2
+    accessResult?.total !== 3
     || accessResult.capacity_inserted !== 0
     || accessResult.duplicate_inserted !== 0
+    || accessResult.no_email_inserted !== 1
+    || accessResult.instagram_duplicate_inserted !== 0
   ) {
     throw new Error('Gate atomic insert behavior drifted');
   }
@@ -328,8 +369,35 @@ try {
     FROM transmit_logs;
   `).at(-1).results[0];
   executeFile(legacyPersistTo, normalizeTransmitMigration);
+  execute(legacyPersistTo, `
+    INSERT INTO events (id, data) VALUES ('event-legacy', '{}');
+    INSERT INTO artists (id, event_id, data) VALUES ('artist-legacy', 'event-legacy', '{}');
+    INSERT INTO access_requests (
+      id, event_id, name, email, instagram, privacy_consent, created_at,
+      marketing_consent, artist_id, invited_by
+    )
+    VALUES ('req-legacy', 'event-legacy', 'Guest', 'legacy@example.com', '@legacy', 1,
+            '2026-08-23T00:00:00.000Z', 1, 'artist-legacy', 'Artist');
+  `);
+  executeFile(legacyPersistTo, optionalEmailMigration);
   assertFinalTransmitSchema(legacyPersistTo, 'legacy migration');
   assertSharedDatabaseContracts(legacyPersistTo, 'legacy migration');
+  const [legacyRequest, legacyEmailColumn] = execute(legacyPersistTo, `
+    SELECT id, event_id, name, email, instagram, privacy_consent, marketing_consent,
+           artist_id, invited_by, created_at
+    FROM access_requests;
+    SELECT "notnull" AS required FROM pragma_table_info('access_requests') WHERE name = 'email';
+  `);
+  if (JSON.stringify(legacyRequest.results) !== JSON.stringify([{
+    id: 'req-legacy', event_id: 'event-legacy', name: 'Guest', email: 'legacy@example.com',
+    instagram: '@legacy', privacy_consent: 1, marketing_consent: 1,
+    artist_id: 'artist-legacy', invited_by: 'Artist', created_at: '2026-08-23T00:00:00.000Z',
+  }])) {
+    throw new Error('optional email migration did not keep existing access requests');
+  }
+  if (legacyEmailColumn.results[0]?.required !== 0) {
+    throw new Error('optional email migration left access_requests.email required');
+  }
 
   const migrated = execute(legacyPersistTo, `
     SELECT id, handle, message, ts, created_at, device_id
@@ -402,7 +470,7 @@ try {
     throw new Error('unknown transmit timestamp did not fail closed');
   }
 
-  console.log('Local D1 contract PASS: 10 migrations, canonical Transmit schema/data conversion, indexes, FK, Gate/Signal atomic rules, Transmit idempotency/order');
+  console.log('Local D1 contract PASS: 11 migrations, canonical Transmit schema/data conversion, optional guest email, indexes, FK, Gate/Signal atomic rules, Transmit idempotency/order');
 } finally {
   for (const persistTo of persistRoots) {
     rmSync(persistTo, { recursive: true, force: true });

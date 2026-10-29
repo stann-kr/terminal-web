@@ -355,14 +355,14 @@ describe('stage views', () => {
     fireEvent.click(form().getByRole('button', { name: '코드 확인' }));
     await waitFor(() => expect(form().getByLabelText(/^이름/)).toBeEnabled());
     fireEvent.change(form().getByLabelText(/^이름/), { target: { value: 'Example' } });
-    fireEvent.change(form().getByLabelText(/^이메일/), { target: { value: 'example@example.test' } });
+    fireEvent.change(form().getByRole('textbox', { name: /인스타그램 ID/ }), { target: { value: 'example' } });
     go('/about');
     // Let the leaving layer and the closed file release the actual form instance.
     await act(() => new Promise(resolve => setTimeout(resolve, 750)));
     go('/events/TRM-03/request');
     expect(form().getByLabelText(/초대 코드/)).toHaveValue('CODE');
     expect(form().getByLabelText(/^이름/)).toHaveValue('Example');
-    expect(form().getByLabelText(/^이메일/)).toHaveValue('example@example.test');
+    expect(form().getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('example');
     expect(form().getByLabelText(/^이름/)).toBeDisabled();
     expect(form().getByRole('button', { name: '게스트 신청 저장' })).toBeDisabled();
     vi.unstubAllGlobals();
