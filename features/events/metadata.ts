@@ -10,7 +10,7 @@ export const SITE_ORIGIN = 'https://terminal.stann.kr';
  * What a shared link shows when its page has no picture of its own (the home, an artist, a session
  * before its poster). Made with the promo kit (`node promo/export.mjs share`) in the site's palette.
  */
-export const SHARE_IMAGE = { url: '/og/terminal.png', width: 1200, height: 630, alt: 'TERMINAL' };
+export const SHARE_IMAGE = { url: '/og/terminal-share.png', width: 1200, height: 630, alt: 'TERMINAL' };
 
 export const sessionNamesBrand = (session: string) => /\bTERMINAL\b/i.test(session);
 
