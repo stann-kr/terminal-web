@@ -1,5 +1,6 @@
 'use client';
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, Suspense, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Action, ActionDeck, Bay, Facts, Panel, ui } from '@/features/ui/Ui';
 import {
   Consent,
@@ -10,7 +11,7 @@ import {
   formStyles,
   literalInput,
 } from '@/features/ui/Form';
-import { errorMessage } from '@/features/ui/http';
+import { ApiError, errorMessage, postJson } from '@/features/ui/http';
 import { instagram } from '@/features/about/instagram';
 import { useSignalSubscription } from './useSignalSubscription';
 import styles from './signal.module.css';
@@ -80,7 +81,20 @@ function SignalInformation({
   );
 }
 
-function SignalForm({
+/** The form, or the unsubscribe key when the page was opened from a mail's unsubscribe link. */
+function SignalForm({ request }: { request: ReturnType<typeof useSignalSubscription> }) {
+  const form = <SignalSubscribeForm request={request} />;
+  return <Suspense fallback={form}><UnsubscribeSwitch>{form}</UnsubscribeSwitch></Suspense>;
+}
+
+function UnsubscribeSwitch({ children }: { children: ReactNode }) {
+  // Null outside the app router (component tests render the form alone).
+  const search = useSearchParams() as URLSearchParams | null;
+  const s = search?.get('s'), t = search?.get('t');
+  return s && t ? <SignalUnsubscribe link={{ s, t }} /> : children;
+}
+
+function SignalSubscribeForm({
   request,
 }: {
   request: ReturnType<typeof useSignalSubscription>;
@@ -165,6 +179,51 @@ function SignalForm({
             </button>
           </fieldset>
         </form>
+      )}
+    </FormPanel>
+  );
+}
+
+/** Opened from a mail's unsubscribe link: one key that deletes the subscription the link names. */
+function SignalUnsubscribe({ link }: { link: { s: string; t: string } }) {
+  const [pending, setPending] = useState(false),
+    [done, setDone] = useState(false),
+    [error, setError] = useState<unknown>(null);
+  async function submit() {
+    if (pending) return;
+    setPending(true);
+    setError(null);
+    try {
+      const query = new URLSearchParams(link).toString();
+      const result = await postJson<{ ok: boolean }>(`/api/signal/unsubscribe?${query}`, {});
+      if (result.ok !== true) throw new ApiError('INVALID_RESPONSE', 200);
+      setDone(true);
+    } catch (error) {
+      setError(error);
+    } finally {
+      setPending(false);
+    }
+  }
+  return (
+    <FormPanel title="수신 거부" code="SIGNAL">
+      {done ? (
+        <FormSuccess>
+          <p className={ui.eyebrow}>UNSUBSCRIBED</p>
+          <h2>수신 거부했습니다</h2>
+          <p>이 주소로는 더 이상 TERMINAL 소식을 보내지 않으며, 저장된 연락처를 지웠습니다. You will no longer receive TERMINAL news.</p>
+          <ActionDeck>
+            <Action href="/">홈으로 돌아가기</Action>
+          </ActionDeck>
+        </FormSuccess>
+      ) : (
+        <div className={formStyles.form}>
+          <FormError message={error ? errorMessage(error) : ''} />
+          <p>이 메일 주소로 TERMINAL 이벤트 소식을 더 받지 않으려면 아래 키를 눌러 주세요. 저장된 연락처도 함께 지웁니다.</p>
+          <p className={ui.muted}>Press the key below to stop receiving TERMINAL news at this address.</p>
+          <button type="button" aria-busy={pending} disabled={pending} onClick={submit} className={`${ui.button} ${ui.primary}`}>
+            {pending ? '처리 중…' : '수신 거부 · Unsubscribe'}
+          </button>
+        </div>
       )}
     </FormPanel>
   );

@@ -12,6 +12,7 @@ declare global {
     };
     TURNSTILE_SECRET_KEY?: string;
     TURNSTILE_EXPECTED_HOSTNAME?: string;
+    SIGNAL_UNSUBSCRIBE_SECRET?: string;
   }
 }
 
