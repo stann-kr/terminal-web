@@ -228,7 +228,7 @@ describe('signal UI',()=>{
     const user=userEvent.setup();const {container}=render(<SignalBody/>);
     const matrix=container.querySelector('[aria-hidden=true][data-state]')!;
     expect(matrix).toHaveAttribute('data-state','idle');
-    await user.type(screen.getByLabelText(/^이메일/),'reader@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'reader');await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));expect(fetch).not.toHaveBeenCalled();
+    await user.type(screen.getByLabelText(/^이메일/),'reader@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@reader');expect(screen.getByRole('textbox',{name:/인스타그램 ID/})).toHaveValue('@reader');await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));expect(fetch).not.toHaveBeenCalled();
     await user.click(screen.getByRole('checkbox'));await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));
     expect(matrix).toHaveAttribute('data-state','sending');
     expect(screen.getByRole('button',{name:'저장 중…'})).toBeDisabled();
