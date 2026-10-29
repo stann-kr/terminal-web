@@ -1065,6 +1065,9 @@
   min-height: 0;
   margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
 }
+.panelRow:where([data-columns="2"]) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .panelRow > * {
   min-height: 0;
 }
