@@ -11,11 +11,14 @@ import styles from './form.module.css';
 export function FormPanel({
   title,
   code,
+  label = code,
   children,
   titled = true,
 }: {
   title: string;
   code: string;
+  /** The English station label printed large in the head, as on every plate (the code by default). */
+  label?: string;
   children: ReactNode;
   /** False where the column around the form already shows its title: the heading stays for screen readers only. */
   titled?: boolean;
@@ -23,11 +26,11 @@ export function FormPanel({
   return (
     <section className={styles.terminalForm} data-surface="paper">
       {titled ? (
-        <header className={styles.formHeading}>
-          <p className={styles.formCode} aria-hidden="true">
-            {code}
-          </p>
-          <h2>{title}</h2>
+        <header className={ui.panelHead}>
+          <h2 className={ui.panelTitle} data-labelled>
+            <span className={ui.panelLabel} aria-hidden="true">{label}</span>
+            <span className={ui.panelKo}>{title}</span>
+          </h2>
         </header>
       ) : (
         <h2 className={ui.srOnly}>{title}</h2>
