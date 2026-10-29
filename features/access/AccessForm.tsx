@@ -151,12 +151,11 @@ export function AccessForm({
             id="guest-instagram"
             label="인스타그램 ID"
             required
-            maxLength={30}
-            pattern="[A-Za-z0-9_.]{1,30}"
-            prefix="@"
+            maxLength={31}
+            pattern="@[A-Za-z0-9_.]{1,30}"
             {...literalInput}
-            placeholder="handle"
-            value={fields.instagram}
+            // The @ is part of what the field shows, never of what is stored.
+            value={`@${fields.instagram}`}
             error={
               errorCode === 'INVALID_INSTAGRAM_FORMAT'
                 ? errorMessage(error)

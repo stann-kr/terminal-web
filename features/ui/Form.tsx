@@ -49,17 +49,14 @@ export function Field({
   label,
   error,
   hint,
-  prefix,
   ref,
   ...props
-}: Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix'> & {
+}: InputHTMLAttributes<HTMLInputElement> & {
   ref?: Ref<HTMLInputElement>;
   id: string;
   label: string;
   error?: string;
   hint?: string;
-  /** A fixed mark printed before the value (the @ of a handle); it is never part of the value. */
-  prefix?: string;
 }) {
   const describedBy =
     [
@@ -91,12 +88,7 @@ export function Field({
           </p>
         )}
       </div>
-      {prefix ? (
-        <div className={styles.affix}>
-          <span aria-hidden="true">{prefix}</span>
-          {input}
-        </div>
-      ) : input}
+      {input}
       {hint && (
         <p id={`${props.id}-hint`} className={styles.hint}>
           {hint}

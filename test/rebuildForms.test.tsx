@@ -44,12 +44,12 @@ describe('guest request UI',()=>{
     await user.click(screen.getByRole('checkbox', { name: /게스트 접근 관리/ }));
     view.rerender(tree('B'));
     expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');
-    expect(screen.getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('@');
     expect(screen.getByRole('checkbox', { name: /게스트 접근 관리/ })).not.toBeChecked();
     await user.type(screen.getByLabelText(/초대 코드/), 'CODE-B');
     view.rerender(tree('A'));
     expect(screen.getByLabelText(/초대 코드/)).toHaveValue('CODE-A');
-    expect(screen.getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('example');
+    expect(screen.getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('@example');
     expect(screen.getByRole('checkbox', { name: /게스트 접근 관리/ })).toBeChecked();
     expect(screen.getByRole('button', { name: '게스트 신청 저장' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: '코드 확인' }));
@@ -152,7 +152,7 @@ describe('guest request UI',()=>{
     expect(fetch.mock.calls[0][0]).toBe('/api/gate/code-info');
     expect(screen.getByLabelText(/^이름/)).toHaveFocus();
     expect(screen.queryByText('초대 코드를 확인하면 입력할 수 있습니다.')).not.toBeInTheDocument();
-    await user.keyboard('Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    await user.keyboard('Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@example');expect(screen.getByRole('textbox',{name:/인스타그램 ID/})).toHaveValue('@example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     const saved=await screen.findByRole('status');
     expect(saved).toHaveTextContent('INVITER');expect(saved).toHaveTextContent('@example');expect(saved).not.toHaveTextContent('이메일');
     expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');expect(screen.getByRole('link',{name:'@TERMINAL.SIGNAL 팔로우'})).toHaveAttribute('href','https://www.instagram.com/terminal.signal/');
