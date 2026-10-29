@@ -214,9 +214,16 @@
 .accessDeck {
   margin-top: auto;
 }
-/* Guest request over the news signup: one key per line, at any width. */
+/* Guest request and the news signup stand side by side while each name fits on one line; once one
+   would break, the keys stack one per line instead. */
 div.accessDeck {
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+}
+div.accessDeck > * {
+  flex: 1 1 auto;
+  width: auto;
+  white-space: nowrap;
 }
 /* Calendar, map and share keys sit under the date and venue facts, a gap apart like the facts under
    the title. They are keys in the plate's control colour like every key, so they never read as one
