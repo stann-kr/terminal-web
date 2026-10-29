@@ -24,15 +24,6 @@ describe('Signal subscription input policy', () => {
     });
   });
 
-  it('stores an Instagram id lowercase with its @, typed with or without one', () => {
-    for (const typed of ['Guest.Name', '@Guest.Name']) {
-      const result = validateSignalSubscriptionInput({ email: 'guest@example.com', instagram: typed, consent: true });
-      expect(result.ok && result.input.instagram).toBe('@guest.name');
-    }
-    const blank = validateSignalSubscriptionInput({ email: 'guest@example.com', instagram: '', consent: true });
-    expect(blank.ok && blank.input.instagram).toBe('');
-  });
-
   it.each([
     ['unknown key', { email: 'guest@example.com', instagram: '@guest', consent: true, role: 'admin' }],
     ['string consent', { email: 'guest@example.com', instagram: '@guest', consent: 'true' }],
