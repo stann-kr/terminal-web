@@ -45,6 +45,13 @@ describe('gate request runtime validation', () => {
     });
   });
 
+  it('stores an Instagram id lowercase with its @, typed with or without one', () => {
+    for (const typed of ['Guest.Name', '@Guest.Name']) {
+      const result = parseGateRequestBody({ ...validBody, instagram: typed });
+      expect(result.ok && result.input.instagram).toBe('@guest.name');
+    }
+  });
+
   it('keeps an email only for a guest who asked for news', () => {
     const result = parseGateRequestBody({ ...validBody, marketingConsent: true });
     expect(result.ok && result.input.email).toBe('guest@example.com');
