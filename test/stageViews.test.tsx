@@ -251,6 +251,7 @@ describe('stage views', () => {
     const shareSheet = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     Object.defineProperty(navigator, 'share', { configurable: true, value: shareSheet });
+    Object.defineProperty(window, 'isSecureContext', { configurable: true, value: true });
     try {
       const { container, go } = shell();
       go('/events/OLD');
@@ -260,18 +261,20 @@ describe('stage views', () => {
       // A desktop pointer copies the address, even where a share sheet exists.
       fireEvent.click(key);
       await waitFor(() => expect(key).toHaveTextContent('링크 복사됨'));
-      expect(writeText).toHaveBeenCalledWith(`${location.origin}/events/OLD`);
+      // The public address, whatever address the page was opened at.
+      expect(writeText).toHaveBeenCalledWith('https://terminal.stann.kr/events/OLD');
       expect(shareSheet).not.toHaveBeenCalled();
       expect(within(file).getByText('링크 복사됨', { selector: '[role="status"]' })).toBeInTheDocument();
       // A phone opens its share sheet with the session's name and address.
       Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({ matches: query === '(pointer: coarse)' }) });
       fireEvent.click(key);
-      await waitFor(() => expect(shareSheet).toHaveBeenCalledWith({ title: 'Past event', url: `${location.origin}/events/OLD` }));
+      await waitFor(() => expect(shareSheet).toHaveBeenCalledWith({ title: 'Past event', url: 'https://terminal.stann.kr/events/OLD' }));
       expect(writeText).toHaveBeenCalledTimes(1);
     } finally {
       delete (navigator as { clipboard?: unknown }).clipboard;
       delete (navigator as { share?: unknown }).share;
       delete (window as { matchMedia?: unknown }).matchMedia;
+      delete (window as { isSecureContext?: unknown }).isSecureContext;
     }
   });
 
