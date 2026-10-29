@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import type { TerminalEvent } from '@/lib/events/types';
 import { getEventDateTime, getEventEndTime } from '@/lib/events/lifecycle';
-import { buildArtistArchive, type ArtistProfile } from '@/features/artists/model';
+import { buildArtistArchive, profileForKey, type ArtistProfile } from '@/features/artists/model';
 import { eventHref, eventSubtitle, paragraphs, publicArtists } from './model';
 
 /** The site's public address: link previews, the sitemap and structured data name pages by it. */
@@ -61,7 +61,7 @@ export function artistMetadata(profile: ArtistProfile): Metadata {
 }
 
 export function findArtistProfile(events: readonly TerminalEvent[], key: string) {
-  return buildArtistArchive(events).find((profile) => profile.key === key);
+  return profileForKey(buildArtistArchive(events), key);
 }
 
 /** `2026-11-28T23:00:00+09:00`: a moment as the KST wall clock reads it. */

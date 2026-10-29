@@ -453,7 +453,7 @@ describe('stage views', () => {
     const { container, go } = shell([
       { ...past, id: 'TRM-01', artists: [{ ...lumo, id: '01-A' }] },
       { ...past, id: 'TRM-02', artists: [{ ...lumo, id: '02-A' }] },
-      { ...past, id: 'OTHER', artists: [{ ...lumo, id: 'X' }] },
+      { ...past, id: 'OTHER', artists: [{ ...lumo, id: 'X', name: 'OTHER ARTIST' }] },
     ]);
     go('/artists');
     const canonical = item(container, 'artist:stann-lumo');
