@@ -362,7 +362,7 @@ describe('stage views', () => {
     go('/events/TRM-03/request');
     expect(form().getByLabelText(/초대 코드/)).toHaveValue('CODE');
     expect(form().getByLabelText(/^이름/)).toHaveValue('Example');
-    expect(form().getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('example');
+    expect(form().getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('@example');
     expect(form().getByLabelText(/^이름/)).toBeDisabled();
     expect(form().getByRole('button', { name: '게스트 신청 저장' })).toBeDisabled();
     vi.unstubAllGlobals();
