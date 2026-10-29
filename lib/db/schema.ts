@@ -66,7 +66,7 @@ export const signal = sqliteTable(
   {
     id: text("id").primaryKey(),
     name: text("name"),
-    email: text("email").notNull(),
+    email: text("email"),  // 이메일로도 소식을 받겠다고 한 구독자만 남김.
     instagram: text("instagram").notNull(),
     source: text("source").notNull(),
     createdAt: text("created_at").notNull(),

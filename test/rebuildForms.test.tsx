@@ -228,8 +228,10 @@ describe('signal UI',()=>{
     const user=userEvent.setup();const {container}=render(<SignalBody/>);
     const matrix=container.querySelector('[aria-hidden=true][data-state]')!;
     expect(matrix).toHaveAttribute('data-state','idle');
-    await user.type(screen.getByLabelText(/^이메일/),'reader@example.test');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'reader');await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));expect(fetch).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('checkbox'));await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));
+    expect(screen.queryByLabelText(/소식 받을 이메일/)).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^이름/),'Reader');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@reader');await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));expect(fetch).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('checkbox',{name:/이메일로도/}));await user.type(screen.getByLabelText(/소식 받을 이메일/),'reader@example.test');
+    await user.click(screen.getByRole('checkbox',{name:/소식 안내 목적/}));await user.click(screen.getByRole('button',{name:'소식 신청 저장'}));
     expect(matrix).toHaveAttribute('data-state','sending');
     expect(screen.getByRole('button',{name:'저장 중…'})).toBeDisabled();
     await act(async()=>{resolve(saved?json({ok:true}):json({error:'UNAVAILABLE'},503));});
@@ -240,9 +242,9 @@ describe('signal UI',()=>{
     } else {
       expect(await screen.findByRole('alert')).toBeInTheDocument();
       expect(matrix).toHaveAttribute('data-state','error');
-      expect(screen.getByLabelText(/^이메일/)).toHaveValue('reader@example.test');
+      expect(screen.getByLabelText(/소식 받을 이메일/)).toHaveValue('reader@example.test');
     }
-    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({email:'reader@example.test',instagram:'reader',consent:true});
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({name:'Reader',email:'reader@example.test',instagram:'reader',consent:true});
   });
 });
 
@@ -256,8 +258,11 @@ describe('field error recovery',()=>{
       await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
       await user.type(screen.getByLabelText(/^이름/),'Example');
       await user.click(screen.getByRole('checkbox',{name:/차기 이벤트 소식/}));
+    } else {
+      await user.type(screen.getByLabelText(/^이름/),'Example');
+      await user.click(screen.getByRole('checkbox',{name:/이메일로도/}));
     }
-    const email=screen.getByLabelText(form==='access'?/소식 받을 이메일/:/^이메일/),instagram=screen.getByRole('textbox',{name:/인스타그램 ID/});
+    const email=screen.getByLabelText(/소식 받을 이메일/),instagram=screen.getByRole('textbox',{name:/인스타그램 ID/});
     await user.type(email,'old@example.test');await user.type(instagram,'example');
     await user.click(screen.getAllByRole('checkbox')[0]);await user.click(screen.getByRole('button',{name:form==='access'?'게스트 신청 저장':'소식 신청 저장'}));
     await screen.findByRole('alert');expect(email).toHaveAttribute('aria-invalid','true');

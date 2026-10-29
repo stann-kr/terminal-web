@@ -109,27 +109,19 @@ function SignalSubscribeForm({
           <FormError message={error ? errorMessage(error) : ''} />
           <fieldset disabled={pending} className={formStyles.fields}>
             <Field
-              id="signal-email"
-              label="이메일"
+              id="signal-name"
+              label="이름"
               required
-              type="email"
-              maxLength={254}
-              autoComplete="email"
-              value={fields.email}
-              error={
-                errorCode === 'INVALID_EMAIL_FORMAT'
-                  ? errorMessage(error)
-                  : undefined
-              }
-              onChange={(event) => {
-                setFields({ ...fields, email: event.target.value });
-                if (errorCode === 'INVALID_EMAIL_FORMAT') setError(null);
-              }}
+              maxLength={100}
+              autoComplete="name"
+              value={fields.name}
+              onChange={(event) => setFields({ ...fields, name: event.target.value })}
             />
             <Field
               id="signal-instagram"
-              label="인스타그램 ID (선택)"
-              hint="적어 두면 인스타그램으로도 소식을 보냅니다. 팔로워에게만 닿습니다."
+              label="인스타그램 ID"
+              hint="인스타그램으로 소식을 보냅니다. 팔로워에게만 닿습니다."
+              required
               maxLength={30}
               pattern="[A-Za-z0-9_.]{1,30}"
               prefix="@"
@@ -146,15 +138,45 @@ function SignalSubscribeForm({
                 if (errorCode === 'INVALID_INSTAGRAM_FORMAT') setError(null);
               }}
             />
-            <Consent
-              required
-              id="signal-consent"
-              checked={fields.consent}
-              onChange={(value) => setFields({ ...fields, consent: value })}
-            >
-              이메일과 (적은 경우) 인스타그램 계정을 TERMINAL 이벤트 소식 안내
-              목적으로 수집하는 데 동의합니다. 보존 기간: 수신 거부 시까지.
-            </Consent>
+            <div>
+              <Consent
+                required
+                id="signal-consent"
+                checked={fields.consent}
+                onChange={(value) => setFields({ ...fields, consent: value })}
+              >
+                이름·인스타그램 계정(적은 경우 이메일)을 TERMINAL 이벤트 소식 안내
+                목적으로 수집하는 데 동의합니다. 보존 기간: 수신 거부 시까지.
+              </Consent>
+              <Consent
+                id="signal-wants-email"
+                checked={fields.wantsEmail}
+                onChange={(value) => setFields({ ...fields, wantsEmail: value })}
+              >
+                [선택] 이메일로도 소식을 받습니다.
+              </Consent>
+            </div>
+            {/* The email field opens only for a subscriber who also wants mail. */}
+            {fields.wantsEmail && (
+              <Field
+                id="signal-email"
+                label="소식 받을 이메일"
+                required
+                type="email"
+                maxLength={254}
+                autoComplete="email"
+                value={fields.email}
+                error={
+                  errorCode === 'INVALID_EMAIL_FORMAT'
+                    ? errorMessage(error)
+                    : undefined
+                }
+                onChange={(event) => {
+                  setFields({ ...fields, email: event.target.value });
+                  if (errorCode === 'INVALID_EMAIL_FORMAT') setError(null);
+                }}
+              />
+            )}
             <button
               aria-busy={pending}
               className={`${ui.button} ${ui.primary}`}

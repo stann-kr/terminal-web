@@ -12,7 +12,7 @@ export function createSignalSubscription(
 ): Promise<SignalSubscriptionInsertResult> {
   return insertSignalSubscription(database, {
     id: generateId('sig'),
-    name: null,
+    name: input.name,
     email: input.email,
     instagram: input.instagram,
     source: 'signal',

@@ -49,6 +49,10 @@ const optionalEmailMigration = path.join(
   'migrations',
   '0010_access_request_email_optional.sql',
 );
+const optionalSignalEmailMigration = path.join(
+  'migrations',
+  '0011_signal_email_optional.sql',
+);
 
 function assertFinalTransmitSchema(persistTo, label) {
   const [tableInfoResult, indexListResult] = execute(persistTo, `
@@ -120,7 +124,7 @@ try {
   for (const name of ['events', 'artists', 'access_requests', 'signal', 'transmit_logs', 'access_requests_event_email_idx', 'signal_email_idx']) {
     if (!objects.has(name)) throw new Error(`missing D1 object: ${name}`);
   }
-  if (results[1].results[0]?.count !== 11) throw new Error('expected all 11 Wrangler migrations');
+  if (results[1].results[0]?.count !== 12) throw new Error('expected all 12 Wrangler migrations');
   if (results[2].results.length !== 0) throw new Error('foreign key check failed');
   if (results[3].results.map((row) => row.name).join(',') !== 'event_id,email') {
     throw new Error('access request unique index columns drifted');
@@ -263,6 +267,18 @@ try {
     VALUES ('sig-direct-duplicate', NULL, 'direct@example.com', '@changed', 'signal',
             '2026-08-23T00:05:00.000Z')
     ON CONFLICT(email) DO NOTHING;
+    INSERT INTO signal (id, name, email, instagram, source, created_at)
+    SELECT 'sig-no-email', 'Reader', NULL, '@reader', 'signal', '2026-08-23T00:06:00.000Z'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM signal WHERE instagram <> '' AND lower(ltrim(instagram, '@')) = 'reader'
+    )
+    ON CONFLICT DO NOTHING;
+    INSERT INTO signal (id, name, email, instagram, source, created_at)
+    SELECT 'sig-no-email-duplicate', 'Reader', NULL, 'READER', 'signal', '2026-08-23T00:07:00.000Z'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM signal WHERE instagram <> '' AND lower(ltrim(instagram, '@')) = 'reader'
+    )
+    ON CONFLICT DO NOTHING;
 
     INSERT INTO transmit_logs (id, handle, message, ts, created_at)
     VALUES ('tx-current', 'CURRENT', 'original', '2026.08.24 / 01:05',
@@ -289,7 +305,9 @@ try {
       SUM(email = 'no@example.com') AS no_marketing_inserted,
       SUM(email = 'capacity@example.com') AS rejected_request_inserted,
       SUM(email = 'yes@example.com') AS gate_marketing_inserted,
-      SUM(email = 'direct@example.com') AS direct_inserted
+      SUM(email = 'direct@example.com') AS direct_inserted,
+      SUM(id = 'sig-no-email' AND email IS NULL) AS no_email_inserted,
+      SUM(id = 'sig-no-email-duplicate') AS instagram_duplicate_inserted
     FROM signal;
     SELECT COUNT(*) AS total, MAX(message) AS message
     FROM transmit_logs WHERE id = 'tx-current';
@@ -317,7 +335,9 @@ try {
   }
   const signalResult = behavior[1].results[0];
   if (
-    signalResult?.total !== 2
+    signalResult?.total !== 3
+    || signalResult.no_email_inserted !== 1
+    || signalResult.instagram_duplicate_inserted !== 0
     || signalResult.no_marketing_inserted !== 0
     || signalResult.rejected_request_inserted !== 0
     || signalResult.gate_marketing_inserted !== 1
@@ -379,7 +399,22 @@ try {
     VALUES ('req-legacy', 'event-legacy', 'Guest', 'legacy@example.com', '@legacy', 1,
             '2026-08-23T00:00:00.000Z', 1, 'artist-legacy', 'Artist');
   `);
+  execute(legacyPersistTo, `
+    INSERT INTO signal (id, name, email, instagram, source, created_at)
+    VALUES ('sig-legacy', NULL, 'legacy@example.com', '@legacy', 'signal', '2026-08-23T00:00:00.000Z');
+  `);
   executeFile(legacyPersistTo, optionalEmailMigration);
+  executeFile(legacyPersistTo, optionalSignalEmailMigration);
+  const [legacySignal, signalEmailColumn] = execute(legacyPersistTo, `
+    SELECT id, name, email, instagram, source, created_at FROM signal;
+    SELECT "notnull" AS required FROM pragma_table_info('signal') WHERE name = 'email';
+  `);
+  if (JSON.stringify(legacySignal.results) !== JSON.stringify([{
+    id: 'sig-legacy', name: null, email: 'legacy@example.com', instagram: '@legacy',
+    source: 'signal', created_at: '2026-08-23T00:00:00.000Z',
+  }]) || signalEmailColumn.results[0]?.required !== 0) {
+    throw new Error('optional Signal email migration drifted');
+  }
   assertFinalTransmitSchema(legacyPersistTo, 'legacy migration');
   assertSharedDatabaseContracts(legacyPersistTo, 'legacy migration');
   const [legacyRequest, legacyEmailColumn] = execute(legacyPersistTo, `
@@ -470,7 +505,7 @@ try {
     throw new Error('unknown transmit timestamp did not fail closed');
   }
 
-  console.log('Local D1 contract PASS: 11 migrations, canonical Transmit schema/data conversion, optional guest email, indexes, FK, Gate/Signal atomic rules, Transmit idempotency/order');
+  console.log('Local D1 contract PASS: 12 migrations, canonical Transmit schema/data conversion, optional guest and Signal email, indexes, FK, Gate/Signal atomic rules, Transmit idempotency/order');
 } finally {
   for (const persistTo of persistRoots) {
     rmSync(persistTo, { recursive: true, force: true });
