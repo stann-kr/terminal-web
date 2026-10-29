@@ -195,7 +195,8 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
       accessCode,
       name,
       email,
-      instagram,
+      // One spelling for every stored handle: Instagram ids are lowercase, shown with their @.
+      instagram: `@${cleanInstagram.toLowerCase()}`,
       privacyConsent: true,
       marketingConsent,
     },
