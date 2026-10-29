@@ -7,16 +7,19 @@ import path from 'node:path';
 /**
  * Sends one mail to everyone on the Signal list (production D1 `signal`), one message per address.
  *
- *   npm run signal:mail -- <mail.html> <mail.txt> --subject "<subject>"            (dry run)
- *   npm run signal:mail -- <mail.html> <mail.txt> --subject "<subject>" --only <address>
- *   npm run signal:mail -- <mail.html> <mail.txt> --subject "<subject>" --send
+ *   npm run signal:mail -- <mail.html> <mail.txt> --subject "<subject>"                        (dry run)
+ *   npm run signal:mail -- <mail.html> <mail.txt> --subject "<subject>" --only <address> --confirm 1
+ *   npm run signal:mail -- <mail.html> <mail.txt> --subject "<subject>" --send --confirm <count>
  *
- * Without --send or --only it only prints how many would receive it. Mail goes out through
+ * Nothing is sent without --confirm naming exactly how many people will get the mail (1 for
+ * --only); without it a run only prints who would. A subject shorter than 10 characters is refused,
+ * and so is a subject marked TEST on a send to the whole list. --only to a subscriber (anyone but
+ * REPLY_TO) is logged like --send, so the whole-list run after it skips them. Mail goes out through
  * Cloudflare Email Sending from stann@terminal.stann.kr, replies go to REPLY_TO. Each message
  * gets its own unsubscribe link ({{UNSUBSCRIBE_URL}} in the html and text), signed with
  * SIGNAL_UNSUBSCRIBE_SECRET (the Worker's secret; read from the environment or .env), and the
- * List-Unsubscribe / List-Unsubscribe-Post headers that give mail apps a one-click button. Sending uses the wrangler OAuth
- * login (the API token in .env has no Email Sending permission), so the repo .env is not loaded for
+ * List-Unsubscribe / List-Unsubscribe-Post headers that give mail apps a one-click button. Sending
+ * uses the wrangler OAuth login (the API token in .env has no Email Sending permission), so the repo .env is not loaded for
  * it. Each sent address is appended to backups/signal-mail/<date>.log (git-ignored), and a re-run
  * of the same log skips those addresses.
  */
@@ -32,6 +35,9 @@ function fail(message) {
   console.error(`✖ ${message}`);
   process.exit(1);
 }
+/** The line of a failed wrangler run that says what went wrong. */
+const reason = error => String(error?.stderr || error?.message || error).split('\n').find(line => /error|✘/i.test(line))?.trim() ?? 'failed';
+process.on('uncaughtException', error => fail(reason(error)));
 
 const args = process.argv.slice(2);
 const option = name => { const at = args.indexOf(name); return at >= 0 ? args[at + 1] : undefined; };
@@ -41,6 +47,15 @@ const only = option('--only');
 const send = args.includes('--send');
 if (!htmlFile || !textFile || !subject) fail('usage: <mail.html> <mail.txt> --subject "<subject>" [--only <address> | --send]');
 if (only && send) fail('--only and --send are separate runs');
+if (subject.trim().length < 10) fail('the subject is shorter than 10 characters: write the real subject');
+if (send && /\bTEST\b/i.test(subject)) fail('a TEST subject never goes to the whole list');
+const confirm = option('--confirm');
+/** Stops before sending unless --confirm names exactly the number about to receive the mail. */
+function confirmed(count, what) {
+  if (confirm === String(count)) return true;
+  console.log(`not sent: ${what}. To send, run again with --confirm ${count}.`);
+  return false;
+}
 const html = readFileSync(htmlFile, 'utf8');
 const text = readFileSync(textFile, 'utf8');
 const secret = process.env.SIGNAL_UNSUBSCRIBE_SECRET
@@ -77,26 +92,35 @@ function sendTo({ id, email }) {
     '--header', 'List-Unsubscribe-Post:List-Unsubscribe=One-Click'], { oauth: true });
 }
 
+const logDir = path.join(process.cwd(), 'backups', 'signal-mail');
+const logFile = option('--log') ?? path.join(logDir, `${new Date().toISOString().slice(0, 10)}.log`);
+
 if (only) {
-  // A test send: the address must be on the list, so its unsubscribe link is real.
+  // The address must be on the list, so its unsubscribe link is real.
   const row = subscribers().valid.find(item => item.email === only.toLowerCase());
   if (!row) fail('--only takes an address on the Signal list');
+  const owner = row.email === REPLY_TO;
+  if (!confirmed(1, `"${subject}" to ${owner ? 'your own address' : 'a subscriber'} (${row.email})`)) process.exit(0);
   sendTo(row);
-  console.log(`✓ sent to ${only}`);
+  if (!owner) { mkdirSync(path.dirname(logFile), { recursive: true }); appendFileSync(logFile, `${row.email}\n`); }
+  console.log(`✓ sent to ${row.email}`);
   process.exit(0);
 }
 
 const { valid, skipped } = subscribers();
-const logDir = path.join(process.cwd(), 'backups', 'signal-mail');
-const logFile = option('--log') ?? path.join(logDir, `${new Date().toISOString().slice(0, 10)}.log`);
 let done = new Set();
 try { done = new Set(readFileSync(logFile, 'utf8').split('\n').filter(Boolean)); } catch {}
 const pending = valid.filter(row => !done.has(row.email));
 console.log(`${valid.length} subscribers, ${skipped.length} undeliverable left out, ${valid.length - pending.length} already sent in ${path.relative(process.cwd(), logFile)}`);
-if (!send) {
-  console.log(`dry run: ${pending.length} would receive "${subject}". Add --send to send.`);
+if (!pending.length) {
+  console.log('nothing to send: everyone on the list already has this mail.');
   process.exit(0);
 }
+if (!send) {
+  console.log(`dry run: ${pending.length} would receive "${subject}". Add --send --confirm ${pending.length} to send.`);
+  process.exit(0);
+}
+if (!confirmed(pending.length, `"${subject}" to ${pending.length} subscribers`)) process.exit(0);
 mkdirSync(path.dirname(logFile), { recursive: true });
 let failed = 0;
 for (const [index, row] of pending.entries()) {
@@ -106,7 +130,7 @@ for (const [index, row] of pending.entries()) {
     console.log(`✓ ${index + 1}/${pending.length}`);
   } catch (error) {
     failed += 1;
-    console.error(`✖ ${index + 1}/${pending.length}: ${String(error.stderr ?? error.message).split('\n').find(line => /error/i.test(line)) ?? 'failed'}`);
+    console.error(`✖ ${index + 1}/${pending.length}: ${reason(error)}`);
   }
 }
 console.log(`${pending.length - failed} sent, ${failed} failed`);
