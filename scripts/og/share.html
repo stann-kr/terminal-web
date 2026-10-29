@@ -1,0 +1,43 @@
+<!doctype html>
+<!--
+  The site's share image (public/og/terminal-share.png, 1200 × 630), drawn as the site is: plates on
+  the ceramic field. Matches the "공유 미리보기" artboard of the web UI canvas. Render it with
+  `node scripts/og/render.mjs` (the site fonts are inlined); re-render when NEXT changes.
+-->
+<html><head><meta charset="utf-8"><style>
+@font-face{font-family:'TERMINAL Lettering';src:url(../../public/fonts/TERMINAL-Lettering.woff2) format('woff2')}
+@font-face{font-family:Barlow;src:url(../../public/fonts/instrument/Barlow-Medium.woff2) format('woff2');font-weight:500 700}
+@font-face{font-family:'Barlow Condensed';src:url(../../public/fonts/instrument/BarlowCondensed-Bold.woff2) format('woff2');font-weight:700 800}
+@font-face{font-family:'Share Tech Mono';src:url(../../public/fonts/instrument/ShareTechMono-Regular.woff2) format('woff2')}
+*{box-sizing:border-box}
+body{margin:0}
+#og{width:1200px;height:630px;background:#eaeae4;padding:12px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;color:#24343d;font-family:Barlow,sans-serif}
+.brand{font-family:'TERMINAL Lettering',sans-serif;font-weight:400;letter-spacing:0;font-kerning:normal}
+.lab{font:700 18px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em}
+.feature{grid-column:1/span 3;grid-row:1/span 2;background:#426c79;color:#f7f7f3;position:relative;overflow:hidden;padding:32px 36px;display:flex;flex-direction:column}
+.feature svg{position:absolute;right:-300px;bottom:-300px;opacity:.22}
+.next{grid-column:4/span 2;grid-row:1;background:#f7f7f3;padding:24px 28px;display:flex;flex-direction:column}
+.facts{grid-column:4/span 2;grid-row:2;background:#d6dad8;display:flex;flex-direction:column;justify-content:center}
+.row{display:flex;justify-content:space-between;align-items:baseline;padding:12px 28px;font:700 24px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.03em}
+.row span:first-child{font-size:15px;letter-spacing:.16em;color:#4f5c62}
+.row:nth-child(odd){background:rgba(36,52,61,.08)}
+</style></head><body>
+<div id="og">
+  <div class="feature">
+    <svg width="720" height="720" viewBox="0 0 360 360" aria-hidden="true"><g fill="none" stroke="#f7f7f3" stroke-width=".6"><circle cx="180" cy="180" r="30"/><circle cx="180" cy="180" r="60"/><circle cx="180" cy="180" r="90"/><circle cx="180" cy="180" r="120"/><circle cx="180" cy="180" r="150"/><circle cx="180" cy="180" r="180"/></g></svg>
+    <div class="lab">STANN OS · LIVE</div>
+    <div style="margin-top:auto"><span class="brand" style="font-size:100px;line-height:.9">TERMINAL</span></div>
+    <div style="margin-top:16px;font:600 26px/1.3 Barlow,sans-serif">A Voyage to the Unknown Sector.</div>
+  </div>
+  <div class="next">
+    <div class="lab" style="color:#426c79">NEXT</div>
+    <div style="margin-top:auto"><span class="brand" style="font-size:36px">TERMINAL</span> <span style="font:700 32px/1 'Barlow Condensed',sans-serif">[03]</span></div>
+    <div style="margin-top:4px;font:700 26px/1.1 'Barlow Condensed',sans-serif;text-transform:uppercase">Vulpecula Junction</div>
+  </div>
+  <div class="facts">
+    <div class="row"><span>DATE</span><span>2026.11.28 SAT</span></div>
+    <div class="row"><span>VENUE</span><span>FAUST SEOUL</span></div>
+    <div class="row"><span>SITE</span><span style="font:400 22px/1 'Share Tech Mono',monospace">terminal.stann.kr</span></div>
+  </div>
+</div>
+</body></html>
