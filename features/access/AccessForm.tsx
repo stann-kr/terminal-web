@@ -151,10 +151,11 @@ export function AccessForm({
             id="guest-instagram"
             label="인스타그램 ID"
             required
-            maxLength={31}
-            pattern="@?[A-Za-z0-9_.]{1,30}"
+            maxLength={30}
+            pattern="[A-Za-z0-9_.]{1,30}"
+            prefix="@"
             {...literalInput}
-            placeholder="@handle"
+            placeholder="handle"
             value={fields.instagram}
             error={
               errorCode === 'INVALID_INSTAGRAM_FORMAT'
@@ -162,7 +163,7 @@ export function AccessForm({
                 : undefined
             }
             onChange={(event) => {
-              setFields({ ...fields, instagram: event.target.value });
+              setFields({ ...fields, instagram: event.target.value.replace(/^@+/, '') });
               if (errorCode === 'INVALID_INSTAGRAM_FORMAT') setError(null);
             }}
           />

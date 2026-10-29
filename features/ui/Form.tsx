@@ -49,14 +49,17 @@ export function Field({
   label,
   error,
   hint,
+  prefix,
   ref,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & {
+}: Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix'> & {
   ref?: Ref<HTMLInputElement>;
   id: string;
   label: string;
   error?: string;
   hint?: string;
+  /** A fixed mark printed before the value (the @ of a handle); it is never part of the value. */
+  prefix?: string;
 }) {
   const describedBy =
     [
@@ -66,6 +69,14 @@ export function Field({
     ]
       .filter(Boolean)
       .join(' ') || undefined;
+  const input = (
+    <input
+      {...props}
+      ref={ref}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy}
+    />
+  );
   return (
     <div className={styles.field}>
       {/* A field error is printed in the label bar, where "필수" sits: the form keeps its height. */}
@@ -80,12 +91,12 @@ export function Field({
           </p>
         )}
       </div>
-      <input
-        {...props}
-        ref={ref}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-      />
+      {prefix ? (
+        <div className={styles.affix}>
+          <span aria-hidden="true">{prefix}</span>
+          {input}
+        </div>
+      ) : input}
       {hint && (
         <p id={`${props.id}-hint`} className={styles.hint}>
           {hint}
