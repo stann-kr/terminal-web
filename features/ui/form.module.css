@@ -131,8 +131,10 @@
 .success > * {
   --bleed: var(--success-inset);
 }
+/* Its keys (the last thing in it) stack one per line, at any width. */
 .success > :last-child {
   margin-top: 6px;
+  grid-template-columns: minmax(0, 1fr);
 }
 .success h2 {
   font: 700 var(--t-xl)/1.1 var(--display);
