@@ -214,6 +214,10 @@
 .accessDeck {
   margin-top: auto;
 }
+/* Guest request over the news signup: one key per line, at any width. */
+div.accessDeck {
+  grid-template-columns: minmax(0, 1fr);
+}
 /* Calendar, map and share keys sit under the date and venue facts, a gap apart like the facts under
    the title. They are keys in the plate's control colour like every key, so they never read as one
    more fact line, parted by the deck's hairline. They stand all in one row or all stacked, never two
