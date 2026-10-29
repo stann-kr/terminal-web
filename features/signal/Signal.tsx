@@ -130,11 +130,10 @@ function SignalSubscribeForm({
               id="signal-instagram"
               label="인스타그램 ID (선택)"
               hint="적어 두면 인스타그램으로도 소식을 보냅니다. 팔로워에게만 닿습니다."
-              maxLength={30}
-              pattern="[A-Za-z0-9_.]{1,30}"
-              prefix="@"
+              maxLength={31}
+              pattern="@?[A-Za-z0-9_.]{1,30}"
               {...literalInput}
-              placeholder="handle"
+              placeholder="@handle"
               value={fields.instagram}
               error={
                 errorCode === 'INVALID_INSTAGRAM_FORMAT'
@@ -142,7 +141,7 @@ function SignalSubscribeForm({
                   : undefined
               }
               onChange={(event) => {
-                setFields({ ...fields, instagram: event.target.value.replace(/^@+/, '') });
+                setFields({ ...fields, instagram: event.target.value });
                 if (errorCode === 'INVALID_INSTAGRAM_FORMAT') setError(null);
               }}
             />
