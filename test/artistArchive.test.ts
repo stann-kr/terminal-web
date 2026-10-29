@@ -1,8 +1,8 @@
 import { describe,expect,it } from 'vitest';
 import type { Artist,TerminalEvent } from '../lib/events/types';
-import { buildArtistArchive } from '../features/artists/model';
+import { buildArtistArchive, profileForKey } from '../features/artists/model';
 import { accessAvailability, paragraphs } from '../features/events/model';
-const artist=(id:string,status:Artist['status']='CONFIRMED'):Artist=>({id,name:'SAME NAME',origin:'KR',dock:'1',time:'TBA',status});
+const artist=(id:string,status:Artist['status']='CONFIRMED',name='SAME NAME'):Artist=>({id,name,origin:'KR',dock:'1',time:'TBA',status});
 const event=(id:string,artists:Artist[],date='2026-10-01'):TerminalEvent=>({id,session:id,subtitle:'',date,time:'23:00',venue:'Venue',district:'Seoul',coords:'',capacity:'',sound:'',status:'UPCOMING',artists});
 describe('public artist archive',()=>{
   it('groups the confirmed identities into three people and four public appearances',()=>{
@@ -15,11 +15,17 @@ describe('public artist archive',()=>{
     expect(profiles.find(profile=>profile.key==='stann-lumo')).toMatchObject({eventCount:2});
     expect(profiles.reduce((count,profile)=>count+profile.appearances.length,0)).toBe(4);
   });
-  it('keeps names independent until appearances have an explicit reviewed mapping',()=>{
-    const events=[event('A',[artist('1')]),event('B',[artist('2')])];
-    expect(buildArtistArchive(events)).toHaveLength(2);
-    const profiles=buildArtistArchive(events,[{key:'reviewed',appearances:[{eventId:'A',artistRowId:'1'},{eventId:'B',artistRowId:'2'}]}]);
-    expect(profiles).toHaveLength(1);expect(profiles[0]).toMatchObject({key:'reviewed',eventCount:2,verified:true});
+  it('groups the same name into one artist without a mapping, keyed by its oldest appearance',()=>{
+    const events=[event('B',[artist('2','CONFIRMED',' same  name ')],'2026-11-01'),event('A',[artist('1')],'2026-03-01'),event('C',[artist('3','CONFIRMED','OTHER')])];
+    const profiles=buildArtistArchive(events,[]);
+    expect(profiles).toHaveLength(2);
+    expect(profiles.find(profile=>profile.eventCount===2)).toMatchObject({key:'appearance:A:1',verified:false});
+    expect(profileForKey(profiles,'appearance:B:2')?.key).toBe('appearance:A:1');
+  });
+  it('joins a returning name to its reviewed identity, and lets a mapping keep two of one name apart',()=>{
+    const events=[event('A',[artist('1')],'2026-03-01'),event('B',[artist('2')],'2026-11-01')];
+    expect(buildArtistArchive(events,[{key:'reviewed',appearances:[{eventId:'A',artistRowId:'1'}]}])).toMatchObject([{key:'reviewed',eventCount:2}]);
+    expect(buildArtistArchive(events,[{key:'one',appearances:[{eventId:'A',artistRowId:'1'}]},{key:'two',appearances:[{eventId:'B',artistRowId:'2'}]}])).toHaveLength(2);
   });
   it('excludes private and disappeared appearances, without counting multiple slots as multiple events',()=>{
     const rows=buildArtistArchive([event('A',[artist('1'),artist('2'),artist('3','CLASSIFIED')])],[{key:'reviewed',appearances:[{eventId:'A',artistRowId:'1'},{eventId:'A',artistRowId:'2'},{eventId:'A',artistRowId:'3'},{eventId:'B',artistRowId:'4'}]}]);
@@ -31,7 +37,7 @@ describe('public artist archive',()=>{
     expect(paragraphs({en:'English'},'ko')).toEqual([]);
   });
   it('keeps event and row identifiers with delimiters distinct',()=>{
-    const profiles=buildArtistArchive([event('A:B',[artist('C')]),event('A',[artist('B:C')]),event('A%3AB',[artist('C')])]);
+    const profiles=buildArtistArchive([event('A:B',[artist('C','CONFIRMED','ONE')]),event('A',[artist('B:C','CONFIRMED','TWO')]),event('A%3AB',[artist('C','CONFIRMED','THREE')])]);
     expect(profiles).toHaveLength(3);expect(new Set(profiles.map(profile=>profile.key)).size).toBe(3);
   });
 });

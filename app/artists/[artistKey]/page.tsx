@@ -14,7 +14,10 @@ export default async function Page({ params }: { params: Promise<{ artistKey: st
   // An artist the events do not have is a 404 (the stage shows it as a notice in the roster); when
   // the events cannot be read, the stage shows that with a retry instead.
   const events = await readPublicEvents();
-  if (events && !findArtistProfile(events, artistKey)) notFound();
+  const profile = events && findArtistProfile(events, artistKey);
+  if (events && !profile) notFound();
+  // A link to one appearance of an artist seen at several events opens the artist's one file.
+  if (profile && profile.key !== artistKey) redirect(artistHref(profile.key));
   return null;
 }
 
