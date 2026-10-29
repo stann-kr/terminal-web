@@ -119,10 +119,22 @@
   font-size: var(--text-ui);
   font-weight: 600;
 }
+/* The saved note: a flush strip across the form plate, like a notice; its keys are bars along its
+   foot, flush to the strip's sides like every deck. */
 .success {
+  --success-inset: max(12px, var(--bleed, 0px));
   display: grid;
   gap: 12px;
-  padding: 18px;
+  margin-inline: calc(var(--bleed, 0px) * -1);
+  padding: 18px var(--success-inset) 0;
+}
+.success > * {
+  --bleed: var(--success-inset);
+}
+/* Its keys (the last thing in it) stack one per line, at any width. */
+.success > :last-child {
+  margin-top: 6px;
+  grid-template-columns: minmax(0, 1fr);
 }
 .success h2 {
   font: 700 var(--t-xl)/1.1 var(--display);
@@ -131,9 +143,6 @@
 }
 .success p {
   font-size: var(--text-ui);
-}
-.success a {
-  width: fit-content;
 }
 .error:focus-visible,
 .success:focus-visible {

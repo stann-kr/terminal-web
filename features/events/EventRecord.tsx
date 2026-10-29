@@ -188,7 +188,8 @@ function useShare(event: TerminalEvent) {
     return () => window.clearTimeout(timer);
   }, [state]);
   async function share() {
-    const url = new URL(eventHref(event.id), location.origin).href;
+    // The public address, whichever address this page was opened at.
+    const url = new URL(eventHref(event.id), SITE_ORIGIN).href;
     if (window.matchMedia?.('(pointer: coarse)').matches && navigator.share) {
       try {
         await navigator.share({ title: event.session, url });
@@ -199,13 +200,28 @@ function useShare(event: TerminalEvent) {
       }
     }
     try {
-      await navigator.clipboard.writeText(url);
+      await copyText(url);
       setState('copied');
     } catch {
       setState('failed');
     }
   }
   return [state, share] as const;
+}
+
+/** The clipboard API where the page is secure; elsewhere (a preview over plain http) the older copy command. */
+async function copyText(text: string) {
+  if (window.isSecureContext && navigator.clipboard) return navigator.clipboard.writeText(text);
+  const field = document.createElement('textarea');
+  field.value = text;
+  field.setAttribute('readonly', '');
+  field.style.position = 'fixed';
+  field.style.opacity = '0';
+  document.body.appendChild(field);
+  field.select();
+  const copied = document.execCommand('copy');
+  field.remove();
+  if (!copied) throw new Error('copy refused');
 }
 
 export function EventActions({

@@ -214,6 +214,17 @@
 .accessDeck {
   margin-top: auto;
 }
+/* Guest request and the news signup stand side by side while each name fits on one line; once one
+   would break, the keys stack one per line instead. */
+div.accessDeck {
+  display: flex;
+  flex-wrap: wrap;
+}
+div.accessDeck > * {
+  flex: 1 1 auto;
+  width: auto;
+  white-space: nowrap;
+}
 /* Calendar, map and share keys sit under the date and venue facts, a gap apart like the facts under
    the title. They are keys in the plate's control colour like every key, so they never read as one
    more fact line, parted by the deck's hairline. They stand all in one row or all stacked, never two
@@ -226,10 +237,13 @@ div.sessionKeys {
   gap: 2px;
   margin-top: 14px;
 }
-/* On a coloured session plate (featured, live) the keys stand on a strip of the lightest plate, so
-   they keep the one key colour every other key wears instead of turning inside out. */
+/* On a coloured session plate (featured, live) the keys stand on a strip of the field (with the
+   lightest plate's key colours), so they keep the one key colour every other key wears instead of
+   turning inside out. */
 div.sessionKeys[data-surface] {
   padding-block: 10px;
+  /* The strip and the hairlines between its keys are the field the plates stand on, not white. */
+  background: var(--field);
 }
 div.sessionKeys:has(> :nth-child(3)) {
   --keys-row: 510px;
