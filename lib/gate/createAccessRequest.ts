@@ -21,7 +21,8 @@ export interface GateRequestInput {
   eventId: string;
   accessCode: string;
   name: string;
-  email: string;
+  /** Kept only for a guest who asked for news; everyone else is found by Instagram id. */
+  email: string | null;
   instagram: string;
   privacyConsent: true;
   marketingConsent: boolean;
@@ -133,7 +134,7 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   if (!eventIdResult.ok) return eventIdResult;
   if (
     !isString(body.name)
-    || !isString(body.email)
+    || (body.email !== undefined && !isString(body.email))
     || !isString(body.instagram)
     || !isString(body.accessCode)
   ) {
@@ -150,26 +151,31 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   }
 
   const name = body.name.trim();
-  const email = body.email.trim().toLowerCase();
+  const marketingConsent = body.marketingConsent ?? false;
+  // Email exists only to send news, so a guest who did not ask for news leaves none behind.
+  const email = marketingConsent ? (body.email ?? '').trim().toLowerCase() : null;
   const instagram = body.instagram.trim();
   const accessCode = body.accessCode.trim();
   const invitedBy = body.invitedBy?.trim() || null;
 
-  if (!name || !email || !instagram || !accessCode) {
+  if (!name || !instagram || !accessCode) {
     return { ok: false, error: 'ALL_FIELDS_REQUIRED' };
   }
   if (!body.privacyConsent) {
     return { ok: false, error: 'PRIVACY_CONSENT_REQUIRED' };
   }
+  if (email === '') {
+    return { ok: false, error: 'EMAIL_REQUIRED_FOR_NEWS' };
+  }
   if (
     name.length > 100
-    || email.length > MAX_EMAIL_LENGTH
+    || (email?.length ?? 0) > MAX_EMAIL_LENGTH
     || accessCode.length > MAX_ACCESS_CODE_LENGTH
     || (invitedBy?.length ?? 0) > 100
   ) {
     return { ok: false, error: 'INVALID_INPUT' };
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email !== null && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, error: 'INVALID_EMAIL_FORMAT' };
   }
 
@@ -191,7 +197,7 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
       email,
       instagram,
       privacyConsent: true,
-      marketingConsent: body.marketingConsent ?? false,
+      marketingConsent,
     },
   };
 }

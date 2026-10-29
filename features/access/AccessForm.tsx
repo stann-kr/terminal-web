@@ -66,8 +66,8 @@ export function AccessForm({
             ...(event ? [['이벤트', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
             ...(verified ? [['초대인', verified.name] as [string, string]] : []),
             ['이름', fields.name.trim()],
-            ['이메일', fields.email.trim()],
             ['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`],
+            ...(fields.marketingConsent ? [['이메일', fields.email.trim()] as [string, string]] : []),
             ['소식 수신', fields.marketingConsent ? '동의' : '동의 안 함'],
           ]}
         />
@@ -134,36 +134,18 @@ export function AccessForm({
         {!verified && availability.canRequest && (
           <p className={styles.locked}>초대 코드를 확인하면 입력할 수 있습니다.</p>
         )}
-        <Field
-          ref={nameField}
-          id="guest-name"
-          label="이름"
-          required
-          maxLength={100}
-          autoComplete="name"
-          value={fields.name}
-          onChange={(event) =>
-            setFields({ ...fields, name: event.target.value })
-          }
-        />
         <div className={styles.contacts}>
           <Field
-            id="guest-email"
-            label="이메일"
-            type="email"
+            ref={nameField}
+            id="guest-name"
+            label="이름"
             required
-            maxLength={254}
-            autoComplete="email"
-            value={fields.email}
-            error={
-              errorCode === 'INVALID_EMAIL_FORMAT'
-                ? errorMessage(error)
-                : undefined
+            maxLength={100}
+            autoComplete="name"
+            value={fields.name}
+            onChange={(event) =>
+              setFields({ ...fields, name: event.target.value })
             }
-            onChange={(event) => {
-              setFields({ ...fields, email: event.target.value });
-              if (errorCode === 'INVALID_EMAIL_FORMAT') setError(null);
-            }}
           />
           <Field
             id="guest-instagram"
@@ -194,8 +176,8 @@ export function AccessForm({
               setFields({ ...fields, privacyConsent: value })
             }
           >
-            이름·이메일·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다.
-            보존 기간: 이벤트 종료 후 1개월. 제3자 미공개.
+            이름·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다. 보존
+            기간: 이벤트 종료 후 1개월. 제3자 미공개.
           </Consent>
           <Consent
             id="marketing-consent"
@@ -204,10 +186,31 @@ export function AccessForm({
               setFields({ ...fields, marketingConsent: value })
             }
           >
-            [선택] 차기 이벤트 소식을 이메일·인스타그램 채널로 수신합니다. 보존
-            기간: 수신 거부 시까지.
+            [선택] 차기 이벤트 소식을 이메일·인스타그램 채널로 수신합니다.
+            소식을 받을 이메일을 함께 수집합니다. 보존 기간: 수신 거부 시까지.
           </Consent>
         </div>
+        {/* Email is asked only of a guest who wants news; nobody else leaves one. */}
+        {fields.marketingConsent && (
+          <Field
+            id="guest-email"
+            label="소식 받을 이메일"
+            type="email"
+            required
+            maxLength={254}
+            autoComplete="email"
+            value={fields.email}
+            error={
+              errorCode === 'INVALID_EMAIL_FORMAT' || errorCode === 'EMAIL_REQUIRED_FOR_NEWS'
+                ? errorMessage(error)
+                : undefined
+            }
+            onChange={(event) => {
+              setFields({ ...fields, email: event.target.value });
+              if (errorCode === 'INVALID_EMAIL_FORMAT' || errorCode === 'EMAIL_REQUIRED_FOR_NEWS') setError(null);
+            }}
+          />
+        )}
         <button
           aria-busy={pending}
           className={`${ui.button} ${ui.primary}`}

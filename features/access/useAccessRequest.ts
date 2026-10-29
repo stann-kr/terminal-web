@@ -107,6 +107,8 @@ export function useAccessRequest(
         eventId,
         accessCode: verified.code,
         ...fields,
+        // A guest who unticked news keeps the typed email in the draft but never sends it.
+        email: fields.marketingConsent ? fields.email : undefined,
       });
       if (result.ok !== true) throw new ApiError('INVALID_RESPONSE', 200);
       setSaved(submittedDraft);

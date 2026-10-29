@@ -1,6 +1,15 @@
 import { isJsonObject } from '../api/validation';
 import { prepareGateSignalSubscriptionInsert } from '../signal/d1SignalSubscriptionRepository';
 
+/**
+ * One guest per event: the same Instagram id (case and a leading @ aside), or the same email when
+ * both left one. Email is optional, so the Instagram id is the duplicate key that always exists.
+ */
+const SAME_GUEST = `(
+      lower(ltrim(instagram, '@')) = ?
+      OR (email IS NOT NULL AND email = ?)
+    )`;
+
 export const ACCESS_REQUEST_INSERT_SQL = `
   INSERT INTO access_requests (
     id,
@@ -18,7 +27,7 @@ export const ACCESS_REQUEST_INSERT_SQL = `
   WHERE NOT EXISTS (
     SELECT 1
     FROM access_requests
-    WHERE event_id = ? AND email = ?
+    WHERE event_id = ? AND ${SAME_GUEST}
   )
   AND (
     ? IS NULL
@@ -28,7 +37,7 @@ export const ACCESS_REQUEST_INSERT_SQL = `
       WHERE event_id = ? AND artist_id = ?
     ) < ?
   )
-  ON CONFLICT(event_id, email) DO NOTHING
+  ON CONFLICT DO NOTHING
 `;
 
 const REJECTION_STATE_SQL = `
@@ -36,7 +45,7 @@ const REJECTION_STATE_SQL = `
     EXISTS (
       SELECT 1
       FROM access_requests
-      WHERE event_id = ? AND email = ?
+      WHERE event_id = ? AND ${SAME_GUEST}
     ) AS is_duplicate,
     (
       SELECT COUNT(*)
@@ -52,7 +61,7 @@ export interface AtomicAccessRequestInput {
   artistId: string;
   invitedBy: string | null;
   name: string;
-  email: string;
+  email: string | null;
   instagram: string;
   privacyConsent: true;
   marketingConsent: boolean;
@@ -96,6 +105,11 @@ export function classifyRejectedAccessRequest(
   throw new Error('Conditional access request insert was rejected without a matching constraint');
 }
 
+/** The duplicate key SAME_GUEST compares stored ids against. */
+export function instagramKey(instagram: string): string {
+  return instagram.trim().replace(/^@+/, '').toLowerCase();
+}
+
 function getChanges(result: D1Result<unknown> | undefined): number {
   const changes = result?.meta.changes;
   return typeof changes === 'number' ? changes : 0;
@@ -121,6 +135,7 @@ export async function createAccessRequestAtomically(
     input.marketingConsent ? 1 : 0,
     input.createdAt,
     input.eventId,
+    instagramKey(input.instagram),
     input.email,
     input.guestLimit,
     input.eventId,
@@ -131,13 +146,15 @@ export async function createAccessRequestAtomically(
     id: input.signalId,
     accessRequestId: input.id,
     name: input.name,
-    email: input.email,
+    email: input.email ?? '',
     instagram: input.instagram,
-    marketingConsent: input.marketingConsent,
+    // The request parser only lets consent through with an email; this keeps Signal's NOT NULL safe.
+    marketingConsent: input.marketingConsent && input.email !== null,
     createdAt: input.createdAt,
   });
   const rejectionStateStatement = database.prepare(REJECTION_STATE_SQL).bind(
     input.eventId,
+    instagramKey(input.instagram),
     input.email,
     input.eventId,
     input.artistId,
