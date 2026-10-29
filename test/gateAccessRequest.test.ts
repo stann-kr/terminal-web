@@ -14,6 +14,7 @@ import {
   ACCESS_REQUEST_INSERT_SQL,
   classifyRejectedAccessRequest,
   createAccessRequestAtomically,
+  instagramKey,
 } from '../lib/gate/d1AccessRequestRepository';
 import { GATE_SIGNAL_SUBSCRIPTION_INSERT_SQL } from '../lib/signal/d1SignalSubscriptionRepository';
 
@@ -36,11 +37,38 @@ describe('gate request runtime validation', () => {
         eventId: 'event-1',
         accessCode: 'ARTIST-01',
         name: 'Guest Name',
-        email: 'guest@example.com',
+        email: null,
         instagram: '@guest.name',
         privacyConsent: true,
         marketingConsent: false,
       },
+    });
+  });
+
+  it('keeps an email only for a guest who asked for news', () => {
+    const result = parseGateRequestBody({ ...validBody, marketingConsent: true });
+    expect(result.ok && result.input.email).toBe('guest@example.com');
+  });
+
+  it('needs no email from a guest who did not ask for news', () => {
+    const { email: _email, ...body } = validBody;
+    const result = parseGateRequestBody(body);
+    expect(result.ok && result.input.email).toBeNull();
+  });
+
+  it('asks for an email, and a well-formed one, once news is ticked', () => {
+    const { email: _email, ...body } = validBody;
+    expect(parseGateRequestBody({ ...body, marketingConsent: true })).toEqual({
+      ok: false,
+      error: 'EMAIL_REQUIRED_FOR_NEWS',
+    });
+    expect(parseGateRequestBody({ ...validBody, email: '  ', marketingConsent: true })).toEqual({
+      ok: false,
+      error: 'EMAIL_REQUIRED_FOR_NEWS',
+    });
+    expect(parseGateRequestBody({ ...validBody, email: 'nope', marketingConsent: true })).toEqual({
+      ok: false,
+      error: 'INVALID_EMAIL_FORMAT',
     });
   });
 
@@ -244,10 +272,28 @@ describe('atomic access request statement contract', () => {
     return { database, prepared };
   }
 
-  it('checks duplicate email and capacity inside the request insert statement', () => {
-    expect(ACCESS_REQUEST_INSERT_SQL).toMatch(/WHERE NOT EXISTS[\s\S]*event_id = \? AND email = \?/);
+  it('checks a duplicate guest and capacity inside the request insert statement', () => {
+    expect(ACCESS_REQUEST_INSERT_SQL).toMatch(
+      /WHERE NOT EXISTS[\s\S]*event_id = \? AND \([\s\S]*lower\(ltrim\(instagram, '@'\)\) = \?[\s\S]*OR \(email IS NOT NULL AND email = \?\)/,
+    );
     expect(ACCESS_REQUEST_INSERT_SQL).toMatch(/SELECT COUNT\(\*\)[\s\S]*event_id = \? AND artist_id = \?/);
-    expect(ACCESS_REQUEST_INSERT_SQL).toContain('ON CONFLICT(event_id, email) DO NOTHING');
+    expect(ACCESS_REQUEST_INSERT_SQL).toContain('ON CONFLICT DO NOTHING');
+  });
+
+  it('folds case and a leading @ into the Instagram duplicate key', () => {
+    expect(instagramKey(' @Guest.Name ')).toBe('guest.name');
+    expect(instagramKey('guest.name')).toBe('guest.name');
+  });
+
+  it('stores no email and subscribes nobody for a guest without one', async () => {
+    const { database, prepared } = createDatabaseStub(1);
+    await createAccessRequestAtomically(database, {
+      ...atomicInput,
+      email: null,
+      marketingConsent: false,
+    });
+    expect(prepared[0].values[5]).toBeNull();
+    expect(prepared[1].values.at(-2)).toBe(0);
   });
 
   it('only inserts marketing after the request id exists and tolerates subscriber conflicts', () => {
@@ -257,11 +303,11 @@ describe('atomic access request statement contract', () => {
     expect(GATE_SIGNAL_SUBSCRIPTION_INSERT_SQL).toContain('ON CONFLICT(email) DO NOTHING');
   });
 
-  it('classifies duplicate email before capacity', () => {
+  it('classifies a duplicate guest before capacity', () => {
     expect(classifyRejectedAccessRequest({ is_duplicate: 1, guest_count: 25 }, 25)).toBe('duplicate');
   });
 
-  it('classifies a full capacity when the email is new', () => {
+  it('classifies a full capacity when the guest is new', () => {
     expect(classifyRejectedAccessRequest({ is_duplicate: 0, guest_count: 25 }, 25)).toBe(
       'guest_limit_reached',
     );
@@ -293,6 +339,7 @@ describe('atomic access request statement contract', () => {
     expect(prepared).toHaveLength(3);
     expect(prepared[2].values).toEqual([
       atomicInput.eventId,
+      'guest',
       atomicInput.email,
       atomicInput.eventId,
       atomicInput.artistId,

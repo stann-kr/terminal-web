@@ -45,7 +45,7 @@ export const accessRequests = sqliteTable(
       .notNull()
       .references(() => events.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    email: text("email").notNull(),
+    email: text("email"),  // 소식 수신에 동의한 게스트만 남김.
     instagram: text("instagram").notNull(),
     artistId: text("artist_id").references(() => artists.id),
     invitedBy: text("invited_by"),

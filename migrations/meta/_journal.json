@@ -71,6 +71,13 @@
       "when": 1787491295934,
       "tag": "0009_normalize_transmit_created_at",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1793263781810,
+      "tag": "0010_access_request_email_optional",
+      "breakpoints": true
     }
   ]
 }
