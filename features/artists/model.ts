@@ -5,6 +5,7 @@ import { artistIdentities, type ArtistIdentity } from './identities';
 export type Appearance = { event: TerminalEvent; artist: Artist };
 export interface ArtistProfile { key: string; name: string; origin: string; verified: boolean; appearances: Appearance[]; eventCount: number }
 export const appearanceKey = (eventId: string, rowId: string) => `appearance:${encodeURIComponent(eventId)}:${encodeURIComponent(rowId)}`;
+const nameKey = (name: string) => name.normalize('NFKC').trim().replace(/\s+/g,' ').toUpperCase();
 export const artistHref = (key: string) => `/artists/${encodeURIComponent(key)}`;
 export function buildArtistArchive(events: readonly TerminalEvent[], identities: readonly ArtistIdentity[] = artistIdentities): ArtistProfile[] {
   const mapping = new Map<string,string>();
@@ -13,11 +14,19 @@ export function buildArtistArchive(events: readonly TerminalEvent[], identities:
     if (mapping.has(ref)) throw new Error('Artist appearance maps to multiple identities');
     mapping.set(ref,identity.key);
   }
+  // A name seen again is the same artist: an appearance without an explicit identity joins the
+  // profile that already carries its name, so a returning artist needs only a new row. Oldest first,
+  // so the key (the oldest appearance's) stays put as later appearances are added.
+  const rows = events.flatMap(event => event.artists.filter(isPublicArtist).map(artist => ({ event, artist })))
+    .sort((a,b) => getEventDateTime(a.event).getTime() - getEventDateTime(b.event).getTime() || a.event.id.localeCompare(b.event.id));
+  const byName = new Map<string,string>();
+  for (const { event, artist } of rows) { const key = mapping.get(appearanceKey(event.id,artist.id)); if (key && !byName.has(nameKey(artist.name))) byName.set(nameKey(artist.name),key); }
   const profiles = new Map<string,ArtistProfile>();
-  for (const event of events) for (const artist of event.artists.filter(isPublicArtist)) {
+  for (const { event, artist } of rows) {
     const ref = appearanceKey(event.id,artist.id);
     const canonical = mapping.get(ref);
-    const key = canonical ?? ref;
+    const key = canonical ?? byName.get(nameKey(artist.name)) ?? ref;
+    if (!byName.has(nameKey(artist.name))) byName.set(nameKey(artist.name),key);
     const profile = profiles.get(key) ?? { key, name: artist.name, origin: artist.origin, verified: !!canonical, appearances: [], eventCount: 0 };
     profile.appearances.push({ event,artist });
     profiles.set(key,profile);
@@ -28,3 +37,5 @@ export function buildArtistArchive(events: readonly TerminalEvent[], identities:
   });
 }
 export function profileForAppearance(profiles: ArtistProfile[], eventId: string, rowId: string) { return profiles.find(profile => profile.appearances.some(row => row.event.id === eventId && row.artist.id === rowId)); }
+/** The profile a key names: its own key, or (an older link) the key of one of its appearances. */
+export function profileForKey(profiles: ArtistProfile[], key: string) { return profiles.find(profile => profile.key === key) ?? profiles.find(profile => profile.appearances.some(row => appearanceKey(row.event.id,row.artist.id) === key)); }
