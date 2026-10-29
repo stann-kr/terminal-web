@@ -27,6 +27,7 @@ const messages: Record<string,string> = {
   VERIFICATION_UNAVAILABLE: '지금은 코드를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
   DATA_UNAVAILABLE: '이벤트 정보를 확인할 수 없습니다. 입력을 유지한 채 다시 시도해 주세요.',
   INVALID_EMAIL_FORMAT: '이메일 주소 형식을 확인해 주세요.',
+  INVALID_UNSUBSCRIBE_LINK: '수신 거부 링크가 올바르지 않습니다. 메일의 링크를 다시 눌러 주세요.',
   INVALID_INSTAGRAM_FORMAT: '인스타그램 ID는 영문·숫자·마침표·밑줄로 입력해 주세요.',
   PRIVACY_CONSENT_REQUIRED: '필수 개인정보 수집에 동의해 주세요.', CONSENT_REQUIRED: '소식 안내를 위한 수집 동의가 필요합니다.',
   ALL_FIELDS_REQUIRED: '모든 필수 항목을 입력해 주세요.', INVALID_INPUT: '입력한 항목과 길이를 확인해 주세요.',
