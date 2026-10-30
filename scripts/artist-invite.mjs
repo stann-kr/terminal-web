@@ -99,7 +99,9 @@ async function image() {
   await renderOg('scripts/og/invite.html', out, {
     ARTIST: data.name,
     NUMBER: event.session.match(/\[[^\]]+\]/)?.[0] ?? '',
-    SUBTITLE: event.subtitle ?? '',
+    // The session's own subtitle (`TERMINAL [03] : Vulpecula Junction`), as the site prints it; the
+    // stored `subtitle` is often TERMINAL's tagline.
+    SUBTITLE: String(event.session).split(/\s+:\s+/)[1] ?? event.subtitle ?? '',
     DATE: `${event.date.replaceAll('-', '.')} ${weekday} ${String(event.time).slice(0, 5)}`,
     VENUE: event.venue ?? '',
   });
