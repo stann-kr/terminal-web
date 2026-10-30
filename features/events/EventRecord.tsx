@@ -6,6 +6,7 @@ import { getSlotTimes } from '@/lib/events/lifecycle';
 import { Action, ActionDeck, Arrow, BrandText, Facts, ui } from '@/features/ui/Ui';
 import { CALENDAR_FEED_PATH, calendarSubscribeHref } from './calendar';
 import { SITE_ORIGIN } from './metadata';
+import { useShareLink, type ShareState } from '@/features/ui/share';
 import {
   buildArtistArchive,
   profileForAppearance,
@@ -96,7 +97,9 @@ function KeyFace({ label, children }: { label: string; children: ReactNode }) {
 function SessionKeys({ event }: { event: TerminalEvent }) {
   const subscribe = useSubscribeHref();
   const map = event.status === 'ARCHIVED' ? null : venueMapHref(event);
-  const [shared, share] = useShare(event);
+  const { state: shared, share: shareLink } = useShareLink();
+  // The public address, whichever address this page was opened at.
+  const share = () => shareLink(new URL(eventHref(event.id), SITE_ORIGIN).href, event.session);
   const [calendar, openCalendar] = useCalendarOpen(subscribe);
   return (
     <>
@@ -172,57 +175,8 @@ function useCalendarOpen(href: string) {
   return [state, open] as const;
 }
 
-type ShareState = 'idle' | 'copied' | 'failed';
 /** Short, so the key keeps its size when its text changes. */
 const SHARE_TEXT: Record<ShareState, string> = { idle: '링크 공유', copied: '링크 복사됨', failed: '복사 실패' };
-
-/**
- * The session's address, handed on: a phone opens its share sheet (a messenger, a DM), elsewhere the
- * link is copied. What happened shows in the key itself for a moment; nothing else moves.
- */
-function useShare(event: TerminalEvent) {
-  const [state, setState] = useState<ShareState>('idle');
-  useEffect(() => {
-    if (state === 'idle') return;
-    const timer = window.setTimeout(() => setState('idle'), 2000);
-    return () => window.clearTimeout(timer);
-  }, [state]);
-  async function share() {
-    // The public address, whichever address this page was opened at.
-    const url = new URL(eventHref(event.id), SITE_ORIGIN).href;
-    if (window.matchMedia?.('(pointer: coarse)').matches && navigator.share) {
-      try {
-        await navigator.share({ title: event.session, url });
-        return;
-      } catch (error) {
-        // Closing the sheet is a choice, not a failure; anything else falls back to copying.
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-      }
-    }
-    try {
-      await copyText(url);
-      setState('copied');
-    } catch {
-      setState('failed');
-    }
-  }
-  return [state, share] as const;
-}
-
-/** The clipboard API where the page is secure; elsewhere (a preview over plain http) the older copy command. */
-async function copyText(text: string) {
-  if (window.isSecureContext && navigator.clipboard) return navigator.clipboard.writeText(text);
-  const field = document.createElement('textarea');
-  field.value = text;
-  field.setAttribute('readonly', '');
-  field.style.position = 'fixed';
-  field.style.opacity = '0';
-  document.body.appendChild(field);
-  field.select();
-  const copied = document.execCommand('copy');
-  field.remove();
-  if (!copied) throw new Error('copy refused');
-}
 
 export function EventActions({
   event,
