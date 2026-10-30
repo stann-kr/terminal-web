@@ -146,7 +146,7 @@ describe('guest request UI',()=>{
     expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');
     expect(screen.getByRole('link',{name:/일정 구독/})).toHaveAttribute('href','https://terminal.stann.kr/calendar/subscribe');
     await user.click(screen.getByRole('button',{name:'다른 초대 코드 입력'}));
-    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');expect(screen.queryByText('INVITE CLOSED')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');await waitFor(()=>expect(screen.getByLabelText(/초대 코드/)).toHaveFocus());expect(screen.queryByText('INVITE CLOSED')).not.toBeInTheDocument();
   });
   it('turns a save refused for a full guest list into the closed invite',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:true})).mockResolvedValueOnce(json({error:'GUEST_LIMIT_REACHED'},409)));
