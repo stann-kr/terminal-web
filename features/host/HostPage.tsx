@@ -1,13 +1,14 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { HostView } from '@/lib/gate/hostView';
 import { inviteHref } from '@/features/access/invite';
 import { SITE_ORIGIN } from '@/features/events/metadata';
 import { ApiError, errorMessage, postJson } from '@/features/ui/http';
 import { useShareLink, type ShareState } from '@/features/ui/share';
-import { Action, Bay, BrandText, Facts, Loading, PageHeading, Panel, StateNotice, ui } from '@/features/ui/Ui';
+import { Action, BrandText, Facts, Loading, PageHeading, Panel, StateNotice, ui } from '@/features/ui/Ui';
+import { Consent, Field, FormError, formStyles, literalInput } from '@/features/ui/Form';
 import styles from './host.module.css';
 
 /** Places drawn as cells; a longer list shows its numbers alone. */
@@ -58,10 +59,10 @@ export function HostPage({ artistId }: { artistId: string }) {
     );
   }
   if (!query.data) return <><PageHeading title="게스트 초대 페이지" /><Loading /></>;
-  return <HostPlates view={query.data} />;
+  return <HostPlates view={query.data} artistId={artistId} token={token} />;
 }
 
-function HostPlates({ view }: { view: HostView }) {
+function HostPlates({ view, artistId, token }: { view: HostView; artistId: string; token: string }) {
   const link = new URL(inviteHref(view.event.id, view.code), SITE_ORIGIN).href;
   const { state, share, copy } = useShareLink();
   // Which of the two link keys was pressed last, so only that one shows the result.
@@ -110,7 +111,7 @@ function HostPlates({ view }: { view: HostView }) {
             </button>
           </div>
           <span className={ui.srOnly} role="status">{state === 'idle' ? '' : COPY_TEXT[state]}</span>
-          <Bay label={`INVITE / ${view.code}`} />
+          <HostGuestForm artistId={artistId} token={token} open={view.open} />
         </Panel>
         <Panel title="신청 현황" label="Status" code={unlimited ? 'NO LIMIT' : `LIMIT ${view.limit}`}>
           <p className={styles.count}>
@@ -147,5 +148,79 @@ function HostPlates({ view }: { view: HostView }) {
         </Panel>
       </div>
     </div>
+  );
+}
+
+/**
+ * The artist puts a guest on the list themselves (a friend who will not fill in a form): a name and
+ * an Instagram id, on the artist's word that the guest agreed. Same limit and duplicate rules.
+ */
+function HostGuestForm({ artistId, token, open }: { artistId: string; token: string; open: boolean }) {
+  const client = useQueryClient();
+  const [fields, setFields] = useState({ name: '', instagram: '', consent: false });
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const [saved, setSaved] = useState('');
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    setPending(true);
+    setError(null);
+    setSaved('');
+    try {
+      await postJson<{ ok: boolean }>('/api/invite/host/guests', { artistId, t: token, ...fields });
+      setSaved(fields.name.trim());
+      setFields({ name: '', instagram: '', consent: false });
+      await client.invalidateQueries({ queryKey: ['host', artistId, token] });
+    } catch (failure) {
+      setError(failure);
+    } finally {
+      setPending(false);
+    }
+  }
+  const errorCode = error instanceof ApiError ? error.code : '';
+  return (
+    <form className={`${formStyles.form} ${styles.guestForm}`} onSubmit={submit} aria-busy={pending}>
+      <p className={`${ui.band} ${styles.formBand}`}>게스트 직접 등록</p>
+      <FormError message={error && errorCode !== 'INVALID_INSTAGRAM_FORMAT' ? errorMessage(error) : ''} />
+      <fieldset className={formStyles.fields} disabled={pending || !open}>
+        <Field
+          id="host-guest-name"
+          label="게스트 이름"
+          required
+          maxLength={100}
+          value={fields.name}
+          onChange={(change) => setFields({ ...fields, name: change.target.value })}
+        />
+        <Field
+          id="host-guest-instagram"
+          label="인스타그램 ID"
+          required
+          maxLength={31}
+          pattern="@[A-Za-z0-9_.]{1,30}"
+          {...literalInput}
+          value={`@${fields.instagram}`}
+          error={errorCode === 'INVALID_INSTAGRAM_FORMAT' ? errorMessage(error) : undefined}
+          onChange={(change) => {
+            setFields({ ...fields, instagram: change.target.value.replace(/^@+/, '') });
+            if (errorCode === 'INVALID_INSTAGRAM_FORMAT') setError(null);
+          }}
+        />
+        <Consent
+          id="host-guest-consent"
+          required
+          checked={fields.consent}
+          onChange={(value) => setFields({ ...fields, consent: value })}
+        >
+          게스트 본인에게 이름과 인스타그램 ID를 TERMINAL 게스트 명단에 올린다는 동의를 받았습니다.
+          보존 기간: 이벤트 종료 후 1개월.
+        </Consent>
+        <button aria-busy={pending} className={`${ui.button} ${ui.primary}`}>
+          {pending ? '등록 중…' : open ? '게스트 등록' : '등록 마감'}
+        </button>
+      </fieldset>
+      <p className={ui.srOnly} role="status">{saved ? `${saved} 님을 명단에 올렸습니다.` : ''}</p>
+      {saved && <p className={styles.saved} aria-hidden="true">{saved} 님을 명단에 올렸습니다.</p>}
+    </form>
   );
 }
