@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { eventMetadata, inviteMetadata } from '@/features/events/metadata';
+import { eventMetadata, inviteMetadata, sessionNamesBrand } from '@/features/events/metadata';
 import { inviteCodeFrom } from '@/features/access/invite';
 import { readInviter } from '@/lib/gate/readInviter';
 import { readPublicEvents } from '@/lib/events/requestEvents';
@@ -32,8 +32,7 @@ export async function generateMetadata({
   if (!event) return { title: '게스트 신청' };
   // An artist's invite link previews with the artist's name; an unknown code reads as a plain form.
   const code = inviteCodeFrom(new URLSearchParams(await searchParams as Record<string, string>).toString());
-  // The address's own headers (cf-connecting-ip) decide its rate-limit budget.
-  const request = new Request(`https://terminal.stann.kr/events/${encodeURIComponent(event.id)}/request`, { headers: await headers() });
-  const inviter = code ? await readInviter(event.id, code, request) : null;
-  return inviter ? inviteMetadata(event, inviter) : eventMetadata(event, '게스트 신청 · ');
+  const inviter = code ? await readInviter(event.id, code, headers) : null;
+  // TERMINAL's own codes (its DMs, the SIGNAL mail) keep the plain form preview: the brand is in the session name.
+  return inviter && !sessionNamesBrand(inviter.name) ? inviteMetadata(event, inviter) : eventMetadata(event, '게스트 신청 · ');
 }
