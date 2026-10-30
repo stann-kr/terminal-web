@@ -1,0 +1,138 @@
+/* The artist's page, off the stage: a head strip, then three plates side by side on the field
+   (feature: who invites, paper: the link, panel: who came), stacked when the page is narrow. */
+.page {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--gap);
+  min-height: 100dvh;
+  padding: var(--gap);
+  background: var(--field);
+  align-content: start;
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  padding: calc(var(--pad) * .7) var(--pad);
+}
+.headLabel {
+  color: var(--accent);
+  font: 700 clamp(44px, 5vw, 64px)/.9 var(--display);
+  letter-spacing: .01em;
+}
+.headKo {
+  font: 600 var(--t-md)/1.2 var(--sans);
+}
+.headEvent {
+  margin-left: auto;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .16em;
+}
+.plates {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap);
+  align-items: stretch;
+}
+@container (max-width: 900px) {
+  .plates { grid-template-columns: minmax(0, 1fr); }
+}
+
+.artist {
+  margin: 0;
+  font: 700 clamp(44px, 5vw, 64px)/.92 var(--display);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.lead {
+  margin: 18px 0 0;
+}
+.facts {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.link {
+  margin: 16px calc(var(--bleed) * -1) 0;
+  padding: 14px var(--bleed);
+  background: var(--well);
+  font: 400 var(--t-sm)/1.4 var(--mono);
+  overflow-wrap: anywhere;
+}
+.keys {
+  display: grid;
+  gap: 2px;
+  margin: 2px calc(var(--bleed) * -1) 0;
+}
+.keys > button {
+  justify-content: space-between;
+  width: 100%;
+}
+.keys small {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+}
+
+.count {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font: 700 var(--t-xl)/1 var(--display);
+  color: var(--muted);
+}
+.count strong {
+  color: var(--accent);
+  font: 800 clamp(64px, 6vw, 88px)/.9 var(--display);
+}
+.cells {
+  display: flex;
+  gap: 3px;
+  margin-top: 14px;
+}
+.cells i {
+  flex: 1;
+  height: 22px;
+  background: var(--well);
+}
+.cells i[data-used] {
+  background: var(--ink);
+}
+.band {
+  margin-top: 16px;
+}
+.band[data-state="closed"] {
+  --fill: var(--alert);
+  --on-fill: var(--alert-ink);
+}
+.guests {
+  margin: 8px calc(var(--bleed) * -1) 0;
+  padding: 0;
+  list-style: none;
+}
+.guests li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px var(--bleed);
+}
+.guests li:nth-child(odd) {
+  background: var(--well);
+}
+.guests time {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1 var(--mono);
+  white-space: nowrap;
+}
+.empty,
+.note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+.note + * {
+  margin-top: 16px;
+}
