@@ -12,14 +12,18 @@ import { listGateArtistRowsByEvent, listGateEventRows } from './d1GateReadReposi
  * Who an invite link's code belongs to, for the link's preview: the artist row and its name, or
  * `null` (no such code, not the event taking requests now, unreadable data). A preview that names
  * the artist confirms the code, so each lookup spends the same per-address budget as the code
- * check (`code-info`); past it, the link previews as a plain form.
+ * check (`code-info`); past it, or on any failure, the link previews as a plain form.
  */
 export async function readInviter(
   eventId: string,
   code: string,
-  request: Request,
+  readHeaders: () => Promise<HeadersInit>,
 ): Promise<{ artistId: string; name: string } | null> {
   try {
+    // The address's own headers (cf-connecting-ip) decide its rate-limit budget.
+    const request = new Request(`https://terminal.stann.kr/events/${encodeURIComponent(eventId)}/request`, {
+      headers: await readHeaders(),
+    });
     const { env } = await getCloudflareContext({ async: true });
     const db = getDb(env.DB);
     const now = new Date();

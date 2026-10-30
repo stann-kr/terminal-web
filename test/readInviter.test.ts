@@ -14,7 +14,8 @@ vi.mock('../lib/gate/d1GateReadRepository', () => ({
 }));
 const { readInviter } = await import('../lib/gate/readInviter');
 
-const request = new Request('https://terminal.stann.kr/events/TRM-03/request');
+const headers = async () => ({ 'cf-connecting-ip': '192.0.2.7' });
+const ipOf = () => (mocks.enforceRateLimit.mock.calls[0][2] as Request).headers.get('cf-connecting-ip');
 
 describe('invite preview lookup', () => {
   beforeEach(() => {
@@ -27,18 +28,29 @@ describe('invite preview lookup', () => {
   });
 
   it('names the artist a code belongs to, spending the code-check budget', async () => {
-    expect(await readInviter('TRM-03', 'k7qm', request)).toEqual({ artistId: '03-A', name: 'STANN LUMO' });
-    expect(mocks.enforceRateLimit).toHaveBeenCalledWith({ DB: {} }, 'code-info', request);
+    expect(await readInviter('TRM-03', 'k7qm', headers)).toEqual({ artistId: '03-A', name: 'STANN LUMO' });
+    expect(mocks.enforceRateLimit.mock.calls[0][1]).toBe('code-info');
+    expect(ipOf()).toBe('192.0.2.7');
   });
 
   it('reads no artist once the address has spent its budget', async () => {
     mocks.enforceRateLimit.mockResolvedValue({ ok: false, status: 429, error: 'RATE_LIMITED' });
-    expect(await readInviter('TRM-03', 'K7QM', request)).toBeNull();
+    expect(await readInviter('TRM-03', 'K7QM', headers)).toBeNull();
     expect(mocks.listGateArtistRowsByEvent).not.toHaveBeenCalled();
   });
 
   it('looks up nothing for an event that is not taking requests', async () => {
-    expect(await readInviter('TRM-02', 'K7QM', request)).toBeNull();
+    expect(await readInviter('TRM-02', 'K7QM', headers)).toBeNull();
     expect(mocks.enforceRateLimit).not.toHaveBeenCalled();
+  });
+
+  it('looks up nothing outside the request window', async () => {
+    vi.setSystemTime(new Date('2026-08-01T12:00:00+09:00'));
+    expect(await readInviter('TRM-03', 'K7QM', headers)).toBeNull();
+    expect(mocks.enforceRateLimit).not.toHaveBeenCalled();
+  });
+
+  it('falls back to a plain preview when the headers cannot be read', async () => {
+    expect(await readInviter('TRM-03', 'K7QM', async () => { throw new Error('no request'); })).toBeNull();
   });
 });
