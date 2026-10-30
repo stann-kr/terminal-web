@@ -86,6 +86,33 @@ describe('artist host page', () => {
     expect(container.querySelector('[aria-hidden="true"] > i')).toBeNull();
   });
 
+  it('lets the artist list a guest and shows the refreshed list', async () => {
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(json(view))
+      .mockResolvedValueOnce(json({ ok: true }))
+      .mockResolvedValueOnce(json({ ...view, count: 3, guests: [{ name: '이서연', createdAt: '2026-10-30T03:00:00.000Z' }, ...view.guests] }));
+    vi.stubGlobal('fetch', fetch);
+    const user = userEvent.setup();
+    page();
+    await user.type(await screen.findByLabelText(/게스트 이름/), '이서연');
+    const instagram = screen.getByRole('textbox', { name: /인스타그램 ID/ });
+    await user.type(instagram, 'seoyeon');
+    expect(instagram).toHaveValue('@seoyeon');
+    await user.click(screen.getByRole('checkbox', { name: /동의를 받았습니다/ }));
+    await user.click(screen.getByRole('button', { name: '게스트 등록' }));
+    expect(fetch.mock.calls[1][0]).toBe('/api/invite/host/guests');
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ artistId: '03-A', t: 'abc', name: '이서연', instagram: 'seoyeon', consent: true });
+    expect(await screen.findByText('OPEN · 7 LEFT')).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: '신청한 게스트' })).toHaveTextContent('이서연');
+    expect(screen.getByLabelText(/게스트 이름/)).toHaveValue('');
+  });
+
+  it('closes the artist form with the list', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ ...view, count: 10, open: false })));
+    page();
+    expect(await screen.findByRole('button', { name: '등록 마감' })).toBeDisabled();
+  });
+
   it('says nothing about the artist for a link that does not hold', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ error: 'INVALID_HOST_LINK' }, 404)));
     page();

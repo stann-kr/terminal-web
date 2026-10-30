@@ -136,3 +136,16 @@
 .note + * {
   margin-top: 16px;
 }
+
+/* The artist's own entry: a band across the plate, then the fields flush with it. */
+.guestForm {
+  margin-top: 24px;
+}
+.formBand {
+  margin-bottom: 0;
+}
+.saved {
+  margin: 10px 0 0;
+  color: var(--accent);
+  font-size: var(--text-label);
+}

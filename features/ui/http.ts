@@ -24,6 +24,8 @@ const messages: Record<string,string> = {
   REQUEST_PERIOD_INACTIVE: '현재는 게스트 신청 기간이 아닙니다.',
   ACCESS_NOT_OPEN: '이 이벤트는 아직 게스트 신청을 받지 않습니다.',
   GUEST_LIMIT_REACHED: '이 초대인의 접수 한도에 도달했습니다.',
+  GUEST_ALREADY_LISTED: '이미 이 이벤트 명단에 있는 인스타그램 ID입니다.',
+  GUEST_CONSENT_REQUIRED: '게스트 본인의 동의를 확인해 주십시오.',
   VERIFICATION_UNAVAILABLE: '지금은 코드를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
   DATA_UNAVAILABLE: '이벤트 정보를 확인할 수 없습니다. 입력을 유지한 채 다시 시도해 주세요.',
   INVALID_EMAIL_FORMAT: '이메일 주소 형식을 확인해 주세요.',

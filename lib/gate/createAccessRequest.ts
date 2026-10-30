@@ -179,14 +179,8 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
     return { ok: false, error: 'INVALID_EMAIL_FORMAT' };
   }
 
-  const cleanInstagram = instagram.replace(/^@/, '');
-  if (
-    cleanInstagram.length === 0
-    || cleanInstagram.length > 30
-    || !/^[\w.]+$/.test(cleanInstagram)
-  ) {
-    return { ok: false, error: 'INVALID_INSTAGRAM_FORMAT' };
-  }
+  const storedInstagram = normalizeInstagram(instagram);
+  if (!storedInstagram) return { ok: false, error: 'INVALID_INSTAGRAM_FORMAT' };
 
   return {
     ok: true,
@@ -195,12 +189,20 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
       accessCode,
       name,
       email,
-      // One spelling for every stored handle: Instagram ids are lowercase, shown with their @.
-      instagram: `@${cleanInstagram.toLowerCase()}`,
+      instagram: storedInstagram,
       privacyConsent: true,
       marketingConsent,
     },
   };
+}
+
+/**
+ * An Instagram id as it is stored: one spelling for every handle, lowercase with its @ (ids are
+ * lowercase on Instagram). `null` for anything that is not an id.
+ */
+export function normalizeInstagram(value: string): string | null {
+  const clean = value.trim().replace(/^@/, '');
+  return clean.length > 0 && clean.length <= 30 && /^[\w.]+$/.test(clean) ? `@${clean.toLowerCase()}` : null;
 }
 
 /** A client event id binds the visible form to the server-selected event; it grants no access. */
