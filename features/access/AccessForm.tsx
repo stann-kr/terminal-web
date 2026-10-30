@@ -46,6 +46,8 @@ export function AccessForm({
   } = useAccessRequest(eventId, availability);
   // A checked code unlocks step 02; the guest carries on typing there.
   const nameField = useRef<HTMLInputElement>(null);
+  // Back from a closed invite to type another code: the code field takes the focus once it is drawn.
+  const codeField = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (verified) nameField.current?.focus();
   }, [verified]);
@@ -82,7 +84,7 @@ export function AccessForm({
       </FormSuccess>
     );
   if (!availability.canRequest && !hasDraft && !pending) return closed;
-  if (closedInviter) return <InviteClosed inviter={closedInviter} onOtherCode={() => changeCode('')} />;
+  if (closedInviter) return <InviteClosed inviter={closedInviter} onOtherCode={() => { changeCode(''); requestAnimationFrame(() => codeField.current?.focus()); }} />;
   return (
     <form aria-busy={pending} onSubmit={submit} className={formStyles.form}>
       {!availability.canRequest && closed}
@@ -94,6 +96,7 @@ export function AccessForm({
         <legend className={`${ui.band} ${styles.legend}`}>01 / 초대 코드 확인</legend>
         <div className={styles.code}>
           <Field
+            ref={codeField}
             id="access-code"
             label="초대 코드"
             required
