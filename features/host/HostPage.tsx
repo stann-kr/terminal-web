@@ -10,8 +10,10 @@ import { useShareLink, type ShareState } from '@/features/ui/share';
 import { Action, Bay, BrandText, Facts, Loading, PageHeading, Panel, StateNotice, ui } from '@/features/ui/Ui';
 import styles from './host.module.css';
 
-/** Places drawn as cells; a larger list (TERMINAL's own) shows its count alone. */
+/** Places drawn as cells; a longer list shows its numbers alone. */
 const MAX_CELLS = 30;
+/** The largest guest limit a code may carry (lib/gate/createAccessRequest): no limit in practice. */
+const UNLIMITED = 10_000;
 const COPY_TEXT: Record<ShareState, string> = { idle: '링크 복사', copied: '링크 복사됨', failed: '복사 실패' };
 const SHARE_TEXT: Record<ShareState, string> = { idle: '공유하기', copied: '링크 복사됨', failed: '복사 실패' };
 
@@ -62,7 +64,9 @@ function HostPlates({ view }: { view: HostView }) {
   // Which of the two link keys was pressed last, so only that one shows the result.
   const [lastKey, setLastKey] = useState<'copy' | 'share' | null>(null);
   const full = view.count >= view.limit;
-  const unlimited = view.limit > MAX_CELLS;
+  // The code's ceiling (TERMINAL's own list) reads as no limit; any other limit is printed.
+  const unlimited = view.limit >= UNLIMITED;
+  const cells = view.limit <= MAX_CELLS;
   const band = !view.open && !full ? 'CLOSED' : full ? 'FULL · INVITE CLOSED' : unlimited ? 'OPEN' : `OPEN · ${view.limit - view.count} LEFT`;
   return (
     <div className={styles.page}>
@@ -111,7 +115,7 @@ function HostPlates({ view }: { view: HostView }) {
             {!unlimited && <span> / {two(view.limit)}</span>}
             <span className={ui.srOnly}>명 신청</span>
           </p>
-          {!unlimited && (
+          {cells && (
             <div className={styles.cells} aria-hidden="true">
               {Array.from({ length: view.limit }, (_, index) => (
                 <i key={index} data-used={index < view.count || undefined} />

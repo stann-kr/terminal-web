@@ -123,13 +123,20 @@ if (confirm !== '1') {
   process.exit(0);
 }
 
-const folder = path.join('.docs', 'evidence', `${new Date().toISOString().slice(0, 10)}-invite-${artistId}`);
-mkdirSync(folder, { recursive: true });
+// One folder per run: a second change the same day never overwrites the first backup.
+const folder = path.join('.docs', 'evidence', `${new Date().toISOString().replace(/[:.]/g, '-')}-invite-${artistId}`);
+mkdirSync(folder, { recursive: false });
 writeFileSync(path.join(folder, 'before.json'), `${JSON.stringify(row, null, 2)}\n`);
 const guard = current === null ? "json_extract(data, '$.guestCode') IS NULL" : `json_extract(data, '$.guestCode') = ${sql(data.guestCode)}`;
-const [update] = d1(`UPDATE artists SET data = json_set(data, '$.guestCode', ${sql(code)}, '$.guestLimit', ${limit}) WHERE id = ${sql(artistId)} AND ${guard}`);
+const limitGuard = Number.isSafeInteger(data.guestLimit) ? `json_extract(data, '$.guestLimit') = ${data.guestLimit}` : "json_extract(data, '$.guestLimit') IS NULL";
+// The row must still hold what was read, and no other artist of the event may have taken the code
+// meanwhile (two runs at once): otherwise nothing is written.
+const [update] = d1(`UPDATE artists SET data = json_set(data, '$.guestCode', ${sql(code)}, '$.guestLimit', ${limit})
+  WHERE id = ${sql(artistId)} AND ${guard} AND ${limitGuard}
+  AND NOT EXISTS (SELECT 1 FROM artists AS other WHERE other.event_id = ${sql(row.event_id)} AND other.id <> ${sql(artistId)}
+    AND upper(trim(json_extract(other.data, '$.guestCode'))) = ${sql(code)})`);
 writeFileSync(path.join(folder, 'update-result.json'), `${JSON.stringify(update.meta ?? update, null, 2)}\n`);
-if (update.meta?.changes !== 1) fail(`the row changed since it was read; nothing written (${folder})`);
+if (update.meta?.changes !== 1) fail(`the row changed since it was read, or another artist took ${code}; nothing written (${folder})`);
 const [after] = d1(`SELECT id, event_id, data FROM artists WHERE id = ${sql(artistId)}`);
 writeFileSync(path.join(folder, 'after.json'), `${JSON.stringify(after.results[0], null, 2)}\n`);
 const saved = JSON.parse(after.results[0].data);
