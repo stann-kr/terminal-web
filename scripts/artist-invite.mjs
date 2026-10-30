@@ -78,7 +78,8 @@ if (current && code !== current && !replace) fail(`${artistId} already has code 
 if (taken.has(code)) fail(`code ${code} is another artist's in ${row.event_id}`);
 const limitArg = option('--limit');
 const limit = limitArg === undefined ? (Number.isSafeInteger(data.guestLimit) ? data.guestLimit : DEFAULT_LIMIT) : Number(limitArg);
-if (!Number.isSafeInteger(limit) || limit < 1 || limit > MAX_LIMIT) fail(`--limit: a whole number from 1 to ${MAX_LIMIT}`);
+// --link only prints; a stored limit outside the range (0 closes a code) is left as it is.
+if (!linkOnly && (!Number.isSafeInteger(limit) || limit < 1 || limit > MAX_LIMIT)) fail(`--limit: a whole number from 1 to ${MAX_LIMIT}`);
 
 const secret = process.env.SIGNAL_UNSUBSCRIBE_SECRET
   ?? (() => { try { return readFileSync('.env', 'utf8').match(/^SIGNAL_UNSUBSCRIBE_SECRET=(.+)$/m)?.[1].trim(); } catch { return undefined; } })();
@@ -131,6 +132,9 @@ const guard = current === null ? "json_extract(data, '$.guestCode') IS NULL" : `
 const limitGuard = Number.isSafeInteger(data.guestLimit) ? `json_extract(data, '$.guestLimit') = ${data.guestLimit}` : "json_extract(data, '$.guestLimit') IS NULL";
 // The row must still hold what was read, and no other artist of the event may have taken the code
 // meanwhile (two runs at once): otherwise nothing is written.
+// From here on the update may have reached the database even if a later step fails.
+process.removeAllListeners('uncaughtException');
+process.on('uncaughtException', error => fail(`${reason(error)} — the update may have been applied: compare ${folder}/before.json with --link output`));
 const [update] = d1(`UPDATE artists SET data = json_set(data, '$.guestCode', ${sql(code)}, '$.guestLimit', ${limit})
   WHERE id = ${sql(artistId)} AND ${guard} AND ${limitGuard}
   AND NOT EXISTS (SELECT 1 FROM artists AS other WHERE other.event_id = ${sql(row.event_id)} AND other.id <> ${sql(artistId)}

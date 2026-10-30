@@ -140,11 +140,13 @@ describe('guest request UI',()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:false})));
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
-    const notice=await screen.findByRole('status');
-    expect(notice).toHaveTextContent('INVITE CLOSED');expect(notice).toHaveTextContent('INVITER의 게스트 초대가 마감되었습니다');
+    const heading=await screen.findByRole('heading',{name:'INVITER의 게스트 초대가 마감되었습니다'});
+    expect(heading).toHaveFocus();expect(screen.getByText('INVITE CLOSED')).toBeInTheDocument();
     expect(screen.queryByLabelText(/^이름/)).not.toBeInTheDocument();
     expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');
     expect(screen.getByRole('link',{name:/일정 구독/})).toHaveAttribute('href','https://terminal.stann.kr/calendar/subscribe');
+    await user.click(screen.getByRole('button',{name:'다른 초대 코드 입력'}));
+    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');expect(screen.queryByText('INVITE CLOSED')).not.toBeInTheDocument();
   });
   it('turns a save refused for a full guest list into the closed invite',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:true})).mockResolvedValueOnce(json({error:'GUEST_LIMIT_REACHED'},409)));
@@ -156,7 +158,7 @@ describe('guest request UI',()=>{
   });
   it('tells the guest their name goes to the inviter',()=>{
     render(<AccessForm eventId="A"/>);
-    expect(screen.getByRole('checkbox',{name:/게스트 접근 관리/}).closest('label')??document.body).toHaveTextContent('이름은 초대한 아티스트에게 공유됩니다');
+    expect(screen.getByRole('checkbox',{name:/게스트 접근 관리/}).closest('label')??document.body).toHaveTextContent('이름과 신청 시각은 초대한 아티스트에게 공유됩니다');
   });
   it('reports a stored request without claiming admission or tickets',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockResolvedValueOnce(json({ok:true})));

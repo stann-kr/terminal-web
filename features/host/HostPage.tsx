@@ -49,12 +49,15 @@ export function HostPage({ artistId }: { artistId: string }) {
   }
   if (query.error) {
     return (
-      <StateNotice error title="초대 현황을 불러오지 못했습니다" retry={() => void query.refetch()}>
-        <p>{errorMessage(query.error)}</p>
-      </StateNotice>
+      <>
+        <PageHeading title="게스트 초대 페이지" />
+        <StateNotice error title="초대 현황을 불러오지 못했습니다" retry={() => void query.refetch()}>
+          <p>{errorMessage(query.error)}</p>
+        </StateNotice>
+      </>
     );
   }
-  if (!query.data) return <Loading />;
+  if (!query.data) return <><PageHeading title="게스트 초대 페이지" /><Loading /></>;
   return <HostPlates view={query.data} />;
 }
 
@@ -100,10 +103,10 @@ function HostPlates({ view }: { view: HostView }) {
           <p className={styles.link}>{link.replace(/^https:\/\//, '')}</p>
           <div className={styles.keys}>
             <button type="button" className={`${ui.button} ${ui.primary}`} onClick={() => { setLastKey('copy'); void copy(link); }}>
-              {lastKey === 'copy' ? COPY_TEXT[state] : COPY_TEXT.idle}<small lang="en">COPY</small>
+              {lastKey === 'copy' ? COPY_TEXT[state] : COPY_TEXT.idle}<small lang="en" aria-hidden="true">COPY</small>
             </button>
             <button type="button" className={`${ui.button} ${ui.primary}`} onClick={() => { setLastKey('share'); void share(link, `${view.artist} · ${view.event.session} 게스트 초대`); }}>
-              {lastKey === 'share' ? SHARE_TEXT[state] : SHARE_TEXT.idle}<small lang="en">SHARE</small>
+              {lastKey === 'share' ? SHARE_TEXT[state] : SHARE_TEXT.idle}<small lang="en" aria-hidden="true">SHARE</small>
             </button>
           </div>
           <span className={ui.srOnly} role="status">{state === 'idle' ? '' : COPY_TEXT[state]}</span>
@@ -138,7 +141,7 @@ function HostPlates({ view }: { view: HostView }) {
           <p className={styles.note}>
             {unlimited
               ? '신청한 게스트의 이름과 신청 시각만 보입니다. 연락처는 TERMINAL만 확인합니다.'
-              : '한도가 차면 링크는 마감 안내로 바뀝니다. 더 필요하면 TERMINAL에 요청해 주십시오.'}
+              : '신청한 게스트의 이름과 신청 시각만 보입니다. 한도가 차면 링크는 마감 안내로 바뀝니다. 더 필요하면 TERMINAL에 요청해 주십시오.'}
           </p>
           <Action href="/">TERMINAL 사이트 보기</Action>
         </Panel>
