@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref } from '@/features/events/model';
+import { SITE_ORIGIN } from '@/features/events/metadata';
 import { Action, ActionDeck, Facts, StateNotice, ui } from '@/features/ui/Ui';
 import {
   Consent,
@@ -41,9 +42,12 @@ export function AccessForm({
     submit,
     errorCode,
     hasDraft,
+    closedInviter,
   } = useAccessRequest(eventId, availability);
   // A checked code unlocks step 02; the guest carries on typing there.
   const nameField = useRef<HTMLInputElement>(null);
+  // Back from a closed invite to type another code: the code field takes the focus once it is drawn.
+  const codeField = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (verified) nameField.current?.focus();
   }, [verified]);
@@ -80,6 +84,7 @@ export function AccessForm({
       </FormSuccess>
     );
   if (!availability.canRequest && !hasDraft && !pending) return closed;
+  if (closedInviter) return <InviteClosed inviter={closedInviter} onOtherCode={() => { changeCode(''); requestAnimationFrame(() => codeField.current?.focus()); }} />;
   return (
     <form aria-busy={pending} onSubmit={submit} className={formStyles.form}>
       {!availability.canRequest && closed}
@@ -91,6 +96,7 @@ export function AccessForm({
         <legend className={`${ui.band} ${styles.legend}`}>01 / 초대 코드 확인</legend>
         <div className={styles.code}>
           <Field
+            ref={codeField}
             id="access-code"
             label="초대 코드"
             required
@@ -176,8 +182,9 @@ export function AccessForm({
               setFields({ ...fields, privacyConsent: value })
             }
           >
-            이름·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다. 보존
-            기간: 이벤트 종료 후 1개월. 제3자 미공개.
+            이름·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다. 이름과
+            신청 시각은 초대한 아티스트에게 공유됩니다. 보존 기간: 이벤트 종료 후
+            1개월. 그 밖의 제3자 미공개.
           </Consent>
           <Consent
             id="marketing-consent"
@@ -220,5 +227,37 @@ export function AccessForm({
         </button>
       </fieldset>
     </form>
+  );
+}
+
+/**
+ * An invite link whose inviter has no places left: the event stays in view beside it, and instead
+ * of a form that could only fail the guest gets the two ways to hear about the next one.
+ */
+function InviteClosed({ inviter, onOtherCode }: { inviter: string; onOtherCode: () => void }) {
+  // The key the guest pressed is gone with the form; the notice takes the focus and is read out.
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => heading.current?.focus(), []);
+  return (
+    <div className={styles.closedInvite}>
+      <Facts rows={[['초대인', inviter]]} />
+      <p className={`${ui.band} ${styles.closedBand}`}>INVITE CLOSED</p>
+      <div className={styles.closedText}>
+        <h2 ref={heading} tabIndex={-1}>{inviter}의 게스트 초대가 마감되었습니다</h2>
+        <p>
+          이미 신청하셨다면 신청은 그대로 유효합니다. 새로 신청하려면 초대해 준 아티스트에게 문의해
+          주십시오. 다음 이벤트 소식을 받거나 일정을 구독해 두시면 TERMINAL의 다음 이벤트를 먼저
+          알려 드립니다.
+        </p>
+        <p lang="en" className={styles.closedEn}>
+          This artist&apos;s guest list is full. Subscribe for news of the next TERMINAL.
+        </p>
+      </div>
+      <ActionDeck>
+        <Action primary href="/signal">다음 이벤트 소식 신청</Action>
+        <Action primary href={`${SITE_ORIGIN}/calendar/subscribe`}>TERMINAL 일정 구독</Action>
+        <button type="button" className={ui.button} onClick={onOtherCode}>다른 초대 코드 입력</button>
+      </ActionDeck>
+    </div>
   );
 }

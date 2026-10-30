@@ -14,7 +14,7 @@ import {
   listGateEventRows,
 } from "@/lib/gate/d1GateReadRepository";
 
-function json(body: { name: string | null } | { error: string }, status = 200) {
+function json(body: { name: string | null; open?: boolean } | { error: string }, status = 200) {
   return noStoreJson(body, status);
 }
 
@@ -25,7 +25,9 @@ function json(body: { name: string | null } | { error: string }, status = 200) {
  *
  * @body code - 인증 코드
  * @body eventId - 화면에 표시된 신청 대상 이벤트
- * @returns { name: string | null }; returns a no-store 503 error when verification is unavailable
+ * @returns { name: string | null, open?: boolean } — `open` is false once the code's guest limit is
+ *   reached, so an invite link shows its closed notice before the form; a no-store 503 error when
+ *   verification is unavailable
  */
 export async function POST(request: Request) {
   try {
@@ -81,7 +83,15 @@ export async function POST(request: Request) {
       return json({ name: null });
     }
 
-    return json({ name: accessCodeResult.data.name });
+    const used = await env.DB.prepare(
+      "SELECT COUNT(*) AS count FROM access_requests WHERE event_id = ? AND artist_id = ?",
+    )
+      .bind(upcomingEvent.rowId, accessCodeResult.artistId)
+      .first<{ count: number }>();
+    return json({
+      name: accessCodeResult.data.name,
+      open: (used?.count ?? 0) < accessCodeResult.data.guestLimit,
+    });
   } catch {
     console.error("[POST /api/gate/code-info] internal error");
     return json({ error: "VERIFICATION_UNAVAILABLE" }, 503);

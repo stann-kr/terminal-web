@@ -75,3 +75,27 @@
   color: var(--muted);
   font-size: var(--text-ui);
 }
+
+/* An invite whose inviter is full: the band takes the alert colour, the copy sits on the plate. */
+.closedInvite {
+  display: grid;
+  gap: 14px;
+}
+.closedBand {
+  --fill: var(--alert);
+  --on-fill: var(--alert-ink);
+}
+.closedText {
+  display: grid;
+  gap: 10px;
+  padding-inline: var(--bleed);
+}
+.closedText h2 {
+  margin: 0;
+  font: 700 var(--t-xl)/1.15 var(--display);
+}
+.closedText p { margin: 0; }
+.closedEn {
+  color: var(--muted);
+  font-size: var(--text-label);
+}
