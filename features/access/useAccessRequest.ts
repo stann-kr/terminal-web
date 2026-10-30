@@ -16,6 +16,8 @@ export function useAccessRequest(
   const [verified, setVerified] = useState<{
     code: string;
     name: string;
+    /** False once the inviter's guest limit is reached: the form gives way to the closed notice. */
+    open: boolean;
   } | null>(null);
   const [checking, setChecking] = useState(false);
   const [pending, setPending] = useState(false);
@@ -52,7 +54,7 @@ export function useAccessRequest(
     setError(null);
     setCodeMessage('');
     try {
-      const result = await postJson<{ name: string | null }>(
+      const result = await postJson<{ name: string | null; open?: boolean }>(
         '/api/gate/code-info',
         { eventId, code: submittedCode },
         undefined,
@@ -60,7 +62,7 @@ export function useAccessRequest(
       );
       if (current !== revision.current) return;
       if (typeof result.name === 'string' && result.name) {
-        setVerified({ code: submittedCode, name: result.name });
+        setVerified({ code: submittedCode, name: result.name, open: result.open !== false });
         setCodeMessage('초대 코드를 확인했습니다.');
       } else setCodeMessage('일치하는 초대 코드가 없습니다.');
     } catch (error) {
@@ -134,6 +136,8 @@ export function useAccessRequest(
     }
   }
   const errorCode = error instanceof ApiError ? error.code : '';
+  // The limit can also fill between the code check and the save (another guest got there first).
+  const closedInviter = verified && (!verified.open || errorCode === 'GUEST_LIMIT_REACHED') ? verified.name : null;
   const hasDraft = !!(
     code ||
     fields.name ||
@@ -158,5 +162,6 @@ export function useAccessRequest(
     submit,
     errorCode,
     hasDraft,
+    closedInviter,
   };
 }

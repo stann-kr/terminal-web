@@ -188,10 +188,12 @@ describe('opaque public success responses', () => {
     expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
   });
 
-  it('returns only the matched artist name from the code-info route', async () => {
+  it.each([[9, true], [10, false]])('returns only the matched artist name and whether its %i used places leave room', async (used, open) => {
     const { POST } = await import('../app/api/gate/code-info/route');
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-01T12:00:00+09:00'));
+    const bind = vi.fn(() => ({ first: async () => ({ count: used }) }));
+    mocks.getCloudflareContext.mockReturnValue({ env: { DB: { prepare: () => ({ bind }) } } });
 
     const response = await responseDetails(await POST(new Request(
       'https://terminal.test/api/gate/code-info',
@@ -205,8 +207,9 @@ describe('opaque public success responses', () => {
     expect(response).toEqual({
       status: 200,
       cacheControl: 'no-store',
-      body: { name: 'Artist Name' },
+      body: { name: 'Artist Name', open },
     });
+    expect(bind).toHaveBeenCalledWith('event-1', 'artist-1');
     expect(mocks.listGateArtistRowsByEvent).toHaveBeenCalledWith(
       { database: true },
       'event-1',
