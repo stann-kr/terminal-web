@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { parseIdentifierQuery } from '@/lib/api/validation';
 import { listStoredArtistRowsByEvent } from '@/lib/events/d1EventReadRepository';
 import { parsePublicArtistRow } from '@/lib/events/publicDtos';
+import { isPublicArtist } from '@/lib/events/lifecycle';
 import { getDb } from '@/lib/db/client';
 
 export async function GET(request: Request) {
@@ -28,7 +29,8 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } });
+    // Artists waiting for their announcement are left out, as in /api/events.
+    return NextResponse.json(result.filter((artist) => artist !== null && isPublicArtist(artist)), { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     console.error('[GET /api/artists] internal error');
     return NextResponse.json(

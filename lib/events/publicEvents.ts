@@ -6,13 +6,14 @@ import {
   type StoredEventRow,
 } from './d1EventReadRepository';
 import { hasConfiguredAccessCode } from '@/lib/gate/createAccessRequest';
-import { withEffectiveEventStatus } from './lifecycle';
+import { isPublicArtist, withEffectiveEventStatus } from './lifecycle';
 import { parsePublicArtistRow, parsePublicEventRow } from './publicDtos';
 import type { Artist, TerminalEvent } from './types';
 
 /**
  * Stored rows → the public events, with the status the clock gives them. An event whose artist
- * rows do not parse is left out whole rather than shown with a partial lineup. `guestAccess` says
+ * rows do not parse is left out whole rather than shown with a partial lineup. Only announced artists
+ * (CONFIRMED, ARCHIVED) are listed. `guestAccess` says
  * whether any of its artist rows (hidden ones included) carries a guest code.
  */
 export function toPublicEvents(
@@ -26,8 +27,9 @@ export function toPublicEvents(
   for (const row of artistRows) {
     (rowsByEvent[row.eventId] ??= []).push(row);
     const artist = parsePublicArtistRow(row);
-    if (artist) (artistsByEvent[row.eventId] ??= []).push(artist);
-    else invalid.add(row.eventId);
+    // A row waiting for its announcement (PENDING) is checked but never sent: its name is the news.
+    if (!artist) invalid.add(row.eventId);
+    else if (isPublicArtist(artist)) (artistsByEvent[row.eventId] ??= []).push(artist);
   }
   return eventRows.flatMap((row) => {
     if (invalid.has(row.id)) return [];

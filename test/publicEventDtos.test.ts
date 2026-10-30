@@ -109,4 +109,20 @@ describe('public event DTOs', () => {
     expect(JSON.stringify(events)).not.toContain('HOST-CODE');
     expect(JSON.stringify(events)).not.toContain('guestLimit');
   });
+
+  it('lists only announced artists, while a hidden row still has to be well formed', () => {
+    const now = new Date('2026-08-01T00:00:00Z');
+    const rows = (hidden: object) => toPublicEvents(
+      [{ id: 'e', data: JSON.stringify(eventData) }],
+      [
+        { id: 'shown', eventId: 'e', data: JSON.stringify(artistData) },
+        { id: 'next', eventId: 'e', data: JSON.stringify(hidden) },
+      ],
+      now,
+    );
+    const [event] = rows({ ...artistData, name: 'NOT YET', status: 'PENDING' });
+    expect(event.artists.map((artist) => artist.id)).toEqual(['shown']);
+    expect(JSON.stringify(event)).not.toContain('NOT YET');
+    expect(rows({ name: 'BROKEN', status: 'PENDING' })).toEqual([]);
+  });
 });
