@@ -77,6 +77,15 @@ describe('artist host page', () => {
     expect(screen.getByText('NO LIMIT')).toBeInTheDocument();
   });
 
+  it('keeps a long but finite limit in view, without cells', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ ...view, limit: 50, count: 32 })));
+    const { container } = page();
+    expect(await screen.findByText('OPEN · 18 LEFT')).toBeInTheDocument();
+    expect(screen.getByText('LIMIT 50')).toBeInTheDocument();
+    expect(screen.getByText('/ 50', { exact: false })).toBeInTheDocument();
+    expect(container.querySelector('[aria-hidden="true"] > i')).toBeNull();
+  });
+
   it('says nothing about the artist for a link that does not hold', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ error: 'INVALID_HOST_LINK' }, 404)));
     page();
