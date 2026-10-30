@@ -5,7 +5,7 @@ vi.mock('../features/events/inviteImages.json', () => ({ default: ['03-A'] }));
 const { SHARE_IMAGE, inviteMetadata } = await import('../features/events/metadata');
 
 const event: TerminalEvent = {
-  id: 'TRM-03', session: 'TERMINAL [03]', subtitle: 'Vulpecula Junction', date: '2026-11-28', time: '23:00 KST',
+  id: 'TRM-03', session: 'TERMINAL [03] : Vulpecula Junction', subtitle: 'Vulpecula Junction', date: '2026-11-28', time: '23:00 KST',
   venue: 'FAUST SEOUL', district: 'SEOUL', coords: '', capacity: '', sound: '', status: 'UPCOMING', artists: [],
 };
 
