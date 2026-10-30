@@ -110,7 +110,7 @@ describe('POST /api/invite/host', () => {
     vi.setSystemTime(new Date('2026-10-30T12:00:00+09:00'));
     const response = await post({ artistId: '03-A', t: await signHostLink(SECRET, '03-A', 'K7QM') });
     vi.useRealTimers();
-    expect((await response.json()).open).toBe(false);
+    expect(((await response.json()) as { open: boolean }).open).toBe(false);
   });
 
   it('rejects unexpected fields before reading anything', async () => {
