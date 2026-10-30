@@ -136,6 +136,28 @@ describe('guest request UI',()=>{
     expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({eventId:'A',accessCode:'CODE',name:'Example',email:'example@example.test',instagram:'example',privacyConsent:true,marketingConsent:true});
     expect(saved).toHaveTextContent('example@example.test');
   });
+  it('shows the closed invite instead of the form once the inviter has no places left',async()=>{
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:false})));
+    const user=userEvent.setup();render(<AccessForm eventId="A"/>);
+    await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
+    const notice=await screen.findByRole('status');
+    expect(notice).toHaveTextContent('INVITE CLOSED');expect(notice).toHaveTextContent('INVITER의 게스트 초대가 마감되었습니다');
+    expect(screen.queryByLabelText(/^이름/)).not.toBeInTheDocument();
+    expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');
+    expect(screen.getByRole('link',{name:/일정 구독/})).toHaveAttribute('href','https://terminal.stann.kr/calendar/subscribe');
+  });
+  it('turns a save refused for a full guest list into the closed invite',async()=>{
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:true})).mockResolvedValueOnce(json({error:'GUEST_LIMIT_REACHED'},409)));
+    const user=userEvent.setup();render(<AccessForm eventId="A"/>);
+    await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
+    await user.type(await screen.findByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
+    await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    expect(await screen.findByText('INVITE CLOSED')).toBeInTheDocument();
+  });
+  it('tells the guest their name goes to the inviter',()=>{
+    render(<AccessForm eventId="A"/>);
+    expect(screen.getByRole('checkbox',{name:/게스트 접근 관리/}).closest('label')??document.body).toHaveTextContent('이름은 초대한 아티스트에게 공유됩니다');
+  });
   it('reports a stored request without claiming admission or tickets',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockResolvedValueOnce(json({ok:true})));
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
