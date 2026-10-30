@@ -1,16 +1,32 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { enforceRateLimit } from '../api/abuseControl';
 import { getDb } from '../db/client';
-import { resolveArtistAccessCode } from './createAccessRequest';
-import { listGateArtistRowsByEvent } from './d1GateReadRepository';
+import {
+  findUpcomingGateEvent,
+  isGateRequestWindowActive,
+  resolveArtistAccessCode,
+} from './createAccessRequest';
+import { listGateArtistRowsByEvent, listGateEventRows } from './d1GateReadRepository';
 
 /**
  * Who an invite link's code belongs to, for the link's preview: the artist row and its name, or
- * `null` (no such code, unreadable data). The code itself never leaves the server this way.
+ * `null` (no such code, not the event taking requests now, unreadable data). A preview that names
+ * the artist confirms the code, so each lookup spends the same per-address budget as the code
+ * check (`code-info`); past it, the link previews as a plain form.
  */
-export async function readInviter(eventId: string, code: string): Promise<{ artistId: string; name: string } | null> {
+export async function readInviter(
+  eventId: string,
+  code: string,
+  request: Request,
+): Promise<{ artistId: string; name: string } | null> {
   try {
     const { env } = await getCloudflareContext({ async: true });
-    const result = resolveArtistAccessCode(await listGateArtistRowsByEvent(getDb(env.DB), eventId), code);
+    const db = getDb(env.DB);
+    const now = new Date();
+    const upcoming = findUpcomingGateEvent(await listGateEventRows(db), now);
+    if (upcoming?.rowId !== eventId || !isGateRequestWindowActive(upcoming, now)) return null;
+    if (!(await enforceRateLimit(env, 'code-info', request)).ok) return null;
+    const result = resolveArtistAccessCode(await listGateArtistRowsByEvent(db, eventId), code);
     return result.kind === 'match' ? { artistId: result.artistId, name: result.data.name } : null;
   } catch {
     console.error('[readInviter] artists unavailable');

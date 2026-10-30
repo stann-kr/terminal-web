@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { eventMetadata, inviteMetadata } from '@/features/events/metadata';
 import { inviteCodeFrom } from '@/features/access/invite';
@@ -31,6 +32,8 @@ export async function generateMetadata({
   if (!event) return { title: '게스트 신청' };
   // An artist's invite link previews with the artist's name; an unknown code reads as a plain form.
   const code = inviteCodeFrom(new URLSearchParams(await searchParams as Record<string, string>).toString());
-  const inviter = code ? await readInviter(event.id, code) : null;
+  // The address's own headers (cf-connecting-ip) decide its rate-limit budget.
+  const request = new Request(`https://terminal.stann.kr/events/${encodeURIComponent(event.id)}/request`, { headers: await headers() });
+  const inviter = code ? await readInviter(event.id, code, request) : null;
   return inviter ? inviteMetadata(event, inviter) : eventMetadata(event, '게스트 신청 · ');
 }
