@@ -52,6 +52,7 @@
     "start": "cross-env NODE_ENV=production next start -H 0.0.0.0 -p 3005",
     "lint": "eslint .",
     "signal:mail": "node scripts/signal-mail.mjs",
+    "invite": "node scripts/artist-invite.mjs",
     "smoke:http": "node scripts/http-smoke.mjs",
     "test": "vitest run",
     "test:d1": "node scripts/verify-local-d1.mjs",
