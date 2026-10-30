@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import type { TerminalEvent } from '@/lib/events/types';
 import { getEventDateTime, getEventEndTime } from '@/lib/events/lifecycle';
 import { buildArtistArchive, profileForKey, type ArtistProfile } from '@/features/artists/model';
-import { eventHref, eventSubtitle, paragraphs, publicArtists } from './model';
+import { eventHref, eventSubtitle, paragraphs, publicArtists, sessionShort } from './model';
 import inviteImages from './inviteImages.json';
 
 /** The site's public address: link previews, the sitemap and structured data name pages by it. */
@@ -49,7 +49,7 @@ export function eventMetadata(event: TerminalEvent, prefix = ''): Metadata {
  * title, and the artist's own preview image is used once `npm run invite` has rendered it.
  */
 export function inviteMetadata(event: TerminalEvent, inviter: { artistId: string; name: string }): Metadata {
-  const title = `${inviter.name} · ${event.session} 게스트 초대`;
+  const title = `${inviter.name} · ${sessionShort(event.session)} 게스트 초대`;
   const description = `${event.date} ${event.time} · ${event.venue} · 게스트 신청`;
   const image = (inviteImages as string[]).includes(inviter.artistId)
     ? { url: `/og/invite/${encodeURIComponent(inviter.artistId)}.png`, width: 1200, height: 630, alt: title }
