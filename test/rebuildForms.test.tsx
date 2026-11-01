@@ -156,6 +156,10 @@ describe('guest request UI',()=>{
     await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     expect(await screen.findByText('INVITE CLOSED')).toBeInTheDocument();
   });
+  it('asks each companion to send their own request',()=>{
+    render(<AccessForm eventId="A"/>);
+    expect(screen.getByLabelText(/^이름/)).toHaveAccessibleDescription('1인 1신청 · 동반인도 각자 신청해 주십시오.');
+  });
   it('tells the guest their name goes to the inviter',()=>{
     render(<AccessForm eventId="A"/>);
     expect(screen.getByRole('checkbox',{name:/게스트 접근 관리/}).closest('label')??document.body).toHaveTextContent('이름과 신청 시각은 초대한 아티스트에게 공유됩니다');
@@ -170,12 +174,12 @@ describe('guest request UI',()=>{
   it('checks the code on Enter, then moves on to the name and summarises the saved request',async()=>{
     const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockResolvedValueOnce(json({ok:true}));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
-    expect(screen.getByText('초대 코드를 확인하면 입력할 수 있습니다.')).toBeInTheDocument();
+    expect(screen.getByText('초대 코드를 확인하면 02를 입력할 수 있습니다.')).toBeInTheDocument();
     await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
     expect(await screen.findByText('초대 코드를 확인했습니다.')).toBeInTheDocument();
     expect(fetch.mock.calls[0][0]).toBe('/api/gate/code-info');
     expect(screen.getByLabelText(/^이름/)).toHaveFocus();
-    expect(screen.queryByText('초대 코드를 확인하면 입력할 수 있습니다.')).not.toBeInTheDocument();
+    expect(screen.queryByText('초대 코드를 확인하면 02를 입력할 수 있습니다.')).not.toBeInTheDocument();
     await user.keyboard('Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@example');expect(screen.getByRole('textbox',{name:/인스타그램 ID/})).toHaveValue('@example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     const saved=await screen.findByRole('status');
     expect(saved).toHaveTextContent('INVITER');expect(saved).toHaveTextContent('@example');expect(saved).not.toHaveTextContent('이메일');

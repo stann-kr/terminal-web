@@ -4,7 +4,8 @@ import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { HostView } from '@/lib/gate/hostView';
 import { inviteHref } from '@/features/access/invite';
-import { SITE_ORIGIN } from '@/features/events/metadata';
+import { SITE_ORIGIN, sessionNamesBrand } from '@/features/events/metadata';
+import { sessionShort } from '@/features/events/model';
 import { ApiError, errorMessage, postJson } from '@/features/ui/http';
 import { useShareLink, type ShareState } from '@/features/ui/share';
 import { Action, BrandText, Facts, Loading, PageHeading, Panel, StateNotice, ui } from '@/features/ui/Ui';
@@ -24,6 +25,7 @@ const kstStamp = (iso: string) => {
   return `${kst.slice(5, 7)}.${kst.slice(8, 10)} ${kst.slice(11, 16)}`;
 };
 const two = (value: number) => String(value).padStart(2, '0');
+const megabytes = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)}MB`;
 
 /**
  * What an artist opens from the link TERMINAL sends them: the invite link to hand their guests,
@@ -85,6 +87,13 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
       <div className={styles.plates}>
         <Panel title="초대인" label="Artist" surface="feature" heading={false}>
           <p className={styles.artist}>{view.artist}</p>
+          {/* TERMINAL's own page (its DM list) thanks no one. */}
+          {!sessionNamesBrand(view.artist) && (
+            <p className={styles.thanks}>
+              {sessionShort(view.event.session)}의 원정에 함께해 주셔서 진심으로 감사드립니다.
+              <span lang="en">Thank you for joining the expedition.</span>
+            </p>
+          )}
           <p className={styles.lead}>
             {view.artist}님의 게스트 초대 페이지입니다. 아래 링크를 게스트에게 보내 주십시오. 게스트가
             직접 이름과 인스타그램 ID를 남기고 신청합니다.
@@ -113,7 +122,7 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           <span className={ui.srOnly} role="status">{state === 'idle' ? '' : COPY_TEXT[state]}</span>
           <HostGuestForm artistId={artistId} token={token} open={view.open} />
         </Panel>
-        <Panel title="신청 현황" label="Status" code={unlimited ? 'NO LIMIT' : `LIMIT ${view.limit}`}>
+        <Panel title="신청 현황" label="Status" code={unlimited ? 'NO LIMIT' : `LIMIT ${view.limit}`} className={styles.status}>
           <p className={styles.count}>
             <strong>{two(view.count)}</strong>
             {!unlimited && <span> / {two(view.limit)}</span>}
@@ -128,7 +137,7 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           )}
           <p className={`${ui.band} ${styles.band}`} data-state={view.open ? 'open' : 'closed'}>{band}</p>
           {view.guests.length ? (
-            <ol className={styles.guests} aria-label="신청한 게스트">
+            <ol className={styles.guests} aria-label="신청한 게스트" tabIndex={0}>
               {view.guests.map((guest, index) => (
                 <li key={`${guest.createdAt}-${index}`}>
                   <span>{guest.name}</span>
@@ -146,6 +155,25 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           </p>
           <Action href="/">TERMINAL 사이트 보기</Action>
         </Panel>
+        {view.kit.length > 0 && (
+          <Panel title="홍보 자료" label="Kit" surface="inset" className={styles.kitPanel}>
+            <p className={styles.kitLead}>포스터와 티저 원본입니다. 게스트 초대 링크와 함께 올려 주십시오.</p>
+            <ul className={styles.kit}>
+              {view.kit.map((item) => (
+                <li key={item.href}>
+                  {/* Previews come through the token-checked route, which an image loader cannot sign. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={item.thumb} alt="" width={480} height={Math.round((480 * item.height) / item.width)} loading="lazy" decoding="async" />
+                  <span className={styles.kitLabel}>{item.label}</span>
+                  <span className={styles.kitMeta}>PNG · {item.width}×{item.height} · {megabytes(item.bytes)}</span>
+                  <a className={`${ui.action} ${ui.primary}`} href={item.href} download={item.download}>
+                    받기<span className={ui.srOnly}> — {item.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        )}
       </div>
     </div>
   );

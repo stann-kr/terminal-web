@@ -23,6 +23,7 @@ const view = {
     { name: '김지현', createdAt: '2026-10-29T05:02:00.000Z' },
     { name: 'Park Minjun', createdAt: '2026-10-29T04:40:00.000Z' },
   ],
+  kit: [{ label: '티저', download: 'TERMINAL[03]_teaser.png', width: 2160, height: 2880, bytes: 5_952_827, href: '/api/invite/host/file?a=03-A&t=abc&f=trm-03%2Fteaser.png', thumb: '/api/invite/host/file?a=03-A&t=abc&f=trm-03%2Fteaser.thumb.jpg' }],
 };
 const page = (artistId = '03-A') => render(
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -49,6 +50,26 @@ describe('artist host page', () => {
     expect(guests).toHaveTextContent('김지현');
     expect(guests).toHaveTextContent('10.29 14:02');
     expect(guests.querySelectorAll('li')).toHaveLength(2);
+  });
+
+  it('thanks the artist, but not on TERMINAL\'s own page', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(view)));
+    page();
+    expect(await screen.findByText(/TERMINAL \[03\]의 원정에 함께해 주셔서 진심으로 감사드립니다/)).toBeInTheDocument();
+    cleanup();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ ...view, artist: 'TERMINAL', limit: 10_000 })));
+    page('03-HOST');
+    await screen.findByText('NO LIMIT');
+    expect(screen.queryByText(/감사드립니다/)).not.toBeInTheDocument();
+  });
+
+  it('offers the promo files to download', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(view)));
+    page();
+    const key = await screen.findByRole('link', { name: /티저/ });
+    expect(key).toHaveAttribute('href', '/api/invite/host/file?a=03-A&t=abc&f=trm-03%2Fteaser.png');
+    expect(key).toHaveAttribute('download', 'TERMINAL[03]_teaser.png');
+    expect(screen.getByText('PNG · 2160×2880 · 5.7MB')).toBeInTheDocument();
   });
 
   it('copies the guest invite address', async () => {

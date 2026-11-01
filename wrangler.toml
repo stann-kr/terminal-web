@@ -24,6 +24,13 @@ database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
 remote = true
 
+# 아티스트 페이지의 홍보 자료(포스터·티저 원본). 비공개 버킷으로, /api/invite/host/file이 서명 링크를
+# 확인한 뒤에만 그 아티스트에게 허용된 파일을 꺼내 준다. 로컬 미리보기도 운영 버킷을 읽는다.
+[[r2_buckets]]
+binding = "PRESS"
+bucket_name = "terminal-press"
+remote = true
+
 # 공개 쓰기 API(초대 코드 확인·게스트 신청·소식 신청·방문자 로그)의 시도 제한. lib/api/abuseControl.ts가
 # `<작업>:<접속 IP>` 키로 부른다(초대 코드 확인과 게스트 신청은 한 예산). 바인딩은 환경마다 다시 선언하고,
 # namespace가 환경마다 달라 카운터를 함께 쓰지 않는다.
@@ -47,6 +54,10 @@ binding = "DB"
 database_name = "terminal-db"
 database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
+
+[[env.production.r2_buckets]]
+binding = "PRESS"
+bucket_name = "terminal-press"
 
 # 공개 쓰기 API 시도 제한(맨 위 설명 참고).
 [[env.production.ratelimits]]
@@ -72,6 +83,10 @@ binding = "DB"
 database_name = "terminal-db"
 database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
+
+[[env.development.r2_buckets]]
+binding = "PRESS"
+bucket_name = "terminal-press"
 
 # 공개 쓰기 API 시도 제한(맨 위 설명 참고).
 [[env.development.ratelimits]]
