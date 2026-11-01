@@ -51,6 +51,17 @@ describe('artist host page', () => {
     expect(guests.querySelectorAll('li')).toHaveLength(2);
   });
 
+  it('thanks the artist, but not on TERMINAL\'s own page', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(view)));
+    page();
+    expect(await screen.findByText(/TERMINAL \[03\]의 원정에 함께해 주셔서 진심으로 감사드립니다/)).toBeInTheDocument();
+    cleanup();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ ...view, artist: 'TERMINAL', limit: 10_000 })));
+    page('03-HOST');
+    await screen.findByText('NO LIMIT');
+    expect(screen.queryByText(/감사드립니다/)).not.toBeInTheDocument();
+  });
+
   it('copies the guest invite address', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(view)));
     // userEvent installs its own clipboard, so ours goes in after it.
