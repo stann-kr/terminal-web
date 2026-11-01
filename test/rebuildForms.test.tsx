@@ -156,6 +156,10 @@ describe('guest request UI',()=>{
     await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     expect(await screen.findByText('INVITE CLOSED')).toBeInTheDocument();
   });
+  it('asks each companion to send their own request',()=>{
+    render(<AccessForm eventId="A"/>);
+    expect(screen.getByLabelText(/^이름/)).toHaveAccessibleDescription('한 번에 한 사람만 신청됩니다. 함께 오는 분도 각자 신청해 주십시오.');
+  });
   it('tells the guest their name goes to the inviter',()=>{
     render(<AccessForm eventId="A"/>);
     expect(screen.getByRole('checkbox',{name:/게스트 접근 관리/}).closest('label')??document.body).toHaveTextContent('이름과 신청 시각은 초대한 아티스트에게 공유됩니다');
