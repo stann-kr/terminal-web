@@ -12,8 +12,9 @@
    the status plate only the guest list does, so a long list never stretches the page. */
 @media (min-width: 1200px) {
   .page {
-    /* The window less the frame's top and bottom bars (features/shell). */
-    height: calc(100svh - var(--frame-y, 0px) * 2);
+    /* The frame's own height (the window height the site holds, features/shell) less its top and
+       bottom bars, so the plates end where the frame does at any window size. */
+    height: calc(var(--viewport-h, 100svh) - var(--frame-y, 0px) * 2);
     grid-template-rows: auto minmax(0, 1fr);
     align-content: stretch;
   }
@@ -22,12 +23,13 @@
     min-height: 0;
     overflow-y: auto;
   }
-  .plates > .status { overflow: hidden; }
+  /* The list keeps at least a few rows; on a short window the plate itself scrolls past that. */
+  .plates > .status { overflow-y: auto; }
   .status > :last-child { min-height: 0; }
   /* Side by side only, the list scrolls in its plate; stacked, it runs with the page. */
   .status .guests {
     flex: 1 1 auto;
-    min-height: 0;
+    min-height: 168px;
     overflow-y: auto;
     overscroll-behavior: contain;
   }
