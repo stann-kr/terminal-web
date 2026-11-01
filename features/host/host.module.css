@@ -24,9 +24,12 @@
   }
   .plates > .status { overflow: hidden; }
   .status > :last-child { min-height: 0; }
+  /* Side by side only, the list scrolls in its plate; stacked, it runs with the page. */
   .status .guests {
     flex: 1 1 auto;
     min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 }
 .head {
@@ -140,21 +143,15 @@
   --on-fill: var(--alert-ink);
 }
 .guests {
-  /* Stacked, the list keeps to part of the screen and scrolls in place. */
-  max-height: 60svh;
   margin: 8px calc(var(--bleed) * -1) 0;
   padding: 0;
   list-style: none;
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 .guests:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: -3px;
 }
-@media (min-width: 1200px) {
-  .guests { max-height: none; }
-}
+
 .guests li {
   display: flex;
   justify-content: space-between;
@@ -216,6 +213,9 @@
 .kit img {
   width: 100%;
   height: auto;
+  /* Every preview in the same 3:4 frame; the story poster's 9:16 is cropped here, never in the file. */
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
   background: var(--well);
 }
 .kitLabel {
