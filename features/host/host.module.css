@@ -87,6 +87,34 @@
 .lead {
   margin: 18px 0 0;
 }
+/* The invite guide: numbered steps, each a short title over one line of how. */
+.guide {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  font-size: var(--text-label);
+  line-height: 1.5;
+}
+.guide li {
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr);
+  column-gap: 8px;
+  counter-increment: step;
+}
+.guide li::before {
+  content: counter(step, decimal-leading-zero);
+  grid-row: span 2;
+  opacity: .7;
+  font: 700 var(--t-sm)/1.4 var(--display);
+  letter-spacing: .08em;
+}
+.guide strong {
+  font: 700 var(--t-sm)/1.4 var(--display);
+  letter-spacing: .06em;
+}
 .facts {
   margin-top: auto;
   padding-top: 24px;
