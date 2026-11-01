@@ -158,7 +158,7 @@ describe('guest request UI',()=>{
   });
   it('asks each companion to send their own request',()=>{
     render(<AccessForm eventId="A"/>);
-    expect(screen.getByLabelText(/^이름/)).toHaveAccessibleDescription('한 번에 한 사람만 신청됩니다. 함께 오는 분도 각자 신청해 주십시오.');
+    expect(screen.getByLabelText(/^이름/)).toHaveAccessibleDescription('1인 1신청 · 동반인도 각자 신청해 주십시오.');
   });
   it('tells the guest their name goes to the inviter',()=>{
     render(<AccessForm eventId="A"/>);

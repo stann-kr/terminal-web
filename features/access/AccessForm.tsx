@@ -145,7 +145,7 @@ export function AccessForm({
             ref={nameField}
             id="guest-name"
             label="이름"
-            hint="한 번에 한 사람만 신청됩니다. 함께 오는 분도 각자 신청해 주십시오."
+            hint="1인 1신청 · 동반인도 각자 신청해 주십시오."
             required
             maxLength={100}
             autoComplete="name"
