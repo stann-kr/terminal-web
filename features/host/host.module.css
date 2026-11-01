@@ -12,10 +12,10 @@
    the status plate only the guest list does, so a long list never stretches the page. */
 @media (min-width: 1200px) {
   .page {
-    /* The taller of the frame's height (the window height the site holds, features/shell) and the
-       window as shown now, less the frame's top and bottom bars: the plates reach the bottom of
-       whichever is larger, so no strip of field is left under them. */
-    height: calc(max(var(--viewport-h, 100svh), 100dvh) - var(--frame-y, 0px) * 2);
+    /* Pinned to the window inside the frame's bars and gutters (features/shell), so it ends at the
+       window's bottom edge whatever a browser makes of `svh`/`dvh`: no height unit is involved. */
+    position: fixed;
+    inset: var(--frame-y, 0px) clamp(10px, 1.4vw, 24px);
     grid-template-rows: auto minmax(0, 1fr);
     align-content: stretch;
   }
