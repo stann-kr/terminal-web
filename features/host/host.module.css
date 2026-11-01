@@ -10,7 +10,7 @@
 }
 /* Side by side, the page is exactly the window: each plate scrolls inside itself if it must, and in
    the status plate only the guest list does, so a long list never stretches the page. */
-@media (min-width: 901px) {
+@media (min-width: 1200px) {
   .page {
     /* The window less the frame's top and bottom bars (features/shell). */
     height: calc(100svh - var(--frame-y, 0px) * 2);
@@ -52,11 +52,11 @@
 }
 .plates {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--gap);
   align-items: stretch;
 }
-@container (max-width: 900px) {
+@container (max-width: 1180px) {
   .plates { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -152,7 +152,7 @@
   outline: 2px solid var(--focus);
   outline-offset: -3px;
 }
-@media (min-width: 901px) {
+@media (min-width: 1200px) {
   .guests { max-height: none; }
 }
 .guests li {
@@ -191,4 +191,42 @@
   margin: 10px 0 0;
   color: var(--accent);
   font-size: var(--text-label);
+}
+
+/* Promo files: previews in two columns, each with its download key under it. */
+.kitLead {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+.kit {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kit li {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+.kit img {
+  width: 100%;
+  height: auto;
+  background: var(--well);
+}
+.kitLabel {
+  font: 700 var(--t-sm)/1.2 var(--display);
+  letter-spacing: .04em;
+}
+.kitMeta {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1.2 var(--mono);
+  overflow-wrap: anywhere;
+}
+.kit a {
+  margin-top: 4px;
 }
