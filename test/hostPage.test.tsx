@@ -72,6 +72,19 @@ describe('artist host page', () => {
     expect(screen.getByText('PNG · 2160×2880 · 5.7MB')).toBeInTheDocument();
   });
 
+  it('guides the artist step by step, with the limit only where there is one', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(view)));
+    page();
+    const guide = await screen.findByRole('list', { name: '초대 안내' });
+    expect(guide).toHaveTextContent('링크 보내기');
+    expect(guide).toHaveTextContent('한도 10명');
+    expect(guide).toHaveTextContent('신청은 이벤트 시작 전까지');
+    cleanup();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ ...view, limit: 10_000 })));
+    page();
+    expect(await screen.findByRole('list', { name: '초대 안내' })).not.toHaveTextContent('한도');
+  });
+
   it('copies the guest invite address', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(view)));
     // userEvent installs its own clipboard, so ours goes in after it.

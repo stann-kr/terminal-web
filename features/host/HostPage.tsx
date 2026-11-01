@@ -94,14 +94,38 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
               <span lang="en">Thank you for joining the expedition.</span>
             </p>
           )}
-          <p className={styles.lead}>
-            {view.artist}님의 게스트 초대 페이지입니다. 아래 링크를 게스트에게 보내 주십시오. 게스트가
-            직접 이름과 인스타그램 ID를 남기고 신청합니다.
-          </p>
+          <p className={styles.lead}>{view.artist}님의 게스트 초대 페이지입니다.</p>
+          <ol className={styles.guide} aria-label="초대 안내">
+            <li>
+              <strong>링크 보내기</strong>
+              초대 링크를 복사·공유해 게스트에게 보내 주십시오.
+            </li>
+            <li>
+              <strong>직접 등록</strong>
+              게스트의 동의를 받아 직접 등록 칸에 올려도 됩니다.
+            </li>
+            <li>
+              <strong>1인 1신청</strong>
+              동반인도 각자 신청해야 합니다.
+            </li>
+            {!unlimited && (
+              <li>
+                <strong>한도 {view.limit}명</strong>
+                차면 링크가 마감됩니다. 추가는 TERMINAL에 요청해 주십시오.
+              </li>
+            )}
+            <li>
+              <strong>당일 입장</strong>
+              신청은 이벤트 시작 전까지, 입구에서 이름으로 확인합니다.
+            </li>
+            <li>
+              <strong>함께 알리기</strong>
+              홍보 자료의 포스터와 함께 올려 주십시오.
+            </li>
+          </ol>
           <div className={styles.facts}>
             <Facts
               rows={[
-                ['이벤트', view.event.session],
                 ['일시', `${view.event.date} ${view.event.time}`],
                 ['장소', view.event.venue],
               ]}
@@ -151,7 +175,7 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           <p className={styles.note}>
             {unlimited
               ? '신청한 게스트의 이름과 신청 시각만 보입니다. 연락처는 TERMINAL만 확인합니다.'
-              : '신청한 게스트의 이름과 신청 시각만 보입니다. 한도가 차면 링크는 마감 안내로 바뀝니다. 더 필요하면 TERMINAL에 요청해 주십시오.'}
+              : '신청한 게스트의 이름과 신청 시각만 보입니다. 차면 링크가 마감됩니다. 추가는 TERMINAL에 요청해 주십시오.'}
           </p>
           <Action href="/">TERMINAL 사이트 보기</Action>
         </Panel>
