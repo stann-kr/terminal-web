@@ -25,6 +25,7 @@ const kstStamp = (iso: string) => {
   return `${kst.slice(5, 7)}.${kst.slice(8, 10)} ${kst.slice(11, 16)}`;
 };
 const two = (value: number) => String(value).padStart(2, '0');
+const megabytes = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)}MB`;
 
 /**
  * What an artist opens from the link TERMINAL sends them: the invite link to hand their guests,
@@ -154,6 +155,25 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           </p>
           <Action href="/">TERMINAL 사이트 보기</Action>
         </Panel>
+        {view.kit.length > 0 && (
+          <Panel title="홍보 자료" label="Kit" surface="inset" className={styles.kitPanel}>
+            <p className={styles.kitLead}>포스터와 티저 원본입니다. 게스트 초대 링크와 함께 올려 주십시오.</p>
+            <ul className={styles.kit}>
+              {view.kit.map((item) => (
+                <li key={item.href}>
+                  {/* Previews come through the token-checked route, which an image loader cannot sign. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={item.thumb} alt="" width={480} height={Math.round((480 * item.height) / item.width)} loading="lazy" decoding="async" />
+                  <span className={styles.kitLabel}>{item.label}</span>
+                  <span className={styles.kitMeta}>PNG · {item.width}×{item.height} · {megabytes(item.bytes)}</span>
+                  <a className={`${ui.action} ${ui.primary}`} href={item.href} download={item.download}>
+                    받기<span className={ui.srOnly}> — {item.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        )}
       </div>
     </div>
   );

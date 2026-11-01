@@ -13,6 +13,8 @@ declare global {
     TURNSTILE_SECRET_KEY?: string;
     TURNSTILE_EXPECTED_HOSTNAME?: string;
     SIGNAL_UNSUBSCRIBE_SECRET?: string;
+    /** Promo files for artists' host pages (wrangler.toml `terminal-press`). */
+    PRESS?: R2Bucket;
   }
 }
 

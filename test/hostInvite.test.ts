@@ -74,7 +74,7 @@ describe('POST /api/invite/host', () => {
     vi.useRealTimers();
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
-    const body = await response.json();
+    const body = (await response.json()) as { kit: { download: string; href: string }[] };
     expect(body).toEqual({
       artist: 'STANN LUMO',
       event: { id: 'TRM-03', session: 'TERMINAL [03]', subtitle: 'Vulpecula Junction', date: '2026-11-28', time: '23:00 KST', venue: 'FAUST SEOUL', status: 'UPCOMING' },
@@ -86,7 +86,14 @@ describe('POST /api/invite/host', () => {
         { name: '김지현', createdAt: '2026-10-29T05:02:00.000Z' },
         { name: 'Park Minjun', createdAt: '2026-10-29T04:40:00.000Z' },
       ],
+      kit: expect.any(Array),
     });
+    // Its own poster and the event's files, each through the token-checked route.
+    expect(body.kit.map((item) => item.download)).toEqual([
+      'TERMINAL[03]_stannlumo_front.png', 'TERMINAL[03]_stannlumo_back.png', 'TERMINAL[03]_main.png',
+      'TERMINAL[03]_main_story.png', 'TERMINAL[03]_teaser.png', 'TERMINAL[03]_preteaser.png',
+    ]);
+    expect(body.kit[0].href).toMatch(/^\/api\/invite\/host\/file\?a=03-A&t=[0-9a-f]{64}&f=trm-03%2Fstannlumo-front\./);
     expect(JSON.stringify(body)).not.toMatch(/email|instagram/);
     expect(binds).toContainEqual(['TRM-03', '03-A']);
   });

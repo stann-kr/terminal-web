@@ -10,6 +10,10 @@ import { findUpcomingGateEvent, isGateRequestWindowActive } from "@/lib/gate/cre
 import { listGateEventRows } from "@/lib/gate/d1GateReadRepository";
 import { verifiedHostArtist } from "@/lib/gate/hostAccess";
 import type { HostView } from "@/lib/gate/hostView";
+import { promoKit } from "@/lib/gate/promoKit";
+
+const promoHref = (artistId: string, token: string, key: string) =>
+  `/api/invite/host/file?${new URLSearchParams({ a: artistId, t: token, f: key })}`;
 
 /** Every way a link can fail answers the same, so the page never tells which artist ids exist. */
 const invalid = () => noStoreJson({ error: "INVALID_HOST_LINK" }, 404);
@@ -31,7 +35,8 @@ export async function POST(request: Request) {
     const abuseDecision = await enforceRateLimit(env, 'host', request);
     if (!abuseDecision.ok) return noStoreJson({ error: abuseDecision.error }, abuseDecision.status);
 
-    const host = await verifiedHostArtist(env.DB, env.SIGNAL_UNSUBSCRIBE_SECRET ?? '', body.artistId, body.t);
+    const { artistId, t: token } = body;
+    const host = await verifiedHostArtist(env.DB, env.SIGNAL_UNSUBSCRIBE_SECRET ?? '', artistId, token);
     if (!host) return invalid();
     const { eventId, access } = host;
 
@@ -64,6 +69,11 @@ export async function POST(request: Request) {
         && isGateRequestWindowActive(upcoming, now)
         && count < access.guestLimit,
       guests: guests.results.map((guest) => ({ name: guest.name, createdAt: guest.created_at })),
+      kit: promoKit(eventId, artistId).map(({ key, thumbKey, ...item }) => ({
+        ...item,
+        href: promoHref(artistId, token, key),
+        thumb: promoHref(artistId, token, thumbKey),
+      })),
     };
     return noStoreJson(view);
   } catch (error) {
