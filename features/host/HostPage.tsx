@@ -4,7 +4,8 @@ import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { HostView } from '@/lib/gate/hostView';
 import { inviteHref } from '@/features/access/invite';
-import { SITE_ORIGIN } from '@/features/events/metadata';
+import { SITE_ORIGIN, sessionNamesBrand } from '@/features/events/metadata';
+import { sessionShort } from '@/features/events/model';
 import { ApiError, errorMessage, postJson } from '@/features/ui/http';
 import { useShareLink, type ShareState } from '@/features/ui/share';
 import { Action, BrandText, Facts, Loading, PageHeading, Panel, StateNotice, ui } from '@/features/ui/Ui';
@@ -85,6 +86,13 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
       <div className={styles.plates}>
         <Panel title="초대인" label="Artist" surface="feature" heading={false}>
           <p className={styles.artist}>{view.artist}</p>
+          {/* TERMINAL's own page (its DM list) thanks no one. */}
+          {!sessionNamesBrand(view.artist) && (
+            <p className={styles.thanks}>
+              {sessionShort(view.event.session)}의 원정에 함께해 주셔서 진심으로 감사드립니다.
+              <span lang="en">Thank you for joining the expedition.</span>
+            </p>
+          )}
           <p className={styles.lead}>
             {view.artist}님의 게스트 초대 페이지입니다. 아래 링크를 게스트에게 보내 주십시오. 게스트가
             직접 이름과 인스타그램 ID를 남기고 신청합니다.
