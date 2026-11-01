@@ -124,7 +124,8 @@ export function AccessForm({
           </button>
         </div>
         <p className={styles.codeMessage} role="status">
-          {codeMessage}
+          {/* Until a code is checked, the line under the code says what unlocks step 02. */}
+          {codeMessage || (!verified && availability.canRequest ? '초대 코드를 확인하면 02를 입력할 수 있습니다.' : '')}
         </p>
         {verified && (
           <p className={styles.inviter}>
@@ -137,9 +138,6 @@ export function AccessForm({
         disabled={!verified || pending || !availability.canRequest}
       >
         <legend className={`${ui.band} ${styles.legend}`}>02 / 연락처와 동의</legend>
-        {!verified && availability.canRequest && (
-          <p className={styles.locked}>초대 코드를 확인하면 입력할 수 있습니다.</p>
-        )}
         <div className={styles.contacts}>
           <Field
             ref={nameField}

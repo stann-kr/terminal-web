@@ -68,14 +68,6 @@
   white-space: nowrap;
 }
 
-/* Why step 02 is still shut: it waits for the code above. */
-.locked {
-  margin: 0;
-  padding: 8px var(--bleed);
-  color: var(--muted);
-  font-size: var(--text-ui);
-}
-
 /* An invite whose inviter is full: the band takes the alert colour, the copy sits on the plate. */
 .closedInvite {
   display: grid;
