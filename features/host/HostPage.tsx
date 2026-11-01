@@ -118,10 +118,6 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
               <strong>당일 입장</strong>
               신청은 이벤트 시작 전까지, 입구에서 이름으로 확인합니다.
             </li>
-            <li>
-              <strong>함께 알리기</strong>
-              홍보 자료의 포스터와 함께 올려 주십시오.
-            </li>
           </ol>
           <div className={styles.facts}>
             <Facts
@@ -181,7 +177,7 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
         </Panel>
         {view.kit.length > 0 && (
           <Panel title="홍보 자료" label="Kit" surface="inset" className={styles.kitPanel}>
-            <p className={styles.kitLead}>포스터와 티저 원본입니다. 게스트 초대 링크와 함께 올려 주십시오.</p>
+            <p className={styles.kitLead}>포스터와 티저 원본입니다.</p>
             <ul className={styles.kit}>
               {view.kit.map((item) => (
                 <li key={item.href}>
