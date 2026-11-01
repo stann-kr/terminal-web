@@ -113,7 +113,7 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           <span className={ui.srOnly} role="status">{state === 'idle' ? '' : COPY_TEXT[state]}</span>
           <HostGuestForm artistId={artistId} token={token} open={view.open} />
         </Panel>
-        <Panel title="신청 현황" label="Status" code={unlimited ? 'NO LIMIT' : `LIMIT ${view.limit}`}>
+        <Panel title="신청 현황" label="Status" code={unlimited ? 'NO LIMIT' : `LIMIT ${view.limit}`} className={styles.status}>
           <p className={styles.count}>
             <strong>{two(view.count)}</strong>
             {!unlimited && <span> / {two(view.limit)}</span>}
@@ -128,7 +128,7 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           )}
           <p className={`${ui.band} ${styles.band}`} data-state={view.open ? 'open' : 'closed'}>{band}</p>
           {view.guests.length ? (
-            <ol className={styles.guests} aria-label="신청한 게스트">
+            <ol className={styles.guests} aria-label="신청한 게스트" tabIndex={0}>
               {view.guests.map((guest, index) => (
                 <li key={`${guest.createdAt}-${index}`}>
                   <span>{guest.name}</span>

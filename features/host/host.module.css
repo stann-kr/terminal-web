@@ -4,10 +4,30 @@
   container-type: inline-size;
   display: grid;
   gap: var(--gap);
-  min-height: 100dvh;
   padding: var(--gap);
   background: var(--field);
   align-content: start;
+}
+/* Side by side, the page is exactly the window: each plate scrolls inside itself if it must, and in
+   the status plate only the guest list does, so a long list never stretches the page. */
+@media (min-width: 901px) {
+  .page {
+    /* The window less the frame's top and bottom bars (features/shell). */
+    height: calc(100svh - var(--frame-y, 0px) * 2);
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch;
+  }
+  .plates { min-height: 0; }
+  .plates > section {
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .plates > .status { overflow: hidden; }
+  .status > :last-child { min-height: 0; }
+  .status .guests {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
 }
 .head {
   display: flex;
@@ -108,9 +128,20 @@
   --on-fill: var(--alert-ink);
 }
 .guests {
+  /* Stacked, the list keeps to part of the screen and scrolls in place. */
+  max-height: 60svh;
   margin: 8px calc(var(--bleed) * -1) 0;
   padding: 0;
   list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.guests:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -3px;
+}
+@media (min-width: 901px) {
+  .guests { max-height: none; }
 }
 .guests li {
   display: flex;
