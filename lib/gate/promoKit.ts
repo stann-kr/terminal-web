@@ -50,7 +50,7 @@ const ARTIST_FILES: Record<string, PromoFile[]> = {
   ],
   '03-F': [
     file('아티스트 포스터 · 앞면', 'harim-front.5675ba06d88c', 'harim_front', 2160, 2880, 6547876),
-    file('아티스트 포스터 · 뒷면', 'harim-back.e73992dbdf78', 'harim_back', 2160, 2880, 1387771),
+    file('아티스트 포스터 · 뒷면', 'harim-back.b22a12c8b9f9', 'harim_back', 2160, 2880, 1386282),
   ],
 };
 
