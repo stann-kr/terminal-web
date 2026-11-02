@@ -48,6 +48,10 @@ const ARTIST_FILES: Record<string, PromoFile[]> = {
     file('아티스트 포스터 · 앞면', 'yaree-front.a4e2851ed6da', 'yaree_front', 2160, 2880, 6840322),
     file('아티스트 포스터 · 뒷면', 'yaree-back.5f0dcadc9f92', 'yaree_back', 2160, 2880, 1496542),
   ],
+  '03-F': [
+    file('아티스트 포스터 · 앞면', 'harim-front.5675ba06d88c', 'harim_front', 2160, 2880, 6547876),
+    file('아티스트 포스터 · 뒷면', 'harim-back.e73992dbdf78', 'harim_back', 2160, 2880, 1387771),
+  ],
 };
 
 const EVENT_FILES: Record<string, PromoFile[]> = {
