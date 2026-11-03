@@ -144,7 +144,8 @@ describe('guest request UI',()=>{
     expect(heading).toHaveFocus();expect(screen.getByText('INVITE CLOSED')).toBeInTheDocument();
     expect(screen.queryByLabelText(/^이름/)).not.toBeInTheDocument();
     expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');
-    expect(screen.getByRole('link',{name:/일정 구독/})).toHaveAttribute('href','https://terminal.stann.kr/calendar/subscribe');
+    // The session file's calendar key (the browser's own feed link), not a bare redirect an in-app browser would drop.
+    expect(screen.getByRole('link',{name:/CALENDAR/})).toHaveAttribute('href','https://calendar.google.com/calendar/render?cid=webcal%3A%2F%2Fterminal.stann.kr%2Fcalendar.ics');
     await user.click(screen.getByRole('button',{name:'다른 초대 코드 입력'}));
     expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');await waitFor(()=>expect(screen.getByLabelText(/초대 코드/)).toHaveFocus());expect(screen.queryByText('INVITE CLOSED')).not.toBeInTheDocument();
   });

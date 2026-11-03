@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref } from '@/features/events/model';
-import { SITE_ORIGIN } from '@/features/events/metadata';
+import { CALENDAR_BLOCKED, CalendarKey, useCalendarKey } from '@/features/events/EventRecord';
 import { Action, ActionDeck, Facts, StateNotice, ui } from '@/features/ui/Ui';
 import {
   Consent,
@@ -237,6 +237,7 @@ function InviteClosed({ inviter, onOtherCode }: { inviter: string; onOtherCode: 
   // The key the guest pressed is gone with the form; the notice takes the focus and is read out.
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => heading.current?.focus(), []);
+  const calendarKey = useCalendarKey();
   return (
     <div className={styles.closedInvite}>
       <Facts rows={[['초대인', inviter]]} />
@@ -254,9 +255,11 @@ function InviteClosed({ inviter, onOtherCode }: { inviter: string; onOtherCode: 
       </div>
       <ActionDeck>
         <Action primary href="/signal">다음 이벤트 소식 신청</Action>
-        <Action primary href={`${SITE_ORIGIN}/calendar/subscribe`}>TERMINAL 일정 구독</Action>
+        {/* The session file's key: an in-app browser (Instagram, KakaoTalk) would drop the webcal link without a word. */}
+        <CalendarKey {...calendarKey} />
         <button type="button" className={ui.button} onClick={onOtherCode}>다른 초대 코드 입력</button>
       </ActionDeck>
+      <span className={ui.srOnly} role="status">{calendarKey.calendar === 'blocked' ? CALENDAR_BLOCKED : ''}</span>
     </div>
   );
 }

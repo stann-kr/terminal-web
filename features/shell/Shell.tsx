@@ -27,15 +27,16 @@ function SearchSync({ onChange }: { onChange: (search: string) => void }) {
  */
 export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [search, setSearch] = useState('');
-  const state = stageStateFromUrl(pathname, new URLSearchParams(search));
+  // Null until SearchSync has read the query string (one commit after the first).
+  const [search, setSearch] = useState<string | null>(null);
+  const state = stageStateFromUrl(pathname, new URLSearchParams(search ?? ''));
   const frame = useRef<HTMLDivElement>(null);
   const main = useRef<HTMLElement>(null);
   const previousPath = useRef(pathname);
   useDisplayPolicy(frame);
   useSweepDirection();
   useTouchPress();
-  useNavigationPending(`${pathname}?${search}`);
+  useNavigationPending(`${pathname}?${search ?? ''}`);
 
   useEffect(() => {
     if (previousPath.current === pathname) return;
@@ -54,7 +55,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </Suspense>
       <main ref={main} id="main" aria-label="본문" tabIndex={-1} className={styles.main}>
         <AccessDraftProvider>
-          <Stage state={state} />
+          <Stage state={state} addressReady={search !== null} />
           {children}
         </AccessDraftProvider>
       </main>

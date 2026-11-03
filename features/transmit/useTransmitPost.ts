@@ -4,6 +4,15 @@ import type { PublicTransmitLog } from '@/lib/transmit/contract';
 import { ApiError, postJson } from '@/features/ui/http';
 import { getNodeName } from './nodeIdentity';
 
+/**
+ * A fresh key for one attempt, 32 hex characters. `crypto.randomUUID` exists only on secure
+ * origins; a plain-http preview (LAN dev) draws the bytes itself instead of failing to post.
+ */
+function idempotencyKey(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID().replaceAll('-', '');
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export type TransmitCallbacks = { onPosted: () => void; onSaved?: () => void };
 
 export function useTransmitPost({ onPosted, onSaved }: TransmitCallbacks) {
@@ -59,10 +68,7 @@ export function useTransmitPost({ onPosted, onSaved }: TransmitCallbacks) {
     }
     const fingerprint = JSON.stringify(normalized);
     if (attempt.current?.fingerprint !== fingerprint)
-      attempt.current = {
-        fingerprint,
-        key: crypto.randomUUID().replaceAll('-', ''),
-      };
+      attempt.current = { fingerprint, key: idempotencyKey() };
     const key = attempt.current.key;
     submitting.current = true;
     setPending(true);

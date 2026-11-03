@@ -94,27 +94,44 @@ function KeyFace({ label, children }: { label: string; children: ReactNode }) {
  * filled like every key so they never read as one more fact line. The calendar key subscribes to
  * the whole TERMINAL feed (later changes reach the subscriber); a past session has no map key.
  */
-function SessionKeys({ event }: { event: TerminalEvent }) {
+/** The calendar key's link and state, for any deck that offers the subscription (CalendarKey). */
+export function useCalendarKey() {
   const subscribe = useSubscribeHref();
+  const [calendar, open] = useCalendarOpen(subscribe);
+  return { subscribe, calendar, open };
+}
+
+/**
+ * The key that subscribes to the TERMINAL feed: the right link for this browser, the loading cover
+ * while another app takes over, and the notice where an in-app browser would drop the link.
+ */
+export function CalendarKey({ subscribe, calendar, open }: ReturnType<typeof useCalendarKey>) {
+  return (
+    <a
+      className={`${ui.action} ${ui.primary}`}
+      href={subscribe}
+      {...(subscribe.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      data-pending={calendar === 'opening' ? '' : undefined}
+      onClick={open}
+    >
+      <KeyFace label="CALENDAR">
+        {calendar === 'blocked' ? CALENDAR_BLOCKED : <><BrandText text="TERMINAL" /> 일정 구독</>}
+      </KeyFace>
+    </a>
+  );
+}
+
+function SessionKeys({ event }: { event: TerminalEvent }) {
+  const calendarKey = useCalendarKey();
+  const { calendar } = calendarKey;
   const map = event.status === 'ARCHIVED' ? null : venueMapHref(event);
   const { state: shared, share: shareLink } = useShareLink();
   // The public address, whichever address this page was opened at.
   const share = () => shareLink(new URL(eventHref(event.id), SITE_ORIGIN).href, event.session);
-  const [calendar, openCalendar] = useCalendarOpen(subscribe);
   return (
     <>
       <ActionDeck className={styles.sessionKeys} surface="paper">
-        <a
-          className={`${ui.action} ${ui.primary}`}
-          href={subscribe}
-          {...(subscribe.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-          data-pending={calendar === 'opening' ? '' : undefined}
-          onClick={openCalendar}
-        >
-          <KeyFace label="CALENDAR">
-            {calendar === 'blocked' ? CALENDAR_BLOCKED : <><BrandText text="TERMINAL" /> 일정 구독</>}
-          </KeyFace>
-        </a>
+        <CalendarKey {...calendarKey} />
         {map && (
           <Action primary external href={map}>
             <KeyFace label="MAP">
@@ -136,7 +153,7 @@ const IN_APP = /Instagram|FBAN|FBAV|FB_IAB|KAKAOTALK|Line\/|NAVER\(inapp|DaumApp
 /** Longest the calendar key shows LOADING while the calendar app or the new tab takes over. */
 export const CALENDAR_OPEN_MS = 2500;
 /** Short, so the key keeps its size. */
-const CALENDAR_BLOCKED = 'Safari에서 열어 주세요';
+export const CALENDAR_BLOCKED = 'Safari에서 열어 주세요';
 type CalendarState = 'idle' | 'opening' | 'blocked';
 
 /**

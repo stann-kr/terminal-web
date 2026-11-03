@@ -57,6 +57,9 @@ export function useRouteHold() {
   return useCallback(
     (href: string, { control, replace, scroll }: { control?: HTMLElement | null; replace?: boolean; scroll?: boolean } = {}) => {
       if (onItsWay(href)) return;
+      // Already there (a back card that leads to this same address): the router would not move, and
+      // the cover would stay up until its limit.
+      if (href === window.location.pathname + window.location.search) return;
       markPending(control && shown(control) ? control : null, href);
       holdRoute(router, href, { replace, scroll });
     },

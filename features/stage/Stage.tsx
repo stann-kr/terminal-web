@@ -113,7 +113,11 @@ const sameHeads = (a: Heads, b: Heads) => HEADED.every(id => a[id]?.mode === b[i
  * does not fit spreads the view over sheets (a narrow window gets one per column); the server's
  * first markup, and a page without script, lay the same elements out in document order (flow).
  */
-export function Stage({ state: address }: { state: StageState }) {
+export function Stage({ state: address, addressReady = true }: {
+  state: StageState;
+  /** False while the query string is still unknown (Shell's SearchSync): the address is provisional then. */
+  addressReady?: boolean;
+}) {
   const router = useRouter();
   const go = useRouteHold();
   const root = useRef<HTMLDivElement>(null);
@@ -124,10 +128,24 @@ export function Stage({ state: address }: { state: StageState }) {
 
   // ── Where the back card leads: the view before this one, or one level up ─────────────────
   const [trail, setTrail] = useState<StageState[]>([state]);
-  if (stateKey(trail[trail.length - 1]) !== key) {
+  const [started, setStarted] = useState(addressReady);
+  const lastInTrail = trail[trail.length - 1];
+  if (addressReady && !started) {
+    // `/events?page=3` opened directly: the trail starts at page 3, not at a page 1 nobody saw.
+    setStarted(true);
+    if (stateKey(lastInTrail) !== key) setTrail([state]);
+  } else if (stateKey(lastInTrail) !== key) {
     const earlier = trail[trail.length - 2];
+    // A detail whose id the catalogue turns out not to have becomes its parent plate's notice
+    // (resolveMissing); that replaces its own entry, or the back card would lead to the same address.
+    const demoted = stateKey(resolveMissing(lastInTrail, data)) === key;
     // Home is the root: arriving there starts the trail over.
-    setTrail(state.view === 'home' ? [state] : earlier && stateKey(earlier) === key ? trail.slice(0, -1) : [...trail.slice(-8), state]);
+    setTrail(
+      state.view === 'home' ? [state]
+        : demoted ? [...trail.slice(0, -1), state]
+          : earlier && stateKey(earlier) === key ? trail.slice(0, -1)
+            : [...trail.slice(-8), state],
+    );
   }
   const current = stateKey(trail[trail.length - 1]) === key ? trail : [...trail, state];
   const parent = stageParentHref(state);
@@ -294,11 +312,15 @@ export function Stage({ state: address }: { state: StageState }) {
   const [origin, setOrigin] = useState<Origin | null>(null);
   // ── Plate origins: across a jump of the page, boxes set out from what was on screen ─────────
   const [plateOrigins, setPlateOrigins] = useState<Partial<Record<PlateId, Origin>>>({});
-  const settledKey = useRef(key);
+  // The key last acted on; null until the address (query string included) is known, so the key
+  // the visit starts at is not taken for a move.
+  const settledKey = useRef<string | null>(null);
   const openBefore = useRef(layout.open);
   useLayoutEffect(() => {
-    if (settledKey.current === key) return;
+    if (!addressReady) return;
+    const previousKey = settledKey.current;
     settledKey.current = key;
+    if (previousKey === null || previousKey === key) return;
     // A new scene puts the page back at its top at once. A box would then set out from where it
     // was on the page, not from where it was seen: from far below a phone's window, leaving the
     // window empty while it travels. So across the jump each box sets out from where it was on
@@ -343,7 +365,7 @@ export function Stage({ state: address }: { state: StageState }) {
     if (element) (viewTitle(element) ?? element).focus({ preventScroll: true });
     // Only a change of view does this; `state` is described by `key`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+  }, [key, addressReady]);
 
   const recordPoint = (event: PointerEvent<HTMLDivElement>) => {
     const element = root.current;
@@ -424,10 +446,12 @@ export function Stage({ state: address }: { state: StageState }) {
   // flash. Nor after they land, until the pointer moves: a browser re-hit-tests hover only on pointer
   // movement, so a card that travelled out from under a resting pointer would stay lit.
   const [moving, setMoving] = useState(false);
-  const firstKey = useRef(key);
+  const movedFrom = useRef<string | null>(null);
   useLayoutEffect(() => {
-    if (firstKey.current === key) return;
-    firstKey.current = key;
+    if (!addressReady) return;
+    const previousKey = movedFrom.current;
+    movedFrom.current = key;
+    if (previousKey === null || previousKey === key) return;
     setMoving(true);
     let landed = false;
     const timer = window.setTimeout(() => {
@@ -441,7 +465,7 @@ export function Stage({ state: address }: { state: StageState }) {
       window.clearTimeout(timer);
       window.removeEventListener('pointermove', wake);
     };
-  }, [key]);
+  }, [key, addressReady]);
 
   // ── Render ──────────────────────────────────────────────────────────────────────────────
   const last = layout.sheets[sheetCount - 1];

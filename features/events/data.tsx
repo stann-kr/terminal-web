@@ -1,6 +1,6 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import {
   getEventBoundaryTimes,
@@ -33,9 +33,11 @@ export function useEvents() {
       window.removeEventListener('focus', update);
     };
   }, [now, query.data]);
-  return {
-    ...query,
-    now,
-    events: query.data?.map((event) => withEffectiveEventStatus(event, now)),
-  };
+  // One array per (data, now), so readers keyed on `events` (useStageData's memo) see it unchanged
+  // across renders that change neither.
+  const events = useMemo(
+    () => query.data?.map((event) => withEffectiveEventStatus(event, now)),
+    [query.data, now],
+  );
+  return { ...query, now, events };
 }

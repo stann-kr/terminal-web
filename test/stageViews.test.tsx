@@ -428,6 +428,30 @@ describe('stage views', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('NOPE');
   });
 
+  it('starts the trail where a direct visit lands, not at a view nobody saw', async () => {
+    const back = (container: HTMLElement) => within(container.querySelector<HTMLElement>('[data-back]')!);
+    // `/events?page=2` opened directly: the query string is read one commit after the first
+    // (SearchSync), so page 1 is never a view the visitor came from.
+    navigation.pathname = '/events';
+    navigation.search = new URLSearchParams('page=2');
+    const paged = shell(Array.from({ length: 40 }, (_, index) => ({ ...past, id: `EVENT ${String(index).padStart(2, '0')}` })));
+    expect(back(paged.container).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
+    cleanup();
+    // `/events/NOPE` opened directly, the catalogue arriving after the first paint: the session
+    // becomes the directory's notice, and the back card leads up, not to the same address again.
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+    navigation.pathname = '/events/NOPE';
+    navigation.search = new URLSearchParams();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+    clients.push(client);
+    client.setQueryData(['transmit', 1], { logs: [], total: 0, page: 1, totalPages: 0 });
+    const { container } = render(<QueryClientProvider client={client}><Shell><p /></Shell></QueryClientProvider>);
+    act(() => client.setQueryData(['events'], [past]));
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('NOPE'));
+    expect(back(container).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
+    vi.unstubAllGlobals();
+  });
+
   it('orders live, upcoming, then past sessions in the directory and hides private names', () => {
     const live = { ...past, id: 'LIVE', session: 'Live event', date: '2000-01-01', status: 'LIVE' as const };
     const { container, go } = shell([past, upcoming, live]);
