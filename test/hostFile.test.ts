@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signHostLink } from '../lib/gate/hostLink';
+import KIT from './fixtures/kit-TRM-03.json';
 
 const mocks = vi.hoisted(() => ({ enforceRateLimit: vi.fn(), getCloudflareContext: vi.fn(), get: vi.fn() }));
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: mocks.getCloudflareContext }));
@@ -13,7 +14,9 @@ describe('GET /api/invite/host/file', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.enforceRateLimit.mockResolvedValue({ ok: true });
-    mocks.get.mockImplementation(async (key: string) => ({ body: `bytes of ${key}`, size: 8 }));
+    mocks.get.mockImplementation(async (key: string) => (key === 'kit/TRM-03.json'
+      ? { json: async () => KIT }
+      : { body: `bytes of ${key}`, size: 8 }));
     const prepare = () => ({ bind: () => ({ first: async () => ({ event_id: 'TRM-03', data: JSON.stringify({ name: 'HOGUN', guestCode: '3J5W', guestLimit: 10 }) }) }) });
     mocks.getCloudflareContext.mockResolvedValue({ env: { SIGNAL_UNSUBSCRIBE_SECRET: SECRET, DB: { prepare }, PRESS: { get: mocks.get } } });
   });
@@ -27,7 +30,7 @@ describe('GET /api/invite/host/file', () => {
     expect(response.headers.get('content-type')).toBe('image/png');
     expect(response.headers.get('content-disposition')).toBe('attachment; filename="TERMINAL[03]_hogun_front.png"');
     expect(response.headers.get('cache-control')).toBe('private, max-age=86400');
-    expect(mocks.get).toHaveBeenCalledWith(HOGUN_FRONT);
+    expect(mocks.get).toHaveBeenLastCalledWith(HOGUN_FRONT);
   });
 
   it('shows a preview inline, and the event teaser too', async () => {
@@ -43,6 +46,12 @@ describe('GET /api/invite/host/file', () => {
   ])('answers %s with the same 404 and reads nothing', async (_label, key, token) => {
     const response = await get(key, token);
     expect(response.status).toBe(404);
-    expect(mocks.get).not.toHaveBeenCalled();
+    expect(mocks.get).not.toHaveBeenCalledWith(key);
+  });
+
+  it('lists nothing when the event has no manifest in the bucket', async () => {
+    mocks.get.mockResolvedValue(null);
+    expect((await get(HOGUN_FRONT)).status).toBe(404);
+    expect(mocks.get).not.toHaveBeenCalledWith(HOGUN_FRONT);
   });
 });
