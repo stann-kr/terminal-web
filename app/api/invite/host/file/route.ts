@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     if (!abuseDecision.ok) return noStoreJson({ error: abuseDecision.error }, abuseDecision.status);
 
     const host = await verifiedHostArtist(env.DB, env.SIGNAL_UNSUBSCRIBE_SECRET ?? "", artistId, token);
-    const item = host ? promoFileFor(host.eventId, artistId, key) : null;
+    const item = host ? await promoFileFor(env.PRESS, host.eventId, artistId, key) : null;
     if (!item || !env.PRESS) return missing();
     const object = await env.PRESS.get(key);
     if (!object) return missing();

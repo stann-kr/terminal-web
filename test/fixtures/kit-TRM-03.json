@@ -1,0 +1,155 @@
+{
+  "dir": "trm-03",
+  "artists": {
+    "03-A": [
+      {
+        "label": "아티스트 포스터 · 앞면",
+        "name": "stannlumo-front.6659998d7ca4",
+        "download": "TERMINAL[03]_stannlumo_front.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 7109352
+      },
+      {
+        "label": "아티스트 포스터 · 뒷면",
+        "name": "stannlumo-back.28660e54091e",
+        "download": "TERMINAL[03]_stannlumo_back.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 1484675
+      }
+    ],
+    "03-B": [
+      {
+        "label": "아티스트 포스터 · 앞면",
+        "name": "hogun-front.0596ca9196b0",
+        "download": "TERMINAL[03]_hogun_front.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 7014508
+      },
+      {
+        "label": "아티스트 포스터 · 뒷면",
+        "name": "hogun-back.449d58e8762b",
+        "download": "TERMINAL[03]_hogun_back.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 1512242
+      }
+    ],
+    "03-C": [
+      {
+        "label": "아티스트 포스터 · 앞면",
+        "name": "kimboyeon-front.8a313b8ee570",
+        "download": "TERMINAL[03]_kimboyeon_front.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 6732326
+      },
+      {
+        "label": "아티스트 포스터 · 뒷면",
+        "name": "kimboyeon-back.b40ac4d60941",
+        "download": "TERMINAL[03]_kimboyeon_back.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 1423027
+      }
+    ],
+    "03-D": [
+      {
+        "label": "아티스트 포스터 · 앞면",
+        "name": "minjoon-front.f78c3cb1bf78",
+        "download": "TERMINAL[03]_minjoon_front.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 6474322
+      },
+      {
+        "label": "아티스트 포스터 · 뒷면",
+        "name": "minjoon-back.812f26e05119",
+        "download": "TERMINAL[03]_minjoon_back.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 1512316
+      }
+    ],
+    "03-E": [
+      {
+        "label": "아티스트 포스터 · 앞면",
+        "name": "yaree-front.a4e2851ed6da",
+        "download": "TERMINAL[03]_yaree_front.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 6840322
+      },
+      {
+        "label": "아티스트 포스터 · 뒷면",
+        "name": "yaree-back.5f0dcadc9f92",
+        "download": "TERMINAL[03]_yaree_back.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 1496542
+      }
+    ],
+    "03-F": [
+      {
+        "label": "아티스트 포스터 · 앞면",
+        "name": "harim-front.5675ba06d88c",
+        "download": "TERMINAL[03]_harim_front.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 6547876
+      },
+      {
+        "label": "아티스트 포스터 · 뒷면",
+        "name": "harim-back.b22a12c8b9f9",
+        "download": "TERMINAL[03]_harim_back.png",
+        "width": 2160,
+        "height": 2880,
+        "bytes": 1386282
+      }
+    ]
+  },
+  "event": [
+    {
+      "label": "본 포스터",
+      "name": "main.9cb197280f1b",
+      "download": "TERMINAL[03]_main.png",
+      "width": 2160,
+      "height": 2880,
+      "bytes": 2375449
+    },
+    {
+      "label": "본 포스터 · 스토리",
+      "name": "main-story.181231053d65",
+      "download": "TERMINAL[03]_main_story.png",
+      "width": 2160,
+      "height": 3840,
+      "bytes": 2562724
+    },
+    {
+      "label": "타임테이블 · 스토리",
+      "name": "timetable-story.bf6024eaf402",
+      "download": "TERMINAL[03]_timetable_story.png",
+      "width": 2160,
+      "height": 3840,
+      "bytes": 468457
+    },
+    {
+      "label": "티저",
+      "name": "teaser.af058b046376",
+      "download": "TERMINAL[03]_teaser.png",
+      "width": 2160,
+      "height": 2880,
+      "bytes": 5952827
+    },
+    {
+      "label": "프리티저",
+      "name": "preteaser.1988830cfc25",
+      "download": "TERMINAL[03]_preteaser.png",
+      "width": 2160,
+      "height": 2880,
+      "bytes": 2571669
+    }
+  ]
+}
