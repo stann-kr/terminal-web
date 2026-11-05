@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { hostHref, signHostLink, verifyHostLink } from '../lib/gate/hostLink';
 import { signUnsubscribe } from '../lib/signal/unsubscribeToken';
+import KIT from './fixtures/kit-TRM-03.json';
 
 const mocks = vi.hoisted(() => ({
   enforceRateLimit: vi.fn(),
@@ -61,7 +62,8 @@ describe('POST /api/invite/host', () => {
         };
       },
     });
-    mocks.getCloudflareContext.mockResolvedValue({ env: { SIGNAL_UNSUBSCRIBE_SECRET: SECRET, DB: { prepare } } });
+    const PRESS = { get: async (key: string) => (key === 'kit/TRM-03.json' ? { json: async () => KIT } : null) };
+    mocks.getCloudflareContext.mockResolvedValue({ env: { SIGNAL_UNSUBSCRIBE_SECRET: SECRET, DB: { prepare }, PRESS } });
   });
   const post = (body: unknown) => POST(new Request('https://terminal.stann.kr/api/invite/host', {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),

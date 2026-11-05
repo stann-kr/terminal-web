@@ -69,7 +69,7 @@ export async function POST(request: Request) {
         && isGateRequestWindowActive(upcoming, now)
         && count < access.guestLimit,
       guests: guests.results.map((guest) => ({ name: guest.name, createdAt: guest.created_at })),
-      kit: promoKit(eventId, artistId).map(({ key, thumbKey, ...item }) => ({
+      kit: (await promoKit(env.PRESS, eventId, artistId)).map(({ key, thumbKey, ...item }) => ({
         ...item,
         href: promoHref(artistId, token, key),
         thumb: promoHref(artistId, token, thumbKey),
