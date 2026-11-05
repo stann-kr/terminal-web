@@ -249,6 +249,10 @@
   object-fit: cover;
   background: var(--well);
 }
+/* A landscape sheet sits whole in the frame instead of losing its sides. */
+.kit img[data-wide] {
+  object-fit: contain;
+}
 .kitLabel {
   font: 700 var(--t-sm)/1.2 var(--display);
   letter-spacing: .04em;
