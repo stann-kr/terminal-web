@@ -91,7 +91,7 @@ describe('POST /api/invite/host', () => {
     // Its own poster and the event's files, each through the token-checked route.
     expect(body.kit.map((item) => item.download)).toEqual([
       'TERMINAL[03]_stannlumo_front.png', 'TERMINAL[03]_stannlumo_back.png', 'TERMINAL[03]_main.png',
-      'TERMINAL[03]_main_story.png', 'TERMINAL[03]_timetable.png', 'TERMINAL[03]_timetable_story.png',
+      'TERMINAL[03]_main_story.png', 'TERMINAL[03]_timetable_story.png',
       'TERMINAL[03]_teaser.png', 'TERMINAL[03]_preteaser.png',
     ]);
     expect(body.kit[0].href).toMatch(/^\/api\/invite\/host\/file\?a=03-A&t=[0-9a-f]{64}&f=trm-03%2Fstannlumo-front\./);

@@ -183,7 +183,7 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
                 <li key={item.href}>
                   {/* Previews come through the token-checked route, which an image loader cannot sign. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.thumb} alt="" data-wide={item.width > item.height || undefined} width={480} height={Math.round((480 * item.height) / item.width)} loading="lazy" decoding="async" />
+                  <img src={item.thumb} alt="" width={480} height={Math.round((480 * item.height) / item.width)} loading="lazy" decoding="async" />
                   <span className={styles.kitLabel}>{item.label}</span>
                   <span className={styles.kitMeta}>PNG · {item.width}×{item.height} · {megabytes(item.bytes)}</span>
                   <a className={`${ui.action} ${ui.primary}`} href={item.href} download={item.download}>

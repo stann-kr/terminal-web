@@ -58,8 +58,7 @@ const EVENT_FILES: Record<string, PromoFile[]> = {
   'TRM-03': [
     file('본 포스터', 'main.9cb197280f1b', 'main', 2160, 2880, 2375449),
     file('본 포스터 · 스토리', 'main-story.c3512bc66ee1', 'main_story', 2160, 3840, 2528237),
-    file('타임테이블', 'timetable.3463c08cc962', 'timetable', 3368, 2382, 405698),
-    file('타임테이블 · 스토리', 'timetable-story.5b4bb000406b', 'timetable_story', 2160, 3840, 469108),
+    file('타임테이블 · 스토리', 'timetable-story.bf6024eaf402', 'timetable_story', 2160, 3840, 468457),
     file('티저', 'teaser.af058b046376', 'teaser', 2160, 2880, 5952827),
     file('프리티저', 'preteaser.1988830cfc25', 'preteaser', 2160, 2880, 2571669),
   ],
