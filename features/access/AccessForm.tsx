@@ -43,6 +43,8 @@ export function AccessForm({
     errorCode,
     hasDraft,
     closedInviter,
+    waitlist,
+    waitlisted,
   } = useAccessRequest(eventId, availability);
   // A checked code unlocks step 02; the guest carries on typing there.
   const nameField = useRef<HTMLInputElement>(null);
@@ -60,6 +62,31 @@ export function AccessForm({
       </ActionDeck>
     </StateNotice>
   );
+  if (done && waitlisted)
+    return (
+      <FormSuccess>
+        <p className={ui.eyebrow}>WAITLISTED</p>
+        <h2>대기 명단에 올렸습니다</h2>
+        <Facts
+          rows={[
+            ...(event ? [['이벤트', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
+            ...(verified ? [['초대인', verified.name] as [string, string]] : []),
+            ['이름', fields.name.trim()],
+            ['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`],
+            ['상태', '대기'],
+          ]}
+        />
+        <p>
+          아직 게스트 명단은 아닙니다. 자리가 생겨 명단에 오르면 초대한 아티스트가 인스타그램 DM으로
+          알려 드립니다.
+        </p>
+        <ActionDeck>
+          <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>
+          <Action href={eventHref(eventId)}>이벤트로 돌아가기</Action>
+          <Action href="/signal">다음 이벤트 소식 신청</Action>
+        </ActionDeck>
+      </FormSuccess>
+    );
   if (done)
     return (
       <FormSuccess>
@@ -132,12 +159,22 @@ export function AccessForm({
             초대인 <strong>{verified.name}</strong>
           </p>
         )}
+        {/* A full code still takes the guest, onto its waitlist: said before step 02, not after. */}
+        {waitlist && verified && (
+          <div className={styles.waitlist} role="note">
+            <p className={`${ui.band} ${styles.closedBand}`}>WAITLIST</p>
+            <p>
+              {verified.name}의 게스트 초대가 마감되었습니다. 대기 명단에 올려 두시면 자리가 생길 때
+              아티스트가 인스타그램 DM으로 알려 드립니다.
+            </p>
+          </div>
+        )}
       </fieldset>
       <fieldset
         className={formStyles.fields}
         disabled={!verified || pending || !availability.canRequest}
       >
-        <legend className={`${ui.band} ${styles.legend}`}>02 / 연락처와 동의</legend>
+        <legend className={`${ui.band} ${styles.legend}`}>{waitlist ? '02 / 대기 신청' : '02 / 연락처와 동의'}</legend>
         <div className={styles.contacts}>
           <Field
             ref={nameField}
@@ -181,10 +218,21 @@ export function AccessForm({
               setFields({ ...fields, privacyConsent: value })
             }
           >
-            이름·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다. 이름과
-            신청 시각은 초대한 아티스트에게 공유됩니다. 보존 기간: 이벤트 종료 후
-            1개월. 그 밖의 제3자 미공개.
+            {waitlist ? (
+              <>
+                이름·인스타그램 ID를 대기 명단 관리 목적으로 수집합니다. 이름·인스타그램 ID와 신청
+                시각은 초대한 아티스트에게 공유되며, 명단에 오르면 아티스트가 인스타그램으로
+                연락합니다. 보존 기간: 이벤트 종료 후 1개월. 그 밖의 제3자 미공개.
+              </>
+            ) : (
+              <>
+                이름·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다. 이름과
+                신청 시각은 초대한 아티스트에게 공유됩니다. 보존 기간: 이벤트 종료 후
+                1개월. 그 밖의 제3자 미공개.
+              </>
+            )}
           </Consent>
+          {!waitlist && (
           <Consent
             id="marketing-consent"
             checked={fields.marketingConsent}
@@ -195,9 +243,10 @@ export function AccessForm({
             [선택] 차기 이벤트 소식을 이메일·인스타그램 채널로 수신합니다.
             소식을 받을 이메일을 함께 수집합니다. 보존 기간: 수신 거부 시까지.
           </Consent>
+          )}
         </div>
-        {/* Email is asked only of a guest who wants news; nobody else leaves one. */}
-        {fields.marketingConsent && (
+        {/* Email is asked only of a guest who wants news; nobody else leaves one, nor anyone waiting. */}
+        {fields.marketingConsent && !waitlist && (
           <Field
             id="guest-email"
             label="소식 받을 이메일"
@@ -222,7 +271,7 @@ export function AccessForm({
           className={`${ui.button} ${ui.primary}`}
           disabled={pending || !verified || !availability.canRequest}
         >
-          {pending ? '신청 저장 중…' : '게스트 신청 저장'}
+          {pending ? '신청 저장 중…' : waitlist ? '대기 명단에 올리기' : '게스트 신청 저장'}
         </button>
       </fieldset>
     </form>

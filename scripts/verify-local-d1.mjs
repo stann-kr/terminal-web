@@ -117,10 +117,10 @@ try {
     "SELECT name, type FROM sqlite_master WHERE type IN ('table','index') AND name NOT LIKE 'sqlite_%' ORDER BY type, name; SELECT COUNT(*) AS count FROM d1_migrations; PRAGMA foreign_key_check; PRAGMA index_info('access_requests_event_email_idx'); PRAGMA index_info('signal_email_idx');",
   );
   const objects = new Set(results[0].results.map((row) => row.name));
-  for (const name of ['events', 'artists', 'access_requests', 'signal', 'transmit_logs', 'access_requests_event_email_idx', 'signal_email_idx']) {
+  for (const name of ['events', 'artists', 'access_requests', 'access_waitlist', 'signal', 'transmit_logs', 'access_requests_event_email_idx', 'access_waitlist_event_artist_idx', 'signal_email_idx']) {
     if (!objects.has(name)) throw new Error(`missing D1 object: ${name}`);
   }
-  if (results[1].results[0]?.count !== 11) throw new Error('expected all 11 Wrangler migrations');
+  if (results[1].results[0]?.count !== 12) throw new Error('expected all 12 Wrangler migrations');
   if (results[2].results.length !== 0) throw new Error('foreign key check failed');
   if (results[3].results.map((row) => row.name).join(',') !== 'event_id,email') {
     throw new Error('access request unique index columns drifted');
@@ -470,7 +470,7 @@ try {
     throw new Error('unknown transmit timestamp did not fail closed');
   }
 
-  console.log('Local D1 contract PASS: 11 migrations, canonical Transmit schema/data conversion, optional guest email, indexes, FK, Gate/Signal atomic rules, Transmit idempotency/order');
+  console.log('Local D1 contract PASS: 12 migrations, canonical Transmit schema/data conversion, optional guest email, guest waitlist table, indexes, FK, Gate/Signal atomic rules, Transmit idempotency/order');
 } finally {
   for (const persistTo of persistRoots) {
     rmSync(persistTo, { recursive: true, force: true });

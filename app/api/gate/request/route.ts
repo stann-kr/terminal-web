@@ -75,9 +75,12 @@ export async function POST(request: Request) {
       marketingConsent: requestInput.input.marketingConsent,
       guestLimit: accessCodeResult.data.guestLimit,
       createdAt: now.toISOString(),
+      waitlist: true,
     });
 
     if (result.status === "duplicate") return noStoreJson({ ok: true });
+    // A full code keeps the guest on its waitlist: the artist can move them up later.
+    if (result.status === "waitlisted") return noStoreJson({ ok: true, waitlisted: true });
     if (result.status === "guest_limit_reached") {
       return noStoreJson({ error: "GUEST_LIMIT_REACHED" }, 409);
     }

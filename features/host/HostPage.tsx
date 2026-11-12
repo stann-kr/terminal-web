@@ -168,10 +168,11 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           ) : (
             <p className={styles.empty}>아직 이 링크로 신청한 게스트가 없습니다.</p>
           )}
+          <HostWaitlist artistId={artistId} token={token} waitlist={view.waitlist} room={view.count < view.limit} />
           <p className={styles.note}>
             {unlimited
               ? '신청한 게스트의 이름과 신청 시각만 보입니다. 연락처는 TERMINAL만 확인합니다.'
-              : '신청한 게스트의 이름과 신청 시각만 보입니다. 차면 링크가 마감됩니다. 추가는 TERMINAL에 요청해 주십시오.'}
+              : '신청한 게스트의 이름과 신청 시각만 보입니다. 차면 새 신청은 대기 명단으로 받습니다. 정원 추가는 TERMINAL에 요청해 주십시오.'}
           </p>
           <Action href="/">TERMINAL 사이트 보기</Action>
         </Panel>
@@ -270,5 +271,74 @@ function HostGuestForm({ artistId, token, open }: { artistId: string; token: str
       <p className={ui.srOnly} role="status">{saved ? `${saved} 님을 명단에 올렸습니다.` : ''}</p>
       {saved && <p className={styles.saved} aria-hidden="true">{saved} 님을 명단에 올렸습니다.</p>}
     </form>
+  );
+}
+
+/**
+ * Guests the limit turned away, oldest first. The artist moves one up while the list has room and
+ * tells them by Instagram DM: the site sends nothing, so the id is shown (the guest agreed to that).
+ */
+function HostWaitlist({ artistId, token, waitlist, room }: {
+  artistId: string;
+  token: string;
+  waitlist: HostView['waitlist'];
+  room: boolean;
+}) {
+  const client = useQueryClient();
+  const [pending, setPending] = useState('');
+  const [error, setError] = useState<unknown>(null);
+  const [moved, setMoved] = useState<{ name: string; instagram: string } | null>(null);
+  async function promote(guest: HostView['waitlist'][number]) {
+    if (pending) return;
+    setPending(guest.id);
+    setError(null);
+    setMoved(null);
+    try {
+      await postJson<{ ok: boolean }>('/api/invite/host/waitlist', { artistId, t: token, id: guest.id });
+      setMoved({ name: guest.name, instagram: guest.instagram });
+      await client.invalidateQueries({ queryKey: ['host', artistId, token] });
+    } catch (failure) {
+      setError(failure);
+    } finally {
+      setPending('');
+    }
+  }
+  const done = moved && <p className={styles.saved} aria-hidden="true">{moved.name} 님을 명단에 올렸습니다. {moved.instagram}에 DM으로 알려 주십시오.</p>;
+  const status = <p className={ui.srOnly} role="status">{moved ? `${moved.name} 님을 명단에 올렸습니다.` : ''}</p>;
+  // Nobody waiting: nothing to show, but the word that the last one went up stays.
+  if (!waitlist.length) return <>{status}{done}</>;
+  return (
+    <section className={styles.waitlist} aria-label="대기 명단">
+      <p className={`${ui.band} ${styles.waitBand}`}>대기 명단 {two(waitlist.length)}</p>
+      <FormError message={error ? errorMessage(error) : ''} />
+      <ol className={styles.waiting}>
+        {waitlist.map((guest) => (
+          <li key={guest.id}>
+            <span className={styles.waitWho}>
+              <span>{guest.name}</span>
+              <a href={`https://instagram.com/${guest.instagram.replace(/^@/, '')}`} target="_blank" rel="noreferrer">{guest.instagram}</a>
+            </span>
+            <time dateTime={guest.createdAt}>{kstStamp(guest.createdAt)}</time>
+            <button
+              type="button"
+              className={ui.button}
+              aria-busy={pending === guest.id}
+              disabled={!room || Boolean(pending)}
+              onClick={() => void promote(guest)}
+            >
+              {pending === guest.id ? '올리는 중…' : '명단에 올리기'}
+              <span className={ui.srOnly}> — {guest.name}</span>
+            </button>
+          </li>
+        ))}
+      </ol>
+      <p className={styles.note}>
+        {room
+          ? '올린 게스트에게는 사이트가 따로 알리지 않습니다. 인스타그램 DM으로 알려 주십시오.'
+          : '정원이 차 있어 올릴 수 없습니다. 정원 추가는 TERMINAL에 요청해 주십시오.'}
+      </p>
+      {status}
+      {done}
+    </section>
   );
 }
