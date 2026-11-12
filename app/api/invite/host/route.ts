@@ -48,6 +48,11 @@ export async function POST(request: Request) {
     )
       .bind(eventId, body.artistId)
       .all<{ name: string; created_at: string }>();
+    const waitlist = await env.DB.prepare(
+      "SELECT id, name, instagram, created_at FROM access_waitlist WHERE event_id = ? AND artist_id = ? ORDER BY created_at ASC",
+    )
+      .bind(eventId, body.artistId)
+      .all<{ id: string; name: string; instagram: string; created_at: string }>();
     const now = new Date();
     const upcoming = findUpcomingGateEvent(await listGateEventRows(db), now);
     const count = guests.results.length;
@@ -69,6 +74,7 @@ export async function POST(request: Request) {
         && isGateRequestWindowActive(upcoming, now)
         && count < access.guestLimit,
       guests: guests.results.map((guest) => ({ name: guest.name, createdAt: guest.created_at })),
+      waitlist: waitlist.results.map((guest) => ({ id: guest.id, name: guest.name, instagram: guest.instagram, createdAt: guest.created_at })),
       kit: (await promoKit(env.PRESS, eventId, artistId)).map(({ key, thumbKey, ...item }) => ({
         ...item,
         href: promoHref(artistId, token, key),

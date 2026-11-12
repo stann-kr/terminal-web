@@ -23,6 +23,7 @@ const view = {
     { name: '김지현', createdAt: '2026-10-29T05:02:00.000Z' },
     { name: 'Park Minjun', createdAt: '2026-10-29T04:40:00.000Z' },
   ],
+  waitlist: [] as { id: string; name: string; instagram: string; createdAt: string }[],
   kit: [{ label: '티저', download: 'TERMINAL[03]_teaser.png', width: 2160, height: 2880, bytes: 5_952_827, href: '/api/invite/host/file?a=03-A&t=abc&f=trm-03%2Fteaser.png', thumb: '/api/invite/host/file?a=03-A&t=abc&f=trm-03%2Fteaser.thumb.jpg' }],
 };
 const page = (artistId = '03-A') => render(
@@ -102,6 +103,32 @@ describe('artist host page', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ ...view, count: 10, open: false })));
     page();
     expect(await screen.findByText('FULL · INVITE CLOSED')).toHaveAttribute('data-state', 'closed');
+  });
+
+  it('lists the waiting guests and moves one up while there is room', async () => {
+    const waiting = { id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' };
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(json({ ...view, waitlist: [waiting] }))
+      .mockResolvedValueOnce(json({ ok: true }))
+      .mockResolvedValueOnce(json({ ...view, count: 3, guests: [{ name: '최창배', createdAt: '2026-11-12T03:00:00.000Z' }, ...view.guests] }));
+    vi.stubGlobal('fetch', fetch);
+    page();
+    expect(await screen.findByText('대기 명단 01')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '@cc_b3' })).toHaveAttribute('href', 'https://instagram.com/cc_b3');
+    await userEvent.click(screen.getByRole('button', { name: /명단에 올리기.*최창배/ }));
+    expect(fetch.mock.calls[1][0]).toBe('/api/invite/host/waitlist');
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ artistId: '03-A', t: 'abc', id: 'req-w1' });
+    expect(await screen.findByText('최창배 님을 명단에 올렸습니다.', { selector: '[role="status"]' })).toBeInTheDocument();
+  });
+
+  it('keeps the waiting guests in view but cannot move them up into a full list', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({
+      ...view, count: 10, open: false,
+      waitlist: [{ id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' }],
+    })));
+    page();
+    expect(await screen.findByRole('button', { name: /명단에 올리기.*최창배/ })).toBeDisabled();
+    expect(screen.getByText(/정원이 차 있어 올릴 수 없습니다/)).toBeInTheDocument();
   });
 
   it('shows only a count for an unlimited list', async () => {

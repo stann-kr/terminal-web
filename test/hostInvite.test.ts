@@ -19,6 +19,7 @@ const { POST } = await import('../app/api/invite/host/route');
 
 const SECRET = 'test-secret';
 const ARTIST = { guestCode: 'K7QM', guestLimit: 10, name: 'STANN LUMO' };
+const WAITING = [{ id: 'req-w1', name: '최창배', instagram: '@cc_b3', created_at: '2026-10-29T06:00:00.000Z' }];
 const GUESTS = [
   { name: '김지현', created_at: '2026-10-29T05:02:00.000Z' },
   { name: 'Park Minjun', created_at: '2026-10-29T04:40:00.000Z' },
@@ -58,7 +59,7 @@ describe('POST /api/invite/host', () => {
         binds.push(values);
         return {
           first: async () => (sql.includes('FROM artists') ? artistRow : null),
-          all: async () => ({ results: GUESTS }),
+          all: async () => ({ results: sql.includes('FROM access_waitlist') ? WAITING : GUESTS }),
         };
       },
     });
@@ -76,7 +77,7 @@ describe('POST /api/invite/host', () => {
     vi.useRealTimers();
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
-    const body = (await response.json()) as { kit: { download: string; href: string }[] };
+    const body = (await response.json()) as { kit: { download: string; href: string }[]; guests: unknown[] };
     expect(body).toEqual({
       artist: 'STANN LUMO',
       event: { id: 'TRM-03', session: 'TERMINAL [03]', subtitle: 'Vulpecula Junction', date: '2026-11-28', time: '23:00 KST', venue: 'FAUST SEOUL', status: 'UPCOMING' },
@@ -88,6 +89,8 @@ describe('POST /api/invite/host', () => {
         { name: '김지현', createdAt: '2026-10-29T05:02:00.000Z' },
         { name: 'Park Minjun', createdAt: '2026-10-29T04:40:00.000Z' },
       ],
+      // A waiting guest shows the Instagram id they agreed to share, so the artist can DM them.
+      waitlist: [{ id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-10-29T06:00:00.000Z' }],
       kit: expect.any(Array),
     });
     // Its own poster and the event's files, each through the token-checked route.
@@ -97,7 +100,8 @@ describe('POST /api/invite/host', () => {
       'TERMINAL[03]_teaser.png', 'TERMINAL[03]_preteaser.png',
     ]);
     expect(body.kit[0].href).toMatch(/^\/api\/invite\/host\/file\?a=03-A&t=[0-9a-f]{64}&f=trm-03%2Fstannlumo-front\./);
-    expect(JSON.stringify(body)).not.toMatch(/email|instagram/);
+    expect(JSON.stringify(body.guests)).not.toMatch(/email|instagram|@/);
+    expect(JSON.stringify(body)).not.toMatch(/email/);
     expect(binds).toContainEqual(['TRM-03', '03-A']);
   });
 

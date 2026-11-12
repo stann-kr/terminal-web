@@ -12,11 +12,12 @@ export function useAccessRequest(
 ) {
   const { draft, setCode, setFields, clear } = useAccessDraft(eventId);
   const [saved, setSaved] = useState<AccessDraft | null>(null);
+  const [waitlisted, setWaitlisted] = useState(false);
   const { code, fields } = saved ?? draft;
   const [verified, setVerified] = useState<{
     code: string;
     name: string;
-    /** False once the inviter's guest limit is reached: the form gives way to the closed notice. */
+    /** False once the inviter's guest limit is reached: the form then puts the guest on its waitlist. */
     open: boolean;
   } | null>(null);
   const [checking, setChecking] = useState(false);
@@ -102,17 +103,21 @@ export function useAccessRequest(
       return;
     submitting.current = true;
     const submittedDraft = draft;
+    // A full code takes no email: waiting guests hear from the artist, not from TERMINAL's news.
+    const waiting = !verified.open;
     setPending(true);
     setError(null);
     try {
-      const result = await postJson<{ ok: boolean }>('/api/gate/request', {
+      const result = await postJson<{ ok: boolean; waitlisted?: boolean }>('/api/gate/request', {
         eventId,
         accessCode: verified.code,
         ...fields,
+        marketingConsent: waiting ? false : fields.marketingConsent,
         // A guest who unticked news keeps the typed email in the draft but never sends it.
-        email: fields.marketingConsent ? fields.email : undefined,
+        email: fields.marketingConsent && !waiting ? fields.email : undefined,
       });
       if (result.ok !== true) throw new ApiError('INVALID_RESPONSE', 200);
+      setWaitlisted(result.waitlisted === true);
       setSaved(submittedDraft);
       clear(submittedDraft);
     } catch (error) {
@@ -136,8 +141,10 @@ export function useAccessRequest(
     }
   }
   const errorCode = error instanceof ApiError ? error.code : '';
-  // The limit can also fill between the code check and the save (another guest got there first).
-  const closedInviter = verified && (!verified.open || errorCode === 'GUEST_LIMIT_REACHED') ? verified.name : null;
+  // A full code at the check puts the form in waitlist mode; a code that cannot take even that
+  // (the server still answers a full list with GUEST_LIMIT_REACHED) closes the invite.
+  const waitlist = verified !== null && !verified.open;
+  const closedInviter = verified && errorCode === 'GUEST_LIMIT_REACHED' ? verified.name : null;
   const hasDraft = !!(
     code ||
     fields.name ||
@@ -152,6 +159,8 @@ export function useAccessRequest(
     checking,
     pending,
     done: saved !== null,
+    waitlist,
+    waitlisted,
     error,
     setError,
     codeMessage,

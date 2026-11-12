@@ -208,6 +208,46 @@
   margin-top: 16px;
 }
 
+/* Waiting guests: a band, then one row each — who (name over Instagram id), when, and the move. */
+.waitlist {
+  margin-top: 20px;
+}
+.waitBand {
+  --fill: var(--alert);
+  --on-fill: var(--alert-ink);
+  margin: 0;
+}
+.waiting {
+  margin: 8px calc(var(--bleed) * -1) 0;
+  padding: 0;
+  list-style: none;
+}
+.waiting li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px var(--bleed);
+}
+.waiting li:nth-child(odd) {
+  background: var(--well);
+}
+.waitWho {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.waitWho a {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1.2 var(--mono);
+  overflow-wrap: anywhere;
+}
+.waiting time {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1 var(--mono);
+  white-space: nowrap;
+}
+
 /* The artist's own entry: a band across the plate, then the fields flush with it. */
 .guestForm {
   margin-top: 24px;
