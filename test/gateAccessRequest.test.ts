@@ -15,6 +15,7 @@ import {
   classifyRejectedAccessRequest,
   createAccessRequestAtomically,
   instagramKey,
+  WAITLIST_INSERT_SQL,
 } from '../lib/gate/d1AccessRequestRepository';
 import { GATE_SIGNAL_SUBSCRIPTION_INSERT_SQL } from '../lib/signal/d1SignalSubscriptionRepository';
 
@@ -247,7 +248,7 @@ describe('atomic access request statement contract', () => {
 
   function createDatabaseStub(
     changes: number,
-    rejectionState: { is_duplicate: number; guest_count: number } | null = null,
+    rejectionState: { is_duplicate: number; guest_count: number; is_waitlisted?: number } | null = null,
   ) {
     const prepared: Array<{ sql: string; values: unknown[] }> = [];
     const database = {
@@ -263,16 +264,13 @@ describe('atomic access request statement contract', () => {
         return statement;
       },
       async batch(statements: unknown[]) {
-        expect(statements).toHaveLength(3);
-        return [
-          { success: true, meta: { changes }, results: [] },
-          { success: true, meta: { changes: 0 }, results: [] },
-          {
-            success: true,
-            meta: { changes: 0 },
-            results: rejectionState ? [rejectionState] : [],
-          },
-        ];
+        // The request insert, Signal, the waitlist clean-up, the waitlist insert when asked for,
+        // and the rejection state last.
+        return statements.map((_, index) => ({
+          success: true,
+          meta: { changes: index === 0 ? changes : 0 },
+          results: index === statements.length - 1 && rejectionState ? [rejectionState] : [],
+        }));
       },
     } as unknown as Pick<D1Database, 'prepare' | 'batch'>;
 
@@ -332,9 +330,11 @@ describe('atomic access request statement contract', () => {
     await expect(createAccessRequestAtomically(database, atomicInput)).resolves.toEqual({
       status: 'created',
     });
-    expect(prepared).toHaveLength(3);
+    expect(prepared).toHaveLength(4);
     expect(prepared[0].sql).toBe(ACCESS_REQUEST_INSERT_SQL);
     expect(prepared[1].sql).toBe(GATE_SIGNAL_SUBSCRIPTION_INSERT_SQL);
+    // No waitlist insert unless the caller asks for one (the artist's own entry never waits).
+    expect(prepared.some((entry) => entry.sql === WAITLIST_INSERT_SQL)).toBe(false);
   });
 
   it('runs the follow-up classifier after a duplicate zero-change insert', async () => {
@@ -343,13 +343,15 @@ describe('atomic access request statement contract', () => {
     await expect(createAccessRequestAtomically(database, atomicInput)).resolves.toEqual({
       status: 'duplicate',
     });
-    expect(prepared).toHaveLength(3);
-    expect(prepared[2].values).toEqual([
+    expect(prepared).toHaveLength(4);
+    expect(prepared[3].values).toEqual([
       atomicInput.eventId,
       'guest',
       atomicInput.email,
       atomicInput.eventId,
       atomicInput.artistId,
+      atomicInput.eventId,
+      'guest',
     ]);
   });
 
@@ -359,5 +361,24 @@ describe('atomic access request statement contract', () => {
     await expect(createAccessRequestAtomically(database, atomicInput)).resolves.toEqual({
       status: 'guest_limit_reached',
     });
+  });
+
+  it("puts a guest's own request on the waitlist when the code is full", async () => {
+    const { database, prepared } = createDatabaseStub(0, { is_duplicate: 0, guest_count: 25, is_waitlisted: 1 });
+
+    await expect(createAccessRequestAtomically(database, { ...atomicInput, waitlist: true })).resolves.toEqual({
+      status: 'waitlisted',
+    });
+    const waitlist = prepared.find((entry) => entry.sql === WAITLIST_INSERT_SQL);
+    // Name and Instagram only: the email the guest may have typed for news is not kept.
+    expect(waitlist?.values.slice(0, 8)).toEqual([
+      'req-1', 'event-1', 'artist-1', 'Artist Name', 'Guest Name', '@guest', 1, atomicInput.createdAt,
+    ]);
+    expect(waitlist?.values.at(-1)).toBe(25);
+  });
+
+  it('tells a repeat from a waiting guest before the waitlist', () => {
+    expect(classifyRejectedAccessRequest({ is_duplicate: 1, guest_count: 25, is_waitlisted: 1 }, 25, true)).toBe('duplicate');
+    expect(classifyRejectedAccessRequest({ is_duplicate: 0, guest_count: 25, is_waitlisted: 1 }, 25, false)).toBe('guest_limit_reached');
   });
 });

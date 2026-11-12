@@ -136,17 +136,29 @@ describe('guest request UI',()=>{
     expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({eventId:'A',accessCode:'CODE',name:'Example',email:'example@example.test',instagram:'example',privacyConsent:true,marketingConsent:true});
     expect(saved).toHaveTextContent('example@example.test');
   });
-  it('shows the closed invite instead of the form once the inviter has no places left',async()=>{
-    vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:false})));
+  it('takes a guest onto the waitlist once the inviter has no places left',async()=>{
+    const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:false})).mockResolvedValueOnce(json({ok:true,waitlisted:true}));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
-    const heading=await screen.findByRole('heading',{name:'INVITER의 게스트 초대가 마감되었습니다'});
-    expect(heading).toHaveFocus();expect(screen.getByText('INVITE CLOSED')).toBeInTheDocument();
-    expect(screen.queryByLabelText(/^이름/)).not.toBeInTheDocument();
-    expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');
-    expect(screen.getByRole('link',{name:/일정 구독/})).toHaveAttribute('href','https://terminal.stann.kr/calendar/subscribe');
-    await user.click(screen.getByRole('button',{name:'다른 초대 코드 입력'}));
-    expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');await waitFor(()=>expect(screen.getByLabelText(/초대 코드/)).toHaveFocus());expect(screen.queryByText('INVITE CLOSED')).not.toBeInTheDocument();
+    expect(await screen.findByText('WAITLIST')).toBeInTheDocument();
+    expect(screen.getByRole('note')).toHaveTextContent('INVITER의 게스트 초대가 마감되었습니다');
+    // The waiting guest shares their Instagram id with the artist, and leaves no email for news.
+    const consent=screen.getByRole('checkbox',{name:/대기 명단 관리/});
+    expect(consent.closest('label')??document.body).toHaveTextContent('이름·인스타그램 ID와 신청 시각은 초대한 아티스트에게 공유되며');
+    expect(screen.queryByRole('checkbox',{name:/차기 이벤트 소식/})).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
+    await user.click(consent);await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
+    expect(await screen.findByRole('heading',{name:'대기 명단에 올렸습니다'})).toBeInTheDocument();
+    expect(screen.getByText(/아직 게스트 명단은 아닙니다/)).toBeInTheDocument();
+    const sent=JSON.parse(fetch.mock.calls[1][1].body);expect(sent.marketingConsent).toBe(false);expect(sent.email).toBeUndefined();
+  });
+  it('says so when the list filled between the code check and the save',async()=>{
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:true})).mockResolvedValueOnce(json({ok:true,waitlisted:true})));
+    const user=userEvent.setup();render(<AccessForm eventId="A"/>);
+    await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
+    await user.type(await screen.findByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
+    await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    expect(await screen.findByRole('heading',{name:'대기 명단에 올렸습니다'})).toBeInTheDocument();
   });
   it('turns a save refused for a full guest list into the closed invite',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:true})).mockResolvedValueOnce(json({error:'GUEST_LIMIT_REACHED'},409)));
