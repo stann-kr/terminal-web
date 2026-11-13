@@ -221,8 +221,8 @@ function HostPlates({ view, artistId, token, stale }: {
   );
 }
 
-/** Refusals that mean the list on screen is behind the server's: the page reads it again. */
-const OUTDATED = new Set(['GUEST_LIMIT_REACHED', 'GUEST_ALREADY_LISTED', 'WAITLIST_ENTRY_NOT_FOUND', 'REQUEST_PERIOD_INACTIVE']);
+/** Refusals that mean the page on screen is behind the server's (a link that no longer holds included): it reads again. */
+const OUTDATED = new Set(['GUEST_LIMIT_REACHED', 'GUEST_ALREADY_LISTED', 'WAITLIST_ENTRY_NOT_FOUND', 'REQUEST_PERIOD_INACTIVE', 'INVALID_HOST_LINK']);
 const outdated = (failure: unknown) => failure instanceof ApiError && OUTDATED.has(failure.code);
 
 /**

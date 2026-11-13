@@ -3,8 +3,8 @@ import { createHmac } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { failureReason, positionalArgs, readEnvValue } from './lib/cli.mjs';
-import { VALUE_FLAGS, defaultLogFile, isDatedLog, logLine, pendingRecipients, readSentLog } from './lib/signalMail.mjs';
+import { failureReason, parseWranglerJson, positionalArgs, readEnvValue } from './lib/cli.mjs';
+import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, readSentLog } from './lib/signalMail.mjs';
 
 /**
  * Sends one mail to everyone on the Signal list (production D1 `signal`), one message per address.
@@ -80,7 +80,7 @@ const wrangler = (rest, { oauth = false } = {}) => {
 
 function subscribers() {
   const out = wrangler(['d1', 'execute', DATABASE, '--env', 'production', '--remote', '--json', '--command', 'SELECT id, lower(trim(email)) AS email FROM signal']);
-  const rows = JSON.parse(out.slice(out.indexOf('[')))[0].results;
+  const rows = parseWranglerJson(out)[0]?.results ?? fail('wrangler returned no subscriber list');
   const deliverable = row => EMAIL.test(row.email) && !UNDELIVERABLE.test(row.email);
   return { valid: rows.filter(deliverable), skipped: rows.filter(row => !deliverable(row)) };
 }
@@ -111,12 +111,16 @@ function sentSoFar() {
     throw error;
   }
 }
-/** Logs from before logs were keyed by the mail are not read by default: say so while none is. */
-function warnAboutDatedLogs(sent) {
+/**
+ * A mail with nothing logged yet reads no other log: say which ones exist, since a mail that was
+ * corrected after part of it went out (or sent under a date-named log) continues only with --log.
+ */
+function warnAboutOtherLogs(sent) {
   if (option('--log') || sent.size) return;
-  let dated = [];
-  try { dated = readdirSync(path.dirname(logFile)).filter(isDatedLog); } catch (error) { if (error?.code !== 'ENOENT') throw error; }
-  if (dated.length) console.log(`! older date-named logs are not read by default (${dated.join(', ')}): if this mail already went out with one, pass it with --log.`);
+  let names = [];
+  try { names = readdirSync(path.dirname(logFile)); } catch (error) { if (error?.code !== 'ENOENT') throw error; }
+  const others = otherLogs(names, path.basename(logFile));
+  if (others.length) console.log(`! nothing is logged for this exact mail yet, and other send logs are not read (${others.join(', ')}): if part of it already went out (before a correction, or under a date-named log), pass that log with --log.`);
 }
 
 if (only) {
@@ -133,7 +137,7 @@ if (only) {
 
 const { valid, skipped } = subscribers();
 const sent = sentSoFar();
-warnAboutDatedLogs(sent);
+warnAboutOtherLogs(sent);
 const pending = pendingRecipients(valid, sent);
 console.log(`${valid.length} subscribers, ${skipped.length} undeliverable left out, ${valid.length - pending.length} already sent in ${path.relative(process.cwd(), logFile)}`);
 if (!pending.length) {

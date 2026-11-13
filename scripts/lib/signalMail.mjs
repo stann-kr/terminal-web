@@ -62,5 +62,12 @@ export function pendingRecipients(rows, sent) {
  */
 export const logLine = (row) => `${row.id}\n`;
 
-/** Send logs named by date (`2026-11-13.log`), as written before logs were keyed by the mail. */
-export const isDatedLog = (name) => /^\d{4}-\d{2}-\d{2}\.log$/.test(name);
+/**
+ * The other send logs beside this mail's: of another mail, of this mail before its text was
+ * corrected (a changed mail has another key), or named by date as logs were before they were keyed
+ * by the mail. None of them is read unless --log names it.
+ * @param {string[]} names files in the log folder
+ * @param {string} current this mail's log file name
+ * @returns {string[]}
+ */
+export const otherLogs = (names, current) => names.filter((name) => name.endsWith('.log') && name !== current).sort();

@@ -6,7 +6,7 @@ import { positionalArgs } from '../scripts/lib/cli.mjs';
 import {
   VALUE_FLAGS,
   defaultLogFile,
-  isDatedLog,
+  otherLogs,
   logLine,
   mailKey,
   pendingRecipients,
@@ -58,9 +58,11 @@ describe('signal-mail send log', () => {
     expect(pendingRecipients(rows, readSentLog(''))).toEqual(rows);
   });
 
-  it('recognises the date-named logs of the older format', () => {
-    expect(isDatedLog('2026-11-13.log')).toBe(true);
-    expect(isDatedLog(`${mailKey(mail)}.log`)).toBe(false);
+  it('names the other send logs beside this mail’s: a corrected mail or a date-named log continues only with --log', () => {
+    const own = `${mailKey(mail)}.log`;
+    const corrected = `${mailKey({ ...mail, text: `${mail.text} (corrected)` })}.log`;
+    expect(otherLogs([own, '2026-11-13.log', corrected, 'notes.txt'], own)).toEqual(['2026-11-13.log', corrected].sort());
+    expect(otherLogs([own], own)).toEqual([]);
   });
 });
 
