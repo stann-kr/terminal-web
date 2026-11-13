@@ -1,5 +1,5 @@
 'use client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { HostView } from '@/lib/gate/hostView';
@@ -221,9 +221,17 @@ function HostPlates({ view, artistId, token, stale }: {
   );
 }
 
-/** Refusals that mean the page on screen is behind the server's (a link that no longer holds included): it reads again. */
-const OUTDATED = new Set(['GUEST_LIMIT_REACHED', 'GUEST_ALREADY_LISTED', 'WAITLIST_ENTRY_NOT_FOUND', 'REQUEST_PERIOD_INACTIVE', 'INVALID_HOST_LINK']);
-const outdated = (failure: unknown) => failure instanceof ApiError && OUTDATED.has(failure.code);
+/** Refusals that mean the list on screen is behind the server's. */
+const OUTDATED = new Set(['GUEST_LIMIT_REACHED', 'GUEST_ALREADY_LISTED', 'WAITLIST_ENTRY_NOT_FOUND', 'REQUEST_PERIOD_INACTIVE']);
+/**
+ * What a refused save does to the list on screen. A list that is behind is read again. A link that
+ * no longer holds drops what was read under it first, so the names go even if that read fails.
+ */
+function afterRefusal(client: QueryClient, queryKey: readonly unknown[], failure: unknown) {
+  if (!(failure instanceof ApiError)) return;
+  if (failure.code === 'INVALID_HOST_LINK') void client.resetQueries({ queryKey });
+  else if (OUTDATED.has(failure.code)) void client.invalidateQueries({ queryKey });
+}
 
 /**
  * The artist puts a guest on the list themselves (a friend who will not fill in a form): a name and
@@ -248,7 +256,7 @@ function HostGuestForm({ artistId, token, open }: { artistId: string; token: str
       await client.invalidateQueries({ queryKey: ['host', artistId, token] });
     } catch (failure) {
       setError(failure);
-      if (outdated(failure)) void client.invalidateQueries({ queryKey: ['host', artistId, token] });
+      afterRefusal(client, ['host', artistId, token], failure);
     } finally {
       setPending(false);
     }
@@ -327,7 +335,7 @@ function HostWaitlist({ artistId, token, waitlist, room, full }: {
       await client.invalidateQueries({ queryKey: ['host', artistId, token] });
     } catch (failure) {
       setError(failure);
-      if (outdated(failure)) void client.invalidateQueries({ queryKey: ['host', artistId, token] });
+      afterRefusal(client, ['host', artistId, token], failure);
     } finally {
       setPending('');
     }

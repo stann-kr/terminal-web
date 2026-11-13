@@ -71,3 +71,34 @@ export const logLine = (row) => `${row.id}\n`;
  * @returns {string[]}
  */
 export const otherLogs = (names, current) => names.filter((name) => name.endsWith('.log') && name !== current).sort();
+
+/**
+ * Sends the mail to each pending subscriber, logging each one as it goes out. A send that fails is
+ * counted and the run goes on. A mail that went out but could not be logged stops the run there:
+ * the log is what keeps the next run from sending it again, so nobody after it is sent to.
+ * @template {{ id: string }} Row
+ * @param {Row[]} pending
+ * @param {{ send: (row: Row) => void, log: (row: Row) => void, onSent?: (index: number) => void, onFailed?: (index: number, error: unknown) => void }} steps
+ * @returns {{ sent: number, failed: number, unlogged: { row: Row, error: unknown } | null }}
+ */
+export function sendPending(pending, { send, log, onSent, onFailed }) {
+  let sent = 0;
+  let failed = 0;
+  for (const [index, row] of pending.entries()) {
+    try {
+      send(row);
+    } catch (error) {
+      failed += 1;
+      onFailed?.(index, error);
+      continue;
+    }
+    sent += 1;
+    try {
+      log(row);
+    } catch (error) {
+      return { sent, failed, unlogged: { row, error } };
+    }
+    onSent?.(index);
+  }
+  return { sent, failed, unlogged: null };
+}

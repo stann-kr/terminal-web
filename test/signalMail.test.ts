@@ -11,6 +11,7 @@ import {
   mailKey,
   pendingRecipients,
   readSentLog,
+  sendPending,
 } from '../scripts/lib/signalMail.mjs';
 
 const mail = { subject: 'TERMINAL [04] 공지입니다', html: '<p>hello {{UNSUBSCRIBE_URL}}</p>', text: 'hello {{UNSUBSCRIBE_URL}}' };
@@ -63,6 +64,36 @@ describe('signal-mail send log', () => {
     const corrected = `${mailKey({ ...mail, text: `${mail.text} (corrected)` })}.log`;
     expect(otherLogs([own, '2026-11-13.log', corrected, 'notes.txt'], own)).toEqual(['2026-11-13.log', corrected].sort());
     expect(otherLogs([own], own)).toEqual([]);
+  });
+});
+
+describe('signal-mail send run', () => {
+  it('logs each subscriber as the mail goes out, and goes on past a send that failed', () => {
+    const sentTo: string[] = [];
+    const logged: string[] = [];
+    const result = sendPending(rows, {
+      send: (row) => {
+        if (row.id === 'sig-b') throw new Error('rejected');
+        sentTo.push(row.id);
+      },
+      log: (row) => logged.push(row.id),
+    });
+    expect(sentTo).toEqual(['sig-a', 'sig-c']);
+    expect(logged).toEqual(['sig-a', 'sig-c']);
+    expect(result).toEqual({ sent: 2, failed: 1, unlogged: null });
+  });
+
+  it('stops at a mail that went out but could not be logged, sending to nobody after it', () => {
+    const sentTo: string[] = [];
+    const broken = new Error('EACCES');
+    const result = sendPending(rows, {
+      send: (row) => sentTo.push(row.id),
+      log: () => {
+        throw broken;
+      },
+    });
+    expect(sentTo).toEqual(['sig-a']);
+    expect(result).toEqual({ sent: 1, failed: 0, unlogged: { row: rows[0], error: broken } });
   });
 });
 

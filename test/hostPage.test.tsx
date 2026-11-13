@@ -138,6 +138,20 @@ describe('artist host page', () => {
     expect(screen.queryByText('김지현')).not.toBeInTheDocument();
   });
 
+  it('stops showing the list when a save is refused because the link no longer holds, even if the next check fails', async () => {
+    const waiting = { id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' };
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(json({ ...view, waitlist: [waiting] }))
+      .mockResolvedValueOnce(json({ error: 'INVALID_HOST_LINK' }, 404))
+      .mockResolvedValueOnce(json({ error: 'INTERNAL_SERVER_ERROR' }, 500));
+    vi.stubGlobal('fetch', fetch);
+    page();
+    await userEvent.click(await screen.findByRole('button', { name: /명단에 올리기.*최창배/ }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('초대 현황을 불러오지 못했습니다');
+    expect(screen.queryByText('김지현')).not.toBeInTheDocument();
+    expect(screen.queryByText('@cc_b3')).not.toBeInTheDocument();
+  });
+
   it('reads the list again when a move up is refused because the list changed', async () => {
     const waiting = { id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' };
     const fetch = vi.fn()

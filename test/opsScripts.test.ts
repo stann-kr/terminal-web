@@ -7,6 +7,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { envValue, failureReason, maskEmails, parseWranglerJson, readEnvValue } from '../scripts/lib/cli.mjs';
+import { storedManifest } from '../scripts/lib/promoKit.mjs';
 import { startServer } from '../promo/serve.mjs';
 
 describe('.env values', () => {
@@ -63,6 +64,19 @@ describe('wrangler JSON output', () => {
   it('throws a readable error when there is no array', () => {
     expect(() => parseWranglerJson('✘ [ERROR] not logged in')).toThrow(/no JSON result/);
     expect(() => parseWranglerJson('')).toThrow(/no JSON result/);
+  });
+});
+
+describe('promo kit manifest', () => {
+  it('reads a stored manifest as it is', () => {
+    const manifest = { dir: 'trm-03', artists: { '03-A': [] }, event: [{ name: 'teaser.abc' }] };
+    expect(storedManifest(JSON.stringify(manifest))).toEqual(manifest);
+  });
+
+  it('never takes a stored object that is not a manifest for a missing one', () => {
+    for (const content of ['null', '[]', '"x"', '{}', '{"dir":"trm-03","artists":{}}', '{"dir":"trm-03","artists":[],"event":[]}', '{"dir":"trm-03","artists":{"03-A":null},"event":[]}', 'not json']) {
+      expect(() => storedManifest(content), content).toThrow(/stored manifest/);
+    }
   });
 });
 

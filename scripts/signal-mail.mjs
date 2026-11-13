@@ -4,7 +4,7 @@ import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFi
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { failureReason, parseWranglerJson, positionalArgs, readEnvValue } from './lib/cli.mjs';
-import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, readSentLog } from './lib/signalMail.mjs';
+import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, readSentLog, sendPending } from './lib/signalMail.mjs';
 
 /**
  * Sends one mail to everyone on the Signal list (production D1 `signal`), one message per address.
@@ -26,6 +26,9 @@ import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, rea
  * backups/signal-mail/<key>.log, the key taken from the subject, html and text, so the same mail
  * always reads the same log on any day and a different mail starts its own. A re-run skips the ids
  * (or, in a log written before ids, the addresses) in it; --log <file> names the log instead.
+ * --only does not read the log: running it twice sends twice. The log is opened before the first
+ * mail goes out (a log that cannot be written sends nothing), and a mail that went out but could
+ * not be logged stops the run with the id to add by hand.
  */
 const DATABASE = 'terminal-db';
 const FROM = 'stann@terminal.stann.kr';
@@ -96,11 +99,23 @@ function sendTo({ id, email }) {
 }
 
 const logFile = option('--log') ?? defaultLogFile(process.cwd(), { subject, html, text });
-/** Appends sent subscribers to the log; a new log starts with a note of what mail it is for. */
-function logSent(row) {
-  mkdirSync(path.dirname(logFile), { recursive: true });
-  if (!existsSync(logFile)) appendFileSync(logFile, `# ${new Date().toISOString()} ${subject.replaceAll('\n', ' ')}\n`);
-  appendFileSync(logFile, logLine(row));
+/**
+ * Makes sure the log can be written, before anything is sent: a mail that goes out and cannot be
+ * logged would go out again on the next run. A new log starts with a note of what mail it is for.
+ */
+function openLog() {
+  try {
+    mkdirSync(path.dirname(logFile), { recursive: true });
+    appendFileSync(logFile, existsSync(logFile) ? '' : `# ${new Date().toISOString()} ${subject.replaceAll('\n', ' ')}\n`);
+  } catch (error) {
+    fail(`cannot write the send log ${path.relative(process.cwd(), logFile)} (${error?.code ?? reason(error)}): nothing was sent`);
+  }
+}
+/** Appends a sent subscriber to the log. */
+const logSent = row => appendFileSync(logFile, logLine(row));
+/** Stops the run after a mail that went out without its log line, saying how to keep it from going out twice. */
+function failUnlogged({ row, error }) {
+  fail(`sent to signal id ${row.id}, but the send log could not be written (${error?.code ?? reason(error)}). Stopped there: add the line "${row.id}" to ${path.relative(process.cwd(), logFile)} before running again, or that subscriber gets this mail twice.`);
 }
 /** The ids (or older addresses) already sent this mail; a log that does not exist yet is empty. */
 function sentSoFar() {
@@ -129,8 +144,11 @@ if (only) {
   if (!row) fail('--only takes an address on the Signal list');
   const owner = row.email === REPLY_TO;
   if (!confirmed(1, `"${subject}" to ${owner ? 'your own address' : 'a subscriber'} (${row.email})`)) process.exit(0);
+  if (!owner) openLog();
   sendTo(row);
-  if (!owner) logSent(row);
+  if (!owner) {
+    try { logSent(row); } catch (error) { failUnlogged({ row, error }); }
+  }
   console.log(`✓ sent to ${row.email}`);
   process.exit(0);
 }
@@ -149,16 +167,16 @@ if (!send) {
   process.exit(0);
 }
 if (!confirmed(pending.length, `"${subject}" to ${pending.length} subscribers`)) process.exit(0);
-let failed = 0;
-for (const [index, row] of pending.entries()) {
-  try {
-    sendTo(row);
-    logSent(row);
-    console.log(`✓ ${index + 1}/${pending.length}`);
-  } catch (error) {
-    failed += 1;
-    console.error(`✖ ${index + 1}/${pending.length}: ${reason(error)}`);
-  }
+openLog();
+const { sent: delivered, failed, unlogged } = sendPending(pending, {
+  send: sendTo,
+  log: logSent,
+  onSent: index => console.log(`✓ ${index + 1}/${pending.length}`),
+  onFailed: (index, error) => console.error(`✖ ${index + 1}/${pending.length}: ${reason(error)}`),
+});
+if (unlogged) {
+  console.log(`${delivered} sent, ${failed} failed, ${pending.length - delivered - failed} not tried`);
+  failUnlogged(unlogged);
 }
-console.log(`${pending.length - failed} sent, ${failed} failed`);
+console.log(`${delivered} sent, ${failed} failed`);
 process.exit(failed ? 1 : 0);

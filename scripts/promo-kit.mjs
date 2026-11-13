@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { storedManifest } from './lib/promoKit.mjs';
 
 /**
  * Manages the promo files artists take from their host pages (lib/gate/promoKit). The files and
@@ -50,7 +51,10 @@ const put = (key, file, type) => wrangler('put', `${BUCKET}/${key}`, '--file', f
 
 const manifestKey = `kit/${eventId}.json`;
 const previous = path.join(work, 'manifest.json');
-/** The event's manifest, or null only when the bucket says it does not exist; any other failure stops the run. */
+/**
+ * The event's manifest, or null only when the bucket says it does not exist. Any other failure
+ * stops the run, and so does a stored object that is not a manifest.
+ */
 const readManifest = () => {
   try {
     wrangler('get', `${BUCKET}/${manifestKey}`, '--file', previous);
@@ -59,7 +63,11 @@ const readManifest = () => {
     if (/The specified key does not exist\./.test(String(error?.stderr ?? ''))) return null;
     throw error;
   }
-  return JSON.parse(readFileSync(previous, 'utf8'));
+  try {
+    return storedManifest(readFileSync(previous, 'utf8'));
+  } catch (error) {
+    return fail(`${manifestKey}: ${error.message}; nothing was written (look at the object before replacing it)`);
+  }
 };
 
 // An unreadable manifest is never taken for a missing one: only --init starts an event's list, and
