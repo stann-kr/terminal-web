@@ -49,18 +49,23 @@ const wrangler = (...rest) => execFileSync('npx', ['wrangler', 'r2', 'object', .
 const put = (key, file, type) => wrangler('put', `${BUCKET}/${key}`, '--file', file, '--content-type', type);
 
 const manifestKey = `kit/${eventId}.json`;
+const previous = path.join(work, 'manifest.json');
+/** The event's manifest, or null only when the bucket says it does not exist; any other failure stops the run. */
 const readManifest = () => {
-  const file = path.join(work, 'manifest.json');
   try {
-    wrangler('get', `${BUCKET}/${manifestKey}`, '--file', file);
-    return JSON.parse(readFileSync(file, 'utf8'));
-  } catch {
-    return null;
+    wrangler('get', `${BUCKET}/${manifestKey}`, '--file', previous);
+  } catch (error) {
+    // wrangler's own message for a key the bucket does not have (an HTTP 404).
+    if (/The specified key does not exist\./.test(String(error?.stderr ?? ''))) return null;
+    throw error;
   }
+  return JSON.parse(readFileSync(previous, 'utf8'));
 };
 
-// An unreadable manifest is never taken for a missing one: only --init starts an event's list.
-const manifest = readManifest() ?? (args.includes('--init') ? { dir: eventId.toLowerCase(), artists: {}, event: [] } : fail(`cannot read ${manifestKey} (a new event needs --init)`));
+// An unreadable manifest is never taken for a missing one: only --init starts an event's list, and
+// only when the bucket has none.
+const stored = readManifest();
+const manifest = stored ?? (args.includes('--init') ? { dir: eventId.toLowerCase(), artists: {}, event: [] } : fail(`${manifestKey} does not exist (a new event needs --init)`));
 const number = eventId.match(/(\d+)$/)?.[1] ?? eventId;
 const downloadFor = name => `TERMINAL[${number}]_${name}.png`;
 const listOf = () => (artistId ? (manifest.artists[artistId] ??= []) : manifest.event);
@@ -117,11 +122,8 @@ if (!confirm) {
   console.log('(dry run: add --confirm 1 to write)');
   process.exit(0);
 }
-const previous = path.join(work, 'manifest.json');
-try {
-  readFileSync(previous);
-  put(`kit/history/${eventId}.${new Date().toISOString().replaceAll(':', '-')}.json`, previous, 'application/json');
-} catch { /* the first manifest of this event */ }
+// The first manifest of an event has nothing to keep; any other is kept before it is replaced.
+if (stored) put(`kit/history/${eventId}.${new Date().toISOString().replaceAll(':', '-')}.json`, previous, 'application/json');
 const next = path.join(work, 'next.json');
 writeFileSync(next, `${JSON.stringify(manifest, null, 2)}\n`);
 put(manifestKey, next, 'application/json');

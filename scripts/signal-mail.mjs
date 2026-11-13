@@ -1,8 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { failureReason, positionalArgs, readEnvValue } from './lib/cli.mjs';
+import { VALUE_FLAGS, defaultLogFile, isDatedLog, logLine, pendingRecipients, readSentLog } from './lib/signalMail.mjs';
 
 /**
  * Sends one mail to everyone on the Signal list (production D1 `signal`), one message per address.
@@ -20,8 +22,10 @@ import path from 'node:path';
  * SIGNAL_UNSUBSCRIBE_SECRET (the Worker's secret; read from the environment or .env), and the
  * List-Unsubscribe / List-Unsubscribe-Post headers that give mail apps a one-click button. Sending
  * uses the wrangler OAuth login (the API token in .env has no Email Sending permission), so the repo .env is not loaded for
- * it. Each sent address is appended to backups/signal-mail/<date>.log (git-ignored), and a re-run
- * of the same log skips those addresses.
+ * it. Each subscriber sent to is appended, by signal id, to a log of that mail (git-ignored):
+ * backups/signal-mail/<key>.log, the key taken from the subject, html and text, so the same mail
+ * always reads the same log on any day and a different mail starts its own. A re-run skips the ids
+ * (or, in a log written before ids, the addresses) in it; --log <file> names the log instead.
  */
 const DATABASE = 'terminal-db';
 const FROM = 'stann@terminal.stann.kr';
@@ -35,13 +39,13 @@ function fail(message) {
   console.error(`✖ ${message}`);
   process.exit(1);
 }
-/** The line of a failed wrangler run that says what went wrong. */
-const reason = error => String(error?.stderr || error?.message || error).split('\n').find(line => /error|✘/i.test(line))?.trim() ?? 'failed';
+/** What went wrong in a failed wrangler run, with addresses masked. */
+const reason = failureReason;
 process.on('uncaughtException', error => fail(reason(error)));
 
 const args = process.argv.slice(2);
 const option = name => { const at = args.indexOf(name); return at >= 0 ? args[at + 1] : undefined; };
-const [htmlFile, textFile] = args.filter((arg, index) => !arg.startsWith('--') && !['--subject', '--only', '--log'].includes(args[index - 1]));
+const [htmlFile, textFile] = positionalArgs(args, VALUE_FLAGS);
 const subject = option('--subject');
 const only = option('--only');
 const send = args.includes('--send');
@@ -58,8 +62,7 @@ function confirmed(count, what) {
 }
 const html = readFileSync(htmlFile, 'utf8');
 const text = readFileSync(textFile, 'utf8');
-const secret = process.env.SIGNAL_UNSUBSCRIBE_SECRET
-  ?? (() => { try { return readFileSync('.env', 'utf8').match(/^SIGNAL_UNSUBSCRIBE_SECRET=(.+)$/m)?.[1].trim(); } catch { return undefined; } })();
+const secret = readEnvValue('SIGNAL_UNSUBSCRIBE_SECRET');
 if (!secret) fail('SIGNAL_UNSUBSCRIBE_SECRET is not set (environment or .env)');
 const unsubscribeUrl = id => `${SITE}/api/signal/unsubscribe?${new URLSearchParams({ s: id, t: createHmac('sha256', secret).update(id).digest('hex') })}`;
 
@@ -92,8 +95,29 @@ function sendTo({ id, email }) {
     '--header', 'List-Unsubscribe-Post:List-Unsubscribe=One-Click'], { oauth: true });
 }
 
-const logDir = path.join(process.cwd(), 'backups', 'signal-mail');
-const logFile = option('--log') ?? path.join(logDir, `${new Date().toISOString().slice(0, 10)}.log`);
+const logFile = option('--log') ?? defaultLogFile(process.cwd(), { subject, html, text });
+/** Appends sent subscribers to the log; a new log starts with a note of what mail it is for. */
+function logSent(row) {
+  mkdirSync(path.dirname(logFile), { recursive: true });
+  if (!existsSync(logFile)) appendFileSync(logFile, `# ${new Date().toISOString()} ${subject.replaceAll('\n', ' ')}\n`);
+  appendFileSync(logFile, logLine(row));
+}
+/** The ids (or older addresses) already sent this mail; a log that does not exist yet is empty. */
+function sentSoFar() {
+  try {
+    return readSentLog(readFileSync(logFile, 'utf8'));
+  } catch (error) {
+    if (error?.code === 'ENOENT') return new Set();
+    throw error;
+  }
+}
+/** Logs from before logs were keyed by the mail are not read by default: say so while none is. */
+function warnAboutDatedLogs(sent) {
+  if (option('--log') || sent.size) return;
+  let dated = [];
+  try { dated = readdirSync(path.dirname(logFile)).filter(isDatedLog); } catch (error) { if (error?.code !== 'ENOENT') throw error; }
+  if (dated.length) console.log(`! older date-named logs are not read by default (${dated.join(', ')}): if this mail already went out with one, pass it with --log.`);
+}
 
 if (only) {
   // The address must be on the list, so its unsubscribe link is real.
@@ -102,15 +126,15 @@ if (only) {
   const owner = row.email === REPLY_TO;
   if (!confirmed(1, `"${subject}" to ${owner ? 'your own address' : 'a subscriber'} (${row.email})`)) process.exit(0);
   sendTo(row);
-  if (!owner) { mkdirSync(path.dirname(logFile), { recursive: true }); appendFileSync(logFile, `${row.email}\n`); }
+  if (!owner) logSent(row);
   console.log(`✓ sent to ${row.email}`);
   process.exit(0);
 }
 
 const { valid, skipped } = subscribers();
-let done = new Set();
-try { done = new Set(readFileSync(logFile, 'utf8').split('\n').filter(Boolean)); } catch {}
-const pending = valid.filter(row => !done.has(row.email));
+const sent = sentSoFar();
+warnAboutDatedLogs(sent);
+const pending = pendingRecipients(valid, sent);
 console.log(`${valid.length} subscribers, ${skipped.length} undeliverable left out, ${valid.length - pending.length} already sent in ${path.relative(process.cwd(), logFile)}`);
 if (!pending.length) {
   console.log('nothing to send: everyone on the list already has this mail.');
@@ -121,12 +145,11 @@ if (!send) {
   process.exit(0);
 }
 if (!confirmed(pending.length, `"${subject}" to ${pending.length} subscribers`)) process.exit(0);
-mkdirSync(path.dirname(logFile), { recursive: true });
 let failed = 0;
 for (const [index, row] of pending.entries()) {
   try {
     sendTo(row);
-    appendFileSync(logFile, `${row.email}\n`);
+    logSent(row);
     console.log(`✓ ${index + 1}/${pending.length}`);
   } catch (error) {
     failed += 1;

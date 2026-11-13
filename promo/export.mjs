@@ -6,8 +6,9 @@
  *   node promo/export.mjs [posters|motion|all|templates|artboards|share] [--only <text>] [--font <url>]
  *
  * `templates` writes out/templates/<piece>.png: the pieces that wait for the lineup, with sample names.
- * `share` writes out/share/<piece>.png: the site's link-preview candidates at 1200 × 630; the chosen one
- * is copied to public/og/terminal.png, which the site names as its share image.
+ * `share` writes out/share/<piece>.png: link-preview candidates at 1200 × 630, for comparison only. The
+ * site's share image is public/og/terminal-share.png, rendered from scripts/og/share.html by
+ * scripts/og/render.mjs; nothing here writes it.
  * `artboards` writes out/artboards/<Name>.dc.html: each poster as a Claude Design artboard — the held
  * frame with every computed style written inline, so the canvas shows exactly what the kit renders.
  * `--font` is the canvas's uploaded asset url for the brand face (TERMINAL Lettering, woff2); artboards need it.
@@ -29,7 +30,13 @@ const CHROME = process.env.CHROME_PATH ?? (await headlessShell()) ?? '/Applicati
 const A2_DPI = 300;
 
 const args = process.argv.slice(2);
-const set = ['posters', 'motion', 'all', 'templates', 'artboards', 'share'].includes(args[0]) ? args[0] : 'all';
+const SETS = ['posters', 'motion', 'all', 'templates', 'artboards', 'share'];
+// No set (or a flag first) means all; a name that is not a set is a typo, not a request for all.
+const set = args[0] === undefined || args[0].startsWith('--') ? 'all' : args[0];
+if (!SETS.includes(set)) {
+  console.error(`✖ unknown set "${set}": one of ${SETS.join(', ')}`);
+  process.exit(1);
+}
 const fontUrl = args.includes('--font') ? args[args.indexOf('--font') + 1] : null;
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 const selected = list => list.filter(item => !only || fileName(item).includes(only));

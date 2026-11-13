@@ -2,7 +2,7 @@
 
 ## API가 500을 반환할 때
 
-이 checkout의 local D1을 준비했는지 확인합니다. `npx wrangler d1 migrations apply terminal-db --local`은 로컬에만 적용합니다. 필요한 공개 행사 데이터도 local DB에 준비해야 합니다. 운영 DB로 자동 전환하거나 실패를 빈 배열로 덮지 않습니다.
+`npm run dev`와 `npm start`는 local D1이 아니라 Wrangler 원격 바인딩으로 운영 D1 `terminal-db`를 읽습니다(`wrangler.toml`의 `remote = true`, `next.config.ts`의 `remoteBindings`). 먼저 `npx wrangler whoami`로 로그인 상태와 계정을 확인하고, 로그인이 없거나 만료됐으면 `npx wrangler login`을 다시 실행합니다. 그 계정에 해당 D1·R2 접근 권한이 있는지, `CLOUDFLARE_API_TOKEN` 같은 환경 변수가 권한이 다른 token으로 로그인을 대신하고 있지 않은지도 확인합니다. 서버 터미널의 오류 메시지로 원인을 확인하며, `.wrangler/state`의 로컬 사본이나 local migration 적용으로 대신하지 않고 실패를 빈 배열로 덮지 않습니다. CI(`CI`·`WORKERS_CI`)에서는 원격 바인딩 대신 local D1 시뮬레이션을 씁니다.
 
 ## 3005가 사용 중일 때
 
@@ -22,7 +22,7 @@
 
 ## 방문자 로그에 내려야 할 글이 올라왔을 때
 
-`npm run transmit:remove -- list 20 --remote`로 최근 글의 ID를 찾고, `npm run transmit:remove -- remove <ID> --remote`로 내립니다. 지우기 전에 글 전체를 git이 무시하는 `backups/transmit/`에 백업하며, `npm run transmit:remove -- restore <백업 파일> --remote`로 그대로 되돌릴 수 있습니다. `--remote`는 운영 DB이므로 대상 ID를 확인한 뒤 실행합니다. 빼면 로컬 시뮬레이션에서 동작합니다.
+`npm run transmit:remove -- list 20 --remote`로 최근 글의 ID를 찾습니다. `npm run transmit:remove -- remove <ID> --remote`는 그 글과 할 일만 보여 주고 아무것도 지우지 않으며, 대상 ID를 확인한 뒤 `npm run transmit:remove -- remove <ID> --remote --confirm <ID>`로 내립니다. 지우기 전에 글 전체를 git이 무시하는 `backups/transmit/`에 백업하며, `npm run transmit:remove -- restore <백업 파일> --remote --confirm <ID>`로 그대로 되돌릴 수 있습니다(`--confirm` 없이는 계획만 출력). 백업은 가져온 곳(운영 또는 로컬)으로만 되돌리며, 다르면 거부합니다. 실행 도중 실패하면 메시지에 백업 경로가 함께 나오므로 `list`로 상태를 확인한 뒤 진행합니다. `--remote`를 빼면 로컬 시뮬레이션에서 확인 없이 동작합니다.
 
 ## 요청이 많다는 안내(429)가 뜰 때
 
