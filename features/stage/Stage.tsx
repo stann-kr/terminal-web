@@ -128,17 +128,12 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
   const [trail, setTrail] = useState<StageState[]>([state]);
   const [trailKnown, setTrailKnown] = useState(addressKnown);
   if (trailKnown !== addressKnown) setTrailKnown(addressKnown);
-  // A list address past its last page is put right in place (see the spill check): the page it
-  // becomes takes the place of the address it corrects.
-  const [corrected, setCorrected] = useState<{ from: string; to: string } | null>(null);
   if (stateKey(trail[trail.length - 1]) !== key) {
     const earlier = trail[trail.length - 2];
-    const replaced = !trailKnown || (corrected?.from === stateKey(trail[trail.length - 1]) && corrected.to === key);
     // Home is the root: arriving there starts the trail over.
     setTrail(
       state.view === 'home' || !trailKnown ? [state]
-        : replaced ? [...trail.slice(0, -1), state]
-          : earlier && stateKey(earlier) === key ? trail.slice(0, -1) : [...trail.slice(-8), state],
+        : earlier && stateKey(earlier) === key ? trail.slice(0, -1) : [...trail.slice(-8), state],
     );
   }
   const current = stateKey(trail[trail.length - 1]) === key ? trail : [...trail, state];
@@ -262,19 +257,16 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
 
   // Content that spills out of its rect is never clipped: the view escalates (see `escalate`) until
   // it fits. Checked after every change inside the stage and when the fonts arrive, heads first.
-  // A list address past its last page, once the records are read: the last page's address. The
-  // number of pages is only known for the settled layout (measured heads, no more spill), so the
-  // address is corrected at the end of the check below, not from a draft layout.
-  const pageFix = data.events && layout.list && state.view === 'plate' && state.plate === (layout.list.kind === 'event' ? 'events' : 'artists') && state.page !== layout.list.page
-    ? { from: key, to: stateKey({ ...state, page: layout.list.page }), href: listHref(layout.list.kind, layout.list.page) }
-    : null;
-  // The plates print the page that is shown, also before the corrected address arrives.
-  const shownState: StageState = pageFix && layout.list && state.view === 'plate' ? { ...state, page: layout.list.page } : state;
-  const latest = useRef({ plates: layout.plates, spill, primary, pageFix });
-  const fixSent = useRef<string | null>(null);
+  // A list address past its last page shows the last page (the count depends on the window, so
+  // the address is left as it is: a wider window must not rewrite where a narrower one was). The
+  // plates print the page that is shown, as the pager does.
+  const shownState: StageState = layout.list && state.view === 'plate' && state.plate === (layout.list.kind === 'event' ? 'events' : 'artists') && state.page !== layout.list.page
+    ? { ...state, page: layout.list.page }
+    : state;
+  const latest = useRef({ plates: layout.plates, spill, primary });
   // A layout effect, so a synchronous re-render inside the check loop is seen by the next step.
   useLayoutEffect(() => {
-    latest.current = { plates: layout.plates, spill, primary, pageFix };
+    latest.current = { plates: layout.plates, spill, primary };
   });
   useEffect(() => {
     const element = root.current;
@@ -291,16 +283,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
         flushSync(() => setHeads(previous => (sameHeads(measured, previous) ? previous : ((moved = true), measured))));
         if (moved) continue;
         const found = spillOf(element);
-        if (!found) {
-          const fix = latest.current.pageFix;
-          // Asked once per address: further checks while the new address is on its way do not repeat it.
-          if (fix && fixSent.current !== fix.from) {
-            setCorrected({ from: fix.from, to: fix.to });
-            router.replace(fix.href, { scroll: false });
-          }
-          fixSent.current = fix?.from ?? null;
-          return;
-        }
+        if (!found) return;
         const next = escalate(latest.current.spill, found.leaf, found.short, latest.current.primary);
         flushSync(() => setSpilled({ key, scope: spillScope, w: viewport.w, h: viewport.h, spill: next }));
       }
@@ -318,7 +301,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
       cancelAnimationFrame(frame);
       mutations.disconnect();
     };
-  }, [onStage, key, spillScope, viewport, gap, router]);
+  }, [onStage, key, spillScope, viewport, gap]);
 
   // ── Carrier origin: a detail opened from elsewhere sets out from where the click was ─────────
   const [origin, setOrigin] = useState<Origin | null>(null);

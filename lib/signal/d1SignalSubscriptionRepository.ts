@@ -93,12 +93,14 @@ export async function insertSignalSubscription(
 
 /**
  * A gate request keeps its email only to send news, "until unsubscribe" as its consent says. So
- * unsubscribing forgets that copy too, before the subscription that names the email is gone.
+ * unsubscribing forgets that copy too, before the subscription that names the email is gone. Both
+ * sides are compared without capitals or outer spaces: rows are written that way now, but an
+ * older subscription may not be.
  */
 const FORGET_GATE_EMAIL_SQL = `
   UPDATE access_requests
   SET email = NULL, marketing_consent = 0
-  WHERE email = (SELECT email FROM signal WHERE id = ?)
+  WHERE lower(trim(email)) = (SELECT lower(trim(email)) FROM signal WHERE id = ?)
 `;
 
 const SIGNAL_SUBSCRIPTION_DELETE_SQL = `DELETE FROM signal WHERE id = ?`;

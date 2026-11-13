@@ -476,34 +476,18 @@ describe('stage views', () => {
     expect(screen.queryByRole('textbox', { name: /검색/ })).not.toBeInTheDocument();
   });
 
-  it('shows an address past the last list page as the last page, and puts that page in the address', async () => {
+  it('shows an address past the last list page as the last page, and leaves the address as it is', async () => {
     const events = Array.from({ length: 40 }, (_, index) => ({ ...past, id: `EVENT ${String(index).padStart(2, '0')}`, session: `EVENT ${index}` }));
     const { container, go } = shell(events);
     go('/events');
-    const pages = Number(within(screen.getByRole('navigation', { name: '목록 쪽 이동' })).getByText(/^\d+ \/ \d+$/).textContent!.split('/')[1]);
-    const last = String(pages).padStart(2, '0');
+    const pager = () => within(screen.getByRole('navigation', { name: '목록 쪽 이동' }));
+    const last = pager().getByText(/^\d+ \/ \d+$/).textContent!.split('/')[1].trim();
     go('/events', 'page=9');
     expect(within(plate(container, 'events')).getByText(`PAGE ${last}`)).toBeInTheDocument();
-    await waitFor(() => expect(router.replace).toHaveBeenCalledWith(`/events?page=${pages}`, { scroll: false }));
-    go('/events', `page=${pages}`);
-    // The corrected page takes the place of the address it corrects: back leads where the visit came from.
-    expect(within(container.querySelector<HTMLElement>('[data-back]')!).getByRole('link', { name: /이전 화면으로/ })).toHaveAttribute('href', '/events');
-    go('/artists');
-    const back = within(container.querySelector<HTMLElement>('[data-back]')!).getByRole('link', { name: '이전 화면으로: 이벤트' });
-    expect(back).toHaveAttribute('href', `/events?page=${pages}`);
-    expect(back).toHaveTextContent(`EVENTS · ${last}`);
-  });
-
-  it('does not put a page in the address while the list is still being read', async () => {
-    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    clients.push(client);
-    navigation.pathname = '/events';
-    navigation.search = new URLSearchParams('page=3');
-    render(<QueryClientProvider client={client}><Shell>{null}</Shell></QueryClientProvider>);
-    await act(() => new Promise(resolve => setTimeout(resolve, 100)));
+    expect(pager().getByText(`${last} / ${last}`)).toBeInTheDocument();
+    // The number of pages follows the window: a wider one must not rewrite where a narrower one was.
+    await act(() => new Promise(resolve => setTimeout(resolve, 50)));
     expect(router.replace).not.toHaveBeenCalled();
-    vi.unstubAllGlobals();
   });
 
   it('links repeated confirmed appearances to one canonical artist and highlights only STANN LUMO', () => {

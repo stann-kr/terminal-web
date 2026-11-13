@@ -83,6 +83,22 @@ describe.skipIf(!sqliteAvailable)('unsubscribe SQL (SQLite with every migration)
     expect(rows()).toHaveLength(3);
     expect(sqlite.prepare('SELECT id FROM signal').all()).toEqual([{ id: 'sig-2' }]);
   });
+
+  it('matches the address as written by an older row: other capitals or spaces are the same address', async () => {
+    const sqlite = migratedSqlite();
+    sqlite.exec(`INSERT INTO events (id, data) VALUES ('TRM-03', '{}')`);
+    sqlite.exec(`INSERT INTO access_requests (id, event_id, name, email, instagram, privacy_consent, marketing_consent, created_at) VALUES
+      ('req-1', 'TRM-03', 'One', 'one@example.com', '@one', 1, 1, '2026-11-12T00:00:00.000Z'),
+      ('req-2', 'TRM-03', 'Two', 'two@example.com', '@two', 1, 1, '2026-11-12T00:00:01.000Z')`);
+    sqlite.exec(`INSERT INTO signal (id, name, email, instagram, source, created_at) VALUES
+      ('sig-1', 'One', ' One@Example.com ', '@one', 'form', '2026-01-01T00:00:00.000Z')`);
+    await removeSignalSubscription(d1(sqlite), 'sig-1');
+    expect(sqlite.prepare('SELECT id, email, marketing_consent AS news FROM access_requests ORDER BY id').all()).toEqual([
+      { id: 'req-1', email: null, news: 0 },
+      { id: 'req-2', email: 'two@example.com', news: 1 },
+    ]);
+    expect(sqlite.prepare('SELECT id FROM signal').all()).toEqual([]);
+  });
 });
 
 describe('GET /calendar/subscribe', () => {
