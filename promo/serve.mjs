@@ -29,19 +29,33 @@ const TYPES = {
   '.ttf': 'font/ttf',
 };
 
-/** Where a request path is read from, or null when it is outside the kit. */
+/** A request URL or path that cannot be read (bad percent-encoding, `//`): answered with 400. */
+const BAD_PATH = Symbol('bad path');
+
+/** Where a request path is read from, null when it is outside the kit, BAD_PATH when unreadable. */
 function resolve(pathname) {
   if (pathname === '/') return join(here, 'index.html');
   if (pathname === '/palettes.css') return join(root, 'app/palettes.css');
   if (pathname === '/globals.css') return join(root, 'app/globals.css');
   const [base, prefix] = pathname.startsWith('/fonts/') ? [join(root, 'public/fonts'), '/fonts/'] : [here, '/'];
-  const file = normalize(join(base, decodeURIComponent(pathname.slice(prefix.length))));
+  let decoded;
+  try {
+    decoded = decodeURIComponent(pathname.slice(prefix.length));
+  } catch (error) {
+    if (error instanceof URIError) return BAD_PATH;
+    throw error;
+  }
+  const file = normalize(join(base, decoded));
   return file.startsWith(base + sep) ? file : null;
 }
 
 export function startServer({ port = 3007, host = '0.0.0.0' } = {}) {
   const server = createServer(async (request, response) => {
-    const file = resolve(new URL(request.url ?? '/', 'http://promo').pathname);
+    const file = URL.canParse(request.url ?? '/', 'http://promo') ? resolve(new URL(request.url ?? '/', 'http://promo').pathname) : BAD_PATH;
+    if (file === BAD_PATH) {
+      response.writeHead(400).end();
+      return;
+    }
     if (!file || file.endsWith('.mjs')) {
       response.writeHead(404).end();
       return;

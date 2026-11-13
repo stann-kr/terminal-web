@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HostPage } from '../features/host/HostPage';
@@ -99,10 +99,106 @@ describe('artist host page', () => {
     expect(await screen.findByRole('button', { name: /링크 복사됨/ })).toBeInTheDocument();
   });
 
-  it('marks a full list closed', async () => {
+  it('marks a full list as taking the waitlist, in the band and in the guide alike', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ ...view, count: 10, open: false })));
     page();
-    expect(await screen.findByText('FULL · INVITE CLOSED')).toHaveAttribute('data-state', 'closed');
+    expect(await screen.findByText('FULL · WAITLIST')).toHaveAttribute('data-state', 'closed');
+    expect(screen.getByRole('list', { name: '초대 안내' })).toHaveTextContent('차면 새 신청은 대기 명단으로 받습니다');
+    expect(screen.queryByText(/링크가 마감됩니다/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the list and what was typed when a later check fails, and reads again on request', async () => {
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(json(view))
+      .mockResolvedValueOnce(json({ error: 'INTERNAL_SERVER_ERROR' }, 500))
+      .mockResolvedValueOnce(json({ ...view, count: 3 }));
+    vi.stubGlobal('fetch', fetch);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const user = userEvent.setup();
+    render(<QueryClientProvider client={client}><HostPage artistId="03-A" /></QueryClientProvider>);
+    await user.type(await screen.findByLabelText(/게스트 이름/), '이서연');
+    await act(async () => { await client.refetchQueries({ queryKey: ['host'] }); });
+    expect(await screen.findByText('최신 현황을 불러오지 못했습니다')).toBeInTheDocument();
+    expect(screen.getByLabelText(/게스트 이름/)).toHaveValue('이서연');
+    expect(screen.getByRole('list', { name: '신청한 게스트' })).toHaveTextContent('김지현');
+    await user.click(screen.getByRole('button', { name: '다시 불러오기' }));
+    expect(await screen.findByText('OPEN · 7 LEFT')).toBeInTheDocument();
+    expect(screen.queryByText('최신 현황을 불러오지 못했습니다')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/게스트 이름/)).toHaveValue('이서연');
+  });
+
+  it('stops showing the list once the link no longer holds', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(json(view)).mockResolvedValueOnce(json({ error: 'INVALID_HOST_LINK' }, 404));
+    vi.stubGlobal('fetch', fetch);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><HostPage artistId="03-A" /></QueryClientProvider>);
+    await screen.findByText('김지현');
+    await act(async () => { await client.refetchQueries({ queryKey: ['host'] }); });
+    expect(await screen.findByRole('alert')).toHaveTextContent('링크를 확인할 수 없습니다');
+    expect(screen.queryByText('김지현')).not.toBeInTheDocument();
+  });
+
+  it('keeps the list hidden once the link stopped holding, and does not ask for it again', async () => {
+    const waiting = { id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' };
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(json({ ...view, waitlist: [waiting] }))
+      .mockResolvedValueOnce(json({ error: 'INVALID_HOST_LINK' }, 404))
+      .mockImplementation(async () => json({ error: 'INTERNAL_SERVER_ERROR' }, 500));
+    vi.stubGlobal('fetch', fetch);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><HostPage artistId="03-A" /></QueryClientProvider>);
+    await screen.findByText('@cc_b3');
+    await act(async () => { await client.refetchQueries({ queryKey: ['host'] }); });
+    expect(await screen.findByRole('alert')).toHaveTextContent('링크를 확인할 수 없습니다');
+    // A later check (the page asks again whenever it is looked at) that failed another way used to
+    // bring the names back from what was read before.
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ['host'] });
+      await client.invalidateQueries({ queryKey: ['host'] });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('alert')).toHaveTextContent('링크를 확인할 수 없습니다');
+    expect(screen.queryByText('김지현')).not.toBeInTheDocument();
+    expect(screen.queryByText('@cc_b3')).not.toBeInTheDocument();
+  });
+
+  it('stops showing the list when a save is refused because the link no longer holds, even if the next check fails', async () => {
+    const waiting = { id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' };
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(json({ ...view, waitlist: [waiting] }))
+      .mockResolvedValueOnce(json({ error: 'INVALID_HOST_LINK' }, 404))
+      .mockResolvedValueOnce(json({ error: 'INTERNAL_SERVER_ERROR' }, 500));
+    vi.stubGlobal('fetch', fetch);
+    page();
+    await userEvent.click(await screen.findByRole('button', { name: /명단에 올리기.*최창배/ }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('초대 현황을 불러오지 못했습니다');
+    expect(screen.queryByText('김지현')).not.toBeInTheDocument();
+    expect(screen.queryByText('@cc_b3')).not.toBeInTheDocument();
+  });
+
+  it('reads the list again when a move up is refused because the list changed', async () => {
+    const waiting = { id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' };
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(json({ ...view, waitlist: [waiting] }))
+      .mockResolvedValueOnce(json({ error: 'GUEST_LIMIT_REACHED' }, 409))
+      .mockResolvedValueOnce(json({ ...view, count: 10, open: false, waitlist: [waiting] }));
+    vi.stubGlobal('fetch', fetch);
+    page();
+    await userEvent.click(await screen.findByRole('button', { name: /명단에 올리기.*최창배/ }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('접수 한도');
+    expect(await screen.findByText('FULL · WAITLIST')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /명단에 올리기.*최창배/ })).toBeDisabled();
+  });
+
+  it('cannot move a waiting guest up outside the request period, and says why', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({
+      ...view, open: false,
+      waitlist: [{ id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' }],
+    })));
+    page();
+    expect(await screen.findByRole('button', { name: /명단에 올리기.*최창배/ })).toBeDisabled();
+    expect(screen.getByText('신청 기간이 아니어서 올릴 수 없습니다.')).toBeInTheDocument();
   });
 
   it('lists the waiting guests and moves one up while there is room', async () => {

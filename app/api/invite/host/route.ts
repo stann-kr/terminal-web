@@ -53,6 +53,11 @@ export async function POST(request: Request) {
     )
       .bind(eventId, body.artistId)
       .all<{ id: string; name: string; instagram: string; created_at: string }>();
+    // The posters are an extra: a bucket that cannot be read must not take the guest list with it.
+    const kit = await promoKit(env.PRESS, eventId, artistId).catch((error: unknown) => {
+      safeLogError('invite.host_kit_failed', { error });
+      return [];
+    });
     const now = new Date();
     const upcoming = findUpcomingGateEvent(await listGateEventRows(db), now);
     const count = guests.results.length;
@@ -75,7 +80,7 @@ export async function POST(request: Request) {
         && count < access.guestLimit,
       guests: guests.results.map((guest) => ({ name: guest.name, createdAt: guest.created_at })),
       waitlist: waitlist.results.map((guest) => ({ id: guest.id, name: guest.name, instagram: guest.instagram, createdAt: guest.created_at })),
-      kit: (await promoKit(env.PRESS, eventId, artistId)).map(({ key, thumbKey, ...item }) => ({
+      kit: kit.map(({ key, thumbKey, ...item }) => ({
         ...item,
         href: promoHref(artistId, token, key),
         thumb: promoHref(artistId, token, thumbKey),

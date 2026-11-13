@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref } from '@/features/events/model';
-import { SITE_ORIGIN } from '@/features/events/metadata';
+import { CALENDAR_BLOCKED, useCalendarOpen, useSubscribeHref } from '@/features/events/useCalendarKey';
 import { Action, ActionDeck, Facts, StateNotice, ui } from '@/features/ui/Ui';
 import {
   Consent,
@@ -45,6 +45,8 @@ export function AccessForm({
     closedInviter,
     waitlist,
     waitlisted,
+    alreadyWaiting,
+    turned,
   } = useAccessRequest(eventId, availability);
   // A checked code unlocks step 02; the guest carries on typing there.
   const nameField = useRef<HTMLInputElement>(null);
@@ -53,6 +55,12 @@ export function AccessForm({
   useEffect(() => {
     if (verified) nameField.current?.focus();
   }, [verified]);
+  // A save that came after the last place went turns the form to its waitlist terms: the notice
+  // takes the focus (the key that was pressed is disabled while saving) and is read out.
+  const waitlistNote = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (turned) waitlistNote.current?.focus();
+  }, [turned]);
   const closed = (
     <StateNotice title="현재 신청할 수 없습니다">
       <p>{availability.message}</p>
@@ -66,19 +74,23 @@ export function AccessForm({
     return (
       <FormSuccess>
         <p className={ui.eyebrow}>WAITLISTED</p>
-        <h2>대기 명단에 올렸습니다</h2>
+        <h2>{alreadyWaiting ? '이미 대기 명단에 있습니다' : '대기 명단에 올렸습니다'}</h2>
         <Facts
           rows={[
             ...(event ? [['이벤트', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
-            ...(verified ? [['초대인', verified.name] as [string, string]] : []),
-            ['이름', fields.name.trim()],
+            // An entry that was there before may stand under another inviter and another name:
+            // neither is shown, only the id it is known by.
+            ...(verified && !alreadyWaiting ? [['초대인', verified.name] as [string, string]] : []),
+            ...(alreadyWaiting ? [] : [['이름', fields.name.trim()] as [string, string]]),
             ['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`],
             ['상태', '대기'],
           ]}
         />
         <p>
-          아직 게스트 명단은 아닙니다. 자리가 생겨 명단에 오르면 초대한 아티스트가 인스타그램 DM으로
-          알려 드립니다.
+          {alreadyWaiting
+            ? '이 인스타그램 ID는 이 이벤트의 대기 명단에 이미 있어 새로 올리지 않았습니다.'
+            : '아직 게스트 명단은 아닙니다.'}{' '}
+          자리가 생겨 명단에 오르면 초대한 아티스트가 인스타그램 DM으로 알려 드립니다.
         </p>
         <ActionDeck>
           <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>
@@ -161,7 +173,7 @@ export function AccessForm({
         )}
         {/* A full code still takes the guest, onto its waitlist: said before step 02, not after. */}
         {waitlist && verified && (
-          <div className={styles.waitlist} role="note">
+          <div ref={waitlistNote} tabIndex={-1} className={styles.waitlist} role="note">
             <p className={`${ui.band} ${styles.closedBand}`}>WAITLIST</p>
             <p>
               {verified.name}의 게스트 초대가 마감되었습니다. 대기 명단에 올려 두시면 자리가 생길 때
@@ -286,6 +298,10 @@ function InviteClosed({ inviter, onOtherCode }: { inviter: string; onOtherCode: 
   // The key the guest pressed is gone with the form; the notice takes the focus and is read out.
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => heading.current?.focus(), []);
+  // The same key as the session's: it knows the device, and says so where an in-app browser
+  // (most invite links are opened inside Instagram) would drop the calendar link without a word.
+  const subscribe = useSubscribeHref();
+  const [calendar, openCalendar] = useCalendarOpen(subscribe);
   return (
     <div className={styles.closedInvite}>
       <Facts rows={[['초대인', inviter]]} />
@@ -303,9 +319,17 @@ function InviteClosed({ inviter, onOtherCode }: { inviter: string; onOtherCode: 
       </div>
       <ActionDeck>
         <Action primary href="/signal">다음 이벤트 소식 신청</Action>
-        <Action primary href={`${SITE_ORIGIN}/calendar/subscribe`}>TERMINAL 일정 구독</Action>
+        <a
+          className={`${ui.action} ${ui.primary}`}
+          href={subscribe}
+          {...(subscribe.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          onClick={openCalendar}
+        >
+          {calendar === 'blocked' ? CALENDAR_BLOCKED : 'TERMINAL 일정 구독'}
+        </a>
         <button type="button" className={ui.button} onClick={onOtherCode}>다른 초대 코드 입력</button>
       </ActionDeck>
+      <span className={ui.srOnly} role="status">{calendar === 'blocked' ? CALENDAR_BLOCKED : ''}</span>
     </div>
   );
 }

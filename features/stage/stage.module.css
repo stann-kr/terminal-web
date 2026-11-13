@@ -145,6 +145,11 @@
     display: none;
   }
 }
+/* A paused display (useDisplayPolicy: reduced motion, forced colors, save-data, a hidden tab) stops
+   every animation too (globals.css): the old content would stay drawn under the new until removed. */
+:global([data-display-paused]) .layer[data-layer=leaving] {
+  display: none;
+}
 @keyframes layerIn {
   from { opacity: 0; transform: translateY(4px); }
 }
@@ -371,11 +376,11 @@
   transition: var(--light-motion);
 }
 @media (hover: hover) {
-  .textPager button:hover:not(:disabled) {
+  .textPager button:hover:not([aria-disabled="true"]) {
     box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
     color: var(--on-control-hi);
   }
-  .textPager button:active:not(:disabled) {
+  .textPager button:active:not([aria-disabled="true"]) {
     box-shadow: inset 0 0 0 100vmax var(--control-hi);
     color: var(--on-control-hi);
     transition: none;
@@ -386,7 +391,7 @@
   outline-color: currentColor;
 }
 /* A page turn past either end is printed, not keyed. */
-.textPager button:disabled {
+.textPager button[aria-disabled="true"] {
   cursor: default;
   background: transparent;
   color: var(--muted);
@@ -456,6 +461,7 @@
 @media (forced-colors: active) {
   .pager a { border: 1px solid CanvasText; }
   .textPager button, .enlarge button { border: 1px solid ButtonText; }
+  .textPager button[aria-disabled="true"] { color: GrayText; }
 }
 
 /* The place of a file whose records are not read yet: the state, flush across the top. */
@@ -632,6 +638,9 @@
   .boot:not([data-done]) { animation: bootGiveWay 0s linear 6s forwards !important; }
   .stage[data-stage=boot] { animation: bootReveal 0s linear 6s forwards !important; }
 }
+/* The same for a paused display (useDisplayPolicy), which also stops every animation (globals.css). */
+:global([data-display-paused]) .bootMark,
+:global([data-display-paused]) .bootLine { opacity: 1; }
 @keyframes bootShow {
   to { opacity: 1; }
 }

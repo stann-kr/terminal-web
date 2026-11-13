@@ -1185,7 +1185,7 @@
   overflow-wrap: anywhere;
 }
 /* The pager: a flush bar across the plate (--bleed) in its well; the keys are solid control keys,
-   a page past either end is printed (muted) where its key would be. */
+   a page past either end is printed (muted) where its key would be (the key stays, for focus). */
 .logPager {
   display: flex;
   flex: none;
@@ -1218,12 +1218,18 @@
   letter-spacing: inherit;
   transition: var(--light-motion);
 }
+/* No turn left: printed like text in the well, as before, but still the focused key. */
+.logPager button[aria-disabled="true"] {
+  background: transparent;
+  cursor: default;
+  color: var(--muted);
+}
 @media (hover: hover) {
-  .logPager button:hover {
+  .logPager button:not([aria-disabled="true"]):hover {
     box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
     color: var(--on-control-hi);
   }
-  .logPager button:active {
+  .logPager button:not([aria-disabled="true"]):active {
     box-shadow: inset 0 0 0 100vmax var(--control-hi);
     color: var(--on-control-hi);
     transition: none;
@@ -1679,7 +1685,8 @@
     forced-color-adjust: none;
     background: CanvasText;
   }
-  .logPager button { border: 1px solid ButtonText; }
+  .logPager button:not([aria-disabled="true"]) { border: 1px solid ButtonText; }
+  .logPager button[aria-disabled="true"] { color: CanvasText; }
   .band, .columnHead { border-bottom: 1px solid CanvasText; }
 }
 

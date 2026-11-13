@@ -113,7 +113,7 @@ const sameHeads = (a: Heads, b: Heads) => HEADED.every(id => a[id]?.mode === b[i
  * does not fit spreads the view over sheets (a narrow window gets one per column); the server's
  * first markup, and a page without script, lay the same elements out in document order (flow).
  */
-export function Stage({ state: address }: { state: StageState }) {
+export function Stage({ state: address, addressKnown = true }: { state: StageState; addressKnown?: boolean }) {
   const router = useRouter();
   const go = useRouteHold();
   const root = useRef<HTMLDivElement>(null);
@@ -123,11 +123,18 @@ export function Stage({ state: address }: { state: StageState }) {
   const viewport = useViewport();
 
   // ── Where the back card leads: the view before this one, or one level up ─────────────────
+  // Until the address is settled (its query arrives a commit after the first render, see Shell),
+  // the view in place is the arrival itself: it is replaced, not stepped back to.
   const [trail, setTrail] = useState<StageState[]>([state]);
+  const [trailKnown, setTrailKnown] = useState(addressKnown);
+  if (trailKnown !== addressKnown) setTrailKnown(addressKnown);
   if (stateKey(trail[trail.length - 1]) !== key) {
     const earlier = trail[trail.length - 2];
     // Home is the root: arriving there starts the trail over.
-    setTrail(state.view === 'home' ? [state] : earlier && stateKey(earlier) === key ? trail.slice(0, -1) : [...trail.slice(-8), state]);
+    setTrail(
+      state.view === 'home' || !trailKnown ? [state]
+        : earlier && stateKey(earlier) === key ? trail.slice(0, -1) : [...trail.slice(-8), state],
+    );
   }
   const current = stateKey(trail[trail.length - 1]) === key ? trail : [...trail, state];
   const parent = stageParentHref(state);
@@ -250,6 +257,12 @@ export function Stage({ state: address }: { state: StageState }) {
 
   // Content that spills out of its rect is never clipped: the view escalates (see `escalate`) until
   // it fits. Checked after every change inside the stage and when the fonts arrive, heads first.
+  // A list address past its last page shows the last page (the count depends on the window, so
+  // the address is left as it is: a wider window must not rewrite where a narrower one was). The
+  // plates print the page that is shown, as the pager does.
+  const shownState: StageState = layout.list && state.view === 'plate' && state.plate === (layout.list.kind === 'event' ? 'events' : 'artists') && state.page !== layout.list.page
+    ? { ...state, page: layout.list.page }
+    : state;
   const latest = useRef({ plates: layout.plates, spill, primary });
   // A layout effect, so a synchronous re-render inside the check loop is seen by the next step.
   useLayoutEffect(() => {
@@ -296,9 +309,16 @@ export function Stage({ state: address }: { state: StageState }) {
   const [plateOrigins, setPlateOrigins] = useState<Partial<Record<PlateId, Origin>>>({});
   const settledKey = useRef(key);
   const openBefore = useRef(layout.open);
+  // Whether the address was settled in the commit before this one (kept current further down): the
+  // view the settled address replaces is the arrival itself, not a change of view to answer.
+  const knownBefore = useRef(addressKnown);
   useLayoutEffect(() => {
     if (settledKey.current === key) return;
     settledKey.current = key;
+    if (!knownBefore.current) {
+      openBefore.current = layout.open;
+      return;
+    }
     // A new scene puts the page back at its top at once. A box would then set out from where it
     // was on the page, not from where it was seen: from far below a phone's window, leaving the
     // window empty while it travels. So across the jump each box sets out from where it was on
@@ -428,6 +448,7 @@ export function Stage({ state: address }: { state: StageState }) {
   useLayoutEffect(() => {
     if (firstKey.current === key) return;
     firstKey.current = key;
+    if (!knownBefore.current) return;
     setMoving(true);
     let landed = false;
     const timer = window.setTimeout(() => {
@@ -442,6 +463,10 @@ export function Stage({ state: address }: { state: StageState }) {
       window.removeEventListener('pointermove', wake);
     };
   }, [key]);
+  // Declared after every effect that reads it, so those see the previous commit's value.
+  useLayoutEffect(() => {
+    knownBefore.current = addressKnown;
+  });
 
   // ── Render ──────────────────────────────────────────────────────────────────────────────
   const last = layout.sheets[sheetCount - 1];
@@ -498,7 +523,7 @@ export function Stage({ state: address }: { state: StageState }) {
         {tooShort && viewport && (
           <section className={styles.enlarge} data-surface="feature" aria-labelledby="enlarge-title">
             <p className={styles.enlargeMark} aria-hidden="true">TERMINAL</p>
-            <h1 id="enlarge-title" tabIndex={-1} data-stage-title="">창을 조금 더 키워 주세요</h1>
+            <h1 id="enlarge-title" tabIndex={-1} data-stage-title="">창을 조금 더 키워 주십시오</h1>
             <p>
               이 화면은 높이 {minDesktop.h}px 이상인 창에 맞춰 판을 배치합니다. 지금 창은 {viewport.w}×{viewport.h}px입니다.
             </p>
@@ -579,7 +604,6 @@ export function Stage({ state: address }: { state: StageState }) {
               rect={rect(placed.rect)}
               visible={placed.mode !== 'hidden'}
               contentKey={placed.mode}
-              className={styles.plate}
               surface={plateSurface(id, placed.mode, data)}
               delay={delay}
               origin={plateOrigins[id] ?? null}
@@ -587,7 +611,7 @@ export function Stage({ state: address }: { state: StageState }) {
               data={{ plate: id, mode: placed.mode }}
               overlay={subPlates}
             >
-              <PlateContent id={id} mode={placed.mode} state={state} data={data} query={query} size={onStage ? placed.rect : null} rings={rings} />
+              <PlateContent id={id} mode={placed.mode} state={shownState} data={data} query={query} size={onStage ? placed.rect : null} rings={rings} />
             </Box>
           );
         })}
@@ -637,7 +661,7 @@ export function Stage({ state: address }: { state: StageState }) {
                   title={layout.open.kind === 'event' ? '기록을 불러오지 못했습니다' : '아티스트 기록을 불러오지 못했습니다'}
                   retry={() => void query.refetch()}
                 >
-                  잠시 후 다시 불러오거나 다른 판으로 이동해 주세요.
+                  잠시 후 다시 불러오거나 다른 판으로 이동해 주십시오.
                 </StateNotice>
               ) : (
                 <Loading />

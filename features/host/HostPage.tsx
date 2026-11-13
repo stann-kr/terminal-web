@@ -1,5 +1,5 @@
 'use client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { HostView } from '@/lib/gate/hostView';
@@ -27,6 +27,8 @@ const kstStamp = (iso: string) => {
 const two = (value: number) => String(value).padStart(2, '0');
 const megabytes = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)}MB`;
 
+const invalidLink = (failure: unknown) => failure instanceof ApiError && failure.code === 'INVALID_HOST_LINK';
+
 /**
  * What an artist opens from the link TERMINAL sends them: the invite link to hand their guests,
  * and the names of those who used it. The `t` in the address is the credential; the server checks
@@ -37,10 +39,12 @@ export function HostPage({ artistId }: { artistId: string }) {
   const query = useQuery({
     queryKey: ['host', artistId, token],
     queryFn: () => postJson<HostView>('/api/invite/host', { artistId, t: token }),
-    enabled: Boolean(artistId && token),
+    // A link the server refused is not asked about again: a later check that failed another way
+    // would replace that answer, and the list read before it would come back on screen.
+    enabled: (asked) => Boolean(artistId && token) && !invalidLink(asked.state.error),
     retry: false,
   });
-  if (!artistId || !token || (query.error instanceof ApiError && query.error.code === 'INVALID_HOST_LINK')) {
+  if (!artistId || !token || invalidLink(query.error)) {
     return (
       <>
         <PageHeading title="게스트 초대 페이지" />
@@ -50,7 +54,10 @@ export function HostPage({ artistId }: { artistId: string }) {
       </>
     );
   }
-  if (query.error) {
+  // Only a first load that failed has nothing to show. A later check that fails (the page asks
+  // again whenever it is looked at) leaves the last list, and whatever the artist was typing, up.
+  if (!query.data) {
+    if (!query.error) return <><PageHeading title="게스트 초대 페이지" /><Loading /></>;
     return (
       <>
         <PageHeading title="게스트 초대 페이지" />
@@ -60,11 +67,23 @@ export function HostPage({ artistId }: { artistId: string }) {
       </>
     );
   }
-  if (!query.data) return <><PageHeading title="게스트 초대 페이지" /><Loading /></>;
-  return <HostPlates view={query.data} artistId={artistId} token={token} />;
+  return (
+    <HostPlates
+      view={query.data}
+      artistId={artistId}
+      token={token}
+      stale={query.error ? () => void query.refetch() : undefined}
+    />
+  );
 }
 
-function HostPlates({ view, artistId, token }: { view: HostView; artistId: string; token: string }) {
+function HostPlates({ view, artistId, token, stale }: {
+  view: HostView;
+  artistId: string;
+  token: string;
+  /** Set while the last check failed: what is shown is the list as it was last read, and this asks again. */
+  stale?: () => void;
+}) {
   const link = new URL(inviteHref(view.event.id, view.code), SITE_ORIGIN).href;
   const { state, share, copy } = useShareLink();
   // Which of the two link keys was pressed last, so only that one shows the result.
@@ -73,7 +92,8 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
   // The code's ceiling (TERMINAL's own list) reads as no limit; any other limit is printed.
   const unlimited = view.limit >= UNLIMITED;
   const cells = view.limit <= MAX_CELLS;
-  const band = !view.open && !full ? 'CLOSED' : full ? 'FULL · INVITE CLOSED' : unlimited ? 'OPEN' : `OPEN · ${view.limit - view.count} LEFT`;
+  // A full list still takes guests, onto its waitlist: the link is not closed.
+  const band = !view.open && !full ? 'CLOSED' : full ? 'FULL · WAITLIST' : unlimited ? 'OPEN' : `OPEN · ${view.limit - view.count} LEFT`;
   return (
     <div className={styles.page}>
       <PageHeading title={`${view.artist} 게스트 초대`} />
@@ -84,6 +104,11 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           <BrandText text={view.event.session} /> · {view.event.id}
         </span>
       </header>
+      {stale && (
+        <StateNotice title="최신 현황을 불러오지 못했습니다" retry={stale}>
+          <p>아래는 마지막으로 확인한 현황입니다.</p>
+        </StateNotice>
+      )}
       <div className={styles.plates}>
         <Panel title="초대인" label="Artist" surface="feature" heading={false}>
           <p className={styles.artist}>{view.artist}</p>
@@ -111,7 +136,7 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
             {!unlimited && (
               <li>
                 <strong>한도 {view.limit}명</strong>
-                차면 링크가 마감됩니다. 추가는 TERMINAL에 요청해 주십시오.
+                차면 새 신청은 대기 명단으로 받습니다. 정원 추가는 TERMINAL에 요청해 주십시오.
               </li>
             )}
             <li>
@@ -168,7 +193,7 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
           ) : (
             <p className={styles.empty}>아직 이 링크로 신청한 게스트가 없습니다.</p>
           )}
-          <HostWaitlist artistId={artistId} token={token} waitlist={view.waitlist} room={view.count < view.limit} />
+          <HostWaitlist artistId={artistId} token={token} waitlist={view.waitlist} room={view.open} full={full} />
           <p className={styles.note}>
             {unlimited
               ? '신청한 게스트의 이름과 신청 시각만 보입니다. 연락처는 TERMINAL만 확인합니다.'
@@ -200,6 +225,18 @@ function HostPlates({ view, artistId, token }: { view: HostView; artistId: strin
   );
 }
 
+/** Refusals that mean the list on screen is behind the server's. */
+const OUTDATED = new Set(['GUEST_LIMIT_REACHED', 'GUEST_ALREADY_LISTED', 'WAITLIST_ENTRY_NOT_FOUND', 'REQUEST_PERIOD_INACTIVE']);
+/**
+ * What a refused save does to the list on screen. A list that is behind is read again. A link that
+ * no longer holds drops what was read under it first, so the names go even if that read fails.
+ */
+function afterRefusal(client: QueryClient, queryKey: readonly unknown[], failure: unknown) {
+  if (!(failure instanceof ApiError)) return;
+  if (invalidLink(failure)) void client.resetQueries({ queryKey });
+  else if (OUTDATED.has(failure.code)) void client.invalidateQueries({ queryKey });
+}
+
 /**
  * The artist puts a guest on the list themselves (a friend who will not fill in a form): a name and
  * an Instagram id, on the artist's word that the guest agreed. Same limit and duplicate rules.
@@ -223,6 +260,7 @@ function HostGuestForm({ artistId, token, open }: { artistId: string; token: str
       await client.invalidateQueries({ queryKey: ['host', artistId, token] });
     } catch (failure) {
       setError(failure);
+      afterRefusal(client, ['host', artistId, token], failure);
     } finally {
       setPending(false);
     }
@@ -278,11 +316,13 @@ function HostGuestForm({ artistId, token, open }: { artistId: string; token: str
  * Guests the limit turned away, oldest first. The artist moves one up while the list has room and
  * tells them by Instagram DM: the site sends nothing, so the id is shown (the guest agreed to that).
  */
-function HostWaitlist({ artistId, token, waitlist, room }: {
+function HostWaitlist({ artistId, token, waitlist, room, full }: {
   artistId: string;
   token: string;
   waitlist: HostView['waitlist'];
+  /** Whether a guest can be moved up now: a place is left and requests are still taken. */
   room: boolean;
+  full: boolean;
 }) {
   const client = useQueryClient();
   const [pending, setPending] = useState('');
@@ -299,6 +339,7 @@ function HostWaitlist({ artistId, token, waitlist, room }: {
       await client.invalidateQueries({ queryKey: ['host', artistId, token] });
     } catch (failure) {
       setError(failure);
+      afterRefusal(client, ['host', artistId, token], failure);
     } finally {
       setPending('');
     }
@@ -335,7 +376,9 @@ function HostWaitlist({ artistId, token, waitlist, room }: {
       <p className={styles.note}>
         {room
           ? '올린 게스트에게는 사이트가 따로 알리지 않습니다. 인스타그램 DM으로 알려 주십시오.'
-          : '정원이 차 있어 올릴 수 없습니다. 정원 추가는 TERMINAL에 요청해 주십시오.'}
+          : full
+            ? '정원이 차 있어 올릴 수 없습니다. 정원 추가는 TERMINAL에 요청해 주십시오.'
+            : '신청 기간이 아니어서 올릴 수 없습니다.'}
       </p>
       {status}
       {done}
