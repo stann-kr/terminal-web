@@ -15,6 +15,7 @@ const REQUEST_KEYS = [
   'instagram',
   'privacyConsent',
   'marketingConsent',
+  'waitlist',
 ] as const;
 
 export interface GateRequestInput {
@@ -26,6 +27,11 @@ export interface GateRequestInput {
   instagram: string;
   privacyConsent: true;
   marketingConsent: boolean;
+  /**
+   * The guest agreed to the waitlist terms (the artist sees their Instagram id, no news is sent).
+   * Only then may a full code keep them waiting; the plain terms share the name alone.
+   */
+  waitlist: boolean;
 }
 
 export type ParseGateRequestResult =
@@ -149,9 +155,15 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   if (body.marketingConsent !== undefined && !isBoolean(body.marketingConsent)) {
     return { ok: false, error: 'INVALID_INPUT' };
   }
+  if (body.waitlist !== undefined && !isBoolean(body.waitlist)) {
+    return { ok: false, error: 'INVALID_INPUT' };
+  }
 
   const name = body.name.trim();
   const marketingConsent = body.marketingConsent ?? false;
+  const waitlist = body.waitlist ?? false;
+  // The waitlist form offers no news: a request that asks for both was not made on either form.
+  if (waitlist && marketingConsent) return { ok: false, error: 'INVALID_INPUT' };
   // Email exists only to send news, so a guest who did not ask for news leaves none behind.
   const email = marketingConsent ? (body.email ?? '').trim().toLowerCase() : null;
   const instagram = body.instagram.trim();
@@ -192,6 +204,7 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
       instagram: storedInstagram,
       privacyConsent: true,
       marketingConsent,
+      waitlist,
     },
   };
 }

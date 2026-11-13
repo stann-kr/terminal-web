@@ -17,7 +17,9 @@ export async function GET(request: Request) {
     const params = new URL(request.url).searchParams;
     const artistId = params.get("a") ?? "", token = params.get("t") ?? "", key = params.get("f") ?? "";
     const { env } = await getCloudflareContext({ async: true });
-    const abuseDecision = await enforceRateLimit(env, 'host', request);
+    // A budget of its own: one page draws a preview per file, and those must not use up the
+    // attempts the page itself, a guest entry and a waitlist move share.
+    const abuseDecision = await enforceRateLimit(env, 'host-file', request);
     if (!abuseDecision.ok) return noStoreJson({ error: abuseDecision.error }, abuseDecision.status);
 
     const host = await verifiedHostArtist(env.DB, env.SIGNAL_UNSUBSCRIBE_SECRET ?? "", artistId, token);

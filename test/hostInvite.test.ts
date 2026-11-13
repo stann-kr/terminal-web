@@ -118,6 +118,19 @@ describe('POST /api/invite/host', () => {
     expect(binds.some((values) => values.length === 2)).toBe(false);
   });
 
+  it('keeps the guest list when the poster bucket cannot be read', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { env } = await mocks.getCloudflareContext();
+    env.PRESS = { get: async () => { throw new Error('R2 unavailable'); } };
+    const response = await post({ artistId: '03-A', t: await signHostLink(SECRET, '03-A', 'K7QM') });
+    const body = await response.json() as { guests: unknown[]; kit: unknown[] };
+    expect(response.status).toBe(200);
+    expect(body.guests).toHaveLength(GUESTS.length);
+    expect(body.kit).toEqual([]);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('invite.host_kit_failed'));
+    error.mockRestore();
+  });
+
   it('reports a full list as closed', async () => {
     artistRow = { event_id: 'TRM-03', data: JSON.stringify({ ...ARTIST, guestLimit: 2 }) };
     vi.useFakeTimers();

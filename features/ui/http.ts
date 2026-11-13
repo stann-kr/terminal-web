@@ -26,6 +26,7 @@ const messages: Record<string,string> = {
   GUEST_LIMIT_REACHED: '이 초대인의 접수 한도에 도달했습니다.',
   GUEST_ALREADY_LISTED: '이미 이 이벤트 명단에 있는 인스타그램 ID입니다.',
   WAITLIST_ENTRY_NOT_FOUND: '대기 명단에서 찾을 수 없습니다. 이미 올렸는지 새로 고침해 확인해 주십시오.',
+  INVALID_HOST_LINK: '링크를 확인할 수 없습니다. 받은 링크로 페이지를 다시 열어 주십시오.',
   GUEST_CONSENT_REQUIRED: '게스트 본인의 동의를 확인해 주십시오.',
   VERIFICATION_UNAVAILABLE: '지금은 코드를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.',
   DATA_UNAVAILABLE: '이벤트 정보를 확인할 수 없습니다. 입력을 유지한 채 다시 시도해 주세요.',

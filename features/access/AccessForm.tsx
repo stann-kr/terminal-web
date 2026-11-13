@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref } from '@/features/events/model';
-import { SITE_ORIGIN } from '@/features/events/metadata';
+import { CALENDAR_BLOCKED, useCalendarOpen, useSubscribeHref } from '@/features/events/useCalendarKey';
 import { Action, ActionDeck, Facts, StateNotice, ui } from '@/features/ui/Ui';
 import {
   Consent,
@@ -45,6 +45,7 @@ export function AccessForm({
     closedInviter,
     waitlist,
     waitlisted,
+    turned,
   } = useAccessRequest(eventId, availability);
   // A checked code unlocks step 02; the guest carries on typing there.
   const nameField = useRef<HTMLInputElement>(null);
@@ -53,6 +54,12 @@ export function AccessForm({
   useEffect(() => {
     if (verified) nameField.current?.focus();
   }, [verified]);
+  // A save that came after the last place went turns the form to its waitlist terms: the notice
+  // takes the focus (the key that was pressed is disabled while saving) and is read out.
+  const waitlistNote = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (turned) waitlistNote.current?.focus();
+  }, [turned]);
   const closed = (
     <StateNotice title="현재 신청할 수 없습니다">
       <p>{availability.message}</p>
@@ -161,7 +168,7 @@ export function AccessForm({
         )}
         {/* A full code still takes the guest, onto its waitlist: said before step 02, not after. */}
         {waitlist && verified && (
-          <div className={styles.waitlist} role="note">
+          <div ref={waitlistNote} tabIndex={-1} className={styles.waitlist} role="note">
             <p className={`${ui.band} ${styles.closedBand}`}>WAITLIST</p>
             <p>
               {verified.name}의 게스트 초대가 마감되었습니다. 대기 명단에 올려 두시면 자리가 생길 때
@@ -286,6 +293,10 @@ function InviteClosed({ inviter, onOtherCode }: { inviter: string; onOtherCode: 
   // The key the guest pressed is gone with the form; the notice takes the focus and is read out.
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => heading.current?.focus(), []);
+  // The same key as the session's: it knows the device, and says so where an in-app browser
+  // (most invite links are opened inside Instagram) would drop the calendar link without a word.
+  const subscribe = useSubscribeHref();
+  const [calendar, openCalendar] = useCalendarOpen(subscribe);
   return (
     <div className={styles.closedInvite}>
       <Facts rows={[['초대인', inviter]]} />
@@ -303,9 +314,17 @@ function InviteClosed({ inviter, onOtherCode }: { inviter: string; onOtherCode: 
       </div>
       <ActionDeck>
         <Action primary href="/signal">다음 이벤트 소식 신청</Action>
-        <Action primary href={`${SITE_ORIGIN}/calendar/subscribe`}>TERMINAL 일정 구독</Action>
+        <a
+          className={`${ui.action} ${ui.primary}`}
+          href={subscribe}
+          {...(subscribe.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          onClick={openCalendar}
+        >
+          {calendar === 'blocked' ? CALENDAR_BLOCKED : 'TERMINAL 일정 구독'}
+        </a>
         <button type="button" className={ui.button} onClick={onOtherCode}>다른 초대 코드 입력</button>
       </ActionDeck>
+      <span className={ui.srOnly} role="status">{calendar === 'blocked' ? CALENDAR_BLOCKED : ''}</span>
     </div>
   );
 }

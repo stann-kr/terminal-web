@@ -75,12 +75,14 @@ export async function POST(request: Request) {
       marketingConsent: requestInput.input.marketingConsent,
       guestLimit: accessCodeResult.data.guestLimit,
       createdAt: now.toISOString(),
-      waitlist: true,
+      // Waiting shares the Instagram id with the artist, so it takes the guest's own word for it.
+      waitlist: requestInput.input.waitlist,
     });
 
     if (result.status === "duplicate") return noStoreJson({ ok: true });
-    // A full code keeps the guest on its waitlist: the artist can move them up later.
+    // A full code keeps a guest who asked to wait on its waitlist: the artist can move them up later.
     if (result.status === "waitlisted") return noStoreJson({ ok: true, waitlisted: true });
+    // Anyone else is told the code filled up, and can then ask to wait under the waitlist terms.
     if (result.status === "guest_limit_reached") {
       return noStoreJson({ error: "GUEST_LIMIT_REACHED" }, 409);
     }

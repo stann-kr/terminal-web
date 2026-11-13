@@ -43,7 +43,8 @@ export async function listTransmitLogs(
       createdAt: transmitLogs.createdAt,
     })
     .from(transmitLogs)
-    .orderBy(desc(createdAtSortKey))
+    // The key is whole seconds: the id settles logs of the same second, so pages never repeat or skip one.
+    .orderBy(desc(createdAtSortKey), desc(transmitLogs.id))
     .limit(PAGE_SIZE)
     .offset(offset)
     .all();

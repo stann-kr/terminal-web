@@ -1,59 +1,17 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   createAccessRequestAtomically,
   promoteWaitlistedGuest,
   type AtomicAccessRequestInput,
 } from '../lib/gate/d1AccessRequestRepository';
+import { d1, migratedSqlite, sqliteAvailable, type SqliteDatabase } from './sqliteD1';
 
 /**
  * The waitlist SQL against a real SQLite built from every migration, so the batch order (insert,
  * clean-up, waitlist, state) and the conditions in each statement are exercised, not just their
- * text. node:sqlite stands in for D1: a batch runs its statements in order inside one transaction.
+ * text.
  */
-type SqliteDatabase = {
-  exec(sql: string): void;
-  prepare(sql: string): { all(...values: unknown[]): unknown[]; run(...values: unknown[]): { changes: number | bigint } };
-};
-let DatabaseSync: (new (file: string) => SqliteDatabase) | undefined;
-try {
-  ({ DatabaseSync } = createRequire(import.meta.url)('node:sqlite'));
-} catch {
-  DatabaseSync = undefined;
-}
-
-function d1(sqlite: SqliteDatabase) {
-  const statement = (sql: string, values: unknown[] = []) => ({
-    sql,
-    values,
-    bind: (...next: unknown[]) => statement(sql, next),
-  });
-  const run = ({ sql, values }: { sql: string; values: unknown[] }) => {
-    const prepared = sqlite.prepare(sql);
-    if (/^\s*(SELECT|WITH)/i.test(sql)) return { success: true, meta: { changes: 0 }, results: prepared.all(...values) };
-    return { success: true, meta: { changes: Number(prepared.run(...values).changes) }, results: [] };
-  };
-  return {
-    prepare: (sql: string) => statement(sql),
-    async batch(statements: { sql: string; values: unknown[] }[]) {
-      sqlite.exec('BEGIN');
-      try {
-        const results = statements.map(run);
-        sqlite.exec('COMMIT');
-        return results;
-      } catch (error) {
-        sqlite.exec('ROLLBACK');
-        throw error;
-      }
-    },
-  } as unknown as Pick<D1Database, 'prepare' | 'batch'>;
-}
-
-const MIGRATIONS = path.join(__dirname, '..', 'migrations');
-
-describe.skipIf(!DatabaseSync)('access waitlist SQL (SQLite with every migration)', () => {
+describe.skipIf(!sqliteAvailable)('access waitlist SQL (SQLite with every migration)', () => {
   let sqlite: SqliteDatabase;
   let db: Pick<D1Database, 'prepare' | 'batch'>;
   let serial = 0;
@@ -76,12 +34,7 @@ describe.skipIf(!DatabaseSync)('access waitlist SQL (SQLite with every migration
   });
 
   beforeEach(() => {
-    sqlite = new DatabaseSync!(':memory:');
-    for (const file of readdirSync(MIGRATIONS).filter((name) => name.endsWith('.sql')).sort()) {
-      for (const sql of readFileSync(path.join(MIGRATIONS, file), 'utf8').split('--> statement-breakpoint')) {
-        if (sql.trim()) sqlite.exec(sql);
-      }
-    }
+    sqlite = migratedSqlite();
     sqlite.exec(`INSERT INTO events (id, data) VALUES ('TRM-03', '{}')`);
     sqlite.exec(`INSERT INTO artists (id, event_id, data) VALUES ('03-B', 'TRM-03', '{}'), ('03-HOST', 'TRM-03', '{}')`);
     db = d1(sqlite);

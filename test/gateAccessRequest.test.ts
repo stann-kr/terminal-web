@@ -42,7 +42,18 @@ describe('gate request runtime validation', () => {
         instagram: '@guest.name',
         privacyConsent: true,
         marketingConsent: false,
+        waitlist: false,
       },
+    });
+  });
+
+  it('waits only on the guest\'s own word, and never together with news', () => {
+    const waiting = parseGateRequestBody({ ...validBody, waitlist: true });
+    expect(waiting.ok && waiting.input.waitlist).toBe(true);
+    expect(parseGateRequestBody({ ...validBody, waitlist: 'true' })).toEqual({ ok: false, error: 'INVALID_INPUT' });
+    expect(parseGateRequestBody({ ...validBody, waitlist: true, marketingConsent: true })).toEqual({
+      ok: false,
+      error: 'INVALID_INPUT',
     });
   });
 
