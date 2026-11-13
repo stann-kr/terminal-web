@@ -138,6 +138,31 @@ describe('artist host page', () => {
     expect(screen.queryByText('김지현')).not.toBeInTheDocument();
   });
 
+  it('keeps the list hidden once the link stopped holding, and does not ask for it again', async () => {
+    const waiting = { id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' };
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(json({ ...view, waitlist: [waiting] }))
+      .mockResolvedValueOnce(json({ error: 'INVALID_HOST_LINK' }, 404))
+      .mockImplementation(async () => json({ error: 'INTERNAL_SERVER_ERROR' }, 500));
+    vi.stubGlobal('fetch', fetch);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><HostPage artistId="03-A" /></QueryClientProvider>);
+    await screen.findByText('@cc_b3');
+    await act(async () => { await client.refetchQueries({ queryKey: ['host'] }); });
+    expect(await screen.findByRole('alert')).toHaveTextContent('링크를 확인할 수 없습니다');
+    // A later check (the page asks again whenever it is looked at) that failed another way used to
+    // bring the names back from what was read before.
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ['host'] });
+      await client.invalidateQueries({ queryKey: ['host'] });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('alert')).toHaveTextContent('링크를 확인할 수 없습니다');
+    expect(screen.queryByText('김지현')).not.toBeInTheDocument();
+    expect(screen.queryByText('@cc_b3')).not.toBeInTheDocument();
+  });
+
   it('stops showing the list when a save is refused because the link no longer holds, even if the next check fails', async () => {
     const waiting = { id: 'req-w1', name: '최창배', instagram: '@cc_b3', createdAt: '2026-11-11T16:02:00.000Z' };
     const fetch = vi.fn()

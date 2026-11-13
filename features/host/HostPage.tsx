@@ -27,6 +27,8 @@ const kstStamp = (iso: string) => {
 const two = (value: number) => String(value).padStart(2, '0');
 const megabytes = (bytes: number) => `${(bytes / 1_048_576).toFixed(1)}MB`;
 
+const invalidLink = (failure: unknown) => failure instanceof ApiError && failure.code === 'INVALID_HOST_LINK';
+
 /**
  * What an artist opens from the link TERMINAL sends them: the invite link to hand their guests,
  * and the names of those who used it. The `t` in the address is the credential; the server checks
@@ -37,10 +39,12 @@ export function HostPage({ artistId }: { artistId: string }) {
   const query = useQuery({
     queryKey: ['host', artistId, token],
     queryFn: () => postJson<HostView>('/api/invite/host', { artistId, t: token }),
-    enabled: Boolean(artistId && token),
+    // A link the server refused is not asked about again: a later check that failed another way
+    // would replace that answer, and the list read before it would come back on screen.
+    enabled: (asked) => Boolean(artistId && token) && !invalidLink(asked.state.error),
     retry: false,
   });
-  if (!artistId || !token || (query.error instanceof ApiError && query.error.code === 'INVALID_HOST_LINK')) {
+  if (!artistId || !token || invalidLink(query.error)) {
     return (
       <>
         <PageHeading title="게스트 초대 페이지" />
@@ -229,7 +233,7 @@ const OUTDATED = new Set(['GUEST_LIMIT_REACHED', 'GUEST_ALREADY_LISTED', 'WAITLI
  */
 function afterRefusal(client: QueryClient, queryKey: readonly unknown[], failure: unknown) {
   if (!(failure instanceof ApiError)) return;
-  if (failure.code === 'INVALID_HOST_LINK') void client.resetQueries({ queryKey });
+  if (invalidLink(failure)) void client.resetQueries({ queryKey });
   else if (OUTDATED.has(failure.code)) void client.invalidateQueries({ queryKey });
 }
 
