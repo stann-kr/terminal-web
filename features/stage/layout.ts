@@ -153,7 +153,8 @@ export interface StageLayout {
   list: (ListInfo & { kind: CarrierKind; pager: Rect }) | null;
   /** The detail that is open, if any, and which carrier it belongs to. */
   open: { kind: CarrierKind; id: string } | null;
-  /** False when a shown element would leave the stage: the stage mode must fall back to flow. */
+  /** False when a shown element would leave the stage. The stage does not read it (content that
+   * spills escalates instead, see Stage); the layout tests check every tiling with it. */
   fits: boolean;
 }
 

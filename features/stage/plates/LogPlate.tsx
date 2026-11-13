@@ -258,7 +258,8 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
             </ol>
           )}
           <nav className={styles.logPager} aria-label="로그 쪽 이동">
-            {prev ? <button type="button" data-turn="prev" onClick={event => prev(event.currentTarget)}>PREV</button> : <span>PREV</span>}
+            {/* A key with no turn left stays a key (dimmed, turning nothing), so focus is never dropped from under it. */}
+            <button type="button" data-turn="prev" aria-disabled={!prev} onClick={event => prev?.(event.currentTarget)}>PREV</button>
             <span aria-hidden="true">
               {pageReadout(page, Math.max(totalPages, 1))}
               {subCount > 1 && ` · ${index + 1}/${subCount}`}
@@ -267,7 +268,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
               {pageAnnouncement(page, Math.max(totalPages, 1))}
               {subCount > 1 ? `, 나눈 쪽 ${subCount}쪽 중 ${index + 1}쪽` : ''}
             </span>
-            {next ? <button type="button" data-turn="next" onClick={event => next(event.currentTarget)}>NEXT</button> : <span>NEXT</span>}
+            <button type="button" data-turn="next" aria-disabled={!next} onClick={event => next?.(event.currentTarget)}>NEXT</button>
           </nav>
         </>
       )}

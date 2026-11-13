@@ -12,10 +12,19 @@ import { NodeActivity } from '../features/transmit/NodeActivity';
 import siteContent from '../features/about/content.json';
 import NotFound from '../app/not-found';
 import { ROUTE_HOLD_MS } from '../features/ui/useRouteHold';
+import { TextPages } from '../features/stage/TextPages';
+import { StageModeContext } from '../features/stage/usePaging';
+import type { Measurer } from '../features/stage/text';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }));
 vi.mock('next/navigation', () => ({ useSearchParams: () => navigation.search, usePathname: () => navigation.pathname, useRouter: () => router }));
+// jsdom cannot measure text: a test that needs pages hands TextPages a measurer of its own.
+const measuring = vi.hoisted(() => ({ fake: null as Measurer | null }));
+vi.mock('../features/stage/text', async importOriginal => {
+  const actual = await importOriginal<typeof import('../features/stage/text')>();
+  return { ...actual, defaultMeasurer: () => measuring.fake ?? actual.defaultMeasurer() };
+});
 
 const artist = (id: string, name: string, extra: Partial<TerminalEvent['artists'][number]> = {}): TerminalEvent['artists'][number] => ({ id, name, origin: 'KR', dock: '1', time: 'TBA', status: 'ARCHIVED', ...extra });
 const past: TerminalEvent = { id: 'OLD', session: 'Past event', subtitle: 'A past night', date: '2025-03-07', time: '23:00', venue: 'FAUST', district: 'SEOUL', coords: '', capacity: '', sound: '', status: 'ARCHIVED', artists: [artist('PUBLIC', 'VISIBLE ARTIST'), artist('PRIVATE', 'PRIVATE NAME', { status: 'CLASSIFIED' })] };
@@ -118,6 +127,22 @@ describe('stage shell', () => {
     go('/');
     go('/signal');
     expect(within(back()).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
+  });
+
+  it('reads a query with the path it belongs to: back from a list page left, and a page opened directly backs up home', () => {
+    const events = Array.from({ length: 40 }, (_, index) => ({ ...past, id: `EVENT ${String(index).padStart(2, '0')}`, session: `EVENT ${index}` }));
+    const back = (container: HTMLElement) => within(container.querySelector<HTMLElement>('[data-back]')!);
+    const moved = shell(events);
+    moved.go('/events', 'page=2');
+    moved.go('/artists');
+    expect(back(moved.container).getByRole('link', { name: '이전 화면으로: 이벤트' })).toHaveAttribute('href', '/events?page=2');
+    cleanup();
+    // Opened at a list page, the first view is that page: back leads up to the home, and nothing moves.
+    navigation.pathname = '/events';
+    navigation.search = new URLSearchParams('page=2');
+    const direct = shell(events);
+    expect(back(direct.container).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
+    expect(direct.container.querySelector('#stage')).not.toHaveAttribute('data-moving');
   });
 
   it('makes every plate but the open one a single link, with its cells as cards of their own', () => {
@@ -449,6 +474,36 @@ describe('stage views', () => {
     const pager = screen.getByRole('navigation', { name: '목록 쪽 이동' });
     expect(within(pager).getByRole('link', { name: 'PREV' })).toHaveAttribute('href', '/events');
     expect(screen.queryByRole('textbox', { name: /검색/ })).not.toBeInTheDocument();
+  });
+
+  it('shows an address past the last list page as the last page, and puts that page in the address', async () => {
+    const events = Array.from({ length: 40 }, (_, index) => ({ ...past, id: `EVENT ${String(index).padStart(2, '0')}`, session: `EVENT ${index}` }));
+    const { container, go } = shell(events);
+    go('/events');
+    const pages = Number(within(screen.getByRole('navigation', { name: '목록 쪽 이동' })).getByText(/^\d+ \/ \d+$/).textContent!.split('/')[1]);
+    const last = String(pages).padStart(2, '0');
+    go('/events', 'page=9');
+    expect(within(plate(container, 'events')).getByText(`PAGE ${last}`)).toBeInTheDocument();
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith(`/events?page=${pages}`, { scroll: false }));
+    go('/events', `page=${pages}`);
+    // The corrected page takes the place of the address it corrects: back leads where the visit came from.
+    expect(within(container.querySelector<HTMLElement>('[data-back]')!).getByRole('link', { name: /이전 화면으로/ })).toHaveAttribute('href', '/events');
+    go('/artists');
+    const back = within(container.querySelector<HTMLElement>('[data-back]')!).getByRole('link', { name: '이전 화면으로: 이벤트' });
+    expect(back).toHaveAttribute('href', `/events?page=${pages}`);
+    expect(back).toHaveTextContent(`EVENTS · ${last}`);
+  });
+
+  it('does not put a page in the address while the list is still being read', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    clients.push(client);
+    navigation.pathname = '/events';
+    navigation.search = new URLSearchParams('page=3');
+    render(<QueryClientProvider client={client}><Shell>{null}</Shell></QueryClientProvider>);
+    await act(() => new Promise(resolve => setTimeout(resolve, 100)));
+    expect(router.replace).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 
   it('links repeated confirmed appearances to one canonical artist and highlights only STANN LUMO', () => {
@@ -825,6 +880,31 @@ describe('visitor log pager', () => {
     expect(router.push).toHaveBeenCalledWith('/transmit?page=3', { scroll: false });
   });
 
+  it('keeps keyboard focus on NEXT when it reaches the last sub-page, where it turns nothing', () => {
+    const real = window.getComputedStyle.bind(window);
+    // Beside the write form (two columns), each entry taller than half the list: one entry per sub-page.
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((node, pseudo) =>
+      (node as Element).className?.includes?.('logGrid') ? ({ gridTemplateColumns: '1fr 1fr' } as CSSStyleDeclaration) : real(node, pseudo));
+    vi.spyOn(HTMLOListElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
+    vi.spyOn(HTMLLIElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 60));
+    const pager = logShell('page=3');
+    const next = pager.getByRole('button', { name: 'NEXT' });
+    next.focus();
+    const subPages = pager.getByText(/· 1\/\d+/).textContent!.split('/').pop()!;
+    expect(Number(subPages)).toBeGreaterThan(1);
+    for (let step = 2; step <= Number(subPages); step += 1) {
+      fireEvent.click(next);
+      expect(pager.getByText(new RegExp(`· ${step}/${subPages}`))).toBeInTheDocument();
+    }
+    expect(next).toHaveFocus();
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(next);
+    fireEvent.keyDown(next, { key: 'ArrowRight' });
+    expect(pager.getByText(new RegExp(`· ${subPages}/${subPages}`))).toBeInTheDocument();
+    expect(router.push).not.toHaveBeenCalled();
+    expect(next).toHaveFocus();
+  });
+
   it('shows an arrow key’s turn on the PREV/NEXT key it stands for', () => {
     vi.useFakeTimers();
     const pager = logShell('page=2');
@@ -838,6 +918,34 @@ describe('visitor log pager', () => {
     act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
     expect(router.push).toHaveBeenCalledTimes(1);
     expect(router.push).toHaveBeenCalledWith('/transmit', { scroll: false });
+  });
+});
+
+describe('text pages', () => {
+  it('keeps keyboard focus on a page key at the end of the text, where it turns nothing', async () => {
+    const user = userEvent.setup();
+    measuring.fake = { wrap: text => [{ text, width: 10 }] };
+    // One line of room per page: each paragraph is a page.
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(40);
+    try {
+      render(<StageModeContext.Provider value="stage"><TextPages paragraphs={['first', 'second']} label="소개" /></StageModeContext.Provider>);
+      const prev = screen.getByRole('button', { name: 'PREV' });
+      const next = screen.getByRole('button', { name: 'NEXT' });
+      expect(prev).toHaveAttribute('aria-disabled', 'true');
+      expect(next).toHaveAttribute('aria-disabled', 'false');
+      next.focus();
+      await user.keyboard('{Enter}');
+      expect(screen.getByText('second')).toBeInTheDocument();
+      expect(next).toHaveFocus();
+      expect(next).toHaveAttribute('aria-disabled', 'true');
+      await user.keyboard('{Enter}');
+      expect(screen.getByText('second')).toBeInTheDocument();
+      expect(next).toHaveFocus();
+      expect(prev).toHaveAttribute('aria-disabled', 'false');
+    } finally {
+      measuring.fake = null;
+    }
   });
 });
 
