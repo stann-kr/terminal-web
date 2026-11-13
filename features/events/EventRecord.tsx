@@ -1,9 +1,12 @@
 'use client';
-import Link from 'next/link';
-import { useSyncExternalStore, type ReactNode } from 'react';
+import Link from '@/features/ui/RouteLink';
+import { type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
-import { Action, ActionDeck, BrandText, Facts, ui } from '@/features/ui/Ui';
-import { CALENDAR_FEED_PATH, calendarSubscribeHref } from './calendar';
+import { getSlotTimes } from '@/lib/events/lifecycle';
+import { Action, ActionDeck, Arrow, BrandText, Facts, ui } from '@/features/ui/Ui';
+import { CALENDAR_BLOCKED, useCalendarOpen, useSubscribeHref } from './useCalendarKey';
+import { SITE_ORIGIN } from './metadata';
+import { useShareLink, type ShareState } from '@/features/ui/share';
 import {
   buildArtistArchive,
   profileForAppearance,
@@ -63,17 +66,6 @@ export function EventFacts({
     />
   );
 }
-const noSubscribe = () => () => {};
-/** The subscribe link for this browser: `webcal:` on Apple devices, Google Calendar elsewhere. */
-function useSubscribeHref() {
-  return useSyncExternalStore(
-    noSubscribe,
-    () => calendarSubscribeHref(location.origin, /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)),
-    // The server cannot know the device; the feed itself stands in until hydration.
-    () => CALENDAR_FEED_PATH,
-  );
-}
-
 function KeyFace({ label, children }: { label: string; children: ReactNode }) {
   return (
     <span className={styles.keyText}>
@@ -91,23 +83,42 @@ function KeyFace({ label, children }: { label: string; children: ReactNode }) {
 function SessionKeys({ event }: { event: TerminalEvent }) {
   const subscribe = useSubscribeHref();
   const map = event.status === 'ARCHIVED' ? null : venueMapHref(event);
+  const { state: shared, share: shareLink } = useShareLink();
+  // The public address, whichever address this page was opened at.
+  const share = () => shareLink(new URL(eventHref(event.id), SITE_ORIGIN).href, event.session);
+  const [calendar, openCalendar] = useCalendarOpen(subscribe);
   return (
-    <ActionDeck className={styles.sessionKeys}>
-      <Action primary href={subscribe} external={subscribe.startsWith('https:')}>
-        <KeyFace label="CALENDAR">
-          <BrandText text="TERMINAL" /> 일정 구독
-        </KeyFace>
-      </Action>
-      {map && (
-        <Action primary external href={map}>
-          <KeyFace label="MAP">
-            지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span>
+    <>
+      <ActionDeck className={styles.sessionKeys} surface="paper">
+        <a
+          className={`${ui.action} ${ui.primary}`}
+          href={subscribe}
+          {...(subscribe.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          data-pending={calendar === 'opening' ? '' : undefined}
+          onClick={openCalendar}
+        >
+          <KeyFace label="CALENDAR">
+            {calendar === 'blocked' ? CALENDAR_BLOCKED : <><BrandText text="TERMINAL" /> 일정 구독</>}
           </KeyFace>
-        </Action>
-      )}
-    </ActionDeck>
+        </a>
+        {map && (
+          <Action primary external href={map}>
+            <KeyFace label="MAP">
+              지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span>
+            </KeyFace>
+          </Action>
+        )}
+        <button type="button" className={`${ui.button} ${ui.primary}`} onClick={() => void share()}>
+          <KeyFace label="SHARE">{SHARE_TEXT[shared]}</KeyFace>
+        </button>
+      </ActionDeck>
+      <span className={ui.srOnly} role="status">{shared === 'idle' ? (calendar === 'blocked' ? CALENDAR_BLOCKED : '') : SHARE_TEXT[shared]}</span>
+    </>
   );
 }
+
+/** Short, so the key keeps its size when its text changes. */
+const SHARE_TEXT: Record<ShareState, string> = { idle: '링크 공유', copied: '링크 복사됨', failed: '복사 실패' };
 
 export function EventActions({
   event,
@@ -150,19 +161,28 @@ export function Lineup({
   event,
   events,
   stages = false,
+  now,
 }: {
   event: TerminalEvent;
   events: TerminalEvent[];
   stages?: boolean;
+  now?: Date;
 }) {
   const profiles = buildArtistArchive(events);
   const visible = publicArtists(event);
+  // While the session runs, the slot the published timetable is on. It is the timetable, not what
+  // is playing: the dock band says so, and a slot without times (TBA) is never marked.
+  const onNow = (artist: Artist) => {
+    if (event.status !== 'LIVE' || !now) return false;
+    const slot = getSlotTimes(event, artist.time);
+    return !!slot && slot.start <= now && now < slot.end;
+  };
   function identity(artist: Artist) {
     const profile = profileForAppearance(profiles, event.id, artist.id);
     return (
       <>
         {profile ? (
-          <Link href={artistHref(profile.key)} data-carrier={`artist:${profile.key}`} scroll={false}>{artist.name}</Link>
+          <Link href={artistHref(profile.key)} data-carrier={`artist:${profile.key}`} scroll={false}>{artist.name}<Arrow /></Link>
         ) : (
           artist.name
         )}
@@ -184,17 +204,26 @@ export function Lineup({
               >
                 <h3 className={ui.band}>
                   <span>DOCK {dock}</span>
-                  <span>공개 공연표</span>
+                  <span>
+                    {visible.some((artist) => (artist.dock || 'TBA') === dock && onNow(artist))
+                      ? '시간표 기준 지금 순서'
+                      : '공개 공연표'}
+                  </span>
                 </h3>
                 <ul className={styles.stageSlots}>
                   {visible
                     .filter((artist) => (artist.dock || 'TBA') === dock)
                     .map((artist) => (
-                      <li key={artist.id} data-origin="">
+                      <li key={artist.id} data-origin="" data-now={onNow(artist) || undefined}>
                         <div className={styles.slotCode}>
                           {artist.id}
                           <span>
-                            {artist.status === 'ARCHIVED'
+                            {onNow(artist) ? (
+                              <>
+                                NOW
+                                <span className={ui.srOnly}> (시간표 기준 지금 순서)</span>
+                              </>
+                            ) : artist.status === 'ARCHIVED'
                               ? 'ARCHIVE'
                               : 'CONFIRMED'}
                           </span>

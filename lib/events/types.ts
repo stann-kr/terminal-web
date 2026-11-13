@@ -29,12 +29,18 @@ export interface TerminalEvent {
   log?: { en: string; ko: string };
   date: string;
   time: string;
+  /** When the night ends, `HH:MM` KST: the first such time after the start (`05:00` is the next morning). */
+  endTime?: string;
   venue: string;
   district: string;
   coords: string;
   capacity: string;
   sound: string;
   status: EventStatus;
+  /** Days before the start that guest requests open; the default window when absent. */
+  accessWindowDays?: number;
+  /** Some artist row carries a guest code; only the boolean leaves the server, never a code. */
+  guestAccess?: boolean;
   artists: Artist[];
   invitationLines?: {
     en: string[];

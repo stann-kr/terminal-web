@@ -1,6 +1,6 @@
 import { isJsonObject, isString } from '@/lib/api/validation';
 
-export type ProtectedAction = 'code-info' | 'gate-request' | 'signal' | 'transmit';
+export type ProtectedAction = 'code-info' | 'gate-request' | 'host' | 'host-file' | 'signal' | 'transmit';
 
 export interface RateLimitBinding {
   limit(input: { key: string }): Promise<{ success: boolean }>;

@@ -1,14 +1,22 @@
-/* Each step of the form opens on a band across the plate (the fieldset already runs flush). */
+/* Each step of the form opens on a band across the plate. The fieldset already runs flush, so the
+   band does not bleed again (`ui.band` would pull it a second bleed to the left). */
 .legend {
   width: 100%;
+  margin-inline: 0;
 }
-/* The code field and its check key share one line; the key is as tall as the input. */
+/* The code field and its check key share one line; the key is as tall as the input. The field's
+   own box steps aside (its children join this grid), so the label line runs over the key to the
+   plate's edge as every other label line does, with "필수" at the same inset. */
 .code {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
 }
+.code > div { display: contents; }
+.code > div > :first-child { grid-column: 1 / -1; }
 .code > button {
+  grid-row: 2;
+  grid-column: 2;
   min-height: 44px;
   padding-inline: 16px var(--bleed);
 }
@@ -34,15 +42,37 @@
   font-weight: 400;
   letter-spacing: .04em;
 }
+/* A full code: the alert band, then what waiting means, flush with the inviter line above. */
+.waitlist {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+.waitlist > p:last-child {
+  margin: 0;
+  padding: 0 var(--bleed);
+  font-size: var(--text-label);
+  line-height: 1.5;
+}
 .contacts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-@media (max-width: 860px) {
+/* The form answers the width of its own plate (the form plate is a container), not the window's:
+   in a session file's access column it is narrow on a wide window too. */
+@container (max-width: 560px) {
   .contacts { grid-template-columns: minmax(0, 1fr); }
 }
-@media (max-width: 400px) {
+/* Too narrow for both on one line: the key drops under the input, a rule apart so it never reads
+   as a second empty input, its words starting where the label's do. */
+@container (max-width: 360px) {
   .code { grid-template-columns: minmax(0, 1fr); }
+  .code > button {
+    grid-row: auto;
+    grid-column: 1;
+    margin-top: var(--rule);
+    padding-inline: var(--bleed);
+  }
 }
 
 /* Short labels, codes and times never break mid-phrase. */
@@ -50,10 +80,26 @@
   white-space: nowrap;
 }
 
-/* Why step 02 is still shut: it waits for the code above. */
-.locked {
+/* An invite whose inviter is full: the band takes the alert colour, the copy sits on the plate. */
+.closedInvite {
+  display: grid;
+  gap: 14px;
+}
+.closedBand {
+  --fill: var(--alert);
+  --on-fill: var(--alert-ink);
+}
+.closedText {
+  display: grid;
+  gap: 10px;
+  padding-inline: var(--bleed);
+}
+.closedText h2 {
   margin: 0;
-  padding: 8px var(--bleed);
+  font: 700 var(--t-xl)/1.15 var(--display);
+}
+.closedText p { margin: 0; }
+.closedEn {
   color: var(--muted);
-  font-size: var(--text-ui);
+  font-size: var(--text-label);
 }

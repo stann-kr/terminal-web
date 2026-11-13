@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const validation = validateSignalSubscriptionInput(parsed.body);
     if (!validation.ok) return noStoreJson({ error: validation.error }, 400);
 
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const abuseDecision = await enforceRateLimit(env, 'signal', request);
     if (!abuseDecision.ok) {
       return noStoreJson({ error: abuseDecision.error }, abuseDecision.status);

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const db = getDb(env.DB);
     const [eventRows, artistRows] = await Promise.all([
       listStoredEventRows(db),

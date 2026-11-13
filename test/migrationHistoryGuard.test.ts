@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import {
   mkdir,
   mkdtemp,
@@ -15,6 +16,7 @@ import {
   checkMigrationHistory,
   createMigrationLockManifest,
   inspectMigrationHistory,
+  verifyMigrationsAgainstBase,
   writeMigrationLockManifest,
 } from '../scripts/check-migration-history.mjs';
 import {
@@ -253,6 +255,88 @@ describe('migration history lock', () => {
         lockManifest: manifest,
       }),
     ).rejects.toThrow('deleted: migrations/0001_add_signal.sql');
+  });
+});
+
+/** Commits everything under root as the base the next change is compared with. */
+function commitBase(root: string) {
+  const git = (...args: string[]) =>
+    execFileSync(
+      'git',
+      [
+        '-c', 'user.name=fixture',
+        '-c', 'user.email=fixture@example.invalid',
+        '-c', 'commit.gpgsign=false',
+        '-c', 'core.hooksPath=/dev/null',
+        '-c', 'core.autocrlf=false',
+        ...args,
+      ],
+      { cwd: root, stdio: 'pipe' },
+    );
+  git('init', '--quiet');
+  git('add', '--all');
+  git('commit', '--quiet', '--message', 'base');
+}
+
+describe('migration history against a base commit', () => {
+  it('accepts a migration added after the base', async () => {
+    const { root } = await makeLockedFixture();
+    commitBase(root);
+    const migrationsDir = await writeHistory(root, [
+      '0000_initial',
+      '0001_add_signal',
+      '0002_add_waitlist',
+    ]);
+    const history = await inspectMigrationHistory({ migrationsDir, repoRoot: root });
+
+    await expect(verifyMigrationsAgainstBase(history, 'HEAD', { repoRoot: root })).resolves.toEqual([
+      'migrations/0000_initial.sql',
+      'migrations/0001_add_signal.sql',
+      'migrations/meta/0000_snapshot.json',
+      'migrations/meta/0001_snapshot.json',
+    ]);
+  });
+
+  it('rejects a migration rewritten together with its lock', async () => {
+    const { migrationsDir, root } = await makeLockedFixture();
+    commitBase(root);
+    await writeFile(
+      path.join(migrationsDir, '0000_initial.sql'),
+      'CREATE TABLE rewritten (id TEXT);\n',
+    );
+    const history = await inspectMigrationHistory({ migrationsDir, repoRoot: root });
+    const refreshedLock = await createMigrationLockManifest(history, { repoRoot: root });
+
+    // The lock check alone is satisfied: both sides of it were changed.
+    await expect(
+      checkMigrationHistory({ migrationsDir, repoRoot: root, lockManifest: refreshedLock }),
+    ).resolves.toBeDefined();
+    await expect(verifyMigrationsAgainstBase(history, 'HEAD', { repoRoot: root })).rejects.toThrow(
+      'overwritten: migrations/0000_initial.sql',
+    );
+  });
+
+  it('rejects a snapshot or migration the base had that is gone', async () => {
+    const { root } = await makeLockedFixture();
+    commitBase(root);
+    const migrationsDir = await writeHistory(root, ['0000_initial', '0001_renamed']);
+    const history = await inspectMigrationHistory({ migrationsDir, repoRoot: root });
+
+    await expect(verifyMigrationsAgainstBase(history, 'HEAD', { repoRoot: root })).rejects.toThrow(
+      'deleted: migrations/0001_add_signal.sql',
+    );
+  });
+
+  it('says so when the base commit is not there to compare with', async () => {
+    const { history, root } = await makeLockedFixture();
+    commitBase(root);
+
+    await expect(
+      verifyMigrationsAgainstBase(history, 'origin/missing', { repoRoot: root }),
+    ).rejects.toThrow('cannot read migrations at the base commit origin/missing');
+    await expect(
+      verifyMigrationsAgainstBase(history, '--output=x', { repoRoot: root }),
+    ).rejects.toThrow('base commit is not a usable ref');
   });
 });
 

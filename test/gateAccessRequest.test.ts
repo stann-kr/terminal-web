@@ -7,12 +7,15 @@ import {
   parseUpcomingEventCandidate,
   findUpcomingGateEvent,
   isGateRequestWindowActive,
+  hasConfiguredAccessCode,
   resolveArtistAccessCode,
 } from '../lib/gate/createAccessRequest';
 import {
   ACCESS_REQUEST_INSERT_SQL,
   classifyRejectedAccessRequest,
   createAccessRequestAtomically,
+  instagramKey,
+  WAITLIST_INSERT_SQL,
 } from '../lib/gate/d1AccessRequestRepository';
 import { GATE_SIGNAL_SUBSCRIPTION_INSERT_SQL } from '../lib/signal/d1SignalSubscriptionRepository';
 
@@ -35,11 +38,56 @@ describe('gate request runtime validation', () => {
         eventId: 'event-1',
         accessCode: 'ARTIST-01',
         name: 'Guest Name',
-        email: 'guest@example.com',
+        email: null,
         instagram: '@guest.name',
         privacyConsent: true,
         marketingConsent: false,
+        waitlist: false,
       },
+    });
+  });
+
+  it('waits only on the guest\'s own word, and never together with news', () => {
+    const waiting = parseGateRequestBody({ ...validBody, waitlist: true });
+    expect(waiting.ok && waiting.input.waitlist).toBe(true);
+    expect(parseGateRequestBody({ ...validBody, waitlist: 'true' })).toEqual({ ok: false, error: 'INVALID_INPUT' });
+    expect(parseGateRequestBody({ ...validBody, waitlist: true, marketingConsent: true })).toEqual({
+      ok: false,
+      error: 'INVALID_INPUT',
+    });
+  });
+
+  it('stores an Instagram id lowercase with its @, typed with or without one', () => {
+    for (const typed of ['Guest.Name', '@Guest.Name']) {
+      const result = parseGateRequestBody({ ...validBody, instagram: typed });
+      expect(result.ok && result.input.instagram).toBe('@guest.name');
+    }
+  });
+
+  it('keeps an email only for a guest who asked for news', () => {
+    const result = parseGateRequestBody({ ...validBody, marketingConsent: true });
+    expect(result.ok && result.input.email).toBe('guest@example.com');
+  });
+
+  it('needs no email from a guest who did not ask for news', () => {
+    const { email: _email, ...body } = validBody;
+    const result = parseGateRequestBody(body);
+    expect(result.ok && result.input.email).toBeNull();
+  });
+
+  it('asks for an email, and a well-formed one, once news is ticked', () => {
+    const { email: _email, ...body } = validBody;
+    expect(parseGateRequestBody({ ...body, marketingConsent: true })).toEqual({
+      ok: false,
+      error: 'EMAIL_REQUIRED_FOR_NEWS',
+    });
+    expect(parseGateRequestBody({ ...validBody, email: '  ', marketingConsent: true })).toEqual({
+      ok: false,
+      error: 'EMAIL_REQUIRED_FOR_NEWS',
+    });
+    expect(parseGateRequestBody({ ...validBody, email: 'nope', marketingConsent: true })).toEqual({
+      ok: false,
+      error: 'INVALID_EMAIL_FORMAT',
     });
   });
 
@@ -145,6 +193,18 @@ describe('artist access data validation', () => {
     expect(event && isGateRequestWindowActive(event, now)).toBe(true);
   });
 
+  it('opens an event earlier than the default window only by its own stored accessWindowDays', () => {
+    const now = new Date('2026-10-16T12:00:00+09:00');
+    const night = { date: '2026-11-28', time: '23:00 KST', status: 'UPCOMING' };
+    const gate = (data: object) => findUpcomingGateEvent([{ id: 'TRM-03', data: JSON.stringify(data) }], now)!;
+    expect(isGateRequestWindowActive(gate(night), now)).toBe(false);
+    expect(isGateRequestWindowActive(gate({ ...night, accessWindowDays: 60 }), now)).toBe(true);
+    // A malformed window falls back to the default instead of opening the gate.
+    for (const accessWindowDays of [0, 1.5, '60', 10_000]) {
+      expect(isGateRequestWindowActive(gate({ ...night, accessWindowDays }), now)).toBe(false);
+    }
+  });
+
   it('uses one access-code resolution for Gate request and code-info consumers', () => {
     expect(resolveArtistAccessCode([
       {
@@ -159,6 +219,25 @@ describe('artist access data validation', () => {
     expect(resolveArtistAccessCode([
       { id: 'artist-1', data: JSON.stringify({ guestCode: 'CODE-1', name: 'Broken' }) },
     ], 'code-1')).toEqual({ kind: 'unavailable' });
+  });
+
+  it('closes an event none of whose artist rows carries a guest code, apart from a wrong code', () => {
+    const lineupOnly = [
+      { id: 'artist-1', data: JSON.stringify({ name: 'Artist One', status: 'CONFIRMED' }) },
+    ];
+    expect(hasConfiguredAccessCode(lineupOnly)).toBe(false);
+    expect(hasConfiguredAccessCode([])).toBe(false);
+    expect(resolveArtistAccessCode(lineupOnly, 'code-1')).toEqual({ kind: 'closed' });
+    expect(resolveArtistAccessCode([], 'code-1')).toEqual({ kind: 'closed' });
+
+    // A hidden host row (PENDING, not on the public lineup) with a code keeps the event open.
+    const hostRow = {
+      id: 'host-row',
+      data: JSON.stringify({ name: 'HOST', status: 'PENDING', guestCode: 'HOST-CODE', guestLimit: 30 }),
+    };
+    expect(hasConfiguredAccessCode([...lineupOnly, hostRow])).toBe(true);
+    expect(resolveArtistAccessCode([...lineupOnly, hostRow], 'host-code')).toMatchObject({ kind: 'match', artistId: 'host-row' });
+    expect(resolveArtistAccessCode([...lineupOnly, hostRow], 'other')).toEqual({ kind: 'not_found' });
   });
 });
 
@@ -180,7 +259,9 @@ describe('atomic access request statement contract', () => {
 
   function createDatabaseStub(
     changes: number,
-    rejectionState: { is_duplicate: number; guest_count: number } | null = null,
+    rejectionState: { is_duplicate: number; guest_count: number; is_waitlisted?: number } | null = null,
+    /** Rows the waitlist insert adds (it runs right before the state query). */
+    waitlistChanges = 0,
   ) {
     const prepared: Array<{ sql: string; values: unknown[] }> = [];
     const database = {
@@ -196,26 +277,42 @@ describe('atomic access request statement contract', () => {
         return statement;
       },
       async batch(statements: unknown[]) {
-        expect(statements).toHaveLength(3);
-        return [
-          { success: true, meta: { changes }, results: [] },
-          { success: true, meta: { changes: 0 }, results: [] },
-          {
-            success: true,
-            meta: { changes: 0 },
-            results: rejectionState ? [rejectionState] : [],
-          },
-        ];
+        // The request insert, Signal, the waitlist clean-up, the waitlist insert when asked for,
+        // and the rejection state last.
+        const waitlistAt = statements.length === 5 ? 3 : -1;
+        return statements.map((_, index) => ({
+          success: true,
+          meta: { changes: index === 0 ? changes : index === waitlistAt ? waitlistChanges : 0 },
+          results: index === statements.length - 1 && rejectionState ? [rejectionState] : [],
+        }));
       },
     } as unknown as Pick<D1Database, 'prepare' | 'batch'>;
 
     return { database, prepared };
   }
 
-  it('checks duplicate email and capacity inside the request insert statement', () => {
-    expect(ACCESS_REQUEST_INSERT_SQL).toMatch(/WHERE NOT EXISTS[\s\S]*event_id = \? AND email = \?/);
+  it('checks a duplicate guest and capacity inside the request insert statement', () => {
+    expect(ACCESS_REQUEST_INSERT_SQL).toMatch(
+      /WHERE NOT EXISTS[\s\S]*event_id = \? AND \([\s\S]*lower\(ltrim\(instagram, '@'\)\) = \?[\s\S]*OR \(email IS NOT NULL AND email = \?\)/,
+    );
     expect(ACCESS_REQUEST_INSERT_SQL).toMatch(/SELECT COUNT\(\*\)[\s\S]*event_id = \? AND artist_id = \?/);
-    expect(ACCESS_REQUEST_INSERT_SQL).toContain('ON CONFLICT(event_id, email) DO NOTHING');
+    expect(ACCESS_REQUEST_INSERT_SQL).toContain('ON CONFLICT DO NOTHING');
+  });
+
+  it('folds case and a leading @ into the Instagram duplicate key', () => {
+    expect(instagramKey(' @Guest.Name ')).toBe('guest.name');
+    expect(instagramKey('guest.name')).toBe('guest.name');
+  });
+
+  it('stores no email and subscribes nobody for a guest without one', async () => {
+    const { database, prepared } = createDatabaseStub(1);
+    await createAccessRequestAtomically(database, {
+      ...atomicInput,
+      email: null,
+      marketingConsent: false,
+    });
+    expect(prepared[0].values[5]).toBeNull();
+    expect(prepared[1].values.at(-2)).toBe(0);
   });
 
   it('only inserts marketing after the request id exists and tolerates subscriber conflicts', () => {
@@ -225,11 +322,11 @@ describe('atomic access request statement contract', () => {
     expect(GATE_SIGNAL_SUBSCRIPTION_INSERT_SQL).toContain('ON CONFLICT(email) DO NOTHING');
   });
 
-  it('classifies duplicate email before capacity', () => {
+  it('classifies a duplicate guest before capacity', () => {
     expect(classifyRejectedAccessRequest({ is_duplicate: 1, guest_count: 25 }, 25)).toBe('duplicate');
   });
 
-  it('classifies a full capacity when the email is new', () => {
+  it('classifies a full capacity when the guest is new', () => {
     expect(classifyRejectedAccessRequest({ is_duplicate: 0, guest_count: 25 }, 25)).toBe(
       'guest_limit_reached',
     );
@@ -247,9 +344,11 @@ describe('atomic access request statement contract', () => {
     await expect(createAccessRequestAtomically(database, atomicInput)).resolves.toEqual({
       status: 'created',
     });
-    expect(prepared).toHaveLength(3);
+    expect(prepared).toHaveLength(4);
     expect(prepared[0].sql).toBe(ACCESS_REQUEST_INSERT_SQL);
     expect(prepared[1].sql).toBe(GATE_SIGNAL_SUBSCRIPTION_INSERT_SQL);
+    // No waitlist insert unless the caller asks for one (the artist's own entry never waits).
+    expect(prepared.some((entry) => entry.sql === WAITLIST_INSERT_SQL)).toBe(false);
   });
 
   it('runs the follow-up classifier after a duplicate zero-change insert', async () => {
@@ -258,12 +357,15 @@ describe('atomic access request statement contract', () => {
     await expect(createAccessRequestAtomically(database, atomicInput)).resolves.toEqual({
       status: 'duplicate',
     });
-    expect(prepared).toHaveLength(3);
-    expect(prepared[2].values).toEqual([
+    expect(prepared).toHaveLength(4);
+    expect(prepared[3].values).toEqual([
       atomicInput.eventId,
+      'guest',
       atomicInput.email,
       atomicInput.eventId,
       atomicInput.artistId,
+      atomicInput.eventId,
+      'guest',
     ]);
   });
 
@@ -273,5 +375,33 @@ describe('atomic access request statement contract', () => {
     await expect(createAccessRequestAtomically(database, atomicInput)).resolves.toEqual({
       status: 'guest_limit_reached',
     });
+  });
+
+  it("puts a guest's own request on the waitlist when the code is full", async () => {
+    const { database, prepared } = createDatabaseStub(0, { is_duplicate: 0, guest_count: 25, is_waitlisted: 1 }, 1);
+
+    await expect(createAccessRequestAtomically(database, { ...atomicInput, waitlist: true })).resolves.toEqual({
+      status: 'waitlisted',
+    });
+    const waitlist = prepared.find((entry) => entry.sql === WAITLIST_INSERT_SQL);
+    // Name and Instagram only: the email the guest may have typed for news is not kept.
+    expect(waitlist?.values.slice(0, 8)).toEqual([
+      'req-1', 'event-1', 'artist-1', 'Artist Name', 'Guest Name', '@guest', 1, atomicInput.createdAt,
+    ]);
+    expect(waitlist?.values.at(-1)).toBe(25);
+  });
+
+  it('tells a guest who was waiting already from one this request put there', async () => {
+    // The waitlist insert added nothing, yet the guest is waiting: the entry is an older one.
+    const { database } = createDatabaseStub(0, { is_duplicate: 0, guest_count: 25, is_waitlisted: 1 }, 0);
+
+    await expect(createAccessRequestAtomically(database, { ...atomicInput, waitlist: true })).resolves.toEqual({
+      status: 'already_waitlisted',
+    });
+  });
+
+  it('tells a repeat from a waiting guest before the waitlist', () => {
+    expect(classifyRejectedAccessRequest({ is_duplicate: 1, guest_count: 25, is_waitlisted: 1 }, 25, true)).toBe('duplicate');
+    expect(classifyRejectedAccessRequest({ is_duplicate: 0, guest_count: 25, is_waitlisted: 1 }, 25, false)).toBe('guest_limit_reached');
   });
 });

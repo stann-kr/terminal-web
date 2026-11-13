@@ -1,6 +1,7 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import { useRouter } from 'next/navigation';
+import { useRouteHold } from '@/features/ui/useRouteHold';
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { Loading, StateNotice, type Surface } from '@/features/ui/Ui';
@@ -10,7 +11,7 @@ import { Box } from './Box';
 import { BootScreen } from './BootScreen';
 import { Rings } from './Rings';
 import { ScrollHint } from './ScrollHint';
-import { NO_SPILL, computeFlowLayout, computeLayout, stageMetrics, type PlacedItem, type PlateMode, type Rect, type Spill, type StageLayout } from './layout';
+import { NO_SPILL, computeFlowLayout, computeLayout, setOutRect, stageMetrics, type PlacedItem, type PlateMode, type Rect, type Spill, type StageLayout } from './layout';
 import {
   PLATE_ORDER,
   carrierKey,
@@ -43,12 +44,13 @@ const MOVING_MS = 900;
 const BOOT_MAX_MS = 5000;
 /** Shortest time the boot screen stays, counted from the page load, so it reads as a moment (ms). */
 const BOOT_MIN_MS = 1000;
-/** How long a folded detail keeps its full content before it rests as a light row (ms). */
-const DETAIL_REST_MS = 700;
+/** How long a folded detail keeps its full content before it rests as a light row (ms): past its
+ * wave delay, its hold and its fade (--close-hold + --dur-exit). */
+const DETAIL_REST_MS = 900;
 /** Plates whose heads the carriers sit under; their real head heights feed the layout. */
 const HEADED: PlateId[] = ['events', 'artists'];
 
-type SpillState = { key: string; w: number; h: number; spill: Spill };
+type SpillState = { key: string; scope: string; w: number; h: number; spill: Spill };
 type Origin = { item: string; token: number; rect: Rect };
 type Heads = Partial<Record<PlateId, { mode: PlateMode; px: number }>>;
 
@@ -105,14 +107,15 @@ function measureHeads(root: HTMLElement, plates: StageLayout['plates'], gap: num
 const sameHeads = (a: Heads, b: Heads) => HEADED.every(id => a[id]?.mode === b[id]?.mode && Math.abs((a[id]?.px ?? 0) - (b[id]?.px ?? 0)) < 1);
 
 /**
- * The stage: six plates, a back card, and one element per event and artist, all living here for
+ * The stage: the plates, a back card, and one element per event and artist, all living here for
  * the whole visit. The address decides the state, the state picks the view's tiling, and every
  * element travels to its new rect with its content redrawn for the size it gets. Content that
  * does not fit spreads the view over sheets (a narrow window gets one per column); the server's
  * first markup, and a page without script, lay the same elements out in document order (flow).
  */
-export function Stage({ state: address }: { state: StageState }) {
+export function Stage({ state: address, addressKnown = true }: { state: StageState; addressKnown?: boolean }) {
   const router = useRouter();
+  const go = useRouteHold();
   const root = useRef<HTMLDivElement>(null);
   const { data, query } = useStageData();
   const state = resolveMissing(address, data);
@@ -120,11 +123,18 @@ export function Stage({ state: address }: { state: StageState }) {
   const viewport = useViewport();
 
   // ── Where the back card leads: the view before this one, or one level up ─────────────────
+  // Until the address is settled (its query arrives a commit after the first render, see Shell),
+  // the view in place is the arrival itself: it is replaced, not stepped back to.
   const [trail, setTrail] = useState<StageState[]>([state]);
+  const [trailKnown, setTrailKnown] = useState(addressKnown);
+  if (trailKnown !== addressKnown) setTrailKnown(addressKnown);
   if (stateKey(trail[trail.length - 1]) !== key) {
     const earlier = trail[trail.length - 2];
     // Home is the root: arriving there starts the trail over.
-    setTrail(state.view === 'home' ? [state] : earlier && stateKey(earlier) === key ? trail.slice(0, -1) : [...trail.slice(-8), state]);
+    setTrail(
+      state.view === 'home' || !trailKnown ? [state]
+        : earlier && stateKey(earlier) === key ? trail.slice(0, -1) : [...trail.slice(-8), state],
+    );
   }
   const current = stateKey(trail[trail.length - 1]) === key ? trail : [...trail, state];
   const parent = stageParentHref(state);
@@ -152,8 +162,13 @@ export function Stage({ state: address }: { state: StageState }) {
   }, []);
   const size = viewport ? stageSizeFor(viewport) : null;
   // While the window is being dragged the last spill holds; once it settles, the view starts over
-  // from no spill and escalates again for the new size.
-  const spill = spilled && spilled.key === key && viewport && (viewport.resizing || (spilled.w === viewport.w && spilled.h === viewport.h)) ? spilled.spill : NO_SPILL;
+  // from no spill and escalates again for the new size. Going from file to file of one kind (session
+  // to session, artist to artist) keeps the room the last file was given (its sheet to itself), so
+  // the other plates do not re-tile each time one file needs a sheet alone and the next does not;
+  // how much a sheet grew is measured again for each file.
+  const spillScope = state.view === 'session' || state.view === 'artist' ? state.view : key;
+  const sameWindow = !!spilled && !!viewport && (viewport.resizing || (spilled.w === viewport.w && spilled.h === viewport.h));
+  const spill = spilled && sameWindow && spilled.scope === spillScope ? (spilled.key === key ? spilled.spill : { ...spilled.spill, grow: {} }) : NO_SPILL;
   const sheetGap = 2 * stageConfig.frameY;
   let staged: StageLayout | null = null;
   if (viewport && size && fontsReady && state.view !== 'none') {
@@ -206,13 +221,18 @@ export function Stage({ state: address }: { state: StageState }) {
   // on a phone by a finger's momentum or the sheets settling), and checked once more after the
   // layout has settled.
   const scene = sceneKey(state);
+  // Where the reader was when the scene changed, for the boxes to set out from what was on screen.
+  const leftAt = useRef<{ key: string; y: number } | null>(null);
   useLayoutEffect(() => {
+    leftAt.current = { key, y: window.scrollY };
     const top = () => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     top();
     const frame = requestAnimationFrame(() => {
       if (window.scrollY !== 0) top();
     });
     return () => cancelAnimationFrame(frame);
+    // Only a new scene jumps to the top; `key` is read for that commit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scene]);
 
   // Heads are measured at the arrival size right after each change, before the frame paints.
@@ -237,6 +257,12 @@ export function Stage({ state: address }: { state: StageState }) {
 
   // Content that spills out of its rect is never clipped: the view escalates (see `escalate`) until
   // it fits. Checked after every change inside the stage and when the fonts arrive, heads first.
+  // A list address past its last page shows the last page (the count depends on the window, so
+  // the address is left as it is: a wider window must not rewrite where a narrower one was). The
+  // plates print the page that is shown, as the pager does.
+  const shownState: StageState = layout.list && state.view === 'plate' && state.plate === (layout.list.kind === 'event' ? 'events' : 'artists') && state.page !== layout.list.page
+    ? { ...state, page: layout.list.page }
+    : state;
   const latest = useRef({ plates: layout.plates, spill, primary });
   // A layout effect, so a synchronous re-render inside the check loop is seen by the next step.
   useLayoutEffect(() => {
@@ -259,7 +285,7 @@ export function Stage({ state: address }: { state: StageState }) {
         const found = spillOf(element);
         if (!found) return;
         const next = escalate(latest.current.spill, found.leaf, found.short, latest.current.primary);
-        flushSync(() => setSpilled({ key, w: viewport.w, h: viewport.h, spill: next }));
+        flushSync(() => setSpilled({ key, scope: spillScope, w: viewport.w, h: viewport.h, spill: next }));
       }
     };
     const schedule = () => {
@@ -275,28 +301,65 @@ export function Stage({ state: address }: { state: StageState }) {
       cancelAnimationFrame(frame);
       mutations.disconnect();
     };
-  }, [onStage, key, viewport, gap]);
+  }, [onStage, key, spillScope, viewport, gap]);
 
   // ── Carrier origin: a detail opened from elsewhere sets out from where the click was ─────────
   const [origin, setOrigin] = useState<Origin | null>(null);
+  // ── Plate origins: across a jump of the page, boxes set out from what was on screen ─────────
+  const [plateOrigins, setPlateOrigins] = useState<Partial<Record<PlateId, Origin>>>({});
   const settledKey = useRef(key);
   const openBefore = useRef(layout.open);
+  // Whether the address was settled in the commit before this one (kept current further down): the
+  // view the settled address replaces is the arrival itself, not a change of view to answer.
+  const knownBefore = useRef(addressKnown);
   useLayoutEffect(() => {
     if (settledKey.current === key) return;
     settledKey.current = key;
+    if (!knownBefore.current) {
+      openBefore.current = layout.open;
+      return;
+    }
+    // A new scene puts the page back at its top at once. A box would then set out from where it
+    // was on the page, not from where it was seen: from far below a phone's window, leaving the
+    // window empty while it travels. So across the jump each box sets out from where it was on
+    // screen; one that comes from off screen sets out from just beyond the window's edge; one that
+    // was off screen and stays off screen does not cross the window at all.
+    const element = root.current;
+    const after = window.scrollY;
+    const before = leftAt.current?.key === key ? leftAt.current.y : after;
+    const shift = before - after;
+    if (onStage && ready && element) {
+      // Where each plate is now (its move has not begun, or is cut short mid-way), on the stage.
+      const stageBox = element.getBoundingClientRect();
+      const stageTop = stageBox.top + after;
+      const now = (id: PlateId): Rect | null => {
+        const box = element.querySelector<HTMLElement>(`:scope > [data-plate="${id}"]`)?.getBoundingClientRect();
+        return box ? { x: box.left - stageBox.left, y: box.top - stageBox.top, w: box.width, h: box.height } : null;
+      };
+      const token = performance.now();
+      const next: Partial<Record<PlateId, Origin>> = {};
+      for (const id of PLATE_ORDER) {
+        const from = now(id);
+        if (!from || layout.plates[id].mode === 'hidden') continue;
+        const start = setOutRect(from, layout.plates[id].rect, before - stageTop, after - stageTop, window.innerHeight);
+        if (start) next[id] = { item: id, token, rect: start };
+      }
+      setPlateOrigins(next);
+    }
     // A detail grows out of where it was opened: the pressed row or plate, else its own index line.
     // A file of the same kind already open (another session from a session, its request form) stays
     // where it is and only trades its content, as every other box does; growing it again out of
     // the pressed line would fold the open file down and back up for nothing.
     const carrier = stageOrigin.take(state);
-    const before = openBefore.current;
+    const openedBefore = openBefore.current;
     openBefore.current = layout.open;
     const opened = layout.open ? layout.items[carrierKey(layout.open.kind, layout.open.id)] : null;
-    const from = carrier?.rect ?? (opened?.visible ? opened.rect : null);
-    const alreadyOpen = !!before && before.kind === layout.open?.kind;
+    // The pressed row was where it was seen: across the page's jump it keeps that place.
+    const pressed = carrier?.rect ? { ...carrier.rect, y: carrier.rect.y - shift } : null;
+    const from = pressed ?? (opened?.visible ? opened.rect : null);
+    const alreadyOpen = !!openedBefore && openedBefore.kind === layout.open?.kind;
     if (layout.open && from && !alreadyOpen) setOrigin({ item: `detail:${layout.open.kind}`, token: performance.now(), rect: from });
     // Focus follows the view: its title, or the stage when the title is not there yet.
-    const element = root.current;
     if (element) (viewTitle(element) ?? element).focus({ preventScroll: true });
     // Only a change of view does this; `state` is described by `key`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -306,7 +369,7 @@ export function Stage({ state: address }: { state: StageState }) {
     const element = root.current;
     if (!element || !onStage) return;
     const stage = element.getBoundingClientRect();
-    setPoint({ x: event.clientX - stage.left, y: event.clientY - stage.top });
+    setPoint({ x: event.clientX - stage.left, y: event.clientY - stage.top, scroll: window.scrollY });
   };
 
   const recordOrigin = (event: MouseEvent<HTMLDivElement>) => {
@@ -334,14 +397,17 @@ export function Stage({ state: address }: { state: StageState }) {
     keysState.current = { list, backHref };
   });
   useEffect(() => {
+    // The on-screen key a keyboard move stands for: the link to the same place inside `scope`.
+    const keyFor = (scope: string, href: string) =>
+      [...(root.current?.querySelectorAll<HTMLAnchorElement>(`${scope} a[href]`) ?? [])].find(link => link.getAttribute('href') === href) ?? null;
     const keydown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || typing(event.target)) return;
       const now = keysState.current;
-      // Escape does what the back card does.
+      // Escape does what the back card does, and shows its loading cover on the card.
       if (event.key === 'Escape') {
         if (!now.backHref) return;
         event.preventDefault();
-        router.push(now.backHref, { scroll: false });
+        go(now.backHref, { control: keyFor('[data-back]', now.backHref), scroll: false });
         return;
       }
       const direction = pageKey(event);
@@ -350,17 +416,25 @@ export function Stage({ state: address }: { state: StageState }) {
       const page = now.list.page + (direction === 'next' ? 1 : -1);
       if (page < 1 || page > now.list.pages) return;
       event.preventDefault();
-      router.push(listHref(now.list.kind, page), { scroll: false });
+      const href = listHref(now.list.kind, page);
+      // The cover shows on the pager key the arrow stands for.
+      go(href, { control: keyFor('[data-pager]', href), scroll: false });
     };
     document.addEventListener('keydown', keydown);
     return () => document.removeEventListener('keydown', keydown);
-  }, [router]);
+  }, [go]);
 
   const [goOn, setGoOn] = useState(false);
 
   // The arrival wave: boxes set out in order of distance from where you pressed (or from the view's
   // main plate), so a change reads as spreading from one point rather than everything at once.
-  const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
+  const [point, setPoint] = useState<{ x: number; y: number; scroll: number } | null>(null);
+  // A new scene jumps the page to its top: the press is then where it was on screen, so the wave
+  // spreads from there, not from a spot far down the page (every box in the window would wait the
+  // longest, and show its content last).
+  useLayoutEffect(() => {
+    setPoint(press => (press && press.scroll ? { x: press.x, y: press.y - press.scroll, scroll: 0 } : press));
+  }, [scene]);
   const primaryRect = primary === 'detail' ? layout.detail : primary ? layout.plates[primary].rect : null;
   const from = point ?? (primaryRect ? { x: primaryRect.x + primaryRect.w / 2, y: primaryRect.y + primaryRect.h / 2 } : null);
   const reach = size ? Math.hypot(size.w, size.h) : 1;
@@ -374,6 +448,7 @@ export function Stage({ state: address }: { state: StageState }) {
   useLayoutEffect(() => {
     if (firstKey.current === key) return;
     firstKey.current = key;
+    if (!knownBefore.current) return;
     setMoving(true);
     let landed = false;
     const timer = window.setTimeout(() => {
@@ -388,6 +463,10 @@ export function Stage({ state: address }: { state: StageState }) {
       window.removeEventListener('pointermove', wake);
     };
   }, [key]);
+  // Declared after every effect that reads it, so those see the previous commit's value.
+  useLayoutEffect(() => {
+    knownBefore.current = addressKnown;
+  });
 
   // ── Render ──────────────────────────────────────────────────────────────────────────────
   const last = layout.sheets[sheetCount - 1];
@@ -444,7 +523,7 @@ export function Stage({ state: address }: { state: StageState }) {
         {tooShort && viewport && (
           <section className={styles.enlarge} data-surface="feature" aria-labelledby="enlarge-title">
             <p className={styles.enlargeMark} aria-hidden="true">TERMINAL</p>
-            <h1 id="enlarge-title" tabIndex={-1} data-stage-title="">창을 조금 더 키워 주세요</h1>
+            <h1 id="enlarge-title" tabIndex={-1} data-stage-title="">창을 조금 더 키워 주십시오</h1>
             <p>
               이 화면은 높이 {minDesktop.h}px 이상인 창에 맞춰 판을 배치합니다. 지금 창은 {viewport.w}×{viewport.h}px입니다.
             </p>
@@ -525,14 +604,14 @@ export function Stage({ state: address }: { state: StageState }) {
               rect={rect(placed.rect)}
               visible={placed.mode !== 'hidden'}
               contentKey={placed.mode}
-              className={styles.plate}
               surface={plateSurface(id, placed.mode, data)}
               delay={delay}
+              origin={plateOrigins[id] ?? null}
               view={key}
               data={{ plate: id, mode: placed.mode }}
               overlay={subPlates}
             >
-              <PlateContent id={id} mode={placed.mode} state={state} data={data} query={query} size={onStage ? placed.rect : null} rings={rings} />
+              <PlateContent id={id} mode={placed.mode} state={shownState} data={data} query={query} size={onStage ? placed.rect : null} rings={rings} />
             </Box>
           );
         })}
@@ -582,7 +661,7 @@ export function Stage({ state: address }: { state: StageState }) {
                   title={layout.open.kind === 'event' ? '기록을 불러오지 못했습니다' : '아티스트 기록을 불러오지 못했습니다'}
                   retry={() => void query.refetch()}
                 >
-                  잠시 후 다시 불러오거나 다른 판으로 이동해 주세요.
+                  잠시 후 다시 불러오거나 다른 판으로 이동해 주십시오.
                 </StateNotice>
               ) : (
                 <Loading />

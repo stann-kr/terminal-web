@@ -1,5 +1,5 @@
 import type { TerminalEvent } from '@/lib/events/types';
-import { getEventDateTime } from '@/lib/events/lifecycle';
+import { getEventDateTime, getEventEndTime } from '@/lib/events/lifecycle';
 import { sessionNamesBrand } from './metadata';
 import { eventHref, eventSubtitle, publicArtists } from './model';
 
@@ -36,6 +36,7 @@ function fold(line: string) {
 function sessionEntry(event: TerminalEvent, origin: string, now: Date): string[] {
   const start = getEventDateTime(event);
   if (!Number.isFinite(start.getTime())) return [];
+  const end = getEventEndTime(event);
   const url = `${origin}${eventHref(event.id)}`;
   const lineup = publicArtists(event).map((artist) => artist.name);
   const subtitle = eventSubtitle(event);
@@ -47,6 +48,7 @@ function sessionEntry(event: TerminalEvent, origin: string, now: Date): string[]
     `UID:${text(event.id)}@terminal.stann.kr`,
     `DTSTAMP:${stamp(now)}`,
     `DTSTART:${stamp(start)}`,
+    ...(end ? [`DTEND:${stamp(end)}`] : []),
     `SUMMARY:${text(sessionNamesBrand(event.session) ? event.session : `TERMINAL ${event.session}`)}`,
     `LOCATION:${text(`${event.venue}, ${event.district}`)}`,
     `DESCRIPTION:${text(description)}`,
@@ -57,8 +59,8 @@ function sessionEntry(event: TerminalEvent, origin: string, now: Date): string[]
 
 /**
  * Every public session as one iCalendar feed. Entries keep their UID, so a calendar that re-reads
- * the feed updates them in place. The data has start times only, so entries have no end rather
- * than a guessed one.
+ * the feed updates them in place. An entry ends where the data says (its end time, or the last
+ * published slot); without either it has no end rather than a guessed one.
  */
 export function sessionsCalendar(events: readonly TerminalEvent[], origin: string, now = new Date()): string {
   return [

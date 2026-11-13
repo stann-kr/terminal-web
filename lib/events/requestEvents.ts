@@ -10,7 +10,7 @@ import type { TerminalEvent } from './types';
  */
 export const readPublicEvents = cache(async (): Promise<TerminalEvent[] | null> => {
   try {
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     return await loadPublicEvents(getDb(env.DB));
   } catch {
     console.error('[readPublicEvents] events unavailable');

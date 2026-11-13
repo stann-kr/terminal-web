@@ -1,3 +1,4 @@
+import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import {
   link,
@@ -10,6 +11,9 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+
+const runFile = promisify(execFile);
 
 const scriptPath = fileURLToPath(import.meta.url);
 
@@ -422,6 +426,106 @@ export async function verifyMigrationLock(
   return currentManifest;
 }
 
+async function git(repoRoot, args) {
+  const { stdout } = await runFile("git", args, {
+    cwd: repoRoot,
+    encoding: "buffer",
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return stdout;
+}
+
+function gitFailure(error) {
+  const stderr = error?.stderr ? String(error.stderr).trim() : "";
+  return stderr.split("\n")[0] || error?.message || String(error);
+}
+
+/**
+ * Compares the history with a base commit: every migration SQL file and snapshot that commit holds
+ * must still be here, byte for byte. The lock cannot see this on its own, because one change can
+ * rewrite a migration and its lock entry together. The journal is left out: it grows with every new
+ * migration, and the structure check already ties its tags to the SQL files.
+ *
+ * @param {{ migrationsDir: string, repoRoot?: string }} history
+ * @param {string} baseRef a commit the repository already has (fetch it first)
+ * @param {{ repoRoot?: string }} [options]
+ * @returns {Promise<string[]>} the repository paths that were compared
+ */
+export async function verifyMigrationsAgainstBase(
+  history,
+  baseRef,
+  { repoRoot = history.repoRoot ?? PROJECT_ROOT } = {},
+) {
+  if (typeof baseRef !== "string" || baseRef.length === 0 || baseRef.startsWith("-")) {
+    fail(`base commit is not a usable ref: ${String(baseRef)}`);
+  }
+
+  const resolvedRepoRoot = path.resolve(repoRoot);
+  const directory = toRepositoryPath(resolvedRepoRoot, history.migrationsDir);
+  let listing;
+
+  try {
+    listing = await git(resolvedRepoRoot, [
+      "ls-tree",
+      "-r",
+      "-z",
+      "--name-only",
+      baseRef,
+      "--",
+      directory,
+    ]);
+  } catch (error) {
+    fail(
+      `cannot read migrations at the base commit ${baseRef} (${gitFailure(error)}). Fetch the base branch first`,
+    );
+  }
+
+  const basePaths = listing
+    .toString("utf8")
+    .split("\0")
+    .filter((filePath) => {
+      const folder = path.posix.dirname(filePath);
+      const name = path.posix.basename(filePath);
+      return (
+        (folder === directory && SQL_FILE_PATTERN.test(name)) ||
+        (folder === `${directory}/meta` && SNAPSHOT_FILE_PATTERN.test(name))
+      );
+    })
+    .sort(compareStrings);
+  const deletions = [];
+  const overwrites = [];
+
+  for (const filePath of basePaths) {
+    const before = await git(resolvedRepoRoot, ["cat-file", "blob", `${baseRef}:${filePath}`]);
+    let now;
+
+    try {
+      now = await readFile(path.join(resolvedRepoRoot, ...filePath.split("/")));
+    } catch (error) {
+      if (error?.code === "ENOENT") {
+        deletions.push(filePath);
+        continue;
+      }
+      throw error;
+    }
+
+    if (!before.equals(now)) overwrites.push(filePath);
+  }
+
+  if (deletions.length || overwrites.length) {
+    const details = [
+      deletions.length ? `deleted: ${deletions.join(", ")}` : null,
+      overwrites.length ? `overwritten: ${overwrites.join(", ")}` : null,
+    ].filter(Boolean);
+
+    fail(
+      `migration history changed since ${baseRef} (${details.join("; ")}). A migration the base branch already has is never edited: add a new one with npm run db:generate -- --name <safe_name>`,
+    );
+  }
+
+  return basePaths;
+}
+
 /**
  * @param {CheckMigrationHistoryOptions} [options]
  */
@@ -500,6 +604,7 @@ export async function writeMigrationLockManifest(
 
 function parseCliArguments(argv) {
   const options = {
+    baseRef: undefined,
     lockPath: DEFAULT_LOCK_PATH,
     migrationsDir: DEFAULT_MIGRATIONS_DIR,
     repoRoot: PROJECT_ROOT,
@@ -511,6 +616,16 @@ function parseCliArguments(argv) {
 
     if (argument === "--write-lock") {
       options.writeLock = true;
+      continue;
+    }
+
+    if (argument === "--base") {
+      const value = argv[index + 1];
+      if (!value || value.startsWith("-")) {
+        fail("--base requires a commit or ref");
+      }
+      index += 1;
+      options.baseRef = value;
       continue;
     }
 
@@ -539,6 +654,7 @@ async function main() {
   const options = parseCliArguments(process.argv.slice(2));
 
   if (options.writeLock) {
+    if (options.baseRef !== undefined) fail("--base is a check: it cannot be combined with --write-lock");
     const history = await inspectMigrationHistory(options);
     const manifest = await createMigrationLockManifest(history, options);
     await writeMigrationLockManifest(options.lockPath, manifest, {
@@ -554,6 +670,13 @@ async function main() {
   console.log(
     `Migration history OK: ${history.migrations.length} continuous SQL/journal/snapshot entries match the lock`,
   );
+
+  if (options.baseRef !== undefined) {
+    const compared = await verifyMigrationsAgainstBase(history, options.baseRef, options);
+    console.log(
+      `Migration history OK: ${compared.length} SQL and snapshot files are unchanged since ${options.baseRef}`,
+    );
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {

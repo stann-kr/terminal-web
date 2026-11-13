@@ -11,7 +11,9 @@
  *   alert    live, the subscription call, errors  calm     introduction and notes
  *   fresh    writing and saved results
  * Per role: plate · ink · muted · accent (codes, numbers) · fill / on-fill (solid cells) ·
- * hi / on-hi (hover) · danger. `on-fill-muted` is optional (mixed from on-fill and fill when absent).
+ * hi / on-hi (hover) · danger · control / on-control (every button) · control-hi / on-control-hi
+ * (a button under the pointer) · link (the name of a link plate, card or row). `on-fill-muted` is
+ * optional (mixed from on-fill and fill when absent). A key must stand 3:1 off its plate.
  * Beside the roles: `pointer` (the console pointer over controls) and `cue` / `on-cue` (the scroll cue,
  * a colour no plate wears so it never sinks into one; its icon needs 3:1).
  * Every text pair must read at 4.5:1; test/designTokens.test.ts checks every palette here.
@@ -40,6 +42,8 @@
   --c-amber-deep: #926743;
   --c-lilac-deep: #6a6e89;
   --c-sage-deep: #617465;
+  --c-primary-deep: #34565f;
+  --c-primary-deeper: #2f4e57;
 
   --field: var(--c-background);
   --pointer: var(--c-primary);
@@ -128,6 +132,51 @@
   --fresh-hi: var(--c-sage-deep);
   --fresh-on-hi: var(--c-porcelain);
   --fresh-danger: #7e555c;
+
+  /* Controls: every button is one primary key, and a link's name is printed in the deep primary
+     (one step deeper on the recessed plate, to read on its tinted rows). Over the plates that wear
+     primary or rose themselves the key turns porcelain and the name stays in the plate's ink (an
+     arrow marks it). */
+  --panel-control: var(--c-primary);
+  --panel-on-control: var(--c-porcelain);
+  --panel-control-hi: var(--c-text);
+  --panel-on-control-hi: var(--c-porcelain);
+  --panel-link: var(--c-primary-deep);
+  --inset-control: var(--c-primary);
+  --inset-on-control: var(--c-porcelain);
+  --inset-control-hi: var(--c-text);
+  --inset-on-control-hi: var(--c-porcelain);
+  --inset-link: var(--c-primary-deeper);
+  --paper-control: var(--c-primary);
+  --paper-on-control: var(--c-porcelain);
+  --paper-control-hi: var(--c-text);
+  --paper-on-control-hi: var(--c-porcelain);
+  --paper-link: var(--c-primary-deep);
+  --feature-control: var(--c-porcelain);
+  --feature-on-control: var(--c-text);
+  --feature-control-hi: var(--c-surface);
+  --feature-on-control-hi: var(--c-text);
+  --feature-link: var(--c-porcelain);
+  --mark-control: var(--c-primary);
+  --mark-on-control: var(--c-porcelain);
+  --mark-control-hi: var(--c-text);
+  --mark-on-control-hi: var(--c-porcelain);
+  --mark-link: var(--c-primary-deep);
+  --alert-control: var(--c-porcelain);
+  --alert-on-control: var(--c-text);
+  --alert-control-hi: var(--c-surface);
+  --alert-on-control-hi: var(--c-text);
+  --alert-link: var(--c-porcelain);
+  --calm-control: var(--c-primary);
+  --calm-on-control: var(--c-porcelain);
+  --calm-control-hi: var(--c-text);
+  --calm-on-control-hi: var(--c-porcelain);
+  --calm-link: var(--c-primary-deep);
+  --fresh-control: var(--c-primary);
+  --fresh-on-control: var(--c-porcelain);
+  --fresh-control-hi: var(--c-text);
+  --fresh-on-control-hi: var(--c-porcelain);
+  --fresh-link: var(--c-primary-deep);
 }
 
 /* Terminal Night — the first palette: deep navy with cream, gold, orange and red plates */
@@ -237,4 +286,48 @@
   --fresh-hi: var(--c-red);
   --fresh-on-hi: var(--c-white);
   --fresh-danger: #7a0c0c;
+
+  /* Controls: a gold key on the dark plates, a navy key on the light ones, a cream key on red. A
+     link's name is gold on the dark plates; on the others gold or navy would not part it from the
+     ink, so it keeps the ink (an arrow marks it). */
+  --panel-control: var(--c-gold);
+  --panel-on-control: var(--c-navy);
+  --panel-control-hi: var(--c-cream);
+  --panel-on-control-hi: var(--c-navy);
+  --panel-link: var(--c-gold);
+  --inset-control: var(--c-gold);
+  --inset-on-control: var(--c-navy);
+  --inset-control-hi: var(--c-cream);
+  --inset-on-control-hi: var(--c-navy);
+  --inset-link: var(--c-gold);
+  --paper-control: var(--c-navy);
+  --paper-on-control: var(--c-gold);
+  --paper-control-hi: var(--c-red);
+  --paper-on-control-hi: var(--c-white);
+  --paper-link: var(--c-navy);
+  --feature-control: var(--c-navy);
+  --feature-on-control: var(--c-gold);
+  --feature-control-hi: var(--c-deep);
+  --feature-on-control-hi: var(--c-cream);
+  --feature-link: var(--c-field);
+  --mark-control: var(--c-navy);
+  --mark-on-control: var(--c-gold);
+  --mark-control-hi: var(--c-red);
+  --mark-on-control-hi: var(--c-white);
+  --mark-link: var(--c-navy);
+  --alert-control: var(--c-cream);
+  --alert-on-control: var(--c-navy);
+  --alert-control-hi: var(--c-deep);
+  --alert-on-control-hi: var(--c-cream);
+  --alert-link: var(--c-white);
+  --calm-control: var(--c-navy);
+  --calm-on-control: var(--c-gold);
+  --calm-control-hi: var(--c-red);
+  --calm-on-control-hi: var(--c-white);
+  --calm-link: var(--c-navy);
+  --fresh-control: var(--c-navy);
+  --fresh-on-control: var(--c-gold);
+  --fresh-control-hi: var(--c-red);
+  --fresh-on-control-hi: var(--c-white);
+  --fresh-link: var(--c-navy);
 }

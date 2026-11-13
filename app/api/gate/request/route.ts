@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return noStoreJson({ error: requestInput.error }, 400);
     }
 
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const abuseDecision = await enforceRateLimit(env, 'gate-request', request);
     if (!abuseDecision.ok) {
       return noStoreJson({ error: abuseDecision.error }, abuseDecision.status);
@@ -55,6 +55,9 @@ export async function POST(request: Request) {
     if (accessCodeResult.kind === 'unavailable') {
       return noStoreJson({ error: "DATA_UNAVAILABLE" }, 503);
     }
+    if (accessCodeResult.kind === 'closed') {
+      return noStoreJson({ error: "ACCESS_NOT_OPEN" }, 403);
+    }
     if (accessCodeResult.kind === 'not_found') {
       return noStoreJson({ error: "INVALID_ACCESS_CODE" }, 401);
     }
@@ -72,9 +75,19 @@ export async function POST(request: Request) {
       marketingConsent: requestInput.input.marketingConsent,
       guestLimit: accessCodeResult.data.guestLimit,
       createdAt: now.toISOString(),
+      // Waiting shares the Instagram id with the artist, so it takes the guest's own word for it.
+      waitlist: requestInput.input.waitlist,
     });
 
     if (result.status === "duplicate") return noStoreJson({ ok: true });
+    // A full code keeps a guest who asked to wait on its waitlist: the artist can move them up later.
+    if (result.status === "waitlisted") return noStoreJson({ ok: true, waitlisted: true });
+    // Already waiting for this event, under this code or another inviter's: nothing new was stored.
+    // The form then names no inviter, since the entry that stands may not be this one's.
+    if (result.status === "already_waitlisted") {
+      return noStoreJson({ ok: true, waitlisted: true, alreadyWaiting: true });
+    }
+    // Anyone else is told the code filled up, and can then ask to wait under the waitlist terms.
     if (result.status === "guest_limit_reached") {
       return noStoreJson({ error: "GUEST_LIMIT_REACHED" }, 409);
     }

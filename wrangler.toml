@@ -1,4 +1,7 @@
-name = "terminal-web"
+# 맨 위 설정은 로컬 개발(next dev·미리보기)만 쓴다. 배포하는 Worker는 [env.production]의 terminal-web과
+# [env.development]의 terminal-web-dev이며, 배포 명령은 항상 --env를 준다. 맨 위 이름을 배포 Worker와
+# 다르게 두어, --env를 빠뜨린 deploy가 로컬용 설정을 운영 Worker에 올리지 못하게 한다.
+name = "terminal-web-local"
 main = ".open-next/worker.js"
 compatibility_date = "2026-08-04"
 compatibility_flags = ["nodejs_compat"]
@@ -7,10 +10,12 @@ compatibility_flags = ["nodejs_compat"]
 enabled = true
 head_sampling_rate = 1
 
+# 요청마다 자동으로 남는 로그(invocation log)는 끈다. 요청 주소가 통째로 기록되는데, 아티스트 초대
+# 페이지·홍보 파일·수신 거부 링크가 서명 토큰을 주소 쿼리로 받기 때문이다. 코드가 남기는 로그는 그대로 남는다.
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
-invocation_logs = true
+invocation_logs = false
 
 [assets]
 directory = ".open-next/assets"
@@ -24,6 +29,24 @@ database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
 remote = true
 
+# 아티스트 페이지의 홍보 자료(포스터·티저 원본). 비공개 버킷으로, /api/invite/host/file이 서명 링크를
+# 확인한 뒤에만 그 아티스트에게 허용된 파일을 꺼내 준다. 로컬 미리보기도 운영 버킷을 읽는다.
+[[r2_buckets]]
+binding = "PRESS"
+bucket_name = "terminal-press"
+remote = true
+
+# 공개 쓰기 API(초대 코드 확인·게스트 신청·소식 신청·방문자 로그)의 시도 제한. lib/api/abuseControl.ts가
+# `<작업>:<접속 IP>` 키로 부른다(초대 코드 확인과 게스트 신청은 한 예산). 바인딩은 환경마다 다시 선언하고,
+# namespace가 환경마다 달라 카운터를 함께 쓰지 않는다.
+[[ratelimits]]
+name = "PUBLIC_RATE_LIMITER"
+namespace_id = "2026101003"
+
+  [ratelimits.simple]
+  limit = 20
+  period = 60
+
 [env.production]
 name = "terminal-web"
 
@@ -36,6 +59,19 @@ binding = "DB"
 database_name = "terminal-db"
 database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
+
+[[env.production.r2_buckets]]
+binding = "PRESS"
+bucket_name = "terminal-press"
+
+# 공개 쓰기 API 시도 제한(맨 위 설명 참고).
+[[env.production.ratelimits]]
+name = "PUBLIC_RATE_LIMITER"
+namespace_id = "2026101001"
+
+  [env.production.ratelimits.simple]
+  limit = 20
+  period = 60
 
 [env.development]
 name = "terminal-web-dev"
@@ -52,3 +88,16 @@ binding = "DB"
 database_name = "terminal-db"
 database_id = "42d83d1e-e0ee-42af-91ff-d57c2387bb45"
 migrations_dir = "migrations"
+
+[[env.development.r2_buckets]]
+binding = "PRESS"
+bucket_name = "terminal-press"
+
+# 공개 쓰기 API 시도 제한(맨 위 설명 참고).
+[[env.development.ratelimits]]
+name = "PUBLIC_RATE_LIMITER"
+namespace_id = "2026101002"
+
+  [env.development.ratelimits.simple]
+  limit = 20
+  period = 60

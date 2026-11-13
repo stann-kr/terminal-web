@@ -1,7 +1,7 @@
 import { hasOnlyKeys, isBoolean, isJsonObject, isString } from '../api/validation';
 import type { EventStatus, TerminalEvent } from '../events/types';
 import { getEffectiveEventStatus, getEventDateTime, getRequestWindowState } from '../events/lifecycle';
-import { ACCESS_WINDOW_DAYS } from './requestPolicy';
+import { accessWindowDays } from './requestPolicy';
 
 const MAX_ACCESS_CODE_LENGTH = 64;
 const MAX_EMAIL_LENGTH = 254;
@@ -15,16 +15,23 @@ const REQUEST_KEYS = [
   'instagram',
   'privacyConsent',
   'marketingConsent',
+  'waitlist',
 ] as const;
 
 export interface GateRequestInput {
   eventId: string;
   accessCode: string;
   name: string;
-  email: string;
+  /** Kept only for a guest who asked for news; everyone else is found by Instagram id. */
+  email: string | null;
   instagram: string;
   privacyConsent: true;
   marketingConsent: boolean;
+  /**
+   * The guest agreed to the waitlist terms (the artist sees their Instagram id, no news is sent).
+   * Only then may a full code keep them waiting; the plain terms share the name alone.
+   */
+  waitlist: boolean;
 }
 
 export type ParseGateRequestResult =
@@ -44,7 +51,7 @@ export type ArtistAccessInspection =
 
 export interface UpcomingEventCandidate {
   rowId: string;
-  lifecycle: Pick<TerminalEvent, 'date' | 'time' | 'status'>;
+  lifecycle: Pick<TerminalEvent, 'date' | 'time' | 'status' | 'accessWindowDays'>;
 }
 
 export interface StoredGateEventRow {
@@ -88,6 +95,7 @@ export function decodeStoredEventLifecycle(
     date: data.date,
     time: data.time,
     status: data.status as EventStatus,
+    accessWindowDays: accessWindowDays(data),
   };
 
   if (!Number.isFinite(getEventDateTime(lifecycle).getTime())) return null;
@@ -121,7 +129,7 @@ export function findUpcomingGateEvent(
 }
 
 export function isGateRequestWindowActive(event: UpcomingEventCandidate, now: Date): boolean {
-  return getRequestWindowState(event.lifecycle, ACCESS_WINDOW_DAYS, now).isActive;
+  return getRequestWindowState(event.lifecycle, accessWindowDays(event.lifecycle), now).isActive;
 }
 
 export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRequestResult {
@@ -132,7 +140,7 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   if (!eventIdResult.ok) return eventIdResult;
   if (
     !isString(body.name)
-    || !isString(body.email)
+    || (body.email !== undefined && !isString(body.email))
     || !isString(body.instagram)
     || !isString(body.accessCode)
   ) {
@@ -147,39 +155,44 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   if (body.marketingConsent !== undefined && !isBoolean(body.marketingConsent)) {
     return { ok: false, error: 'INVALID_INPUT' };
   }
+  if (body.waitlist !== undefined && !isBoolean(body.waitlist)) {
+    return { ok: false, error: 'INVALID_INPUT' };
+  }
 
   const name = body.name.trim();
-  const email = body.email.trim().toLowerCase();
+  const marketingConsent = body.marketingConsent ?? false;
+  const waitlist = body.waitlist ?? false;
+  // The waitlist form offers no news: a request that asks for both was not made on either form.
+  if (waitlist && marketingConsent) return { ok: false, error: 'INVALID_INPUT' };
+  // Email exists only to send news, so a guest who did not ask for news leaves none behind.
+  const email = marketingConsent ? (body.email ?? '').trim().toLowerCase() : null;
   const instagram = body.instagram.trim();
   const accessCode = body.accessCode.trim();
   const invitedBy = body.invitedBy?.trim() || null;
 
-  if (!name || !email || !instagram || !accessCode) {
+  if (!name || !instagram || !accessCode) {
     return { ok: false, error: 'ALL_FIELDS_REQUIRED' };
   }
   if (!body.privacyConsent) {
     return { ok: false, error: 'PRIVACY_CONSENT_REQUIRED' };
   }
+  if (email === '') {
+    return { ok: false, error: 'EMAIL_REQUIRED_FOR_NEWS' };
+  }
   if (
     name.length > 100
-    || email.length > MAX_EMAIL_LENGTH
+    || (email?.length ?? 0) > MAX_EMAIL_LENGTH
     || accessCode.length > MAX_ACCESS_CODE_LENGTH
     || (invitedBy?.length ?? 0) > 100
   ) {
     return { ok: false, error: 'INVALID_INPUT' };
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email !== null && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, error: 'INVALID_EMAIL_FORMAT' };
   }
 
-  const cleanInstagram = instagram.replace(/^@/, '');
-  if (
-    cleanInstagram.length === 0
-    || cleanInstagram.length > 30
-    || !/^[\w.]+$/.test(cleanInstagram)
-  ) {
-    return { ok: false, error: 'INVALID_INSTAGRAM_FORMAT' };
-  }
+  const storedInstagram = normalizeInstagram(instagram);
+  if (!storedInstagram) return { ok: false, error: 'INVALID_INSTAGRAM_FORMAT' };
 
   return {
     ok: true,
@@ -188,11 +201,21 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
       accessCode,
       name,
       email,
-      instagram,
+      instagram: storedInstagram,
       privacyConsent: true,
-      marketingConsent: body.marketingConsent ?? false,
+      marketingConsent,
+      waitlist,
     },
   };
+}
+
+/**
+ * An Instagram id as it is stored: one spelling for every handle, lowercase with its @ (ids are
+ * lowercase on Instagram). `null` for anything that is not an id.
+ */
+export function normalizeInstagram(value: string): string | null {
+  const clean = value.trim().replace(/^@/, '');
+  return clean.length > 0 && clean.length <= 30 && /^[\w.]+$/.test(clean) ? `@${clean.toLowerCase()}` : null;
 }
 
 /** A client event id binds the visible form to the server-selected event; it grants no access. */
@@ -250,11 +273,21 @@ export function parseArtistAccessData(rawData: string): ArtistAccessData | null 
 export type ArtistAccessCodeResolution =
   | { kind: 'match'; artistId: string; data: ArtistAccessData }
   | { kind: 'not_found' }
+  | { kind: 'closed' }
   | { kind: 'unavailable' };
 
 /**
+ * Whether any artist row of an event carries a guest code. Guest requests run only on invite
+ * codes, so an event without one stays closed whatever its request window says.
+ */
+export function hasConfiguredAccessCode(rows: readonly { data: string }[]): boolean {
+  return rows.some((row) => inspectArtistAccessData(row.data).kind === 'configured');
+}
+
+/**
  * Evaluates every artist record before returning a match so malformed stored
- * access configuration cannot silently alter verification results.
+ * access configuration cannot silently alter verification results. An event with no guest code
+ * at all is `closed`, not a wrong code.
  */
 export function resolveArtistAccessCode(
   rows: StoredGateArtistRow[],
@@ -264,6 +297,9 @@ export function resolveArtistAccessCode(
   const accessRecords = rows.map((row) => ({ row, access: inspectArtistAccessData(row.data) }));
   if (accessRecords.some(({ access }) => access.kind === 'invalid')) {
     return { kind: 'unavailable' };
+  }
+  if (!accessRecords.some(({ access }) => access.kind === 'configured')) {
+    return { kind: 'closed' };
   }
 
   const matches = accessRecords.flatMap(({ row, access }) => (

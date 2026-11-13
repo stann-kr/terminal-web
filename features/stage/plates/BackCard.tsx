@@ -1,5 +1,5 @@
 import { sessionShort } from '@/features/events/model';
-import { BrandText } from '@/features/ui/Ui';
+import { Arrow, BrandText } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import type { PlateId, StageState } from '../state';
 import { FitTitle } from '../FitTitle';
@@ -12,6 +12,7 @@ const PLATE_NAME: Record<PlateId, [string, string]> = {
   artists: ['ARTISTS', '아티스트'],
   log: ['LOG', '방문자 로그'],
   signal: ['SIGNAL', '소식 신청'],
+  instagram: ['INSTAGRAM', '팔로우'],
   about: ['ABOUT', 'TERMINAL 소개'],
 };
 
@@ -46,14 +47,14 @@ export function BackCard({ href, target, data }: { href: string; target: StageSt
           <span className={styles.backLabel}>BACK</span>
           <span className={styles.tag}>ESC</span>
         </span>
-        <FitTitle as="span" text={name} maxLines={1} minPx={12} className={styles.backName}>{name}</FitTitle>
+        <FitTitle as="span" text={name} maxLines={1} minPx={12} className={styles.backName} arrow="in">{name}</FitTitle>
         <FitTitle as="span" text={title} maxLines={1} minPx={12} className={styles.backTitle}>
           <BrandText text={title} />
         </FitTitle>
       </CardLink>
       {home && (
         <CardLink href="/" className={styles.homeKey} label="홈으로" surface="feature">
-          <span aria-hidden="true">HOME</span>
+          <span className={styles.homeName} aria-hidden="true">HOME<Arrow /></span>
         </CardLink>
       )}
     </div>

@@ -1,6 +1,7 @@
 'use client';
-import { Fragment, type ReactNode } from 'react';
-import { Action, ActionDeck, Bay, Facts, Panel, ui } from '@/features/ui/Ui';
+import { Fragment, Suspense, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Action, ActionDeck, Bay, Panel, ui } from '@/features/ui/Ui';
 import {
   Consent,
   Field,
@@ -10,13 +11,14 @@ import {
   formStyles,
   literalInput,
 } from '@/features/ui/Form';
-import { errorMessage } from '@/features/ui/http';
+import { ApiError, errorMessage, postJson } from '@/features/ui/http';
+import { instagram } from '@/features/about/instagram';
 import { useSignalSubscription } from './useSignalSubscription';
 import styles from './signal.module.css';
 
 /**
- * The channel, the form and the channel state around one subscription request, so all three read
- * the same state. `wrap` places each part (the stage puts each in its own column).
+ * The note on the channel and the form around one subscription request, so both read the same
+ * state. `wrap` places each part (the stage puts each in its own column).
  */
 export function SignalBody({ wrap = node => node }: { wrap?: (node: ReactNode) => ReactNode }) {
   const request = useSignalSubscription();
@@ -25,27 +27,10 @@ export function SignalBody({ wrap = node => node }: { wrap?: (node: ReactNode) =
       {[
         <SignalInformation key="info" request={request} />,
         <SignalForm key="form" request={request} />,
-        <SignalChannel key="channel" request={request} />,
       ].map(part => <Fragment key={part.key}>{wrap(part)}</Fragment>)}
     </>
   );
 }
-function SignalChannel({ request }: { request: ReturnType<typeof useSignalSubscription> }) {
-  return (
-    <Panel title="채널 정보" label="Channel" surface="panel" className={styles.channel}>
-      <Facts
-        rows={[
-          ['채널', 'CH 01'],
-          ['수신', '이메일 · 인스타그램'],
-          ['대상', '다음 이벤트 소식'],
-          ['상태', request.pending ? '전송 중' : request.done ? '등록 완료' : request.error ? '전송 실패' : '대기'],
-        ]}
-      />
-      <Bay label="OUTBOUND / KST" />
-    </Panel>
-  );
-}
-
 function SignalInformation({
   request,
 }: {
@@ -53,7 +38,7 @@ function SignalInformation({
 }) {
   const { pending, done, error } = request;
   return (
-    <Panel title="수신 안내" label="Signal" code="CH 01" surface="alert">
+    <Panel title="수신 안내" label="Signal" code="CH 01" surface="mark">
       <p className={styles.lead}>TERMINAL의 새로운 이벤트와 소식을 안내합니다.</p>
       <p
         className={styles.signalMatrix}
@@ -79,7 +64,20 @@ function SignalInformation({
   );
 }
 
-function SignalForm({
+/** The form, or the unsubscribe key when the page was opened from a mail's unsubscribe link. */
+function SignalForm({ request }: { request: ReturnType<typeof useSignalSubscription> }) {
+  const form = <SignalSubscribeForm request={request} />;
+  return <Suspense fallback={form}><UnsubscribeSwitch>{form}</UnsubscribeSwitch></Suspense>;
+}
+
+function UnsubscribeSwitch({ children }: { children: ReactNode }) {
+  // Null outside the app router (component tests render the form alone).
+  const search = useSearchParams() as URLSearchParams | null;
+  const s = search?.get('s'), t = search?.get('t');
+  return s && t ? <SignalUnsubscribe link={{ s, t }} /> : children;
+}
+
+function SignalSubscribeForm({
   request,
 }: {
   request: ReturnType<typeof useSignalSubscription>;
@@ -95,12 +93,16 @@ function SignalForm({
     errorCode,
   } = request;
   return (
-    <FormPanel title="소식 신청서" code="SIGNAL">
+    <FormPanel title="소식 신청서" code="SIGNAL" label="Form">
       {done ? (
         <FormSuccess>
           <p className={ui.eyebrow}>CONTACT SAVED</p>
           <h2>소식 신청을 저장했습니다</h2>
-          <Action href="/">홈으로 돌아가기</Action>
+          <p>인스타그램 소식은 팔로워에게만 닿습니다.</p>
+          <ActionDeck>
+            <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>
+            <Action href="/">홈으로 돌아가기</Action>
+          </ActionDeck>
         </FormSuccess>
       ) : (
         <form aria-busy={pending} onSubmit={submit} className={formStyles.form}>
@@ -127,19 +129,19 @@ function SignalForm({
             <Field
               id="signal-instagram"
               label="인스타그램 ID (선택)"
-              hint="적어 두면 인스타그램으로도 소식을 보냅니다."
+              hint="적어 두면 인스타그램으로도 소식을 보냅니다. 팔로워에게만 닿습니다."
               maxLength={31}
-              pattern="@?[A-Za-z0-9_.]{1,30}"
+              pattern="@[A-Za-z0-9_.]{0,30}"
               {...literalInput}
-              placeholder="@handle"
-              value={fields.instagram}
+              // The @ is part of what the field shows; an untouched field still sends nothing.
+              value={`@${fields.instagram}`}
               error={
                 errorCode === 'INVALID_INSTAGRAM_FORMAT'
                   ? errorMessage(error)
                   : undefined
               }
               onChange={(event) => {
-                setFields({ ...fields, instagram: event.target.value });
+                setFields({ ...fields, instagram: event.target.value.replace(/^@+/, '') });
                 if (errorCode === 'INVALID_INSTAGRAM_FORMAT') setError(null);
               }}
             />
@@ -160,6 +162,53 @@ function SignalForm({
             </button>
           </fieldset>
         </form>
+      )}
+    </FormPanel>
+  );
+}
+
+/** Opened from a mail's unsubscribe link: one key that deletes the subscription the link names. */
+function SignalUnsubscribe({ link }: { link: { s: string; t: string } }) {
+  const [pending, setPending] = useState(false),
+    [done, setDone] = useState(false),
+    [error, setError] = useState<unknown>(null);
+  async function submit() {
+    if (pending) return;
+    setPending(true);
+    setError(null);
+    try {
+      const query = new URLSearchParams(link).toString();
+      const result = await postJson<{ ok: boolean }>(`/api/signal/unsubscribe?${query}`, {});
+      if (result.ok !== true) throw new ApiError('INVALID_RESPONSE', 200);
+      setDone(true);
+    } catch (error) {
+      setError(error);
+    } finally {
+      setPending(false);
+    }
+  }
+  return (
+    <FormPanel title="수신 거부" code="SIGNAL" label="Form">
+      {done ? (
+        <FormSuccess>
+          <p className={ui.eyebrow}>UNSUBSCRIBED</p>
+          <h2>수신 거부했습니다</h2>
+          <p>이 주소로는 더 이상 TERMINAL 소식을 보내지 않으며, 저장된 연락처를 지웠습니다. You will no longer receive TERMINAL news.</p>
+          <ActionDeck>
+            <Action href="/">홈으로 돌아가기</Action>
+          </ActionDeck>
+        </FormSuccess>
+      ) : (
+        <div className={formStyles.form}>
+          <FormError message={error ? errorMessage(error) : ''} />
+          <p>이 메일 주소로 TERMINAL 이벤트 소식을 더 받지 않으려면 아래 키를 눌러 주십시오. 저장된 연락처도 함께 지웁니다.</p>
+          <p className={ui.muted}>Press the key below to stop receiving TERMINAL news at this address.</p>
+          <ActionDeck>
+            <button type="button" aria-busy={pending} disabled={pending} onClick={submit} className={`${ui.button} ${ui.primary}`}>
+              {pending ? '처리 중…' : '수신 거부 · Unsubscribe'}
+            </button>
+          </ActionDeck>
+        </div>
       )}
     </FormPanel>
   );

@@ -78,6 +78,29 @@
 .stage[data-ready] .box[data-visible=false] {
   transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, 0s, var(--dur-exit);
 }
+/* A closing file shrinks back into its line whole, and fades only as it lands there: a fade from
+   the start would leave the window empty (or half see-through over the plates coming in) while the
+   list it returns to is still on its way. */
+.stage[data-ready] .detail[data-visible=false] {
+  transition-duration: var(--dur-move), var(--dur-move), var(--dur-move), var(--dur-move), var(--dur-land), 0s;
+  transition-delay: var(--delay, 0ms), var(--delay, 0ms), var(--delay, 0ms), 0s, calc(var(--delay, 0ms) + var(--close-hold)), calc(var(--delay, 0ms) + var(--close-hold) + var(--dur-land));
+}
+
+/* Sub-plates (the sessions' and artists' own cards: cells, rows, index lines) do not travel: a
+   change of page or of shape puts each card straight in its new place, where it fades in while the
+   old one fades out. They ride with their plate, which still travels. */
+.stage[data-ready] .item {
+  transition-property: opacity, visibility, background-color;
+  transition-duration: var(--dur-exit), 0s, var(--dur-exit);
+  transition-timing-function: linear, linear, linear;
+  transition-delay: 0s, 0s, 0s;
+}
+.stage[data-ready] .item[data-visible=false] {
+  transition-delay: 0s, var(--dur-exit), 0s;
+}
+.stage[data-resizing] .item {
+  transition: none;
+}
 
 /* Content layers. The new content arrives partway through the move; the old one only fades. */
 .layer {
@@ -101,11 +124,18 @@
 .stage[data-stage=stage]:not([data-ready]) .layer[data-layer=current] {
   animation-delay: calc(var(--delay, 0ms) * 2);
 }
+/* A sub-plate's content does not rise into place either: its card stands still, so a rise would
+   read as the card twitching. It only fades. */
+.stage[data-stage=stage] .item > .layer[data-layer=current]:not([data-swap=still]) {
+  animation-name: layerFade;
+}
 /* The old content stays at the size it was drawn at and dims slowly at first, so it never blinks
    out; the new content, drawn over it, crossfades in before it has gone. */
 .layer[data-layer=leaving] {
   pointer-events: none;
-  animation: layerOut var(--dur-exit) cubic-bezier(.4, 0, .8, .6) forwards;
+  /* It waits for the box's turn in the wave, as the new content does (--enter-delay + --delay), so
+     a box farther from the press is never left empty between the two. */
+  animation: layerOut var(--dur-exit) cubic-bezier(.4, 0, .8, .6) var(--delay, 0ms) forwards;
 }
 .stage:not([data-stage=stage]) .layer[data-layer=leaving] {
   display: none;
@@ -114,6 +144,11 @@
   .layer[data-layer=leaving] {
     display: none;
   }
+}
+/* A paused display (useDisplayPolicy: reduced motion, forced colors, save-data, a hidden tab) stops
+   every animation too (globals.css): the old content would stay drawn under the new until removed. */
+:global([data-display-paused]) .layer[data-layer=leaving] {
+  display: none;
 }
 @keyframes layerIn {
   from { opacity: 0; transform: translateY(4px); }
@@ -171,19 +206,24 @@
   font-family: var(--mono);
 }
 .pager a {
-  background: var(--well);
-  color: var(--ink);
+  background: var(--control);
+  color: var(--on-control);
   text-decoration: none;
   transition: var(--light-motion);
 }
+/* A page past either end is printed, not keyed: no fill, muted (above). */
+.pager > span:not([aria-hidden]):not(.srOnly) {
+  background: transparent;
+}
 @media (hover: hover) {
   .pager a:hover {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-    color: var(--on-hi);
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
+    color: var(--on-control-hi);
   }
 }
 .pager a:focus-visible {
   outline-offset: -4px;
+  outline-color: currentColor;
 }
 
 /* ── The server's first markup (and pages without script): document order ── */
@@ -305,8 +345,8 @@
 @keyframes pageBack {
   from { opacity: 0; transform: translateX(-12px); }
 }
-/* Page turns: a flush bar across the column (--bleed) in its well; the keys are a step deeper and
-   as tall as the bar. */
+/* Page turns: a flush bar across the column (--bleed) in its well; the keys are control keys as
+   tall as the bar, and a turn that cannot be taken prints as text. */
 .textPager {
   display: flex;
   flex: none;
@@ -329,21 +369,33 @@
   min-height: 44px;
   padding: 0 max(14px, var(--bleed, 0px));
   border: 0;
-  background: var(--well);
-  color: var(--ink);
+  background: var(--control);
+  color: var(--on-control);
   font: inherit;
   letter-spacing: inherit;
   transition: var(--light-motion);
 }
 @media (hover: hover) {
-  .textPager button:hover:not(:disabled) {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-    color: var(--on-hi);
+  .textPager button:hover:not([aria-disabled="true"]) {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
+    color: var(--on-control-hi);
+  }
+  .textPager button:active:not([aria-disabled="true"]) {
+    box-shadow: inset 0 0 0 100vmax var(--control-hi);
+    color: var(--on-control-hi);
+    transition: none;
   }
 }
-.textPager button:disabled {
+.textPager button:focus-visible {
+  outline-offset: -4px;
+  outline-color: currentColor;
+}
+/* A page turn past either end is printed, not keyed. */
+.textPager button[aria-disabled="true"] {
   cursor: default;
-  opacity: .4;
+  background: transparent;
+  color: var(--muted);
+  opacity: .55;
 }
 
 /* ── Fitted titles: the inner line carries the fitted size ────────────────── */
@@ -384,21 +436,32 @@
   min-height: 48px;
   padding: 0 22px;
   border: 0;
-  background: var(--fill);
-  color: var(--on-fill);
+  background: var(--control);
+  color: var(--on-control);
   font: 700 var(--t-lg)/1 var(--display);
   letter-spacing: .12em;
   transition: var(--light-motion);
 }
 @media (hover: hover) {
   .enlarge button:hover {
-    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
-    color: var(--on-hi);
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--control-hi);
+    color: var(--on-control-hi);
   }
+  .enlarge button:active {
+    box-shadow: inset 0 0 0 100vmax var(--control-hi);
+    color: var(--on-control-hi);
+    transition: none;
+  }
+}
+.enlarge button:focus-visible {
+  outline-offset: -5px;
+  outline-color: currentColor;
 }
 
 @media (forced-colors: active) {
-  .pager a, .textPager button { border: 1px solid CanvasText; }
+  .pager a { border: 1px solid CanvasText; }
+  .textPager button, .enlarge button { border: 1px solid ButtonText; }
+  .textPager button[aria-disabled="true"] { color: GrayText; }
 }
 
 /* The place of a file whose records are not read yet: the state, flush across the top. */
@@ -566,10 +629,18 @@
     animation: bootShow 320ms var(--ease-move) 200ms forwards;
   }
 }
+/* Reduced motion stops every animation (globals.css, !important), which would leave the words at
+   their starting opacity: they are simply there. The 6s give-way switches are not motion (they take
+   no time), so they keep running, or a page whose script never took over would stay covered. */
 @media (scripting: enabled) and (prefers-reduced-motion: reduce) {
   .bootMark,
-  .bootLine { animation-duration: 0s; }
+  .bootLine { opacity: 1; }
+  .boot:not([data-done]) { animation: bootGiveWay 0s linear 6s forwards !important; }
+  .stage[data-stage=boot] { animation: bootReveal 0s linear 6s forwards !important; }
 }
+/* The same for a paused display (useDisplayPolicy), which also stops every animation (globals.css). */
+:global([data-display-paused]) .bootMark,
+:global([data-display-paused]) .bootLine { opacity: 1; }
 @keyframes bootShow {
   to { opacity: 1; }
 }

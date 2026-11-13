@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ──────────────────────────────────────────────────────────
 // events 테이블
@@ -45,7 +45,7 @@ export const accessRequests = sqliteTable(
       .notNull()
       .references(() => events.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    email: text("email").notNull(),
+    email: text("email"),  // 소식 수신에 동의한 게스트만 남김.
     instagram: text("instagram").notNull(),
     artistId: text("artist_id").references(() => artists.id),
     invitedBy: text("invited_by"),
@@ -55,6 +55,29 @@ export const accessRequests = sqliteTable(
   },
   (table) => [
     uniqueIndex("access_requests_event_email_idx").on(table.eventId, table.email),
+  ],
+);
+
+// ──────────────────────────────────────────────────────────
+// access_waitlist 테이블 — 초대 코드 정원이 찬 뒤 들어온 신청(이름·인스타그램만)
+// 아티스트가 올리면 같은 id로 access_requests에 옮겨지고 여기서 지워진다.
+// ──────────────────────────────────────────────────────────
+export const accessWaitlist = sqliteTable(
+  "access_waitlist",
+  {
+    id: text("id").primaryKey(),
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    artistId: text("artist_id").notNull().references(() => artists.id),
+    invitedBy: text("invited_by"),
+    name: text("name").notNull(),
+    instagram: text("instagram").notNull(),
+    privacyConsent: integer("privacy_consent", { mode: "boolean" }).notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("access_waitlist_event_artist_idx").on(table.eventId, table.artistId),
   ],
 );
 

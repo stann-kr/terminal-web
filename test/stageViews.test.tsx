@@ -10,10 +10,21 @@ import { useTransmitRange } from '../features/transmit/useTransmit';
 import { stageOrigin } from '../features/stage/state';
 import { NodeActivity } from '../features/transmit/NodeActivity';
 import siteContent from '../features/about/content.json';
+import NotFound from '../app/not-found';
+import { ROUTE_HOLD_MS } from '../features/ui/useRouteHold';
+import { TextPages } from '../features/stage/TextPages';
+import { StageModeContext } from '../features/stage/usePaging';
+import type { Measurer } from '../features/stage/text';
 
 const navigation = vi.hoisted(() => ({ search: new URLSearchParams(), pathname: '/' }));
-const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }));
 vi.mock('next/navigation', () => ({ useSearchParams: () => navigation.search, usePathname: () => navigation.pathname, useRouter: () => router }));
+// jsdom cannot measure text: a test that needs pages hands TextPages a measurer of its own.
+const measuring = vi.hoisted(() => ({ fake: null as Measurer | null }));
+vi.mock('../features/stage/text', async importOriginal => {
+  const actual = await importOriginal<typeof import('../features/stage/text')>();
+  return { ...actual, defaultMeasurer: () => measuring.fake ?? actual.defaultMeasurer() };
+});
 
 const artist = (id: string, name: string, extra: Partial<TerminalEvent['artists'][number]> = {}): TerminalEvent['artists'][number] => ({ id, name, origin: 'KR', dock: '1', time: 'TBA', status: 'ARCHIVED', ...extra });
 const past: TerminalEvent = { id: 'OLD', session: 'Past event', subtitle: 'A past night', date: '2025-03-07', time: '23:00', venue: 'FAUST', district: 'SEOUL', coords: '', capacity: '', sound: '', status: 'ARCHIVED', artists: [artist('PUBLIC', 'VISIBLE ARTIST'), artist('PRIVATE', 'PRIVATE NAME', { status: 'CLASSIFIED' })] };
@@ -51,6 +62,7 @@ afterEach(() => {
   navigation.pathname = '/';
   router.push.mockReset();
   router.replace.mockReset();
+  router.prefetch.mockReset();
   vi.useRealTimers();
   vi.restoreAllMocks();
   delete document.documentElement.dataset.stageMode;
@@ -82,6 +94,11 @@ describe('stage shell', () => {
     expect(within(next).getAllByText('TERMINAL').some(word => !word.closest('a'))).toBe(true);
     // The language switch is not a site-wide control: it sits only in the heads of bilingual texts.
     expect(within(next).queryByRole('group', { name: '소개글 언어' })).not.toBeInTheDocument();
+    // The account is a plate of its own: one link out of the site, in a new tab, a tile on the home and a chip elsewhere.
+    const follow = () => within(plate(container, 'instagram')).getByRole('link', { name: /@terminal\.signal 팔로우, 새 탭에서 열기/ });
+    expect(plate(container, 'instagram')).toHaveAttribute('data-mode', 'tile');
+    expect(follow()).toHaveAttribute('href', 'https://www.instagram.com/terminal.signal/');
+    expect(follow()).toHaveAttribute('target', '_blank');
     go('/events');
     expect(plate(container, 'events')).toHaveAttribute('data-mode', 'hero');
     expect(within(plate(container, 'events')).getByRole('heading', { level: 1, name: /이벤트/ })).toBeInTheDocument();
@@ -89,6 +106,8 @@ describe('stage shell', () => {
     expect(within(plate(container, 'log')).getByRole('link')).toHaveAttribute('href', '/transmit');
     expect(within(plate(container, 'artists')).getByRole('link', { name: /아티스트/ })).toHaveAttribute('href', '/artists');
     expect(within(plate(container, 'next')).getAllByText('TERMINAL').length).toBeGreaterThan(0);
+    expect(plate(container, 'instagram')).toHaveAttribute('data-mode', 'chip');
+    expect(follow()).toHaveAttribute('href', 'https://www.instagram.com/terminal.signal/');
   });
 
   it('gives every view but the home a back card to the view before it, and a home key once away from it', () => {
@@ -108,6 +127,22 @@ describe('stage shell', () => {
     go('/');
     go('/signal');
     expect(within(back()).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
+  });
+
+  it('reads a query with the path it belongs to: back from a list page left, and a page opened directly backs up home', () => {
+    const events = Array.from({ length: 40 }, (_, index) => ({ ...past, id: `EVENT ${String(index).padStart(2, '0')}`, session: `EVENT ${index}` }));
+    const back = (container: HTMLElement) => within(container.querySelector<HTMLElement>('[data-back]')!);
+    const moved = shell(events);
+    moved.go('/events', 'page=2');
+    moved.go('/artists');
+    expect(back(moved.container).getByRole('link', { name: '이전 화면으로: 이벤트' })).toHaveAttribute('href', '/events?page=2');
+    cleanup();
+    // Opened at a list page, the first view is that page: back leads up to the home, and nothing moves.
+    navigation.pathname = '/events';
+    navigation.search = new URLSearchParams('page=2');
+    const direct = shell(events);
+    expect(back(direct.container).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
+    expect(direct.container.querySelector('#stage')).not.toHaveAttribute('data-moving');
   });
 
   it('makes every plate but the open one a single link, with its cells as cards of their own', () => {
@@ -136,16 +171,16 @@ describe('stage shell', () => {
   it('asks a short desktop window to grow, and lets the visitor go on anyway', () => {
     viewport(1440, 520);
     const { container } = shell();
-    expect(screen.getByRole('heading', { level: 1, name: '창을 조금 더 키워 주세요' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: '창을 조금 더 키워 주십시오' })).toBeInTheDocument();
     expect(container.querySelector('#stage')).toHaveAttribute('data-short');
     fireEvent.click(screen.getByRole('button', { name: '이대로 보기' }));
-    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주세요' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주십시오' })).not.toBeInTheDocument();
     expect(container.querySelector('#stage')).not.toHaveAttribute('data-short');
     cleanup();
     // A narrow (phone) window is never asked: it gets sheets.
     viewport(390, 520);
     shell();
-    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주세요' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주십시오' })).not.toBeInTheDocument();
   });
 
   it('never switches to a scrolling page: a narrow window gets sheets to snap between', () => {
@@ -186,13 +221,43 @@ describe('stage views', () => {
     expect(detail(container, 'event:OLD')).toHaveAttribute('data-visible', 'false');
   });
 
-  it('goes back on Escape like the back card, but not while typing', () => {
+  it('goes back on Escape like the back card, with its loading cover, but not while typing', () => {
+    vi.useFakeTimers();
     const { go } = shell();
     go('/events');
     go('/events/OLD');
     fireEvent.keyDown(screen.getByRole('textbox', { name: '초안' }), { key: 'Escape' });
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
     expect(router.push).not.toHaveBeenCalled();
     fireEvent.keyDown(document.body, { key: 'Escape' });
+    const back = screen.getByRole('link', { name: /이전 화면으로/ });
+    expect(back).toHaveAttribute('data-pending');
+    expect(router.push).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
+    expect(router.push).toHaveBeenCalledWith('/events', { scroll: false });
+    go('/events');
+    expect(back).not.toHaveAttribute('data-pending');
+  });
+
+  it('turns a list page by arrow key with the loading cover on the pager key it stands for', () => {
+    vi.useFakeTimers();
+    const events = Array.from({ length: 40 }, (_, index) => ({ ...past, id: `EVENT ${String(index).padStart(2, '0')}`, session: `EVENT ${index}` }));
+    const { container, go } = shell(events);
+    go('/events', 'page=2');
+    const pager = within(screen.getByRole('navigation', { name: '목록 쪽 이동' }));
+    const prev = pager.getByRole('link', { name: 'PREV' });
+    container.querySelector<HTMLElement>('#stage')!.focus();
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowLeft' });
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowLeft' });
+    expect(prev).toHaveAttribute('data-pending');
+    expect(router.push).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowLeft' });
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
     expect(router.push).toHaveBeenCalledWith('/events', { scroll: false });
   });
 
@@ -204,6 +269,38 @@ describe('stage views', () => {
     expect(within(file).getByRole('region', { name: '무대 2' })).toHaveTextContent('02:00–03:00');
     expect(container).not.toHaveTextContent('PRIVATE NAME');
     expect(within(file).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
+  });
+
+  it('hands the session link on: a phone share sheet, otherwise a copy, said in the key itself', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const shareSheet = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    Object.defineProperty(navigator, 'share', { configurable: true, value: shareSheet });
+    Object.defineProperty(window, 'isSecureContext', { configurable: true, value: true });
+    try {
+      const { container, go } = shell();
+      go('/events/OLD');
+      const file = detail(container, 'event:OLD');
+      const key = within(file).getByRole('button', { name: /SHARE/ });
+      expect(key).toHaveTextContent('링크 공유');
+      // A desktop pointer copies the address, even where a share sheet exists.
+      fireEvent.click(key);
+      await waitFor(() => expect(key).toHaveTextContent('링크 복사됨'));
+      // The public address, whatever address the page was opened at.
+      expect(writeText).toHaveBeenCalledWith('https://terminal.stann.kr/events/OLD');
+      expect(shareSheet).not.toHaveBeenCalled();
+      expect(within(file).getByText('링크 복사됨', { selector: '[role="status"]' })).toBeInTheDocument();
+      // A phone opens its share sheet with the session's name and address.
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({ matches: query === '(pointer: coarse)' }) });
+      fireEvent.click(key);
+      await waitFor(() => expect(shareSheet).toHaveBeenCalledWith({ title: 'Past event', url: 'https://terminal.stann.kr/events/OLD' }));
+      expect(writeText).toHaveBeenCalledTimes(1);
+    } finally {
+      delete (navigator as { clipboard?: unknown }).clipboard;
+      delete (navigator as { share?: unknown }).share;
+      delete (window as { matchMedia?: unknown }).matchMedia;
+      delete (window as { isSecureContext?: unknown }).isSecureContext;
+    }
   });
 
   it('offers the language only where a text comes in two, and reads the browser’s language first', () => {
@@ -271,7 +368,7 @@ describe('stage views', () => {
   });
 
   it('restores a guest draft after leaving the session, with the code awaiting verification again', async () => {
-    const openEvent = { ...upcoming, date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) };
+    const openEvent = { ...upcoming, date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10), guestAccess: true };
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(new Response(JSON.stringify(
       url.startsWith('/api/transmit') ? { logs: [], total: 0, page: 1, totalPages: 0 }
         : url === '/api/events' ? [openEvent] : { name: 'INVITER' },
@@ -283,14 +380,14 @@ describe('stage views', () => {
     fireEvent.click(form().getByRole('button', { name: '코드 확인' }));
     await waitFor(() => expect(form().getByLabelText(/^이름/)).toBeEnabled());
     fireEvent.change(form().getByLabelText(/^이름/), { target: { value: 'Example' } });
-    fireEvent.change(form().getByLabelText(/^이메일/), { target: { value: 'example@example.test' } });
+    fireEvent.change(form().getByRole('textbox', { name: /인스타그램 ID/ }), { target: { value: 'example' } });
     go('/about');
     // Let the leaving layer and the closed file release the actual form instance.
     await act(() => new Promise(resolve => setTimeout(resolve, 750)));
     go('/events/TRM-03/request');
     expect(form().getByLabelText(/초대 코드/)).toHaveValue('CODE');
     expect(form().getByLabelText(/^이름/)).toHaveValue('Example');
-    expect(form().getByLabelText(/^이메일/)).toHaveValue('example@example.test');
+    expect(form().getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('@example');
     expect(form().getByLabelText(/^이름/)).toBeDisabled();
     expect(form().getByRole('button', { name: '게스트 신청 저장' })).toBeDisabled();
     vi.unstubAllGlobals();
@@ -336,6 +433,19 @@ describe('stage views', () => {
     expect(poster()).toHaveAttribute('aria-busy', 'true');
   });
 
+  it('leaves a missing session or artist to the stage, and gives other unknown addresses the not-found page', () => {
+    navigation.pathname = '/events/NOPE';
+    const { container, rerender } = render(<NotFound />);
+    expect(container).toBeEmptyDOMElement();
+    navigation.pathname = '/artists/nobody';
+    rerender(<NotFound />);
+    expect(container).toBeEmptyDOMElement();
+    navigation.pathname = '/not-a-terminal-page';
+    rerender(<NotFound />);
+    expect(screen.getByRole('heading', { name: '이 주소의 기록을 찾을 수 없습니다' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/');
+  });
+
   it('shows an unknown session as an error inside the open directory', () => {
     const { container, go } = shell();
     go('/events/NOPE');
@@ -366,12 +476,26 @@ describe('stage views', () => {
     expect(screen.queryByRole('textbox', { name: /검색/ })).not.toBeInTheDocument();
   });
 
+  it('shows an address past the last list page as the last page, and leaves the address as it is', async () => {
+    const events = Array.from({ length: 40 }, (_, index) => ({ ...past, id: `EVENT ${String(index).padStart(2, '0')}`, session: `EVENT ${index}` }));
+    const { container, go } = shell(events);
+    go('/events');
+    const pager = () => within(screen.getByRole('navigation', { name: '목록 쪽 이동' }));
+    const last = pager().getByText(/^\d+ \/ \d+$/).textContent!.split('/')[1].trim();
+    go('/events', 'page=9');
+    expect(within(plate(container, 'events')).getByText(`PAGE ${last}`)).toBeInTheDocument();
+    expect(pager().getByText(`${last} / ${last}`)).toBeInTheDocument();
+    // The number of pages follows the window: a wider one must not rewrite where a narrower one was.
+    await act(() => new Promise(resolve => setTimeout(resolve, 50)));
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
   it('links repeated confirmed appearances to one canonical artist and highlights only STANN LUMO', () => {
     const lumo = { ...past.artists[0], name: 'STANN LUMO' };
     const { container, go } = shell([
       { ...past, id: 'TRM-01', artists: [{ ...lumo, id: '01-A' }] },
       { ...past, id: 'TRM-02', artists: [{ ...lumo, id: '02-A' }] },
-      { ...past, id: 'OTHER', artists: [{ ...lumo, id: 'X' }] },
+      { ...past, id: 'OTHER', artists: [{ ...lumo, id: 'X', name: 'OTHER ARTIST' }] },
     ]);
     go('/artists');
     const canonical = item(container, 'artist:stann-lumo');
@@ -408,12 +532,12 @@ describe('home plates', () => {
   it('shows node activity without times, visitor handles or messages', async () => {
     const { container, client } = shell();
     act(() => client.setQueryData(['transmit', 1], { logs: [
-      { id: 'log-2', ts: '2026.05.09 / 00:20', handle: 'NODE-K7Q2M', message: 'node text', createdAt: '2026-05-08T15:20:00.000Z' },
       { id: 'log-1', ts: '2026.05.09 / 00:10', handle: 'SECRET_HANDLE', message: 'free text', createdAt: '2026-05-08T15:10:00.000Z' },
+      { id: 'log-2', ts: '2026.05.09 / 00:20', handle: 'NODE-K7Q2M', message: 'node text', createdAt: '2026-05-08T15:20:00.000Z' },
     ], total: 2, page: 1, totalPages: 1 }));
-    await waitFor(() => expect(plate(container, 'log')).toHaveTextContent('NODE-K7Q2M'));
-    const tags = [...plate(container, 'log').querySelectorAll('li b')].map(tag => tag.textContent);
-    expect(tags[1]).toMatch(/^NODE-[A-HJ-NP-Z2-9]{5}$/);
+    // The home log is short: its first row is enough to show a free handle printed as a node tag.
+    await waitFor(() => expect(plate(container, 'log').querySelector('li b')).not.toBeNull());
+    expect(plate(container, 'log').querySelector('li b')?.textContent).toMatch(/^NODE-[A-HJ-NP-Z2-9]{5}$/);
     expect(container).not.toHaveTextContent('05.09');
     expect(container).not.toHaveTextContent('SECRET_HANDLE');
     expect(container).not.toHaveTextContent('free text');
@@ -554,7 +678,38 @@ describe('directory and roster contracts', () => {
     expect(order()).toEqual(['event:LATER', 'event:NEXT', 'event:OLD']);
   });
 
-  it('keeps the home clock after a session starts, then counts down to the next one registered', () => {
+  it('runs a session with an end live, marks the timetable slot on now, and archives it at the end', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
+    const night = { ...upcoming, date: '2026-11-28', time: '23:00 KST', endTime: '05:00', artists: [
+      artist('03-A', 'FIRST ARTIST', { status: 'CONFIRMED', time: '23:00 - 01:00' }),
+      artist('03-B', 'SECOND ARTIST', { status: 'CONFIRMED', time: '01:00 - 05:00' }),
+    ] };
+    const { container, go } = shell([past, night]);
+    const at = (time: string) => act(() => {
+      vi.setSystemTime(new Date(`${time}+09:00`));
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(within(plate(container, 'next')).getByRole('link', { name: /^다음 이벤트 TERMINAL \[03\]/ })).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1000));
+    expect(within(plate(container, 'next')).getByRole('link', { name: /^진행 중인 이벤트 TERMINAL \[03\]/ })).toBeInTheDocument();
+    go('/events/TRM-03');
+    const dock = () => within(detail(container, 'event:TRM-03')).getByRole('region', { name: '무대 1' });
+    const line = (name: string) => within(dock()).getByText(name).closest('li');
+    expect(dock()).toHaveTextContent('시간표 기준 지금 순서');
+    expect(line('FIRST ARTIST')).toHaveAttribute('data-now');
+    expect(line('FIRST ARTIST')).toHaveTextContent('NOW');
+    expect(line('SECOND ARTIST')).not.toHaveAttribute('data-now');
+    at('2026-11-29T01:30:00');
+    expect(line('FIRST ARTIST')).not.toHaveAttribute('data-now');
+    expect(line('SECOND ARTIST')).toHaveAttribute('data-now');
+    at('2026-11-29T05:00:00');
+    expect(dock()).toHaveTextContent('공개 공연표');
+    expect(container.querySelector('[data-now]')).toBeNull();
+    expect(within(detail(container, 'event:TRM-03')).getByText('기록', { selector: '[data-event-state]' })).toHaveAttribute('data-event-state', 'ARCHIVED');
+  });
+
+  it('keeps the home clock after a session starts, leads with it while it runs, then counts down to the next one', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
     const soon = { ...upcoming, date: '2026-11-28', time: '23:00 KST' };
@@ -567,8 +722,16 @@ describe('directory and roster contracts', () => {
     expect(within(next().getByRole('timer')).getByText('초').nextElementSibling).toHaveTextContent('02');
     const registered = { ...soon, id: 'TRM-04', session: 'TERMINAL [04]', date: '2026-12-28' };
     act(() => {
-      client.setQueryData(['events'], [past, { ...soon, status: 'LIVE' }, registered]);
+      client.setQueryData(['events'], [past, { ...soon, status: 'LIVE', endTime: '05:00' }, registered]);
       vi.advanceTimersByTime(1);
+    });
+    // While it runs, the live session leads the home even with the next one announced.
+    expect(next().getByRole('heading', { name: 'TERMINAL [03]' })).toBeInTheDocument();
+    expect(next().getByRole('link', { name: /^진행 중인 이벤트 TERMINAL \[03\]/ })).toBeInTheDocument();
+    // Once it ends, the plate counts down to the next one.
+    act(() => {
+      vi.setSystemTime(new Date('2026-11-29T05:00:00+09:00'));
+      vi.advanceTimersByTime(60_000);
     });
     expect(next().getByRole('heading', { name: 'TERMINAL [04]' })).toBeInTheDocument();
     expect(next().getByRole('timer', { name: '이벤트 시작까지 남은 시간' })).toHaveTextContent('T- COUNTDOWN');
@@ -670,6 +833,103 @@ describe('public log window', () => {
     await waitFor(() => expect(result.current.data).toBeDefined());
     expect(result.current.data!.logs.map(entry => entry.id)).toEqual(['L8', 'L9', 'L10', 'L11', 'L12', 'L13']);
     expect(result.current.data!.total).toBe(14);
+  });
+});
+
+describe('visitor log pager', () => {
+  const log = (n: number) => ({ id: `L${n}`, handle: `h${n}`, message: 'm', ts: '09.30 12:00', createdAt: '2026-09-30T03:00:00.000Z' });
+  function logShell(search: string) {
+    const { client, go } = shell();
+    for (const page of [1, 2, 3]) {
+      client.setQueryData(['transmit', page], { logs: [1, 2, 3, 4, 5].map(i => log((page - 1) * 5 + i)), total: 14, page, totalPages: 3 });
+    }
+    go('/transmit', search);
+    return within(screen.getByRole('navigation', { name: '로그 쪽 이동' }));
+  }
+
+  it('covers the pressed PREV/NEXT key until the page arrives and moves once however often it is pressed', () => {
+    vi.useFakeTimers();
+    const pager = logShell('page=2');
+    const next = pager.getByRole('button', { name: 'NEXT' });
+    next.focus();
+    fireEvent.click(next);
+    fireEvent.click(next);
+    expect(next).toHaveAttribute('data-pending');
+    expect(next).toHaveFocus();
+    expect(router.push).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    fireEvent.click(next);
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
+    expect(router.push).toHaveBeenCalledWith('/transmit?page=3', { scroll: false });
+  });
+
+  it('keeps keyboard focus on NEXT when it reaches the last sub-page, where it turns nothing', () => {
+    const real = window.getComputedStyle.bind(window);
+    // Beside the write form (two columns), each entry taller than half the list: one entry per sub-page.
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((node, pseudo) =>
+      (node as Element).className?.includes?.('logGrid') ? ({ gridTemplateColumns: '1fr 1fr' } as CSSStyleDeclaration) : real(node, pseudo));
+    vi.spyOn(HTMLOListElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
+    vi.spyOn(HTMLLIElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 60));
+    const pager = logShell('page=3');
+    const next = pager.getByRole('button', { name: 'NEXT' });
+    next.focus();
+    const subPages = pager.getByText(/· 1\/\d+/).textContent!.split('/').pop()!;
+    expect(Number(subPages)).toBeGreaterThan(1);
+    for (let step = 2; step <= Number(subPages); step += 1) {
+      fireEvent.click(next);
+      expect(pager.getByText(new RegExp(`· ${step}/${subPages}`))).toBeInTheDocument();
+    }
+    expect(next).toHaveFocus();
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(next);
+    fireEvent.keyDown(next, { key: 'ArrowRight' });
+    expect(pager.getByText(new RegExp(`· ${subPages}/${subPages}`))).toBeInTheDocument();
+    expect(router.push).not.toHaveBeenCalled();
+    expect(next).toHaveFocus();
+  });
+
+  it('shows an arrow key’s turn on the PREV/NEXT key it stands for', () => {
+    vi.useFakeTimers();
+    const pager = logShell('page=2');
+    const next = pager.getByRole('button', { name: 'NEXT' });
+    const prev = pager.getByRole('button', { name: 'PREV' });
+    next.focus();
+    fireEvent.keyDown(next, { key: 'ArrowLeft' });
+    expect(prev).toHaveAttribute('data-pending');
+    expect(next).not.toHaveAttribute('data-pending');
+    expect(next).toHaveFocus();
+    act(() => { vi.advanceTimersByTime(ROUTE_HOLD_MS); });
+    expect(router.push).toHaveBeenCalledTimes(1);
+    expect(router.push).toHaveBeenCalledWith('/transmit', { scroll: false });
+  });
+});
+
+describe('text pages', () => {
+  it('keeps keyboard focus on a page key at the end of the text, where it turns nothing', async () => {
+    const user = userEvent.setup();
+    measuring.fake = { wrap: text => [{ text, width: 10 }] };
+    // One line of room per page: each paragraph is a page.
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(40);
+    try {
+      render(<StageModeContext.Provider value="stage"><TextPages paragraphs={['first', 'second']} label="소개" /></StageModeContext.Provider>);
+      const prev = screen.getByRole('button', { name: 'PREV' });
+      const next = screen.getByRole('button', { name: 'NEXT' });
+      expect(prev).toHaveAttribute('aria-disabled', 'true');
+      expect(next).toHaveAttribute('aria-disabled', 'false');
+      next.focus();
+      await user.keyboard('{Enter}');
+      expect(screen.getByText('second')).toBeInTheDocument();
+      expect(next).toHaveFocus();
+      expect(next).toHaveAttribute('aria-disabled', 'true');
+      await user.keyboard('{Enter}');
+      expect(screen.getByText('second')).toBeInTheDocument();
+      expect(next).toHaveFocus();
+      expect(prev).toHaveAttribute('aria-disabled', 'false');
+    } finally {
+      measuring.fake = null;
+    }
   });
 });
 

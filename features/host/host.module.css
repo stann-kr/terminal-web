@@ -1,0 +1,303 @@
+/* The artist's page, off the stage: a head strip, then three plates side by side on the field
+   (feature: who invites, paper: the link, panel: who came), stacked when the page is narrow. */
+.page {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--gap);
+  padding: var(--gap);
+  background: var(--field);
+  align-content: start;
+}
+/* Side by side, the page is exactly the window: each plate scrolls inside itself if it must, and in
+   the status plate only the guest list does, so a long list never stretches the page. */
+@media (min-width: 1200px) {
+  .page {
+    /* Pinned to the window inside the frame's bars and gutters (features/shell), so it ends at the
+       window's bottom edge whatever a browser makes of `svh`/`dvh`: no height unit is involved. */
+    position: fixed;
+    inset: var(--frame-y, 0px) clamp(10px, 1.4vw, 24px);
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch;
+  }
+  .plates { min-height: 0; }
+  .plates > section {
+    min-height: 0;
+    overflow-y: auto;
+  }
+  /* The list keeps at least a few rows; on a short window the plate itself scrolls past that. */
+  .plates > .status { overflow-y: auto; }
+  .status > :last-child { min-height: 0; }
+  /* Side by side only, the list scrolls in its plate; stacked, it runs with the page. */
+  .status .guests {
+    flex: 1 1 auto;
+    min-height: 168px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  padding: calc(var(--pad) * .7) var(--pad);
+}
+.headLabel {
+  color: var(--accent);
+  font: 700 clamp(44px, 5vw, 64px)/.9 var(--display);
+  letter-spacing: .01em;
+}
+.headKo {
+  font: 600 var(--t-md)/1.2 var(--sans);
+}
+.headEvent {
+  margin-left: auto;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .16em;
+}
+.plates {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap);
+  align-items: stretch;
+}
+@container (max-width: 1180px) {
+  .plates { grid-template-columns: minmax(0, 1fr); }
+}
+
+.artist {
+  margin: 0;
+  font: 700 clamp(44px, 5vw, 64px)/.92 var(--display);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.thanks {
+  display: grid;
+  gap: 6px;
+  margin: 22px 0 0;
+  font: 600 var(--t-md)/1.45 var(--sans);
+}
+.thanks span {
+  opacity: .8;
+  font: 600 var(--t-xs)/1.3 var(--display);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.lead {
+  margin: 18px 0 0;
+}
+/* The invite guide: numbered steps, each a short title over one line of how. */
+.guide {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  font-size: var(--text-label);
+  line-height: 1.5;
+}
+.guide li {
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 1fr);
+  column-gap: 8px;
+  counter-increment: step;
+}
+.guide li::before {
+  content: counter(step, decimal-leading-zero);
+  grid-row: span 2;
+  opacity: .7;
+  font: 700 var(--t-sm)/1.4 var(--display);
+  letter-spacing: .08em;
+}
+.guide strong {
+  font: 700 var(--t-sm)/1.4 var(--display);
+  letter-spacing: .06em;
+}
+.facts {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.link {
+  margin: 16px calc(var(--bleed) * -1) 0;
+  padding: 14px var(--bleed);
+  background: var(--well);
+  font: 400 var(--t-sm)/1.4 var(--mono);
+  overflow-wrap: anywhere;
+}
+.keys {
+  display: grid;
+  gap: 2px;
+  margin: 2px calc(var(--bleed) * -1) 0;
+}
+.keys > button {
+  justify-content: space-between;
+  width: 100%;
+}
+.keys small {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+}
+
+.count {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font: 700 var(--t-xl)/1 var(--display);
+  color: var(--muted);
+}
+.count strong {
+  color: var(--accent);
+  font: 800 clamp(64px, 6vw, 88px)/.9 var(--display);
+}
+.cells {
+  display: flex;
+  gap: 3px;
+  margin-top: 14px;
+}
+.cells i {
+  flex: 1;
+  height: 22px;
+  background: var(--well);
+}
+.cells i[data-used] {
+  background: var(--ink);
+}
+.band {
+  margin-top: 16px;
+}
+.band[data-state="closed"] {
+  --fill: var(--alert);
+  --on-fill: var(--alert-ink);
+}
+.guests {
+  margin: 8px calc(var(--bleed) * -1) 0;
+  padding: 0;
+  list-style: none;
+}
+.guests:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -3px;
+}
+
+.guests li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px var(--bleed);
+}
+.guests li:nth-child(odd) {
+  background: var(--well);
+}
+.guests time {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1 var(--mono);
+  white-space: nowrap;
+}
+.empty,
+.note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+.note + * {
+  margin-top: 16px;
+}
+
+/* Waiting guests: a band, then one row each — who (name over Instagram id), when, and the move. */
+.waitlist {
+  margin-top: 20px;
+}
+.waitBand {
+  --fill: var(--alert);
+  --on-fill: var(--alert-ink);
+  margin: 0;
+}
+.waiting {
+  margin: 8px calc(var(--bleed) * -1) 0;
+  padding: 0;
+  list-style: none;
+}
+.waiting li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px var(--bleed);
+}
+.waiting li:nth-child(odd) {
+  background: var(--well);
+}
+.waitWho {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.waitWho a {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1.2 var(--mono);
+  overflow-wrap: anywhere;
+}
+.waiting time {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1 var(--mono);
+  white-space: nowrap;
+}
+
+/* The artist's own entry: a band across the plate, then the fields flush with it. */
+.guestForm {
+  margin-top: 24px;
+}
+.formBand {
+  margin-bottom: 0;
+}
+.saved {
+  margin: 10px 0 0;
+  color: var(--accent);
+  font-size: var(--text-label);
+}
+
+/* Promo files: previews in two columns, each with its download key under it. */
+.kitLead {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+.kit {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kit li {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+.kit img {
+  width: 100%;
+  height: auto;
+  /* Every preview in the same 3:4 frame; the story poster's 9:16 is cropped here, never in the file. */
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  background: var(--well);
+}
+.kitLabel {
+  font: 700 var(--t-sm)/1.2 var(--display);
+  letter-spacing: .04em;
+}
+.kitMeta {
+  color: var(--muted);
+  font: 400 var(--t-xs)/1.2 var(--mono);
+  overflow-wrap: anywhere;
+}
+.kit a {
+  margin-top: 4px;
+}

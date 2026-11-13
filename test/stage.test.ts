@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PLATE_ORDER, parseCarrierMark, resolveMissing, stageOrigin, stageParentHref, stageStateFromUrl, stateHref, stateKey, type StageState } from '../features/stage/state';
-import { computeFlowLayout, computeLayout, listRowsPerPage, stageMetrics, tile, type LayoutInput, type Rect, type StageLayout } from '../features/stage/layout';
+import { computeFlowLayout, computeLayout, listRowsPerPage, setOutRect, stageMetrics, tile, type LayoutInput, type Rect, type StageLayout } from '../features/stage/layout';
 import { stageConfig } from '../features/stage/config';
-import { fitTitle, packHeights, paginate, type Measurer } from '../features/stage/text';
+import { fitTitle, packHeights, paginate, wordReserveEm, type Measurer } from '../features/stage/text';
 
 describe('stage state from the address', () => {
   it('maps every stage route to its state', () => {
@@ -101,7 +101,7 @@ const contains = (outer: Rect, inner: Rect) => inner.x >= outer.x && inner.y >= 
 const shownItems = (layout: StageLayout) => Object.entries(layout.items).filter(([, item]) => item.visible);
 
 describe('stage layout', () => {
-  it('tiles every view with all six plates, apart, on one screen, carriers inside their plate or the detail', () => {
+  it('tiles every view with every plate, apart, on one screen, carriers inside their plate or the detail', () => {
     for (const { viewportW, stage } of STAGES) {
       for (const path of PATHS) {
         const layout = computeLayout(stageStateFromUrl(path), stage, { viewportW, items: items() });
@@ -134,6 +134,11 @@ describe('stage layout', () => {
     const home = computeLayout({ view: 'home' }, stage);
     expect(home.plates.next.mode).toBe('hero');
     expect(home.plates.next.rect.h).toBe(stage.h);
+    // The Instagram plate sits directly above the subscription call, a step taller than it.
+    const { instagram, signal } = home.plates;
+    expect(instagram).toMatchObject({ mode: 'tile', rect: { x: signal.rect.x, w: signal.rect.w } });
+    expect(instagram.rect.h).toBeGreaterThan(signal.rect.h);
+    expect(instagram.rect.y).toBeLessThan(signal.rect.y);
   });
 
   it('opens a detail as a plate of its own beside an index that keeps the open line, marked current', () => {
@@ -214,6 +219,10 @@ describe('stage layout', () => {
     const layout = computeLayout(stageStateFromUrl('/events'), narrow, { viewportW: 390, items: items() });
     expect(layout.sheets.length).toBeGreaterThan(1);
     expect(layout.sheetOf.events).toBe(0);
+    // A phone's home reads the next session, then the account and the call to subscribe, then the directory.
+    const home = computeLayout({ view: 'home' }, narrow, { viewportW: 390, items: items() });
+    expect(home.sheetOf).toMatchObject({ next: 0, instagram: 1, signal: 1, log: 1, about: 1, events: 2, artists: 2 });
+    expect(home.plates.instagram.rect.y).toBeLessThan(home.plates.signal.rect.y);
     expect(PLATE_ORDER.every(id => layout.plates[id].rect.w === narrow.w)).toBe(true);
     // Secondary sheets are as tall as their plates, not a whole window: chips stay chip-sized, and
     // the back card keeps its own height over the open plate.
@@ -269,8 +278,22 @@ describe('stage layout', () => {
     expect(computeFlowLayout(stageStateFromUrl('/artists/lucii'), { items: items() }).open).toEqual({ kind: 'artist', id: 'lucii' });
   });
 
-  it('keeps every configured view complete: six plates once each, a detail only on details', () => {
-    for (const [view, tree] of Object.entries(stageConfig.layouts)) {
+  it('sets a box out from what was on screen when the page jumps to the top of a new view', () => {
+    const box = (y: number, h = 200): Rect => ({ x: 10, y, w: 370, h });
+    // Seen before the jump (the window was at 1340): it keeps its place on screen.
+    expect(setOutRect(box(1546), box(106, 548), 1340, 0, 664)).toEqual(box(206));
+    // Coming in from far below: it sets out just beyond the window's lower edge.
+    expect(setOutRect(box(2095), box(106, 548), 0, 0, 664)).toEqual(box(672));
+    // Coming in from above: just beyond the upper edge.
+    expect(setOutRect(box(-900, 100), box(10), 0, 0, 664)).toEqual(box(-108, 100));
+    // Off screen before and after: it does not cross the window.
+    expect(setOutRect(box(10), box(674), 1340, 0, 664)).toEqual(box(674));
+    // Seen before and after, no jump: nothing to change.
+    expect(setOutRect(box(100), box(300), 0, 0, 664)).toBeNull();
+  });
+
+  it('keeps every configured view complete: every plate once each, a detail only on details', () => {
+    for (const [view, tree] of [...Object.entries(stageConfig.layouts), ...Object.entries(stageConfig.narrow)]) {
       const leaves = tile(tree, { x: 0, y: 0, w: 1000, h: 1000 }, 0).map(([leaf]) => ('plate' in leaf ? leaf.plate : leaf.slot));
       expect(leaves.filter(key => (PLATE_ORDER as readonly string[]).includes(key)).sort(), view).toEqual([...PLATE_ORDER].sort());
       expect(leaves.includes('detail'), view).toBe(view === 'session' || view === 'artist');
@@ -332,6 +355,27 @@ describe('text pages', () => {
     expect(fitTitle('ab', title, fake)).toBe(40);
     expect(fitTitle('ten chars!', { ...title, maxLines: 2 }, fake)).toBe(16); // 'chars!' alone must fit 100px
     expect(fitTitle('ten chars!', title, null)).toBe(40);
+    // A word set in a wider face than the measured one keeps its extra width free (two chars here).
+    expect(fitTitle('ten chars!', { ...title, reserveEm: 2 }, fake)).toBe(8);
+    // A layout that splits an overlong word over lines (as CSS overflow-wrap does) would fit 'abcdefgh'
+    // on two lines at 25px; a title never breaks inside a word, so it is set where the word fits whole.
+    const breaking: Measurer = {
+      wrap: (text, font, width) => {
+        const px = parseFloat(font.split(' ')[1]);
+        const per = Math.max(1, Math.floor(width / px));
+        const lines: { text: string; width: number }[] = [];
+        for (let at = 0; at < text.length; at += per) lines.push({ text: text.slice(at, at + per), width: Math.min(per, text.length - at) * px });
+        return lines;
+      },
+    };
+    expect(fitTitle('abcdefgh', { ...title, maxLines: 2 }, breaking)).toBe(12);
+  });
+
+  it('reserves what a word in a wider face takes beyond the measured face, so a title never breaks inside it', () => {
+    // The brand word is set in its own face: half again as wide here.
+    const faces: Measurer = { wrap: (text, font, _width, options = {}) => [{ text, width: text.length * (parseFloat(font) * (font.includes('Wide') ? 1.5 : 1) + (options.letterSpacing ?? 0)) }] };
+    expect(wordReserveEm('ab', px => `${px}px Narrow`, 0, px => `${px}px Wide`, 0, faces)).toBe(1);
+    expect(wordReserveEm('ab', px => `${px}px Wide`, 0, px => `${px}px Narrow`, 0, faces)).toBe(0);
   });
 
   it('packs measured entries into pages of a height, in order', () => {

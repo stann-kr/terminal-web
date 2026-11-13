@@ -43,6 +43,14 @@
       "sha256": "fe8a3237ce617013ee38b96727cea7a761ccb5f23cda57e2f0863d5c947d4f39"
     },
     {
+      "path": "migrations/0010_access_request_email_optional.sql",
+      "sha256": "291f68f01cacf8b499c84a28ee3a612ef584172160dcd07e524633ff2a5c8132"
+    },
+    {
+      "path": "migrations/0011_access_waitlist.sql",
+      "sha256": "dac6cdff226a94318fbac40516a2f5b4d3aa550069c3b5a112c45755c3afb50f"
+    },
+    {
       "path": "migrations/meta/0000_snapshot.json",
       "sha256": "9f692fcfb6eb815b1d41dc50dbd43499966359a0f490159ef1350d40a43ad645"
     },
@@ -83,8 +91,16 @@
       "sha256": "98a9af938d1a04e987511635a2f8144956d1c396d3820bd1d30deba109ca36cb"
     },
     {
+      "path": "migrations/meta/0010_snapshot.json",
+      "sha256": "2c96bdca8d2871b917de0b00247283666fc05ba97adfe05466f1984f93c4b78f"
+    },
+    {
+      "path": "migrations/meta/0011_snapshot.json",
+      "sha256": "39bc86c093f529580268bb747d884583913e1dbfea5881e5ebd59ce359b2c74b"
+    },
+    {
       "path": "migrations/meta/_journal.json",
-      "sha256": "51d6ebe5018a12a0292791fdc4903b9b3e7f14ed3555c731763065dcd80fab86"
+      "sha256": "1ef4d952ebc3f601c80fa9cd4d0fbceeeb5b088982d47d75e62e8e76239ac666"
     }
   ]
 }

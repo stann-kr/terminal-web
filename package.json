@@ -1,26 +1,15 @@
 {
   "dependencies": {
     "@chenglou/pretext": "0.0.9",
-    "@gsap/react": "2.1.2",
-    "@opennextjs/cloudflare": "^1.18.1",
-    "@react-three/fiber": "9.3.0",
-    "@react-three/postprocessing": "^3.0.4",
+    "@opennextjs/cloudflare": "^1.20.13",
     "@tanstack/react-query": "^5.99.2",
-    "@tanstack/react-query-devtools": "^5.99.2",
-    "@types/three": "^0.169.0",
-    "clsx": "^2.1.1",
     "cross-env": "^7.0.3",
     "drizzle-orm": "^0.45.2",
-    "framer-motion": "12.23.12",
-    "gsap": "3.15.0",
-    "next": "^16.3.3",
-    "postprocessing": "^6.39.0",
+    "next": "^16.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.5.0",
-    "three": "0.179.1",
     "use-scramble": "^2.2.15",
-    "wrangler": "^4.121.0"
+    "wrangler": "^4.154.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260812.1",
@@ -33,7 +22,7 @@
     "autoprefixer": "^10.4.21",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.16.0",
-    "eslint-config-next": "^16.3.3",
+    "eslint-config-next": "^16.4.3",
     "jsdom": "^30.0.1",
     "patch-package": "^8.0.1",
     "postcss": "^8.5.26",
@@ -62,9 +51,13 @@
     "dev": "cross-env NODE_ENV=development next dev -H 0.0.0.0 -p 3005",
     "start": "cross-env NODE_ENV=production next start -H 0.0.0.0 -p 3005",
     "lint": "eslint .",
+    "signal:mail": "node scripts/signal-mail.mjs",
+    "invite": "node scripts/artist-invite.mjs",
+    "kit": "node scripts/promo-kit.mjs",
     "smoke:http": "node scripts/http-smoke.mjs",
     "test": "vitest run",
     "test:d1": "node scripts/verify-local-d1.mjs",
+    "transmit:remove": "node scripts/transmit-remove.mjs",
     "typecheck": "tsc --noEmit",
     "postinstall": "patch-package --error-on-fail && node scripts/verify-use-scramble-patch.mjs",
     "promo": "node promo/serve.mjs",
@@ -75,6 +68,11 @@
     "sharp": "0.35.5",
     "next": {
       "postcss": "8.5.26"
-    }
+    },
+    "@node-minify/core": {
+      "glob": "^14.0.2"
+    },
+    "glob": "^14.0.2",
+    "minimatch@>=4 <11.0.1": "^11.0.1"
   }
 }

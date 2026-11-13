@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import type { TerminalEvent } from '@/lib/events/types';
 import { eventHref } from '@/features/events/model';
+import { CALENDAR_BLOCKED, useCalendarOpen, useSubscribeHref } from '@/features/events/useCalendarKey';
 import { Action, ActionDeck, Facts, StateNotice, ui } from '@/features/ui/Ui';
 import {
   Consent,
@@ -12,6 +13,7 @@ import {
   literalInput,
 } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
+import { instagram } from '@/features/about/instagram';
 import { useAccessRequest } from './useAccessRequest';
 import styles from './access.module.css';
 
@@ -40,12 +42,25 @@ export function AccessForm({
     submit,
     errorCode,
     hasDraft,
+    closedInviter,
+    waitlist,
+    waitlisted,
+    alreadyWaiting,
+    turned,
   } = useAccessRequest(eventId, availability);
   // A checked code unlocks step 02; the guest carries on typing there.
   const nameField = useRef<HTMLInputElement>(null);
+  // Back from a closed invite to type another code: the code field takes the focus once it is drawn.
+  const codeField = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (verified) nameField.current?.focus();
   }, [verified]);
+  // A save that came after the last place went turns the form to its waitlist terms: the notice
+  // takes the focus (the key that was pressed is disabled while saving) and is read out.
+  const waitlistNote = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (turned) waitlistNote.current?.focus();
+  }, [turned]);
   const closed = (
     <StateNotice title="현재 신청할 수 없습니다">
       <p>{availability.message}</p>
@@ -55,6 +70,35 @@ export function AccessForm({
       </ActionDeck>
     </StateNotice>
   );
+  if (done && waitlisted)
+    return (
+      <FormSuccess>
+        <p className={ui.eyebrow}>WAITLISTED</p>
+        <h2>{alreadyWaiting ? '이미 대기 명단에 있습니다' : '대기 명단에 올렸습니다'}</h2>
+        <Facts
+          rows={[
+            ...(event ? [['이벤트', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
+            // An entry that was there before may stand under another inviter and another name:
+            // neither is shown, only the id it is known by.
+            ...(verified && !alreadyWaiting ? [['초대인', verified.name] as [string, string]] : []),
+            ...(alreadyWaiting ? [] : [['이름', fields.name.trim()] as [string, string]]),
+            ['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`],
+            ['상태', '대기'],
+          ]}
+        />
+        <p>
+          {alreadyWaiting
+            ? '이 인스타그램 ID는 이 이벤트의 대기 명단에 이미 있어 새로 올리지 않았습니다.'
+            : '아직 게스트 명단은 아닙니다.'}{' '}
+          자리가 생겨 명단에 오르면 초대한 아티스트가 인스타그램 DM으로 알려 드립니다.
+        </p>
+        <ActionDeck>
+          <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>
+          <Action href={eventHref(eventId)}>이벤트로 돌아가기</Action>
+          <Action href="/signal">다음 이벤트 소식 신청</Action>
+        </ActionDeck>
+      </FormSuccess>
+    );
   if (done)
     return (
       <FormSuccess>
@@ -65,18 +109,21 @@ export function AccessForm({
             ...(event ? [['이벤트', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
             ...(verified ? [['초대인', verified.name] as [string, string]] : []),
             ['이름', fields.name.trim()],
-            ['이메일', fields.email.trim()],
             ['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`],
+            ...(fields.marketingConsent ? [['이메일', fields.email.trim()] as [string, string]] : []),
             ['소식 수신', fields.marketingConsent ? '동의' : '동의 안 함'],
           ]}
         />
+        <p>인스타그램 안내는 팔로워에게만 닿습니다.</p>
         <ActionDeck>
-          <Action primary href={eventHref(eventId)}>이벤트로 돌아가기</Action>
+          <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>
+          <Action href={eventHref(eventId)}>이벤트로 돌아가기</Action>
           {!fields.marketingConsent && <Action href="/signal">다음 이벤트 소식 신청</Action>}
         </ActionDeck>
       </FormSuccess>
     );
   if (!availability.canRequest && !hasDraft && !pending) return closed;
+  if (closedInviter) return <InviteClosed inviter={closedInviter} onOtherCode={() => { changeCode(''); requestAnimationFrame(() => codeField.current?.focus()); }} />;
   return (
     <form aria-busy={pending} onSubmit={submit} className={formStyles.form}>
       {!availability.canRequest && closed}
@@ -88,6 +135,7 @@ export function AccessForm({
         <legend className={`${ui.band} ${styles.legend}`}>01 / 초대 코드 확인</legend>
         <div className={styles.code}>
           <Field
+            ref={codeField}
             id="access-code"
             label="초대 코드"
             required
@@ -115,69 +163,60 @@ export function AccessForm({
           </button>
         </div>
         <p className={styles.codeMessage} role="status">
-          {codeMessage}
+          {/* Until a code is checked, the line under the code says what unlocks step 02. */}
+          {codeMessage || (!verified && availability.canRequest ? '초대 코드를 확인하면 02를 입력할 수 있습니다.' : '')}
         </p>
         {verified && (
           <p className={styles.inviter}>
             초대인 <strong>{verified.name}</strong>
           </p>
         )}
+        {/* A full code still takes the guest, onto its waitlist: said before step 02, not after. */}
+        {waitlist && verified && (
+          <div ref={waitlistNote} tabIndex={-1} className={styles.waitlist} role="note">
+            <p className={`${ui.band} ${styles.closedBand}`}>WAITLIST</p>
+            <p>
+              {verified.name}의 게스트 초대가 마감되었습니다. 대기 명단에 올려 두시면 자리가 생길 때
+              아티스트가 인스타그램 DM으로 알려 드립니다.
+            </p>
+          </div>
+        )}
       </fieldset>
       <fieldset
         className={formStyles.fields}
         disabled={!verified || pending || !availability.canRequest}
       >
-        <legend className={`${ui.band} ${styles.legend}`}>02 / 연락처와 동의</legend>
-        {!verified && availability.canRequest && (
-          <p className={styles.locked}>초대 코드를 확인하면 입력할 수 있습니다.</p>
-        )}
-        <Field
-          ref={nameField}
-          id="guest-name"
-          label="이름"
-          required
-          maxLength={100}
-          autoComplete="name"
-          value={fields.name}
-          onChange={(event) =>
-            setFields({ ...fields, name: event.target.value })
-          }
-        />
+        <legend className={`${ui.band} ${styles.legend}`}>{waitlist ? '02 / 대기 신청' : '02 / 연락처와 동의'}</legend>
         <div className={styles.contacts}>
           <Field
-            id="guest-email"
-            label="이메일"
-            type="email"
+            ref={nameField}
+            id="guest-name"
+            label="이름"
+            hint="1인 1신청 · 동반인도 각자 신청해 주십시오."
             required
-            maxLength={254}
-            autoComplete="email"
-            value={fields.email}
-            error={
-              errorCode === 'INVALID_EMAIL_FORMAT'
-                ? errorMessage(error)
-                : undefined
+            maxLength={100}
+            autoComplete="name"
+            value={fields.name}
+            onChange={(event) =>
+              setFields({ ...fields, name: event.target.value })
             }
-            onChange={(event) => {
-              setFields({ ...fields, email: event.target.value });
-              if (errorCode === 'INVALID_EMAIL_FORMAT') setError(null);
-            }}
           />
           <Field
             id="guest-instagram"
             label="인스타그램 ID"
             required
             maxLength={31}
-            pattern="@?[A-Za-z0-9_.]{1,30}"
+            pattern="@[A-Za-z0-9_.]{1,30}"
             {...literalInput}
-            placeholder="@handle"
-            value={fields.instagram}
+            // The @ is part of what the field shows, never of what is stored.
+            value={`@${fields.instagram}`}
             error={
               errorCode === 'INVALID_INSTAGRAM_FORMAT'
                 ? errorMessage(error)
                 : undefined
             }
             onChange={(event) => {
-              setFields({ ...fields, instagram: event.target.value });
+              setFields({ ...fields, instagram: event.target.value.replace(/^@+/, '') });
               if (errorCode === 'INVALID_INSTAGRAM_FORMAT') setError(null);
             }}
           />
@@ -191,9 +230,21 @@ export function AccessForm({
               setFields({ ...fields, privacyConsent: value })
             }
           >
-            이름·이메일·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다.
-            보존 기간: 이벤트 종료 후 1개월. 제3자 미공개.
+            {waitlist ? (
+              <>
+                이름·인스타그램 ID를 대기 명단 관리 목적으로 수집합니다. 이름·인스타그램 ID와 신청
+                시각은 초대한 아티스트에게 공유되며, 명단에 오르면 아티스트가 인스타그램으로
+                연락합니다. 보존 기간: 이벤트 종료 후 1개월. 그 밖의 제3자 미공개.
+              </>
+            ) : (
+              <>
+                이름·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다. 이름과
+                신청 시각은 초대한 아티스트에게 공유됩니다. 보존 기간: 이벤트 종료 후
+                1개월. 그 밖의 제3자 미공개.
+              </>
+            )}
           </Consent>
+          {!waitlist && (
           <Consent
             id="marketing-consent"
             checked={fields.marketingConsent}
@@ -201,18 +252,84 @@ export function AccessForm({
               setFields({ ...fields, marketingConsent: value })
             }
           >
-            [선택] 차기 이벤트 소식을 이메일·인스타그램 채널로 수신합니다. 보존
-            기간: 수신 거부 시까지.
+            [선택] 차기 이벤트 소식을 이메일·인스타그램 채널로 수신합니다.
+            소식을 받을 이메일을 함께 수집합니다. 보존 기간: 수신 거부 시까지.
           </Consent>
+          )}
         </div>
+        {/* Email is asked only of a guest who wants news; nobody else leaves one, nor anyone waiting. */}
+        {fields.marketingConsent && !waitlist && (
+          <Field
+            id="guest-email"
+            label="소식 받을 이메일"
+            type="email"
+            required
+            maxLength={254}
+            autoComplete="email"
+            value={fields.email}
+            error={
+              errorCode === 'INVALID_EMAIL_FORMAT' || errorCode === 'EMAIL_REQUIRED_FOR_NEWS'
+                ? errorMessage(error)
+                : undefined
+            }
+            onChange={(event) => {
+              setFields({ ...fields, email: event.target.value });
+              if (errorCode === 'INVALID_EMAIL_FORMAT' || errorCode === 'EMAIL_REQUIRED_FOR_NEWS') setError(null);
+            }}
+          />
+        )}
         <button
           aria-busy={pending}
           className={`${ui.button} ${ui.primary}`}
           disabled={pending || !verified || !availability.canRequest}
         >
-          {pending ? '신청 저장 중…' : '게스트 신청 저장'}
+          {pending ? '신청 저장 중…' : waitlist ? '대기 명단에 올리기' : '게스트 신청 저장'}
         </button>
       </fieldset>
     </form>
+  );
+}
+
+/**
+ * An invite link whose inviter has no places left: the event stays in view beside it, and instead
+ * of a form that could only fail the guest gets the two ways to hear about the next one.
+ */
+function InviteClosed({ inviter, onOtherCode }: { inviter: string; onOtherCode: () => void }) {
+  // The key the guest pressed is gone with the form; the notice takes the focus and is read out.
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => heading.current?.focus(), []);
+  // The same key as the session's: it knows the device, and says so where an in-app browser
+  // (most invite links are opened inside Instagram) would drop the calendar link without a word.
+  const subscribe = useSubscribeHref();
+  const [calendar, openCalendar] = useCalendarOpen(subscribe);
+  return (
+    <div className={styles.closedInvite}>
+      <Facts rows={[['초대인', inviter]]} />
+      <p className={`${ui.band} ${styles.closedBand}`}>INVITE CLOSED</p>
+      <div className={styles.closedText}>
+        <h2 ref={heading} tabIndex={-1}>{inviter}의 게스트 초대가 마감되었습니다</h2>
+        <p>
+          이미 신청하셨다면 신청은 그대로 유효합니다. 새로 신청하려면 초대해 준 아티스트에게 문의해
+          주십시오. 다음 이벤트 소식을 받거나 일정을 구독해 두시면 TERMINAL의 다음 이벤트를 먼저
+          알려 드립니다.
+        </p>
+        <p lang="en" className={styles.closedEn}>
+          This artist&apos;s guest list is full. Subscribe for news of the next TERMINAL.
+        </p>
+      </div>
+      <ActionDeck>
+        <Action primary href="/signal">다음 이벤트 소식 신청</Action>
+        <a
+          className={`${ui.action} ${ui.primary}`}
+          href={subscribe}
+          {...(subscribe.startsWith('https:') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          onClick={openCalendar}
+        >
+          {calendar === 'blocked' ? CALENDAR_BLOCKED : 'TERMINAL 일정 구독'}
+        </a>
+        <button type="button" className={ui.button} onClick={onOtherCode}>다른 초대 코드 입력</button>
+      </ActionDeck>
+      <span className={ui.srOnly} role="status">{calendar === 'blocked' ? CALENDAR_BLOCKED : ''}</span>
+    </div>
   );
 }

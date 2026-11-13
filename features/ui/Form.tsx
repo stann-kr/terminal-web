@@ -6,25 +6,35 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
-import { Bay } from './Ui';
+import { Bay, ui } from './Ui';
 import styles from './form.module.css';
 export function FormPanel({
   title,
   code,
+  label = code,
   children,
+  titled = true,
 }: {
   title: string;
   code: string;
+  /** The English station label printed large in the head, as on every plate (the code by default). */
+  label?: string;
   children: ReactNode;
+  /** False where the column around the form already shows its title: the heading stays for screen readers only. */
+  titled?: boolean;
 }) {
   return (
     <section className={styles.terminalForm} data-surface="paper">
-      <header className={styles.formHeading}>
-        <p className={styles.formCode} aria-hidden="true">
-          {code}
-        </p>
-        <h2>{title}</h2>
-      </header>
+      {titled ? (
+        <header className={ui.panelHead}>
+          <h2 className={ui.panelTitle} data-labelled>
+            <span className={ui.panelLabel} aria-hidden="true">{label}</span>
+            <span className={ui.panelKo}>{title}</span>
+          </h2>
+        </header>
+      ) : (
+        <h2 className={ui.srOnly}>{title}</h2>
+      )}
       <div className={styles.formInterior}>
         {children}
         <Bay label={`${code} / FORM`} />
@@ -56,6 +66,14 @@ export function Field({
     ]
       .filter(Boolean)
       .join(' ') || undefined;
+  const input = (
+    <input
+      {...props}
+      ref={ref}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy}
+    />
+  );
   return (
     <div className={styles.field}>
       {/* A field error is printed in the label bar, where "필수" sits: the form keeps its height. */}
@@ -70,12 +88,7 @@ export function Field({
           </p>
         )}
       </div>
-      <input
-        {...props}
-        ref={ref}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-      />
+      {input}
       {hint && (
         <p id={`${props.id}-hint`} className={styles.hint}>
           {hint}

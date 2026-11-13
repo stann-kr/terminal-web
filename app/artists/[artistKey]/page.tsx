@@ -11,6 +11,13 @@ export default async function Page({ params }: { params: Promise<{ artistKey: st
   try { artistKey = decodeURIComponent(encodedKey); } catch { notFound(); }
   const identity = artistIdentities.find(item => item.appearances.some(row => appearanceKey(row.eventId, row.artistRowId) === artistKey));
   if (identity) redirect(artistHref(identity.key));
+  // An artist the events do not have is a 404 (the stage shows it as a notice in the roster); when
+  // the events cannot be read, the stage shows that with a retry instead.
+  const events = await readPublicEvents();
+  const profile = events && findArtistProfile(events, artistKey);
+  if (events && !profile) notFound();
+  // A link to one appearance of an artist seen at several events opens the artist's one file.
+  if (profile && profile.key !== artistKey) redirect(artistHref(profile.key));
   return null;
 }
 

@@ -1,7 +1,17 @@
 import type { Metadata } from 'next';
 import type { TerminalEvent } from '@/lib/events/types';
-import { buildArtistArchive, type ArtistProfile } from '@/features/artists/model';
-import { eventHref, eventSubtitle, publicArtists } from './model';
+import { getEventDateTime, getEventEndTime } from '@/lib/events/lifecycle';
+import { buildArtistArchive, profileForKey, type ArtistProfile } from '@/features/artists/model';
+import { eventHref, eventSubtitle, paragraphs, publicArtists, sessionShort } from './model';
+import inviteImages from './inviteImages.json';
+
+/** The site's public address: link previews, the sitemap and structured data name pages by it. */
+export const SITE_ORIGIN = 'https://terminal.stann.kr';
+/**
+ * What a shared link shows when its page has no picture of its own (the home, an artist, a session
+ * before its poster). Made with the promo kit (`node promo/export.mjs share`) in the site's palette.
+ */
+export const SHARE_IMAGE = { url: '/og/terminal-share.png', width: 1200, height: 630, alt: 'TERMINAL' };
 
 export const sessionNamesBrand = (session: string) => /\bTERMINAL\b/i.test(session);
 
@@ -29,8 +39,25 @@ export function eventMetadata(event: TerminalEvent, prefix = ''): Metadata {
       title: branded ? title : `${title} / TERMINAL`,
       description,
       url: eventHref(event.id),
-      ...(event.posterUrl ? { images: [{ url: event.posterUrl, alt: event.session }] } : {}),
+      images: [event.posterUrl ? { url: event.posterUrl, alt: event.session } : SHARE_IMAGE],
     },
+  };
+}
+
+/**
+ * A guest invite link (`/events/<id>/request?invite=<code>`): the inviting artist's name leads the
+ * title, and the artist's own preview image is used once `npm run invite` has rendered it.
+ */
+export function inviteMetadata(event: TerminalEvent, inviter: { artistId: string; name: string }): Metadata {
+  const title = `${inviter.name} · ${sessionShort(event.session)} 게스트 초대`;
+  const description = `${event.date} ${event.time} · ${event.venue} · 게스트 신청`;
+  const image = (inviteImages as string[]).includes(inviter.artistId)
+    ? { url: `/og/invite/${encodeURIComponent(inviter.artistId)}.png`, width: 1200, height: 630, alt: title }
+    : event.posterUrl ? { url: event.posterUrl, alt: event.session } : SHARE_IMAGE;
+  return {
+    title: { absolute: title },
+    description,
+    openGraph: { type: 'website', siteName: 'TERMINAL', title, description, images: [image] },
   };
 }
 
@@ -47,10 +74,45 @@ export function artistMetadata(profile: ArtistProfile): Metadata {
   return {
     title: profile.name,
     description,
-    openGraph: { type: 'profile', siteName: 'TERMINAL', title: `${profile.name} / TERMINAL`, description },
+    openGraph: { type: 'profile', siteName: 'TERMINAL', title: `${profile.name} / TERMINAL`, description, images: [SHARE_IMAGE] },
   };
 }
 
 export function findArtistProfile(events: readonly TerminalEvent[], key: string) {
-  return buildArtistArchive(events).find((profile) => profile.key === key);
+  return profileForKey(buildArtistArchive(events), key);
 }
+
+/** `2026-11-28T23:00:00+09:00`: a moment as the KST wall clock reads it. */
+const kstIso = (date: Date) => `${new Date(date.getTime() + 9 * 3_600_000).toISOString().slice(0, 19)}+09:00`;
+
+/**
+ * A session as schema.org MusicEvent, for search engines that list events: only what the record
+ * says (the end when it is known, the published lineup), and its poster or else the site's image.
+ */
+export function eventStructuredData(event: TerminalEvent) {
+  const end = getEventEndTime(event);
+  const lineup = publicArtists(event);
+  const about = paragraphs(event.description, 'ko')[0];
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'MusicEvent',
+    name: event.session,
+    url: `${SITE_ORIGIN}${eventHref(event.id)}`,
+    startDate: kstIso(getEventDateTime(event)),
+    ...(end ? { endDate: kstIso(end) } : {}),
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    location: {
+      '@type': 'Place',
+      name: event.venue,
+      address: { '@type': 'PostalAddress', addressLocality: event.district.replace(/\s*\/+\s*/g, ', '), addressCountry: 'KR' },
+    },
+    image: [event.posterUrl ?? `${SITE_ORIGIN}${SHARE_IMAGE.url}`],
+    ...(about ? { description: about } : {}),
+    ...(lineup.length ? { performer: lineup.map((artist) => ({ '@type': 'Person', name: artist.name })) } : {}),
+    organizer: { '@type': 'Organization', name: 'TERMINAL', url: SITE_ORIGIN },
+  };
+}
+
+/** Structured data as the text of a `<script type="application/ld+json">`: `<` is escaped so no value can close the tag. */
+export const jsonLd = (data: unknown) => JSON.stringify(data).replace(/</g, '\\u003c');

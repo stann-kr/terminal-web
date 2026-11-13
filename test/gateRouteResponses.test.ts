@@ -169,10 +169,72 @@ describe('opaque public success responses', () => {
     if (error === 'REQUEST_PERIOD_INACTIVE') expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
   });
 
-  it('returns only the matched artist name from the code-info route', async () => {
+  it('keeps a guest on a full code\'s waitlist only when the request asked to wait', async () => {
+    const { POST } = await import('../app/api/gate/request/route');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-01T12:00:00+09:00'));
+    const post = (body: object) => POST(new Request('https://terminal.test/api/gate/request', {
+      method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json' },
+    }));
+
+    // The plain form shares the name alone, so a code that filled up meanwhile turns it away.
+    mocks.createAccessRequestAtomically.mockResolvedValueOnce({ status: 'guest_limit_reached' });
+    expect(await responseDetails(await post(requestBody))).toEqual({
+      status: 409, cacheControl: 'no-store', body: { error: 'GUEST_LIMIT_REACHED' },
+    });
+    expect(mocks.createAccessRequestAtomically).toHaveBeenLastCalledWith({}, expect.objectContaining({ waitlist: false }));
+
+    mocks.createAccessRequestAtomically.mockResolvedValueOnce({ status: 'waitlisted' });
+    expect(await responseDetails(await post({ ...requestBody, waitlist: true }))).toEqual({
+      status: 200, cacheControl: 'no-store', body: { ok: true, waitlisted: true },
+    });
+    expect(mocks.createAccessRequestAtomically).toHaveBeenLastCalledWith({}, expect.objectContaining({ waitlist: true }));
+
+    // Waiting already (maybe under another inviter): still a success, marked so the form names no inviter.
+    mocks.createAccessRequestAtomically.mockResolvedValueOnce({ status: 'already_waitlisted' });
+    expect(await responseDetails(await post({ ...requestBody, waitlist: true }))).toEqual({
+      status: 200, cacheControl: 'no-store', body: { ok: true, waitlisted: true, alreadyWaiting: true },
+    });
+  });
+
+  it.each(['request', 'code-info'])('closes %s for an open-window event with no guest code before any write', async (route) => {
+    const { POST } = route === 'request'
+      ? await import('../app/api/gate/request/route')
+      : await import('../app/api/gate/code-info/route');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-01T12:00:00+09:00'));
+    mocks.listGateArtistRowsByEvent.mockResolvedValue([{
+      id: 'artist-1', data: JSON.stringify({ name: 'Artist Name', status: 'CONFIRMED' }),
+    }]);
+    const body = route === 'request' ? requestBody : { code: 'ARTIST-01', eventId: 'event-1' };
+
+    const response = await responseDetails(await POST(new Request(`https://terminal.test/api/gate/${route}`, {
+      method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json' },
+    })));
+
+    expect(response).toEqual({ status: 403, cacheControl: 'no-store', body: { error: 'ACCESS_NOT_OPEN' } });
+    expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
+  });
+
+  it('names no artist for a code checked outside the request window', async () => {
+    const { POST } = await import('../app/api/gate/code-info/route');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-01T12:00:00+09:00'));
+
+    const response = await responseDetails(await POST(new Request('https://terminal.test/api/gate/code-info', {
+      method: 'POST', body: JSON.stringify({ code: 'ARTIST-01', eventId: 'event-1' }), headers: { 'content-type': 'application/json' },
+    })));
+
+    expect(response).toEqual({ status: 403, cacheControl: 'no-store', body: { error: 'REQUEST_PERIOD_INACTIVE' } });
+    expect(mocks.listGateArtistRowsByEvent).not.toHaveBeenCalled();
+  });
+
+  it.each([[9, true], [10, false]])('returns only the matched artist name and whether its %i used places leave room', async (used, open) => {
     const { POST } = await import('../app/api/gate/code-info/route');
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-01T12:00:00+09:00'));
+    const bind = vi.fn(() => ({ first: async () => ({ count: used }) }));
+    mocks.getCloudflareContext.mockReturnValue({ env: { DB: { prepare: () => ({ bind }) } } });
 
     const response = await responseDetails(await POST(new Request(
       'https://terminal.test/api/gate/code-info',
@@ -186,8 +248,9 @@ describe('opaque public success responses', () => {
     expect(response).toEqual({
       status: 200,
       cacheControl: 'no-store',
-      body: { name: 'Artist Name' },
+      body: { name: 'Artist Name', open },
     });
+    expect(bind).toHaveBeenCalledWith('event-1', 'artist-1');
     expect(mocks.listGateArtistRowsByEvent).toHaveBeenCalledWith(
       { database: true },
       'event-1',

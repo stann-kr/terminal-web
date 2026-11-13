@@ -126,15 +126,28 @@ export interface TitleFrame {
   maxPx: number;
   /** Letter spacing as a share of the size (CSS `em`). */
   letterSpacingEm?: number;
+  /**
+   * Width the shown text takes beyond what is measured, as a share of the size: a word set in a
+   * wider face than the measured one (the brand word). It is kept free on every line.
+   */
+  reserveEm?: number;
   options?: Omit<WrapOptions, 'letterSpacing'>;
 }
 
 /** The largest whole-pixel size at which `text` fits `maxLines` lines of `width`; `maxPx` when unmeasured. */
 export function fitTitle(text: string, frame: TitleFrame, measurer: Measurer | null): number {
   if (!measurer || !text || frame.width <= 0) return frame.maxPx;
+  const words = text.split(/\s+/).filter(Boolean);
   const fits = (px: number) => {
-    const lines = measurer.wrap(text, frame.font(px), frame.width, { ...frame.options, letterSpacing: (frame.letterSpacingEm ?? 0) * px });
-    return lines.length <= frame.maxLines && lines.every(line => line.width <= frame.width + 0.5);
+    const width = frame.width - (frame.reserveEm ?? 0) * px;
+    if (width <= 0) return false;
+    const font = frame.font(px);
+    const options = { ...frame.options, letterSpacing: (frame.letterSpacingEm ?? 0) * px };
+    // A title never breaks inside a word (the layout would split an overlong word into lines that
+    // each fit, as CSS overflow-wrap does): every word must fit a line on its own.
+    if (words.some(word => (measurer.wrap(word, font, width * 1000, options)[0]?.width ?? 0) > width + 0.5)) return false;
+    const lines = measurer.wrap(text, font, width, options);
+    return lines.length <= frame.maxLines && lines.every(line => line.width <= width + 0.5);
   };
   let low = Math.floor(frame.minPx);
   let high = Math.floor(frame.maxPx);
@@ -164,4 +177,21 @@ export function packHeights(heights: readonly number[], height: number, gap: num
     }
   });
   return pages.filter(page => page.length);
+}
+
+/**
+ * How much wider a word is in its own face (`own`) than in the face it is measured in (`font`), as a
+ * share of the size: what a title fitted in `font` keeps free for it. Never below zero.
+ */
+export function wordReserveEm(
+  word: string,
+  font: (px: number) => string,
+  letterSpacingEm: number,
+  own: (px: number) => string,
+  ownLetterSpacingEm: number,
+  measurer: Measurer,
+): number {
+  const ref = 100;
+  const width = (shorthand: string, spacingEm: number) => measurer.wrap(word, shorthand, ref * 1000, { letterSpacing: spacingEm * ref })[0]?.width ?? 0;
+  return Math.max(0, (width(own(ref), ownLetterSpacingEm) - width(font(ref), letterSpacingEm)) / ref);
 }

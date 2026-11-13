@@ -5,7 +5,8 @@
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Medium.woff2') format('woff2'); font-weight: 400 500; font-display: block; }
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-SemiBold.woff2') format('woff2'); font-weight: 600; font-display: block; }
 @font-face { font-family: 'Barlow Condensed'; src: url('/fonts/instrument/BarlowCondensed-Bold.woff2') format('woff2'); font-weight: 700 800; font-display: block; }
-@font-face { font-family: 'ProcrastinatingPixie'; src: url('/fonts/ProcrastinatingPixie-WyVOO.ttf') format('truetype'); font-weight: 400 800; font-display: block; }
+/* TERMINAL Lettering: the wordmark's own letters (T E R M I N A L, lowercase maps to them) with its spacing built in as kerning; one weight, declared across 400–800 so no bold is faked. */
+@font-face { font-family: 'TERMINAL Lettering'; src: url('/fonts/TERMINAL-Lettering.woff2') format('woff2'); font-weight: 400 800; font-display: block; }
 @font-face { font-family: 'Share Tech Mono'; src: url('/fonts/instrument/ShareTechMono-Regular.woff2') format('woff2'); font-weight: 400 700; font-display: swap; }
 /*
  * Hypnotic console: plates on a workspace field, a few loud solid plates among them. Concentric rings
@@ -14,6 +15,8 @@
  * every plate:
  *   --ink / --muted: text   --line / --faint: rules   --fill / --on-fill: solid cells   --accent: numbers
  *   --well: a tinted cell   --hi / --on-hi: hover     --danger: errors                   --focus: focus ring
+ *   --control / --on-control: every button (--control-hi / --on-control-hi under the pointer)
+ *   --link: the name of a link plate, card or row, followed by its arrow (Ui.tsx Arrow)
  */
 @property --ring-phase {
   syntax: '<length>';
@@ -27,7 +30,7 @@
   --sans: 'Barlow', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
   --mono: 'Share Tech Mono', 'Apple SD Gothic Neo', 'Noto Sans KR', monospace;
   /* The word TERMINAL is always set in the brand face. */
-  --brand: 'ProcrastinatingPixie', 'Barlow Condensed', sans-serif;
+  --brand: 'TERMINAL Lettering', 'Barlow Condensed', sans-serif;
 
   /* Seven fluid type steps, 1280px → 1920px. Nothing on screen is smaller than --t-xs. */
   --t-xs: clamp(12px, .78vw, 14px);   /* chips, meta labels, codes */
@@ -53,6 +56,8 @@
   --dur-enter: 360ms;
   --enter-delay: 200ms;
   --dur-exit: 260ms;
+  --close-hold: 440ms;   /* a closing file stays whole this long, then fades as it lands (--dur-land) */
+  --dur-land: 180ms;
   --stagger: 30ms;
   /* Ambient rings: they flow outward by one 18px spacing each period, unrelated to any beat. */
   --ring-period: 2.4s;
@@ -85,6 +90,11 @@
   --hi: var(--panel-hi);
   --on-hi: var(--panel-on-hi);
   --danger: var(--panel-danger);
+  --control: var(--panel-control);
+  --on-control: var(--panel-on-control);
+  --control-hi: var(--panel-control-hi);
+  --on-control-hi: var(--panel-on-control-hi);
+  --link: var(--panel-link);
 }
 [data-surface=inset] {
   --plate: var(--inset);
@@ -97,6 +107,11 @@
   --hi: var(--inset-hi);
   --on-hi: var(--inset-on-hi);
   --danger: var(--inset-danger);
+  --control: var(--inset-control);
+  --on-control: var(--inset-on-control);
+  --control-hi: var(--inset-control-hi);
+  --on-control-hi: var(--inset-on-control-hi);
+  --link: var(--inset-link);
 }
 [data-surface=paper] {
   --plate: var(--paper);
@@ -109,6 +124,11 @@
   --hi: var(--paper-hi);
   --on-hi: var(--paper-on-hi);
   --danger: var(--paper-danger);
+  --control: var(--paper-control);
+  --on-control: var(--paper-on-control);
+  --control-hi: var(--paper-control-hi);
+  --on-control-hi: var(--paper-on-control-hi);
+  --link: var(--paper-link);
 }
 [data-surface=feature] {
   --plate: var(--feature);
@@ -121,6 +141,11 @@
   --hi: var(--feature-hi);
   --on-hi: var(--feature-on-hi);
   --danger: var(--feature-danger);
+  --control: var(--feature-control);
+  --on-control: var(--feature-on-control);
+  --control-hi: var(--feature-control-hi);
+  --on-control-hi: var(--feature-on-control-hi);
+  --link: var(--feature-link);
 }
 [data-surface=mark] {
   --plate: var(--mark);
@@ -133,6 +158,11 @@
   --hi: var(--mark-hi);
   --on-hi: var(--mark-on-hi);
   --danger: var(--mark-danger);
+  --control: var(--mark-control);
+  --on-control: var(--mark-on-control);
+  --control-hi: var(--mark-control-hi);
+  --on-control-hi: var(--mark-on-control-hi);
+  --link: var(--mark-link);
 }
 [data-surface=alert] {
   --plate: var(--alert);
@@ -145,6 +175,11 @@
   --hi: var(--alert-hi);
   --on-hi: var(--alert-on-hi);
   --danger: var(--alert-danger);
+  --control: var(--alert-control);
+  --on-control: var(--alert-on-control);
+  --control-hi: var(--alert-control-hi);
+  --on-control-hi: var(--alert-on-control-hi);
+  --link: var(--alert-link);
 }
 [data-surface=calm] {
   --plate: var(--calm);
@@ -157,6 +192,11 @@
   --hi: var(--calm-hi);
   --on-hi: var(--calm-on-hi);
   --danger: var(--calm-danger);
+  --control: var(--calm-control);
+  --on-control: var(--calm-on-control);
+  --control-hi: var(--calm-control-hi);
+  --on-control-hi: var(--calm-on-control-hi);
+  --link: var(--calm-link);
 }
 [data-surface=fresh] {
   --plate: var(--fresh);
@@ -169,6 +209,11 @@
   --hi: var(--fresh-hi);
   --on-hi: var(--fresh-on-hi);
   --danger: var(--fresh-danger);
+  --control: var(--fresh-control);
+  --on-control: var(--fresh-on-control);
+  --control-hi: var(--fresh-control-hi);
+  --on-control-hi: var(--fresh-on-control-hi);
+  --link: var(--fresh-link);
 }
 /* Rules, tinted cells and focus follow the plate's own ink. */
 :root,
@@ -216,6 +261,53 @@ details[open] > summary { margin-bottom: 6px; }
   :where(a:hover, button:hover, li:hover) :where(*) { transition: color var(--dur-light-in) linear, background-color var(--dur-light-in) linear; }
 }
 :root :is(a, button):active { transition: none; }
+/* A link (or a button or key's control, useRouteHold) on its way to a view that has not arrived
+   yet (useNavigationPending) shows the first visit's loading screen inside itself, in its colours
+   whatever the plate: the field covers the control (::before) and a blinking lamp reads LOADING
+   over it (::after). It starts with the press, so the press never reads as a blink before the
+   loading shows, and comes in the way the loading screen does: the field fades up first, the
+   words just after. A link that stretches its ::after over its row keeps itself static (its module
+   says so), so the cover spreads over the whole row. */
+:where(:is(a, button)[data-pending]) { position: relative; }
+:is(a, button)[data-pending] { cursor: progress; }
+/* :root outranks a module's own stretched ::after. */
+:root :is(a, button)[data-pending]::before,
+:root :is(a, button)[data-pending]::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+:root :is(a, button)[data-pending]::before {
+  content: '';
+  background: var(--field);
+  animation: pendingCover 200ms var(--ease-move) both;
+}
+:root :is(a, button)[data-pending]::after {
+  content: 'LOADING';
+  z-index: 3;
+  width: max-content;
+  max-width: 100%;
+  height: max-content;
+  margin: auto;
+  overflow: hidden;
+  padding-left: 19px;
+  background: linear-gradient(var(--panel-muted), var(--panel-muted)) no-repeat left center / 9px 9px;
+  color: var(--panel-muted);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: pendingCover 200ms var(--ease-move) 80ms both, pendingLamp 1s steps(1, end) 280ms infinite;
+}
+/* Too small a box for the word (loadingFits): the lamp alone, blinking in the middle. */
+:root :is(a, button)[data-pending=compact]::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  padding: 0;
+}
+@keyframes pendingCover { from { opacity: 0; } }
+@keyframes pendingLamp { 50% { background-size: 0 0; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }
 

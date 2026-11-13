@@ -1,12 +1,20 @@
 'use client';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { defaultMeasurer, fitTitle, fontOf, whenFontsReady } from './text';
+import { Arrow } from '@/features/ui/Ui';
+import { defaultMeasurer, fitTitle, fontOf, whenFontsReady, wordReserveEm } from './text';
 import styles from './stage.module.css';
+
+/** The word BrandText sets in the brand face, and that face's letter spacing (ui.module.css `.brandWord`). */
+const BRAND_WORD = 'TERMINAL';
+const BRAND_SPACING_EM = 0;
+/** What a link's arrow (Arrow) takes after the name: its width and the space before it. */
+const ARROW_EM = 1;
 
 /**
  * A title set as large as its box allows: the CSS size is the ceiling, and pretext finds the
  * largest size at which the text keeps to `maxLines` lines of the real width. Without measurement
- * (server, tests) it keeps the CSS size.
+ * (server, tests) it keeps the CSS size. `arrow` prints a link's arrow after the name (room for it
+ * is kept on every line, so it never wraps on its own).
  */
 export function FitTitle({
   text,
@@ -17,6 +25,7 @@ export function FitTitle({
   className = '',
   id,
   heading,
+  arrow,
 }: {
   text: string;
   children?: ReactNode;
@@ -27,6 +36,8 @@ export function FitTitle({
   id?: string;
   /** Marks the view's title: focus lands here after a state change. */
   heading?: boolean;
+  /** The title names a link: `in` to a view of this site, `out` to another site. */
+  arrow?: 'in' | 'out';
 }) {
   const outer = useRef<HTMLElement>(null);
   const [size, setSize] = useState<number | null>(null);
@@ -40,15 +51,22 @@ export function FitTitle({
       // Letter spacing is given as `--title-ls` in em on the inner line, so it scales with the fit.
       const spacing = parseFloat(style.getPropertyValue('--title-ls')) || 0;
       const shown = style.textTransform === 'uppercase' ? text.toUpperCase() : text;
-      // A little slack: the brand word is set in another face than the one measured.
-      const width = element.clientWidth * (text.includes('TERMINAL') ? 0.94 : 0.99);
+      const font = (px: number) => fontOf(style, px);
+      // The brand word is set in its own, wider face (BrandText), not the one measured: each line
+      // keeps free what it takes beyond the title's face, so a title never breaks inside it.
+      const brand = style.getPropertyValue('--brand').trim();
+      const brandWords = shown.split(BRAND_WORD).length - 1;
+      const reserveEm = (brand && brandWords
+        ? brandWords * wordReserveEm(BRAND_WORD, font, spacing, px => `400 ${px}px ${brand}`, BRAND_SPACING_EM, measurer)
+        : 0) + (arrow ? ARROW_EM : 0);
       setSize(fitTitle(shown, {
-        font: px => fontOf(style, px),
-        width,
+        font,
+        width: element.clientWidth * 0.99,
         maxLines,
         minPx: Math.min(minPx, ceiling),
         maxPx: ceiling,
         letterSpacingEm: spacing,
+        reserveEm,
       }, measurer));
     };
     run();
@@ -59,7 +77,7 @@ export function FitTitle({
       observer?.disconnect();
       stop();
     };
-  }, [text, maxLines, minPx]);
+  }, [text, maxLines, minPx, arrow]);
   return (
     <Tag
       ref={outer as never}
@@ -68,7 +86,10 @@ export function FitTitle({
       tabIndex={heading ? -1 : undefined}
       data-stage-title={heading || undefined}
     >
-      <span style={size === null ? undefined : { fontSize: `${size}px` }}>{children ?? text}</span>
+      <span style={size === null ? undefined : { fontSize: `${size}px` }}>
+        {children ?? text}
+        {arrow && <Arrow external={arrow === 'out'} />}
+      </span>
     </Tag>
   );
 }

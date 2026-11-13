@@ -18,8 +18,16 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npm audit --omit=dev
       - run: npm run db:check-history
+      # The lock cannot catch a migration rewritten together with its lock entry, so a PR is also
+      # compared with its base branch: SQL and snapshots that branch already has must be unchanged.
+      - name: Migrations unchanged since the base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          npm run db:check-history -- --base FETCH_HEAD
       - run: npm test
       - run: npm run lint
       - run: npm run typecheck

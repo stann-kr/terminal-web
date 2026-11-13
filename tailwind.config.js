@@ -7,7 +7,7 @@ module.exports = {
         label: 'var(--os-tracking)', // 0.14em — STANN OS 모노 라벨 자간
       },
       fontFamily: {
-        'pixie': ['ProcrastinatingPixie', 'monospace'],
+        'lettering': ['TERMINAL Lettering', 'monospace'],
         'orbit': ['Orbit', 'monospace'],
         // 모노 = 라벨/메타 글루 (STANN OS — JetBrains Mono). 타이틀은 font-orbit으로 핀
         'mono': ['var(--font-jetbrains)', 'JetBrains Mono', 'monospace'],

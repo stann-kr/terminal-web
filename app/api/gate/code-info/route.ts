@@ -6,6 +6,7 @@ import { hasOnlyKeys, isString } from "@/lib/api/validation";
 import { getDb } from "@/lib/db/client";
 import {
   findUpcomingGateEvent,
+  isGateRequestWindowActive,
   parseGateEventId,
   resolveArtistAccessCode,
 } from "@/lib/gate/createAccessRequest";
@@ -14,7 +15,7 @@ import {
   listGateEventRows,
 } from "@/lib/gate/d1GateReadRepository";
 
-function json(body: { name: string | null } | { error: string }, status = 200) {
+function json(body: { name: string | null; open?: boolean } | { error: string }, status = 200) {
   return noStoreJson(body, status);
 }
 
@@ -25,7 +26,9 @@ function json(body: { name: string | null } | { error: string }, status = 200) {
  *
  * @body code - 인증 코드
  * @body eventId - 화면에 표시된 신청 대상 이벤트
- * @returns { name: string | null }; returns a no-store 503 error when verification is unavailable
+ * @returns { name: string | null, open?: boolean } — `open` is false once the code's guest limit is
+ *   reached, so an invite link shows its closed notice before the form; a no-store 503 error when
+ *   verification is unavailable
  */
 export async function POST(request: Request) {
   try {
@@ -52,7 +55,7 @@ export async function POST(request: Request) {
       return json({ name: null });
     }
 
-    const { env } = getCloudflareContext();
+    const { env } = await getCloudflareContext({ async: true });
     const abuseDecision = await enforceRateLimit(env, 'code-info', request);
     if (!abuseDecision.ok) return json({ error: abuseDecision.error }, abuseDecision.status);
     const db = getDb(env.DB);
@@ -67,6 +70,10 @@ export async function POST(request: Request) {
     if (upcomingEvent.rowId !== eventIdResult.eventId) {
       return json({ error: "EVENT_MISMATCH" }, 409);
     }
+    // As the request itself does: outside the window a code names no artist.
+    if (!isGateRequestWindowActive(upcomingEvent, now)) {
+      return json({ error: "REQUEST_PERIOD_INACTIVE" }, 403);
+    }
 
     const artistRows = await listGateArtistRowsByEvent(db, upcomingEvent.rowId);
 
@@ -74,11 +81,22 @@ export async function POST(request: Request) {
     if (accessCodeResult.kind === 'unavailable') {
       return json({ error: "VERIFICATION_UNAVAILABLE" }, 503);
     }
+    if (accessCodeResult.kind === 'closed') {
+      return json({ error: "ACCESS_NOT_OPEN" }, 403);
+    }
     if (accessCodeResult.kind === 'not_found') {
       return json({ name: null });
     }
 
-    return json({ name: accessCodeResult.data.name });
+    const used = await env.DB.prepare(
+      "SELECT COUNT(*) AS count FROM access_requests WHERE event_id = ? AND artist_id = ?",
+    )
+      .bind(upcomingEvent.rowId, accessCodeResult.artistId)
+      .first<{ count: number }>();
+    return json({
+      name: accessCodeResult.data.name,
+      open: (used?.count ?? 0) < accessCodeResult.data.guestLimit,
+    });
   } catch {
     console.error("[POST /api/gate/code-info] internal error");
     return json({ error: "VERIFICATION_UNAVAILABLE" }, 503);

@@ -6,7 +6,7 @@ import {
   getEventBoundaryTimes,
   withEffectiveEventStatus,
 } from '@/lib/events/lifecycle';
-import { ACCESS_WINDOW_DAYS } from '@/lib/gate/requestPolicy';
+import { accessWindowDays } from '@/lib/gate/requestPolicy';
 import { requestJson } from '@/features/ui/http';
 
 export function useEvents() {
@@ -20,7 +20,7 @@ export function useEvents() {
     const update = () => setNow(new Date());
     const boundaries = getEventBoundaryTimes(
       query.data ?? [],
-      ACCESS_WINDOW_DAYS,
+      accessWindowDays,
     );
     const next = boundaries.find((time) => time > Date.now());
     const timer = window.setTimeout(

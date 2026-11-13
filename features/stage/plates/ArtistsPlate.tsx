@@ -1,8 +1,8 @@
 'use client';
-import Link from 'next/link';
+import Link from '@/features/ui/RouteLink';
 import { artistHref } from '@/features/artists/model';
 import { LiveValue } from '@/features/display/Display';
-import { Loading, StateNotice } from '@/features/ui/Ui';
+import { Arrow, Loading, StateNotice } from '@/features/ui/Ui';
 import { useStageMode } from '../usePaging';
 import { ChipFace, FocusHead, PlateCard, PlateStatus, Tags } from './faces';
 import type { PlateProps } from './Plates';
@@ -41,7 +41,7 @@ export function ArtistsPlate({ mode, state, data, query }: PlateProps) {
             {profiles.slice(0, 10).map(profile => (
               <li key={profile.key}>
                 <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.artistCell}`} data-featured={profile.key === 'stann-lumo' || undefined}>
-                  <span className={styles.cellName}>{profile.name}</span>
+                  <span className={styles.cellName}>{profile.name}<Arrow /></span>
                   <span className={styles.cellMeta} aria-hidden="true">{profile.origin} · {pad(profile.appearances.length, 2)} REC</span>
                 </Link>
               </li>
@@ -63,7 +63,7 @@ export function ArtistsPlate({ mode, state, data, query }: PlateProps) {
       <FocusHead label="Artists" title="함께한 아티스트" tags={<Tags items={reading ? [reading] : [`${pad(count)} FILES`, `PAGE ${pad(page, 2)}`]} />}>
         {missing ? (
           <p className={styles.missing} role="alert">
-            <b aria-hidden="true">ERROR</b> 공개된 출연 이력이 없는 아티스트입니다. 아래 명부에서 다시 찾아 주세요.
+            <b aria-hidden="true">ERROR</b> 공개된 출연 이력이 없는 아티스트입니다. 아래 명부에서 다시 찾아 주십시오.
           </p>
         ) : data.events && (
           <div className={styles.summary}>
