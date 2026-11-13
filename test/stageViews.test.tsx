@@ -171,16 +171,16 @@ describe('stage shell', () => {
   it('asks a short desktop window to grow, and lets the visitor go on anyway', () => {
     viewport(1440, 520);
     const { container } = shell();
-    expect(screen.getByRole('heading', { level: 1, name: '창을 조금 더 키워 주세요' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: '창을 조금 더 키워 주십시오' })).toBeInTheDocument();
     expect(container.querySelector('#stage')).toHaveAttribute('data-short');
     fireEvent.click(screen.getByRole('button', { name: '이대로 보기' }));
-    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주세요' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주십시오' })).not.toBeInTheDocument();
     expect(container.querySelector('#stage')).not.toHaveAttribute('data-short');
     cleanup();
     // A narrow (phone) window is never asked: it gets sheets.
     viewport(390, 520);
     shell();
-    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주세요' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '창을 조금 더 키워 주십시오' })).not.toBeInTheDocument();
   });
 
   it('never switches to a scrolling page: a narrow window gets sheets to snap between', () => {

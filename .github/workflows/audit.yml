@@ -1,0 +1,24 @@
+name: Audit
+
+# A new advisory fails this run, not every unrelated push and PR. It runs from the default branch
+# once a week and on request (Actions > Audit > Run workflow).
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Mondays 09:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev

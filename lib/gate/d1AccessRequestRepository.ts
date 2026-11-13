@@ -129,6 +129,8 @@ export type AtomicAccessRequestResult =
   | { status: 'created' }
   | { status: 'duplicate' }
   | { status: 'waitlisted' }
+  /** Waiting for this event before this request, under this code or another inviter's: nothing was stored. */
+  | { status: 'already_waitlisted' }
   | { status: 'guest_limit_reached' };
 
 interface RejectionStateRow {
@@ -158,7 +160,7 @@ export function classifyRejectedAccessRequest(
   row: RejectionStateRow | null,
   guestLimit: number | null,
   waitlist = false,
-): Exclude<AtomicAccessRequestResult['status'], 'created'> {
+): Exclude<AtomicAccessRequestResult['status'], 'created' | 'already_waitlisted'> {
   if (row && (row.is_duplicate === true || row.is_duplicate === 1)) return 'duplicate';
   // Just put there by this batch, or by an earlier try: either way the guest is waiting.
   if (waitlist && row && (row.is_waitlisted === true || row.is_waitlisted === 1)) return 'waitlisted';
@@ -258,13 +260,16 @@ export async function createAccessRequestAtomically(
   const rejectionStateResult = results[results.length - 1];
 
   if (getChanges(accessRequestResult) === 1) return { status: 'created' };
-  return {
-    status: classifyRejectedAccessRequest(
-      parseRejectionState(rejectionStateResult?.results[0]),
-      input.guestLimit,
-      waitlist,
-    ),
-  };
+  const status = classifyRejectedAccessRequest(
+    parseRejectionState(rejectionStateResult?.results[0]),
+    input.guestLimit,
+    waitlist,
+  );
+  // A waiting guest was either put there by this batch or was there before it. The waitlist insert
+  // (right before the state query, and always in the batch when the answer can be 'waitlisted')
+  // tells which: no row from it means the entry is an older one, possibly another inviter's.
+  if (status === 'waitlisted' && getChanges(results[results.length - 2]) === 0) return { status: 'already_waitlisted' };
+  return { status };
 }
 
 /**

@@ -13,6 +13,8 @@ export function useAccessRequest(
   const { draft, setCode, setFields, clear } = useAccessDraft(eventId);
   const [saved, setSaved] = useState<AccessDraft | null>(null);
   const [waitlisted, setWaitlisted] = useState(false);
+  // The guest was on the event's waitlist before this request (maybe under another inviter).
+  const [alreadyWaiting, setAlreadyWaiting] = useState(false);
   const { code, fields } = saved ?? draft;
   const [verified, setVerified] = useState<{
     code: string;
@@ -119,7 +121,7 @@ export function useAccessRequest(
     setPending(true);
     setError(null);
     try {
-      const result = await postJson<{ ok: boolean; waitlisted?: boolean }>('/api/gate/request', {
+      const result = await postJson<{ ok: boolean; waitlisted?: boolean; alreadyWaiting?: boolean }>('/api/gate/request', {
         eventId,
         accessCode: verified.code,
         ...fields,
@@ -131,6 +133,7 @@ export function useAccessRequest(
       });
       if (result.ok !== true) throw new ApiError('INVALID_RESPONSE', 200);
       setWaitlisted(result.waitlisted === true);
+      setAlreadyWaiting(result.waitlisted === true && result.alreadyWaiting === true);
       // The summary shows what was sent, not what a hidden box still held.
       setSaved({
         ...submittedDraft,
@@ -188,6 +191,7 @@ export function useAccessRequest(
     done: saved !== null,
     waitlist,
     waitlisted,
+    alreadyWaiting,
     turned,
     error,
     setError,

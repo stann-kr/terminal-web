@@ -10,6 +10,18 @@ import path from 'node:path';
 export const VALUE_FLAGS = ['--subject', '--only', '--log', '--confirm'];
 
 /**
+ * The owner's reply address from SIGNAL_REPLY_TO, trimmed and lowercased as the list's addresses
+ * are, or null when the value is not one plain address. It is written into the Reply-To and the
+ * List-Unsubscribe mailto, so nothing that could add a second address or a header gets through.
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+export function replyToAddress(value) {
+  const address = String(value ?? '').trim().toLowerCase();
+  return /^[^\s@<>(),;:?&"'\\]+@[^\s@<>(),;:?&"'\\]+\.[a-z0-9-]{2,}$/.test(address) ? address : null;
+}
+
+/**
  * A key for one mail: the same subject, html and text always give the same key, any change another.
  * @param {{ subject: string, html: string, text: string }} mail
  * @returns {string}

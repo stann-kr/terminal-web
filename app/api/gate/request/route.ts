@@ -82,6 +82,11 @@ export async function POST(request: Request) {
     if (result.status === "duplicate") return noStoreJson({ ok: true });
     // A full code keeps a guest who asked to wait on its waitlist: the artist can move them up later.
     if (result.status === "waitlisted") return noStoreJson({ ok: true, waitlisted: true });
+    // Already waiting for this event, under this code or another inviter's: nothing new was stored.
+    // The form then names no inviter, since the entry that stands may not be this one's.
+    if (result.status === "already_waitlisted") {
+      return noStoreJson({ ok: true, waitlisted: true, alreadyWaiting: true });
+    }
     // Anyone else is told the code filled up, and can then ask to wait under the waitlist terms.
     if (result.status === "guest_limit_reached") {
       return noStoreJson({ error: "GUEST_LIMIT_REACHED" }, 409);

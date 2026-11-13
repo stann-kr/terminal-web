@@ -260,6 +260,8 @@ describe('atomic access request statement contract', () => {
   function createDatabaseStub(
     changes: number,
     rejectionState: { is_duplicate: number; guest_count: number; is_waitlisted?: number } | null = null,
+    /** Rows the waitlist insert adds (it runs right before the state query). */
+    waitlistChanges = 0,
   ) {
     const prepared: Array<{ sql: string; values: unknown[] }> = [];
     const database = {
@@ -277,9 +279,10 @@ describe('atomic access request statement contract', () => {
       async batch(statements: unknown[]) {
         // The request insert, Signal, the waitlist clean-up, the waitlist insert when asked for,
         // and the rejection state last.
+        const waitlistAt = statements.length === 5 ? 3 : -1;
         return statements.map((_, index) => ({
           success: true,
-          meta: { changes: index === 0 ? changes : 0 },
+          meta: { changes: index === 0 ? changes : index === waitlistAt ? waitlistChanges : 0 },
           results: index === statements.length - 1 && rejectionState ? [rejectionState] : [],
         }));
       },
@@ -375,7 +378,7 @@ describe('atomic access request statement contract', () => {
   });
 
   it("puts a guest's own request on the waitlist when the code is full", async () => {
-    const { database, prepared } = createDatabaseStub(0, { is_duplicate: 0, guest_count: 25, is_waitlisted: 1 });
+    const { database, prepared } = createDatabaseStub(0, { is_duplicate: 0, guest_count: 25, is_waitlisted: 1 }, 1);
 
     await expect(createAccessRequestAtomically(database, { ...atomicInput, waitlist: true })).resolves.toEqual({
       status: 'waitlisted',
@@ -386,6 +389,15 @@ describe('atomic access request statement contract', () => {
       'req-1', 'event-1', 'artist-1', 'Artist Name', 'Guest Name', '@guest', 1, atomicInput.createdAt,
     ]);
     expect(waitlist?.values.at(-1)).toBe(25);
+  });
+
+  it('tells a guest who was waiting already from one this request put there', async () => {
+    // The waitlist insert added nothing, yet the guest is waiting: the entry is an older one.
+    const { database } = createDatabaseStub(0, { is_duplicate: 0, guest_count: 25, is_waitlisted: 1 }, 0);
+
+    await expect(createAccessRequestAtomically(database, { ...atomicInput, waitlist: true })).resolves.toEqual({
+      status: 'already_waitlisted',
+    });
   });
 
   it('tells a repeat from a waiting guest before the waitlist', () => {

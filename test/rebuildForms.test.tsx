@@ -152,6 +152,21 @@ describe('guest request UI',()=>{
     expect(screen.getByText(/아직 게스트 명단은 아닙니다/)).toBeInTheDocument();
     const sent=JSON.parse(fetch.mock.calls[1][1].body);expect(sent.marketingConsent).toBe(false);expect(sent.email).toBeUndefined();expect(sent.waitlist).toBe(true);
   });
+  it('tells a guest who was waiting already so, without naming an inviter or the name just typed',async()=>{
+    const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:false})).mockResolvedValueOnce(json({ok:true,waitlisted:true,alreadyWaiting:true}));vi.stubGlobal('fetch',fetch);
+    const user=userEvent.setup();render(<AccessForm eventId="A"/>);
+    await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
+    await user.type(await screen.findByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
+    await user.click(screen.getByRole('checkbox',{name:/대기 명단 관리/}));await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
+    const heading=await screen.findByRole('heading',{name:'이미 대기 명단에 있습니다'});
+    const saved=heading.closest('section')??heading.parentElement??document.body;
+    // The entry that stands may be another inviter's, under another name: only the id is shown.
+    expect(saved).toHaveTextContent('@example');
+    expect(saved).toHaveTextContent('새로 올리지 않았습니다');
+    expect(saved).not.toHaveTextContent('INVITER');
+    expect(saved).not.toHaveTextContent('Example');
+    expect(screen.queryByRole('heading',{name:'대기 명단에 올렸습니다'})).not.toBeInTheDocument();
+  });
   it('asks again under the waitlist terms when the list filled between the code check and the save',async()=>{
     const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:true})).mockResolvedValueOnce(json({error:'GUEST_LIMIT_REACHED'},409)).mockResolvedValueOnce(json({ok:true,waitlisted:true}));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
@@ -198,7 +213,7 @@ describe('guest request UI',()=>{
       const key=screen.getByRole('link',{name:'TERMINAL 일정 구독'});
       expect(key).toHaveAttribute('href','webcal://terminal.stann.kr/calendar.ics');
       await user.click(key);
-      expect(await screen.findByRole('link',{name:'Safari에서 열어 주세요'})).toBeInTheDocument();
+      expect(await screen.findByRole('link',{name:'Safari에서 열어 주십시오'})).toBeInTheDocument();
     } finally { agent.mockRestore(); }
   });
   it('asks each companion to send their own request',()=>{

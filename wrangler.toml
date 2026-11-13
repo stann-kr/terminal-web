@@ -1,4 +1,7 @@
-name = "terminal-web"
+# 맨 위 설정은 로컬 개발(next dev·미리보기)만 쓴다. 배포하는 Worker는 [env.production]의 terminal-web과
+# [env.development]의 terminal-web-dev이며, 배포 명령은 항상 --env를 준다. 맨 위 이름을 배포 Worker와
+# 다르게 두어, --env를 빠뜨린 deploy가 로컬용 설정을 운영 Worker에 올리지 못하게 한다.
+name = "terminal-web-local"
 main = ".open-next/worker.js"
 compatibility_date = "2026-08-04"
 compatibility_flags = ["nodejs_compat"]
@@ -7,10 +10,12 @@ compatibility_flags = ["nodejs_compat"]
 enabled = true
 head_sampling_rate = 1
 
+# 요청마다 자동으로 남는 로그(invocation log)는 끈다. 요청 주소가 통째로 기록되는데, 아티스트 초대
+# 페이지·홍보 파일·수신 거부 링크가 서명 토큰을 주소 쿼리로 받기 때문이다. 코드가 남기는 로그는 그대로 남는다.
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
-invocation_logs = true
+invocation_logs = false
 
 [assets]
 directory = ".open-next/assets"

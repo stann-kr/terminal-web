@@ -34,7 +34,7 @@ describe('calendar key',()=>{
     render(<EventFacts event={event} modular/>);
     act(()=>{ key().click(); });
     expect(key()).not.toHaveAttribute('data-pending');
-    expect(key()).toHaveTextContent('Safari에서 열어 주세요');
-    expect(screen.getByRole('status')).toHaveTextContent('Safari에서 열어 주세요');
+    expect(key()).toHaveTextContent('Safari에서 열어 주십시오');
+    expect(screen.getByRole('status')).toHaveTextContent('Safari에서 열어 주십시오');
   });
 });

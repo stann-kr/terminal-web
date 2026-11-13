@@ -189,6 +189,12 @@ describe('opaque public success responses', () => {
       status: 200, cacheControl: 'no-store', body: { ok: true, waitlisted: true },
     });
     expect(mocks.createAccessRequestAtomically).toHaveBeenLastCalledWith({}, expect.objectContaining({ waitlist: true }));
+
+    // Waiting already (maybe under another inviter): still a success, marked so the form names no inviter.
+    mocks.createAccessRequestAtomically.mockResolvedValueOnce({ status: 'already_waitlisted' });
+    expect(await responseDetails(await post({ ...requestBody, waitlist: true }))).toEqual({
+      status: 200, cacheControl: 'no-store', body: { ok: true, waitlisted: true, alreadyWaiting: true },
+    });
   });
 
   it.each(['request', 'code-info'])('closes %s for an open-window event with no guest code before any write', async (route) => {

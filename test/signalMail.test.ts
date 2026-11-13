@@ -11,6 +11,7 @@ import {
   mailKey,
   pendingRecipients,
   readSentLog,
+  replyToAddress,
   sendPending,
 } from '../scripts/lib/signalMail.mjs';
 
@@ -94,6 +95,27 @@ describe('signal-mail send run', () => {
     });
     expect(sentTo).toEqual(['sig-a']);
     expect(result).toEqual({ sent: 1, failed: 0, unlogged: { row: rows[0], error: broken } });
+  });
+});
+
+describe('signal-mail reply address', () => {
+  it('reads one plain address, compared the way the list stores them', () => {
+    expect(replyToAddress('  Owner@Example.com ')).toBe('owner@example.com');
+    expect(replyToAddress('owner+news@mail.example.kr')).toBe('owner+news@mail.example.kr');
+  });
+
+  it('is nothing when unset or not an address, so the run stops before sending', () => {
+    expect(replyToAddress(undefined)).toBeNull();
+    expect(replyToAddress('')).toBeNull();
+    expect(replyToAddress('owner')).toBeNull();
+    expect(replyToAddress('owner@example')).toBeNull();
+  });
+
+  it('lets nothing through that could add an address or a header', () => {
+    expect(replyToAddress('a@example.com, b@example.com')).toBeNull();
+    expect(replyToAddress('Owner <owner@example.com>')).toBeNull();
+    expect(replyToAddress('owner@example.com?cc=b@example.com')).toBeNull();
+    expect(replyToAddress('owner@example.com\nBcc: b@example.com')).toBeNull();
   });
 });
 

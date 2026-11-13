@@ -22,7 +22,7 @@ const IN_APP = /Instagram|FBAN|FBAV|FB_IAB|KAKAOTALK|Line\/|NAVER\(inapp|DaumApp
 /** Longest the calendar key shows LOADING while the calendar app or the new tab takes over. */
 export const CALENDAR_OPEN_MS = 2500;
 /** Short, so the key keeps its size. */
-export const CALENDAR_BLOCKED = 'Safari에서 열어 주세요';
+export const CALENDAR_BLOCKED = 'Safari에서 열어 주십시오';
 type CalendarState = 'idle' | 'opening' | 'blocked';
 
 /**

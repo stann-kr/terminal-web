@@ -231,7 +231,7 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
     >
       {!query.data ? (
         query.isError ? (
-          <StateNotice error title="방문자 로그 조회 실패" retry={() => void query.refetch()}>잠시 후 다시 확인해 주세요.</StateNotice>
+          <StateNotice error title="방문자 로그 조회 실패" retry={() => void query.refetch()}>잠시 후 다시 확인해 주십시오.</StateNotice>
         ) : (
           <Loading />
         )

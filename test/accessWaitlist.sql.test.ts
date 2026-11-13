@@ -45,8 +45,11 @@ describe.skipIf(!sqliteAvailable)('access waitlist SQL (SQLite with every migrat
     expect(await request('@one')).toEqual({ status: 'created' });
     expect(await request('@two')).toEqual({ status: 'created' });
     expect(await request('@three')).toEqual({ status: 'waitlisted' });
-    // The same guest again (case and @ aside) still waits, only once.
-    expect(await request('THREE')).toEqual({ status: 'waitlisted' });
+    // The same guest again (case and @ aside) still waits, only once, and is told it is not new.
+    expect(await request('THREE')).toEqual({ status: 'already_waitlisted' });
+    // So is the same guest coming with another inviter's full code: the first entry stands alone.
+    expect(await request('@three', { artistId: '03-HOST', invitedBy: 'TERMINAL', guestLimit: 0 })).toEqual({ status: 'already_waitlisted' });
+    expect(count('access_waitlist', "artist_id = '03-B'")).toBe(1);
     expect(await request('@one')).toEqual({ status: 'duplicate' });
     expect(count('access_requests')).toBe(2);
     expect(count('access_waitlist')).toBe(1);

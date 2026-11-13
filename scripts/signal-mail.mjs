@@ -4,7 +4,7 @@ import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFi
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { failureReason, parseWranglerJson, positionalArgs, readEnvValue } from './lib/cli.mjs';
-import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, readSentLog, sendPending } from './lib/signalMail.mjs';
+import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, readSentLog, replyToAddress, sendPending } from './lib/signalMail.mjs';
 
 /**
  * Sends one mail to everyone on the Signal list (production D1 `signal`), one message per address.
@@ -16,8 +16,10 @@ import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, rea
  * Nothing is sent without --confirm naming exactly how many people will get the mail (1 for
  * --only); without it a run only prints who would. A subject shorter than 10 characters is refused,
  * and so is a subject marked TEST on a send to the whole list. --only to a subscriber (anyone but
- * REPLY_TO) is logged like --send, so the whole-list run after it skips them. Mail goes out through
- * Cloudflare Email Sending from stann@terminal.stann.kr, replies go to REPLY_TO. Each message
+ * the reply address) is logged like --send, so the whole-list run after it skips them. Mail goes out through
+ * Cloudflare Email Sending from stann@terminal.stann.kr, replies go to SIGNAL_REPLY_TO: the owner's
+ * own address, read from the environment or .env like the secret and never kept in the repository
+ * (a run without it, or with something that is not one plain address, stops before the list is read). Each message
  * gets its own unsubscribe link ({{UNSUBSCRIBE_URL}} in the html and text), signed with
  * SIGNAL_UNSUBSCRIBE_SECRET (the Worker's secret; read from the environment or .env), and the
  * List-Unsubscribe / List-Unsubscribe-Post headers that give mail apps a one-click button. Sending
@@ -32,7 +34,6 @@ import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, rea
  */
 const DATABASE = 'terminal-db';
 const FROM = 'stann@terminal.stann.kr';
-const REPLY_TO = 'ilsny7@gmail.com';
 const SITE = 'https://terminal.stann.kr';
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Addresses that cannot be delivered (a misspelt domain); left out rather than bounced.
@@ -67,6 +68,9 @@ const html = readFileSync(htmlFile, 'utf8');
 const text = readFileSync(textFile, 'utf8');
 const secret = readEnvValue('SIGNAL_UNSUBSCRIBE_SECRET');
 if (!secret) fail('SIGNAL_UNSUBSCRIBE_SECRET is not set (environment or .env)');
+// Where replies and the mailto unsubscribe go; also the one address --only does not log.
+const REPLY_TO = replyToAddress(readEnvValue('SIGNAL_REPLY_TO'));
+if (!REPLY_TO) fail('SIGNAL_REPLY_TO is not set to one mail address (environment or .env): replies and the mailto unsubscribe go there');
 const unsubscribeUrl = id => `${SITE}/api/signal/unsubscribe?${new URLSearchParams({ s: id, t: createHmac('sha256', secret).update(id).digest('hex') })}`;
 
 const wrangler = (rest, { oauth = false } = {}) => {

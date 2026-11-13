@@ -2,6 +2,24 @@
 
 공개 가능한 결과 중심 변경 요약이다. 항목은 일자 단위이며 최신 항목을 위에 둔다.
 
+## 2026-11-13 — 리뷰 후속: 설정·CI 정리와 문구 통일
+
+### Fixed
+
+- 게스트 신청: 이미 이벤트의 대기 명단에 있는 게스트가 다시 대기 신청을 하면(다른 초대인의 마감된 코드 포함) "이미 대기 명단에 있습니다"로 안내한다. 이전에는 방금 입력한 코드의 초대인 이름으로 "대기 명단에 올렸습니다"를 보여 줬지만 실제 명단은 먼저 올린 쪽에만 있었다. 응답에는 `alreadyWaiting: true`가 붙는다.
+
+### Changed
+
+- 화면 문구의 요청 어미를 "주십시오"로 통일했다.
+- `wrangler.toml` 맨 위 이름을 `terminal-web-local`로 바꿨다. 맨 위 설정은 로컬 개발만 쓰며, `--env`를 빠뜨린 deploy가 로컬용 설정을 운영 Worker에 올리지 못한다. 배포하는 Worker 이름은 그대로다.
+- Worker의 요청 자동 로그(`invocation_logs`)를 껐다. 서명 토큰이 들어 있는 요청 주소가 로그에 남지 않는다. 코드가 남기는 로그는 그대로다.
+- `npm run signal:mail`의 회신 주소를 코드에서 지우고 `SIGNAL_REPLY_TO`(환경 변수 또는 `.env`)에서 읽는다. 값이 없거나 메일 주소 하나가 아니면 아무것도 하지 않고 멈춘다.
+- CI: PR에서 기준 브랜치에 이미 있는 migration SQL·snapshot이 바뀌지 않았는지 대조한다(`npm run db:check-history -- --base <ref>`). `npm audit`은 push·PR 검증에서 빼고 주간 workflow로 옮겼다.
+
+### Removed
+
+- 쓰이지 않던 `public/og/terminal.png`. 공유 이미지는 `terminal-share.png`다.
+
 ## 2026-11-13 — 전체 코드 리뷰: 대기 명단 동의 경계와 운영 스크립트 안전장치
 
 ### Fixed

@@ -63,7 +63,7 @@ export function ArtistsPlate({ mode, state, data, query }: PlateProps) {
       <FocusHead label="Artists" title="함께한 아티스트" tags={<Tags items={reading ? [reading] : [`${pad(count)} FILES`, `PAGE ${pad(page, 2)}`]} />}>
         {missing ? (
           <p className={styles.missing} role="alert">
-            <b aria-hidden="true">ERROR</b> 공개된 출연 이력이 없는 아티스트입니다. 아래 명부에서 다시 찾아 주세요.
+            <b aria-hidden="true">ERROR</b> 공개된 출연 이력이 없는 아티스트입니다. 아래 명부에서 다시 찾아 주십시오.
           </p>
         ) : data.events && (
           <div className={styles.summary}>

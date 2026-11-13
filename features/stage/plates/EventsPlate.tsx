@@ -69,7 +69,7 @@ export function EventsPlate({ mode, state, data, query }: PlateProps) {
       <FocusHead label="Events" title="이벤트" tags={<Tags items={reading ? [reading] : [`${pad(count)} RECORDS`, `PAGE ${pad(page, 2)}`]} />}>
         {missing ? (
           <p className={styles.missing} role="alert">
-            <b aria-hidden="true">ERROR</b> ‘{missing.id}’ 기록을 찾을 수 없습니다. 아래 목록에서 다시 찾아 주세요.
+            <b aria-hidden="true">ERROR</b> ‘{missing.id}’ 기록을 찾을 수 없습니다. 아래 목록에서 다시 찾아 주십시오.
           </p>
         ) : data.events && (
           <div className={styles.summary}>

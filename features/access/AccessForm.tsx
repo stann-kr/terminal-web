@@ -45,6 +45,7 @@ export function AccessForm({
     closedInviter,
     waitlist,
     waitlisted,
+    alreadyWaiting,
     turned,
   } = useAccessRequest(eventId, availability);
   // A checked code unlocks step 02; the guest carries on typing there.
@@ -73,19 +74,23 @@ export function AccessForm({
     return (
       <FormSuccess>
         <p className={ui.eyebrow}>WAITLISTED</p>
-        <h2>대기 명단에 올렸습니다</h2>
+        <h2>{alreadyWaiting ? '이미 대기 명단에 있습니다' : '대기 명단에 올렸습니다'}</h2>
         <Facts
           rows={[
             ...(event ? [['이벤트', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
-            ...(verified ? [['초대인', verified.name] as [string, string]] : []),
-            ['이름', fields.name.trim()],
+            // An entry that was there before may stand under another inviter and another name:
+            // neither is shown, only the id it is known by.
+            ...(verified && !alreadyWaiting ? [['초대인', verified.name] as [string, string]] : []),
+            ...(alreadyWaiting ? [] : [['이름', fields.name.trim()] as [string, string]]),
             ['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`],
             ['상태', '대기'],
           ]}
         />
         <p>
-          아직 게스트 명단은 아닙니다. 자리가 생겨 명단에 오르면 초대한 아티스트가 인스타그램 DM으로
-          알려 드립니다.
+          {alreadyWaiting
+            ? '이 인스타그램 ID는 이 이벤트의 대기 명단에 이미 있어 새로 올리지 않았습니다.'
+            : '아직 게스트 명단은 아닙니다.'}{' '}
+          자리가 생겨 명단에 오르면 초대한 아티스트가 인스타그램 DM으로 알려 드립니다.
         </p>
         <ActionDeck>
           <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>

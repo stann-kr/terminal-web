@@ -99,7 +99,7 @@ function Poster({ src, alt }: { src: string; alt: string }) {
     <div ref={root} className={styles.poster} role="group" aria-label="이벤트 포스터" tabIndex={-1} aria-busy={status === 'loading'} data-loaded={status === 'loaded' || undefined}>
       {status === 'error' ? (
         <StateNotice title="포스터를 불러오지 못했습니다" className={styles.posterError}>
-          <p>연결을 확인한 뒤 다시 시도하거나 원본을 열어 주세요.</p>
+          <p>연결을 확인한 뒤 다시 시도하거나 원본을 열어 주십시오.</p>
           <ActionDeck>
             <button type="button" className={ui.button} onClick={retry}>포스터 다시 불러오기</button>
             <Action href={src} external>원본 열기<span className={ui.srOnly}> (새 탭)</span></Action>

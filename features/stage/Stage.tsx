@@ -523,7 +523,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
         {tooShort && viewport && (
           <section className={styles.enlarge} data-surface="feature" aria-labelledby="enlarge-title">
             <p className={styles.enlargeMark} aria-hidden="true">TERMINAL</p>
-            <h1 id="enlarge-title" tabIndex={-1} data-stage-title="">창을 조금 더 키워 주세요</h1>
+            <h1 id="enlarge-title" tabIndex={-1} data-stage-title="">창을 조금 더 키워 주십시오</h1>
             <p>
               이 화면은 높이 {minDesktop.h}px 이상인 창에 맞춰 판을 배치합니다. 지금 창은 {viewport.w}×{viewport.h}px입니다.
             </p>
@@ -661,7 +661,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
                   title={layout.open.kind === 'event' ? '기록을 불러오지 못했습니다' : '아티스트 기록을 불러오지 못했습니다'}
                   retry={() => void query.refetch()}
                 >
-                  잠시 후 다시 불러오거나 다른 판으로 이동해 주세요.
+                  잠시 후 다시 불러오거나 다른 판으로 이동해 주십시오.
                 </StateNotice>
               ) : (
                 <Loading />
