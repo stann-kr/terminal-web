@@ -1,8 +1,10 @@
 import { createHmac } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { removeSignalSubscription } from '../lib/signal/d1SignalSubscriptionRepository';
 import { signUnsubscribe, verifyUnsubscribe } from '../lib/signal/unsubscribeToken';
+import { d1, migratedSqlite, sqliteAvailable } from './sqliteD1';
 
-const mocks = vi.hoisted(() => ({ enforceRateLimit: vi.fn(), getCloudflareContext: vi.fn(), run: vi.fn(), bind: vi.fn() }));
+const mocks = vi.hoisted(() => ({ enforceRateLimit: vi.fn(), getCloudflareContext: vi.fn(), batch: vi.fn(), bind: vi.fn() }));
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: mocks.getCloudflareContext }));
 vi.mock('@/lib/api/abuseControl', () => ({ enforceRateLimit: mocks.enforceRateLimit }));
 const { GET, POST } = await import('../app/api/signal/unsubscribe/route');
@@ -25,8 +27,9 @@ describe('POST /api/signal/unsubscribe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.enforceRateLimit.mockResolvedValue({ ok: true });
-    mocks.bind.mockReturnValue({ run: mocks.run });
-    mocks.getCloudflareContext.mockResolvedValue({ env: { SIGNAL_UNSUBSCRIBE_SECRET: SECRET, DB: { prepare: () => ({ bind: mocks.bind }) } } });
+    mocks.bind.mockReturnValue({});
+    mocks.batch.mockResolvedValue([]);
+    mocks.getCloudflareContext.mockResolvedValue({ env: { SIGNAL_UNSUBSCRIBE_SECRET: SECRET, DB: { prepare: () => ({ bind: mocks.bind }), batch: mocks.batch } } });
   });
   const post = (query: string) => POST(new Request(`https://terminal.stann.kr/api/signal/unsubscribe?${query}`, {
     method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'List-Unsubscribe=One-Click',
@@ -37,6 +40,7 @@ describe('POST /api/signal/unsubscribe', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true });
     expect(mocks.bind).toHaveBeenCalledWith(ID);
+    expect(mocks.batch).toHaveBeenCalledTimes(1);
   });
 
   it('refuses a forged link without touching the database', async () => {
@@ -51,6 +55,49 @@ describe('POST /api/signal/unsubscribe', () => {
     expect(response.status).toBe(303);
     expect(response.headers.get('location')).toBe(`https://terminal.stann.kr/signal?s=${ID}&t=abc`);
     expect(mocks.bind).not.toHaveBeenCalled();
+  });
+});
+
+describe.skipIf(!sqliteAvailable)('unsubscribe SQL (SQLite with every migration)', () => {
+  it('forgets the email a guest request kept for news, and leaves every other guest alone', async () => {
+    const sqlite = migratedSqlite();
+    sqlite.exec(`INSERT INTO events (id, data) VALUES ('TRM-03', '{}')`);
+    sqlite.exec(`INSERT INTO access_requests (id, event_id, name, email, instagram, privacy_consent, marketing_consent, created_at) VALUES
+      ('req-1', 'TRM-03', 'One', 'one@example.com', '@one', 1, 1, '2026-11-12T00:00:00.000Z'),
+      ('req-2', 'TRM-03', 'Two', 'two@example.com', '@two', 1, 1, '2026-11-12T00:00:01.000Z'),
+      ('req-3', 'TRM-03', 'Three', NULL, '@three', 1, 0, '2026-11-12T00:00:02.000Z')`);
+    sqlite.exec(`INSERT INTO signal (id, name, email, instagram, source, created_at) VALUES
+      ('sig-1', 'One', 'one@example.com', '@one', 'gate', '2026-11-12T00:00:00.000Z'),
+      ('sig-2', 'Two', 'two@example.com', '@two', 'gate', '2026-11-12T00:00:01.000Z')`);
+    const rows = () => sqlite.prepare('SELECT id, email, marketing_consent AS news FROM access_requests ORDER BY id').all();
+
+    await removeSignalSubscription(d1(sqlite), 'sig-1');
+    expect(sqlite.prepare('SELECT id FROM signal').all()).toEqual([{ id: 'sig-2' }]);
+    expect(rows()).toEqual([
+      { id: 'req-1', email: null, news: 0 },
+      { id: 'req-2', email: 'two@example.com', news: 1 },
+      { id: 'req-3', email: null, news: 0 },
+    ]);
+    // A repeat (the mail client posts again) changes nothing more.
+    await removeSignalSubscription(d1(sqlite), 'sig-1');
+    expect(rows()).toHaveLength(3);
+    expect(sqlite.prepare('SELECT id FROM signal').all()).toEqual([{ id: 'sig-2' }]);
+  });
+
+  it('matches the address as written by an older row: other capitals or spaces are the same address', async () => {
+    const sqlite = migratedSqlite();
+    sqlite.exec(`INSERT INTO events (id, data) VALUES ('TRM-03', '{}')`);
+    sqlite.exec(`INSERT INTO access_requests (id, event_id, name, email, instagram, privacy_consent, marketing_consent, created_at) VALUES
+      ('req-1', 'TRM-03', 'One', 'one@example.com', '@one', 1, 1, '2026-11-12T00:00:00.000Z'),
+      ('req-2', 'TRM-03', 'Two', 'two@example.com', '@two', 1, 1, '2026-11-12T00:00:01.000Z')`);
+    sqlite.exec(`INSERT INTO signal (id, name, email, instagram, source, created_at) VALUES
+      ('sig-1', 'One', ' One@Example.com ', '@one', 'form', '2026-01-01T00:00:00.000Z')`);
+    await removeSignalSubscription(d1(sqlite), 'sig-1');
+    expect(sqlite.prepare('SELECT id, email, marketing_consent AS news FROM access_requests ORDER BY id').all()).toEqual([
+      { id: 'req-1', email: null, news: 0 },
+      { id: 'req-2', email: 'two@example.com', news: 1 },
+    ]);
+    expect(sqlite.prepare('SELECT id FROM signal').all()).toEqual([]);
   });
 });
 

@@ -10,15 +10,17 @@ export { AccessForm } from './AccessForm';
 export function AccessRequest({ eventId }: { eventId: string }) {
   const query = useEvents();
   const event = query.events?.find((event) => event.id === eventId);
+  // A later check that failed leaves the event as it was last read: the form stays usable, and the
+  // server decides again at the save. Only an event that never loaded locks it.
   const availability =
-    event && !query.isError
+    event
       ? accessAvailability(event, query.events!, query.now)
       : {
           canRequest: false,
           message: query.isPending
             ? '이벤트 정보를 확인하고 있습니다.'
             : query.isError
-              ? '최신 이벤트 정보를 확인한 뒤 다시 시도해 주세요.'
+              ? '최신 이벤트 정보를 확인한 뒤 다시 시도해 주십시오.'
               : '신청할 이벤트를 찾을 수 없습니다.',
         };
   return (

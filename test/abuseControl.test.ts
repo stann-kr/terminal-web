@@ -14,6 +14,8 @@ describe('public abuse-control contracts', () => {
     expect(createAttemptKey('code-info', request)).toBe('gate:192.0.2.1');
     expect(createAttemptKey('gate-request', request)).toBe('gate:192.0.2.1');
     expect(createAttemptKey('signal', request)).toBe('signal:192.0.2.1');
+    // A host page's previews never use up the attempts its own actions need.
+    expect(createAttemptKey('host-file', request)).not.toBe(createAttemptKey('host', request));
   });
 
   it('allows local execution without a production binding', async () => {

@@ -201,7 +201,7 @@ function SignalUnsubscribe({ link }: { link: { s: string; t: string } }) {
       ) : (
         <div className={formStyles.form}>
           <FormError message={error ? errorMessage(error) : ''} />
-          <p>이 메일 주소로 TERMINAL 이벤트 소식을 더 받지 않으려면 아래 키를 눌러 주세요. 저장된 연락처도 함께 지웁니다.</p>
+          <p>이 메일 주소로 TERMINAL 이벤트 소식을 더 받지 않으려면 아래 키를 눌러 주십시오. 저장된 연락처도 함께 지웁니다.</p>
           <p className={ui.muted}>Press the key below to stop receiving TERMINAL news at this address.</p>
           <ActionDeck>
             <button type="button" aria-busy={pending} disabled={pending} onClick={submit} className={`${ui.button} ${ui.primary}`}>

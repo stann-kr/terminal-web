@@ -31,6 +31,7 @@ describe('GET /api/invite/host/file', () => {
     expect(response.headers.get('content-disposition')).toBe('attachment; filename="TERMINAL[03]_hogun_front.png"');
     expect(response.headers.get('cache-control')).toBe('private, max-age=86400');
     expect(mocks.get).toHaveBeenLastCalledWith(HOGUN_FRONT);
+    expect(mocks.enforceRateLimit).toHaveBeenCalledWith(expect.anything(), 'host-file', expect.anything());
   });
 
   it('shows a preview inline, and the event teaser too', async () => {

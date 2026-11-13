@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { createHmac, randomInt } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { readEnvValue } from './lib/cli.mjs';
 
 /**
  * Gives an artist of the next event a guest code and prints the two links that go with it: the
@@ -81,8 +82,7 @@ const limit = limitArg === undefined ? (Number.isSafeInteger(data.guestLimit) ? 
 // --link only prints; a stored limit outside the range (0 closes a code) is left as it is.
 if (!linkOnly && (!Number.isSafeInteger(limit) || limit < 1 || limit > MAX_LIMIT)) fail(`--limit: a whole number from 1 to ${MAX_LIMIT}`);
 
-const secret = process.env.SIGNAL_UNSUBSCRIBE_SECRET
-  ?? (() => { try { return readFileSync('.env', 'utf8').match(/^SIGNAL_UNSUBSCRIBE_SECRET=(.+)$/m)?.[1].trim(); } catch { return undefined; } })();
+const secret = readEnvValue('SIGNAL_UNSUBSCRIBE_SECRET');
 if (!secret) fail('SIGNAL_UNSUBSCRIBE_SECRET is not set (environment or .env)');
 const links = () => {
   const token = createHmac('sha256', secret).update(`host:${artistId}:${code}`).digest('hex');
@@ -122,12 +122,16 @@ if (code === current && limit === data.guestLimit) {
 }
 const plan = `${artistId} (${data.name}) code ${current ?? '-'} → ${code}, limit ${data.guestLimit ?? '-'} → ${limit}`;
 if (confirm !== '1') {
-  console.log(`not written: ${plan}. To write, run again with --confirm 1${requested || current ? '' : ' (a fresh code is drawn on that run)'}.`);
+  // A drawn code (no --code, and either no code yet or --replace) is drawn again on the confirmed run.
+  const drawn = !requested && code !== current;
+  console.log(`not written: ${plan}. To write, run again with --confirm 1${drawn ? ' (a fresh code is drawn on that run; pass --code to keep this one)' : ''}.`);
   process.exit(0);
 }
 
-// One folder per run: a second change the same day never overwrites the first backup.
+// One folder per run: a second change the same day never overwrites the first backup. The parent is
+// made if missing; the run's own folder must be new.
 const folder = path.join('.docs', 'evidence', `${new Date().toISOString().replace(/[:.]/g, '-')}-invite-${artistId}`);
+mkdirSync(path.dirname(folder), { recursive: true });
 mkdirSync(folder, { recursive: false });
 writeFileSync(path.join(folder, 'before.json'), `${JSON.stringify(row, null, 2)}\n`);
 const guard = current === null ? "json_extract(data, '$.guestCode') IS NULL" : `json_extract(data, '$.guestCode') = ${sql(data.guestCode)}`;

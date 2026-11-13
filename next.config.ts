@@ -17,10 +17,10 @@ const securityHeaders = [
       "object-src 'none'",
       "img-src 'self' data: blob: https:",
       "media-src 'self' data: blob:",
-      "font-src 'self' data: https://cdnjs.cloudflare.com",
+      "font-src 'self' data:",
       // React/Turbopack development modules need eval; production stays strict.
       `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
-      "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com",
+      "style-src 'self' 'unsafe-inline'",
       "connect-src 'self'",
       "worker-src 'self' blob:",
     ].join("; "),

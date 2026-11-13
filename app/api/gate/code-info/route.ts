@@ -6,6 +6,7 @@ import { hasOnlyKeys, isString } from "@/lib/api/validation";
 import { getDb } from "@/lib/db/client";
 import {
   findUpcomingGateEvent,
+  isGateRequestWindowActive,
   parseGateEventId,
   resolveArtistAccessCode,
 } from "@/lib/gate/createAccessRequest";
@@ -68,6 +69,10 @@ export async function POST(request: Request) {
     }
     if (upcomingEvent.rowId !== eventIdResult.eventId) {
       return json({ error: "EVENT_MISMATCH" }, 409);
+    }
+    // As the request itself does: outside the window a code names no artist.
+    if (!isGateRequestWindowActive(upcomingEvent, now)) {
+      return json({ error: "REQUEST_PERIOD_INACTIVE" }, 403);
     }
 
     const artistRows = await listGateArtistRowsByEvent(db, upcomingEvent.rowId);

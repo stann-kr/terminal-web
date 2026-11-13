@@ -1,7 +1,8 @@
 import { afterEach,beforeEach,describe,expect,it,vi } from 'vitest';
 import { act,cleanup,render,screen } from '@testing-library/react';
 import type { TerminalEvent } from '../lib/events/types';
-import { CALENDAR_OPEN_MS, EventFacts } from '../features/events/EventRecord';
+import { EventFacts } from '../features/events/EventRecord';
+import { CALENDAR_OPEN_MS } from '../features/events/useCalendarKey';
 
 const event:TerminalEvent={ id:'TRM-03',session:'TERMINAL [03]',subtitle:'',date:'2099-11-28',time:'23:00 KST',venue:'FAUST',district:'SEOUL',coords:'',capacity:'',sound:'',status:'UPCOMING',artists:[] };
 const as=(userAgent:string)=>vi.spyOn(navigator,'userAgent','get').mockReturnValue(userAgent);
@@ -33,7 +34,7 @@ describe('calendar key',()=>{
     render(<EventFacts event={event} modular/>);
     act(()=>{ key().click(); });
     expect(key()).not.toHaveAttribute('data-pending');
-    expect(key()).toHaveTextContent('Safari에서 열어 주세요');
-    expect(screen.getByRole('status')).toHaveTextContent('Safari에서 열어 주세요');
+    expect(key()).toHaveTextContent('Safari에서 열어 주십시오');
+    expect(screen.getByRole('status')).toHaveTextContent('Safari에서 열어 주십시오');
   });
 });
