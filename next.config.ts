@@ -19,9 +19,11 @@ const securityHeaders = [
       "media-src 'self' data: blob:",
       "font-src 'self' data:",
       // React/Turbopack development modules need eval; production stays strict.
-      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+      // Cloudflare Web Analytics (auto-injected on the stann.kr zone) loads its beacon from
+      // static.cloudflareinsights.com and reports page views to cloudflareinsights.com.
+      `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline'",
-      "connect-src 'self'",
+      "connect-src 'self' https://cloudflareinsights.com",
       "worker-src 'self' blob:",
     ].join("; "),
   },
