@@ -2,6 +2,12 @@
 
 공개 가능한 결과 중심 변경 요약이다. 항목은 일자 단위이며 최신 항목을 위에 둔다.
 
+## 2026-11-16 — 메일 주소 정리
+
+### Changed
+
+- `npm run signal:mail`의 보내는 주소를 `stann@terminal.stann.kr`(받을 수 없는 주소)에서 TERMINAL 프로젝트 메일 `terminal@stann.kr`로 바꿨다. 회신 주소(`SIGNAL_REPLY_TO`)도 같은 주소를 쓴다.
+
 ## 2026-11-13 — 리뷰 후속: 설정·CI 정리와 문구 통일
 
 ### Fixed
