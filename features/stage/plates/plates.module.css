@@ -712,7 +712,7 @@
 }
 .eventCell[data-state=LIVE] .cellState,
 .eventRow[data-event-state=LIVE] .rowState {
-  --lamp: var(--alert);
+  --lamp: var(--accent);
   color: var(--ink);
 }
 .cellMeta {
@@ -937,6 +937,14 @@
 }
 .lineupCells li[data-empty] {
   background: var(--well);
+  color: var(--ink);
+}
+/* While the session runs, the cell the timetable is on carries the same accent bar as its slot in
+   the running order, and NOW in the plate's ink. */
+.lineupCells li[data-now] {
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+.lineupCells li[data-now] small {
   color: var(--ink);
 }
 
@@ -1596,6 +1604,28 @@
   flex: 1 0 auto;
   grid-auto-rows: minmax(auto, 104px);
   align-content: start;
+}
+/* With times out, the lineup is the running order: one slot per line, [time | artist | dock], in
+   start order, whatever the plate's width. */
+.lineupCells.timetable {
+  --lineup-cols: 1;
+}
+.lineupCells.timetable li:last-child:nth-child(n) {
+  grid-column: auto;
+}
+.lineupCells.timetable li {
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+.slotWhen {
+  font-variant-numeric: tabular-nums;
+}
+.lineupCells.timetable li > small:last-child {
+  text-align: right;
+}
+:global([data-stage=stage]) .partLineup .timetable {
+  grid-auto-rows: minmax(auto, 56px);
 }
 .logList li:nth-child(odd) {
   background: var(--well);

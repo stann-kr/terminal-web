@@ -2,7 +2,6 @@
 import Link from '@/features/ui/RouteLink';
 import { type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
-import { getSlotTimes } from '@/lib/events/lifecycle';
 import { Action, ActionDeck, Arrow, BrandText, Facts, ui } from '@/features/ui/Ui';
 import { CALENDAR_BLOCKED, useCalendarOpen, useSubscribeHref } from './useCalendarKey';
 import { SITE_ORIGIN } from './metadata';
@@ -12,7 +11,7 @@ import {
   profileForAppearance,
   artistHref,
 } from '@/features/artists/model';
-import { accessAvailability, eventHref, publicArtists, venueMapHref } from './model';
+import { accessAvailability, eventHref, isSlotOn, runningOrder, venueMapHref } from './model';
 import styles from './events.module.css';
 
 export function EventFacts({
@@ -169,14 +168,9 @@ export function Lineup({
   now?: Date;
 }) {
   const profiles = buildArtistArchive(events);
-  const visible = publicArtists(event);
-  // While the session runs, the slot the published timetable is on. It is the timetable, not what
-  // is playing: the dock band says so, and a slot without times (TBA) is never marked.
-  const onNow = (artist: Artist) => {
-    if (event.status !== 'LIVE' || !now) return false;
-    const slot = getSlotTimes(event, artist.time);
-    return !!slot && slot.start <= now && now < slot.end;
-  };
+  const visible = runningOrder(event);
+  // The dock band says the mark is the timetable's, not what is playing.
+  const onNow = (artist: Artist) => isSlotOn(event, artist, now);
   function identity(artist: Artist) {
     const profile = profileForAppearance(profiles, event.id, artist.id);
     return (
