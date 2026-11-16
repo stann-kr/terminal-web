@@ -17,8 +17,8 @@ import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, rea
  * --only); without it a run only prints who would. A subject shorter than 10 characters is refused,
  * and so is a subject marked TEST on a send to the whole list. --only to a subscriber (anyone but
  * the reply address) is logged like --send, so the whole-list run after it skips them. Mail goes out through
- * Cloudflare Email Sending from stann@terminal.stann.kr, replies go to SIGNAL_REPLY_TO: the owner's
- * own address, read from the environment or .env like the secret and never kept in the repository
+ * Cloudflare Email Sending from terminal@stann.kr, replies go to SIGNAL_REPLY_TO: the project inbox
+ * (terminal@stann.kr), read from the environment or .env like the secret
  * (a run without it, or with something that is not one plain address, stops before the list is read). Each message
  * gets its own unsubscribe link ({{UNSUBSCRIBE_URL}} in the html and text), signed with
  * SIGNAL_UNSUBSCRIBE_SECRET (the Worker's secret; read from the environment or .env), and the
@@ -33,7 +33,7 @@ import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, rea
  * not be logged stops the run with the id to add by hand.
  */
 const DATABASE = 'terminal-db';
-const FROM = 'stann@terminal.stann.kr';
+const FROM = 'terminal@stann.kr';
 const SITE = 'https://terminal.stann.kr';
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Addresses that cannot be delivered (a misspelt domain); left out rather than bounced.
