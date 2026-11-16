@@ -21,7 +21,7 @@ export type ItemShape = Exclude<ItemMode, 'folded'>;
 
 /** A session reads in its state colour as an open file; as a cell, row or line it is a dark record. */
 export function sessionSurface(event: TerminalEvent): Surface {
-  return event.status === 'ARCHIVED' ? 'paper' : event.status === 'LIVE' ? 'alert' : 'feature';
+  return event.status === 'ARCHIVED' ? 'paper' : 'feature';
 }
 
 /** A session's sub-plate inside the directory plate: a summary cell, a directory row, or an index line. */

@@ -46,7 +46,7 @@ export function PlateContent({ id, ...props }: PlateProps & { id: PlateId }) {
 export function plateSurface(id: PlateId, mode: PlateMode, data: StageData): Surface {
   if (id === 'next') {
     const status = data.next?.status;
-    return !data.next || status === 'ARCHIVED' ? 'paper' : status === 'LIVE' ? 'alert' : 'feature';
+    return !data.next || status === 'ARCHIVED' ? 'paper' : 'feature';
   }
   if (mode === 'hero' && (id === 'log' || id === 'signal' || id === 'about')) return 'inset';
   if (id === 'instagram') return 'alert';

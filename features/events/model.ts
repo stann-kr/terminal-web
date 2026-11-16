@@ -1,9 +1,26 @@
-import type { TerminalEvent } from '@/lib/events/types';
-import { getArchivedOrElapsedEvents, getEventDateTime, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, isPublicArtist, withEffectiveEventStatus } from '@/lib/events/lifecycle';
+import type { Artist, TerminalEvent } from '@/lib/events/types';
+import { getArchivedOrElapsedEvents, getEventDateTime, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, getSlotTimes, isPublicArtist, withEffectiveEventStatus } from '@/lib/events/lifecycle';
 import { accessWindowDays } from '@/lib/gate/requestPolicy';
 import aboutContent from '@/features/about/content.json';
 
 export const publicArtists = (event: TerminalEvent) => event.artists.filter(isPublicArtist);
+/** The published lineup in running order: by slot start, slots without times (TBA) last, then by id. */
+export function runningOrder(event: TerminalEvent): Artist[] {
+  const start = (artist: Artist) => getSlotTimes(event, artist.time)?.start.getTime() ?? Infinity;
+  return publicArtists(event)
+    .map((artist) => ({ artist, at: start(artist) }))
+    .sort((a, b) => (a.at === b.at ? 0 : a.at < b.at ? -1 : 1) || a.artist.id.localeCompare(b.artist.id))
+    .map(({ artist }) => artist);
+}
+/**
+ * While the session runs, whether the published timetable is on this slot. It is the timetable, not
+ * what is playing; a slot without times (TBA) is never on.
+ */
+export function isSlotOn(event: TerminalEvent, artist: Artist, now?: Date) {
+  if (event.status !== 'LIVE' || !now) return false;
+  const slot = getSlotTimes(event, artist.time);
+  return !!slot && slot.start <= now && now < slot.end;
+}
 export const eventHref = (id: string) => `/events/${encodeURIComponent(id)}`;
 /** `TERMINAL [03] : Interstellar Junction` → `TERMINAL [03]`: the name narrow slots (chips, index lines, cells, BACK) print in full. */
 export const sessionShort = (session: string) => session.split(/\s+:\s+/)[0].trim() || session;
