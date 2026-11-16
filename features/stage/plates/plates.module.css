@@ -712,7 +712,7 @@
 }
 .eventCell[data-state=LIVE] .cellState,
 .eventRow[data-event-state=LIVE] .rowState {
-  --lamp: var(--alert);
+  --lamp: var(--accent);
   color: var(--ink);
 }
 .cellMeta {
@@ -937,6 +937,14 @@
 }
 .lineupCells li[data-empty] {
   background: var(--well);
+  color: var(--ink);
+}
+/* While the session runs, the cell the timetable is on carries the same accent bar as its slot in
+   the running order, and NOW in the plate's ink. */
+.lineupCells li[data-now] {
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+.lineupCells li[data-now] small {
   color: var(--ink);
 }
 

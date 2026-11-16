@@ -1,8 +1,9 @@
 'use client';
 import Link from '@/features/ui/RouteLink';
-import type { TerminalEvent } from '@/lib/events/types';
+import type { Artist, TerminalEvent } from '@/lib/events/types';
+import { getSlotTimes } from '@/lib/events/lifecycle';
 import { DataActivity } from '@/features/display/Display';
-import { accessAvailability, dayMark, eventHref, eventSubtitle, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
+import { accessAvailability, dayMark, eventHref, eventSubtitle, isSlotOn, runningOrder, sessionShort, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
 import { Action, Arrow, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
@@ -86,7 +87,15 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
       </Link>
     );
   }
-  const artists = publicArtists(event);
+  // The lineup in running order; while the session runs, the slots the timetable is on lead the
+  // plate's readouts so the home page says who is on without opening the file.
+  const artists = runningOrder(event);
+  const playing = artists.filter((artist) => isSlotOn(event, artist, now));
+  const slotLine = (artist: Artist) => {
+    const dock = artist.dock ? `DOCK ${artist.dock}` : 'DOCK TBA';
+    if (playing.includes(artist)) return `NOW · ${dock}`;
+    return getSlotTimes(event, artist.time) ? `${dock} · ${artist.time.split('-')[0].trim()}` : dock;
+  };
   const schedule: [string, string][] = [
     ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
     ['장소', event.venue],
@@ -99,7 +108,7 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
       href={eventHref(event.id)}
       className={`${styles.card} ${styles.nextBlock}`}
       data-carrier={carrier}
-      aria-label={`${spoken} ${sessionShort(event.session)}${subtitle ? ` ${subtitle}` : ''}${accessOpen ? ', 게스트 신청 접수 중' : ''} 상세 보기`}
+      aria-label={`${spoken} ${sessionShort(event.session)}${subtitle ? ` ${subtitle}` : ''}${playing.length ? `, 시간표 기준 지금 순서 ${playing.map((artist) => artist.name).join(', ')}` : ''}${accessOpen ? ', 게스트 신청 접수 중' : ''} 상세 보기`}
       scroll={false}
     >
       {rings && <Rings at={rings} under />}
@@ -133,14 +142,14 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
           {mode === 'tile' ? <span className={styles.nextWhen}>{event.date} · {event.venue}</span> : <Facts rows={schedule} />}
         </span>
         {mode === 'hero' && (
-          <span className={`${styles.part} ${styles.partFlush} ${styles.partLineup}`} data-priority="4">
+          <span className={`${styles.part} ${styles.partFlush} ${styles.partLineup}`} data-priority={playing.length ? '1' : '4'}>
             <span className={ui.band} aria-hidden="true"><span>Lineup</span></span>
             <ul className={styles.lineupCells}>
               {artists.length
                 ? artists.map(artist => (
-                    <li key={artist.id}>
+                    <li key={artist.id} data-now={playing.includes(artist) || undefined}>
                       <b>{artist.name}</b>
-                      <small aria-hidden="true">{artist.dock ? `DOCK ${artist.dock}` : 'DOCK TBA'}</small>
+                      <small aria-hidden="true">{slotLine(artist)}</small>
                     </li>
                   ))
                 : (

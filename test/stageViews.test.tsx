@@ -709,6 +709,30 @@ describe('directory and roster contracts', () => {
     expect(within(detail(container, 'event:TRM-03')).getByText('기록', { selector: '[data-event-state]' })).toHaveAttribute('data-event-state', 'ARCHIVED');
   });
 
+  it('lists the running order by slot start and shows the slots on now on the home plate', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-29T00:30:00+09:00'));
+    const night = { ...upcoming, date: '2026-11-28', time: '23:00 KST', endTime: '05:00', artists: [
+      artist('03-A', 'LATE ARTIST', { status: 'CONFIRMED', dock: '1', time: '01:00 - 05:00' }),
+      artist('03-B', 'OPENING ARTIST', { status: 'CONFIRMED', dock: '1', time: '23:00 - 01:00' }),
+      artist('03-C', 'SECOND DOCK', { status: 'CONFIRMED', dock: '2', time: '00:00 - 02:00' }),
+      artist('03-D', 'UNTIMED ARTIST', { status: 'CONFIRMED', dock: '2', time: 'TBA' }),
+    ] };
+    const { container, go } = shell([past, night]);
+    const home = plate(container, 'next');
+    expect(within(home).getByRole('link', { name: /시간표 기준 지금 순서 OPENING ARTIST, SECOND DOCK/ })).toBeInTheDocument();
+    const cells = [...home.querySelectorAll('li')];
+    expect(cells.map((cell) => cell.querySelector('b')?.textContent)).toEqual(['OPENING ARTIST', 'SECOND DOCK', 'LATE ARTIST', 'UNTIMED ARTIST']);
+    expect(cells.map((cell) => cell.querySelector('small')?.textContent)).toEqual(['NOW · DOCK 1', 'NOW · DOCK 2', 'DOCK 1 · 01:00', 'DOCK 2']);
+    expect(cells.map((cell) => cell.hasAttribute('data-now'))).toEqual([true, true, false, false]);
+    go('/events/TRM-03');
+    const dock = within(detail(container, 'event:TRM-03')).getByRole('region', { name: '무대 1' });
+    expect([...dock.querySelectorAll('li')].map((line) => line.querySelector('a, div:nth-child(2)')?.textContent)).toEqual([
+      expect.stringContaining('OPENING ARTIST'),
+      expect.stringContaining('LATE ARTIST'),
+    ]);
+  });
+
   it('keeps the home clock after a session starts, leads with it while it runs, then counts down to the next one', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-28T22:59:59+09:00'));
