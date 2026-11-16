@@ -91,11 +91,9 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
   // plate's readouts so the home page says who is on without opening the file.
   const artists = runningOrder(event);
   const playing = artists.filter((artist) => isSlotOn(event, artist, now));
-  const slotLine = (artist: Artist) => {
-    const dock = artist.dock ? `DOCK ${artist.dock}` : 'DOCK TBA';
-    if (playing.includes(artist)) return `NOW · ${dock}`;
-    return getSlotTimes(event, artist.time) ? `${dock} · ${artist.time.split('-')[0].trim()}` : dock;
-  };
+  // Once times are out the lineup reads as the night's running order, one slot per line.
+  const timed = artists.some((artist) => getSlotTimes(event, artist.time));
+  const dockOf = (artist: Artist) => (artist.dock ? `DOCK ${artist.dock}` : 'DOCK TBA');
   const schedule: [string, string][] = [
     ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
     ['장소', event.venue],
@@ -143,23 +141,38 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
         </span>
         {mode === 'hero' && (
           <span className={`${styles.part} ${styles.partFlush} ${styles.partLineup}`} data-priority={playing.length ? '1' : '4'}>
-            <span className={ui.band} aria-hidden="true"><span>Lineup</span></span>
-            <ul className={styles.lineupCells}>
-              {artists.length
-                ? artists.map(artist => (
-                    <li key={artist.id} data-now={playing.includes(artist) || undefined}>
-                      <b>{artist.name}</b>
-                      <small aria-hidden="true">{slotLine(artist)}</small>
-                    </li>
-                  ))
-                : (
-                    // How many play is not set until the lineup is out: one cell says so, not a guessed count.
-                    <li data-empty="">
-                      <b>공개 전</b>
-                      <small aria-hidden="true">TBA</small>
-                    </li>
-                  )}
-            </ul>
+            <span className={ui.band} aria-hidden="true">
+              <span>{timed ? 'Running order' : 'Lineup'}</span>
+              {playing.length > 0 && <span>시간표 기준 지금 순서</span>}
+            </span>
+            {timed ? (
+              <ol className={`${styles.lineupCells} ${styles.timetable}`}>
+                {artists.map((artist) => (
+                  <li key={artist.id} data-now={playing.includes(artist) || undefined}>
+                    <small className={styles.slotWhen} aria-hidden="true">{getSlotTimes(event, artist.time) ? artist.time : 'TBA'}</small>
+                    <b>{artist.name}</b>
+                    <small aria-hidden="true">{playing.includes(artist) ? `NOW · ${dockOf(artist)}` : dockOf(artist)}</small>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <ul className={styles.lineupCells}>
+                {artists.length
+                  ? artists.map(artist => (
+                      <li key={artist.id}>
+                        <b>{artist.name}</b>
+                        <small aria-hidden="true">{dockOf(artist)}</small>
+                      </li>
+                    ))
+                  : (
+                      // How many play is not set until the lineup is out: one cell says so, not a guessed count.
+                      <li data-empty="">
+                        <b>공개 전</b>
+                        <small aria-hidden="true">TBA</small>
+                      </li>
+                    )}
+              </ul>
+            )}
           </span>
         )}
         {mode === 'hero' && (

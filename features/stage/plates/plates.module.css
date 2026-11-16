@@ -1605,6 +1605,28 @@
   grid-auto-rows: minmax(auto, 104px);
   align-content: start;
 }
+/* With times out, the lineup is the running order: one slot per line, [time | artist | dock], in
+   start order, whatever the plate's width. */
+.lineupCells.timetable {
+  --lineup-cols: 1;
+}
+.lineupCells.timetable li:last-child:nth-child(n) {
+  grid-column: auto;
+}
+.lineupCells.timetable li {
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+.slotWhen {
+  font-variant-numeric: tabular-nums;
+}
+.lineupCells.timetable li > small:last-child {
+  text-align: right;
+}
+:global([data-stage=stage]) .partLineup .timetable {
+  grid-auto-rows: minmax(auto, 56px);
+}
 .logList li:nth-child(odd) {
   background: var(--well);
 }
