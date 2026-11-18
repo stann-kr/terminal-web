@@ -475,8 +475,18 @@
     display: none;
   }
 }
+/* The merch tile keeps its price and where it is sold down to a low tile, set closer and smaller. */
+.merchCard .aboutLine {
+  margin-top: 6px;
+  font-size: var(--t-md);
+}
+@container layer (max-height: 92px) {
+  .merchCard .aboutLine {
+    display: none;
+  }
+}
 @container layer (max-height: 130px) {
-  .aboutCard .aboutLine {
+  .aboutCard:not(.merchCard) .aboutLine {
     display: none;
   }
 }
@@ -651,6 +661,7 @@
 .eventCell {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  align-content: center;
   align-items: center;
   gap: 12px;
   min-height: 48px;
@@ -714,6 +725,18 @@
 .eventRow[data-event-state=LIVE] .rowState {
   --lamp: var(--accent);
   color: var(--ink);
+}
+.cellWhen {
+  grid-column: 2;
+  overflow: hidden;
+  margin-top: -6px;
+  color: var(--muted);
+  font: 600 var(--t-sm)/1.2 var(--sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@container layer (max-height: 72px) {
+  .cellWhen { display: none; }
 }
 .cellMeta {
   color: var(--muted);

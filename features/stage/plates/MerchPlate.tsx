@@ -13,7 +13,7 @@ export function MerchPlate({ mode }: PlateProps) {
   if (mode !== 'hero') {
     const line = item ? item.sale : '준비 중입니다';
     return (
-      <CardLink href="/merch" className={`${styles.summaryCard} ${styles.aboutCard}`}>
+      <CardLink href="/merch" className={`${styles.summaryCard} ${styles.aboutCard} ${styles.merchCard}`}>
         <span className={styles.band}>
           <span className={styles.bandTitle}>
             <span className={styles.bandLabel} aria-hidden="true">Merch</span>

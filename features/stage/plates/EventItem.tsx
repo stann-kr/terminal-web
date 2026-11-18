@@ -33,6 +33,8 @@ export function EventItem({ event, shape, current = false, apply = false }: { ev
         <span className={styles.cellCode} aria-hidden="true">{event.id}</span>
         <FitTitle as="span" text={sessionShort(event.session)} maxLines={1} minPx={12} className={styles.cellName} arrow="in"><BrandText text={sessionShort(event.session)} /></FitTitle>
         <span className={styles.cellState}>{statusLabel(event.status)}</span>
+        {/* When and where, under the name; a low cell leaves it out. */}
+        <span className={styles.cellWhen}>{event.date} · {event.time.replace(' KST', '') || 'TBA'} · {event.venue}</span>
       </Link>
     );
   }
