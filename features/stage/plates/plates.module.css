@@ -2575,10 +2575,11 @@
   height: 100%;
   max-width: 40%;
   aspect-ratio: 4 / 5;
-  /* The whole shirt, sleeves and all, a little back from the frame's edges. */
+  /* The whole shirt, sleeves and all, a little back from the frame's edges. The photo's white
+     ground multiplies into the tile's own colour, so the shirt stands on the tile, not on a white card. */
   padding: 6px;
   object-fit: contain;
-  background: var(--well);
+  mix-blend-mode: multiply;
 }
 .merchText {
   display: flex;
