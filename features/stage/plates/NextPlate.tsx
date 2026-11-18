@@ -1,18 +1,26 @@
 'use client';
+import type { CSSProperties } from 'react';
 import Link from '@/features/ui/RouteLink';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getSlotTimes } from '@/lib/events/lifecycle';
 import { DataActivity } from '@/features/display/Display';
-import { accessAvailability, dayMark, eventHref, eventSubtitle, isSlotOn, runningOrder, sessionShort, statusLabel } from '@/features/events/model';
+import { accessAvailability, dayMark, eventHref, eventSubtitle, isSlotOn, runningOrder, sessionShort, shortWhen, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
-import { Action, Arrow, BrandText, Chip, Facts, Loading, StateNotice, ui } from '@/features/ui/Ui';
+import { Action, Arrow, BrandText, Chip, Facts, Loading, StateNotice } from '@/features/ui/Ui';
 import { FitStack } from '../FitStack';
 import { FitTitle } from '../FitTitle';
 import { Rings } from '../Rings';
 import { PlateStatus } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
+
+const HOME_NAV = [
+  ['/events', 'EVENTS', '이벤트', 'panel'],
+  ['/artists', 'ARTISTS', '아티스트', 'panel'],
+  ['/signal', 'SIGNAL', '소식 신청', 'mark'],
+  ['/merch', 'MERCH', 'Signal Tee', 'paper'],
+] as const;
 
 /**
  * The console's own plate: the TERMINAL wordmark and the readouts ride on top of it everywhere,
@@ -68,6 +76,17 @@ export function NextPlate({ mode, data, query, rings }: PlateProps) {
   );
 }
 
+/** A slot's start as printed (`23:00`), or TBA while its time is not out. */
+function startOf(event: TerminalEvent, artist: Artist) {
+  return getSlotTimes(event, artist.time) ? artist.time.split(/\s*[-–]\s*/)[0] : 'TBA';
+}
+
+/** A dock's night, from its first start to its last end (`23:00 – 05:00`), as printed. */
+function spanOf(slots: readonly Artist[]) {
+  const times = slots.map(artist => artist.time.split(/\s*[-–]\s*/)).filter(parts => parts.length === 2);
+  return times.length ? `${times[0][0]} – ${times[times.length - 1][1]}` : '';
+}
+
 function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent; events: TerminalEvent[]; mode: PlateProps['mode']; now: Date; rings?: PlateProps['rings'] }) {
   const carrier = `event:${event.id}`;
   // Guest requests open 30 days ahead; the home plate says so, so nobody has to open the file to find out.
@@ -79,10 +98,9 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextChip}`} data-carrier={carrier} scroll={false}>
         <span className={styles.chipName} aria-hidden="true">NEXT<Arrow /></span>
-        <FitTitle as="span" text={`${sessionShort(event.session)} · ${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine} arrow="in">
-          <span className={styles.srOnly}>{spoken} </span>
-          <span className={styles.linkName}><BrandText text={sessionShort(event.session)} /></span>
-          <span aria-hidden="true"> · {event.id} · {dayMark(event, now)}</span>
+        <FitTitle as="span" text={`${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine} arrow="in">
+          <span className={styles.srOnly}>{spoken} <BrandText text={sessionShort(event.session)} /> </span>
+          <span className={styles.linkName}>{event.id} · {dayMark(event, now)}</span>
         </FitTitle>
       </Link>
     );
@@ -94,14 +112,18 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
   // Once times are out the lineup reads as the night's running order, one slot per line.
   const timed = artists.some((artist) => getSlotTimes(event, artist.time));
   const dockOf = (artist: Artist) => (artist.dock ? `DOCK ${artist.dock}` : 'DOCK TBA');
-  const schedule: [string, string][] = [
-    ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
+  // The running order by dock, a column each, in the order the docks first play.
+  const docks = [...new Set(artists.map(dockOf))].map(dock => [dock, artists.filter(artist => dockOf(artist) === dock)] as const);
+  // A phone's hero reads the date short, with the weekday (`11-28 (토) 23:00`).
+  const schedule: [string, string, string?][] = [
+    ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`, shortWhen(event)],
     ['장소', event.venue],
-    ...(mode === 'hero' ? [['지역', event.district] as [string, string]] : []),
+    // The hero's region cell keeps the district's first part (YONGSAN-GU), so it stays one line.
+    ...(mode === 'hero' ? [['지역', event.district.split('//')[0].trim()] as [string, string]] : []),
   ];
   // Everything under the wordmark is one link, built of flush sub-plates. When the plate is short
   // the least important sub-plates fold away (priority: higher folds first); nothing is clipped.
-  return (
+  const block = (
     <Link
       href={eventHref(event.id)}
       className={`${styles.card} ${styles.nextBlock}`}
@@ -122,7 +144,9 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
             </span>
           </span>
           {event.status === 'ARCHIVED' && mode === 'hero' && <span className={styles.noUpcoming}>다음 이벤트 미정</span>}
-          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession} arrow="in">
+          {/* On the home the name stands on one line, wordmark and number together, with no arrow
+              (the whole block is the link, and the keys below say where it goes). */}
+          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={mode === 'tile' ? 2 : mode === 'hero' ? 1 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession} arrow={mode === 'hero' ? undefined : 'in'}>
             <BrandText text={sessionShort(event.session)} />
           </FitTitle>
         </span>
@@ -133,54 +157,87 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
         )}
         {mode !== 'tile' && (
           <span className={`${styles.part} ${styles.partFlush}`} data-priority="1">
-            <EventCountdown event={event} />
+            <EventCountdown event={event} inline={mode === 'hero'} />
           </span>
         )}
-        <span className={styles.part} data-priority={mode === 'tile' ? '1' : '2'}>
-          {mode === 'tile' ? <span className={styles.nextWhen}>{event.date} · {event.venue}</span> : <Facts rows={schedule} />}
+        <span className={`${styles.part} ${mode === 'hero' ? styles.partFlush : ''}`} data-priority={mode === 'tile' ? '1' : '2'}>
+          {mode === 'tile' ? (
+            <span className={styles.nextWhen}>{event.date} · {event.venue}</span>
+          ) : mode === 'hero' ? (
+            <span className={styles.factCells}>
+              {schedule.map(([label, value, short]) => (
+                <span key={label}>
+                  <small>{label}</small>
+                  {short ? (
+                    <b>
+                      <span className={styles.wideOnly}>{value}</span>
+                      <span className={styles.narrowOnly} aria-hidden="true">{short}</span>
+                    </b>
+                  ) : (
+                    <b>{value || '미정'}</b>
+                  )}
+                </span>
+              ))}
+            </span>
+          ) : (
+            <Facts rows={schedule.map(([label, value]) => [label, value])} />
+          )}
         </span>
         {mode === 'hero' && (
           <span className={`${styles.part} ${styles.partFlush} ${styles.partLineup}`} data-priority={playing.length ? '1' : '4'}>
-            <span className={ui.band} aria-hidden="true">
+            <span className={styles.lineupLabel} aria-hidden="true">
               <span>{timed ? 'Running order' : 'Lineup'}</span>
-              {playing.length > 0 && <span>시간표 기준 지금 순서</span>}
+              <span>{playing.length > 0 ? '시간표 기준 지금 순서' : timed ? '공연표' : '출연'}</span>
             </span>
-            {timed ? (
-              <ol className={`${styles.lineupCells} ${styles.timetable}`}>
-                {artists.map((artist) => (
-                  <li key={artist.id} data-now={playing.includes(artist) || undefined}>
-                    <small className={styles.slotWhen} aria-hidden="true">{getSlotTimes(event, artist.time) ? artist.time : 'TBA'}</small>
-                    <b>{artist.name}</b>
-                    <small aria-hidden="true">{playing.includes(artist) ? `NOW · ${dockOf(artist)}` : dockOf(artist)}</small>
-                  </li>
+            {artists.length ? (
+              // As many rows as the longest dock, so the columns' slots line up when they grow.
+              <span className={styles.dockCols} style={{ '--slots': Math.max(...docks.map(([, slots]) => slots.length)) } as CSSProperties}>
+                {docks.map(([dock, slots]) => (
+                  <span key={dock} className={styles.dockCol}>
+                    <span className={styles.dockHead} aria-hidden="true">
+                      <span>{dock}</span>
+                      {timed && <span>{spanOf(slots)}</span>}
+                    </span>
+                    <ol>
+                      {slots.map(artist => (
+                        <li key={artist.id} data-now={playing.includes(artist) || undefined}>
+                          {timed && <small aria-hidden="true">{startOf(event, artist)}</small>}
+                          <b>{artist.name}</b>
+                          {playing.includes(artist) && <small aria-hidden="true">NOW</small>}
+                        </li>
+                      ))}
+                    </ol>
+                  </span>
                 ))}
-              </ol>
+              </span>
             ) : (
+              // How many play is not set until the lineup is out: one cell says so, not a guessed count.
               <ul className={styles.lineupCells}>
-                {artists.length
-                  ? artists.map(artist => (
-                      <li key={artist.id}>
-                        <b>{artist.name}</b>
-                        <small aria-hidden="true">{dockOf(artist)}</small>
-                      </li>
-                    ))
-                  : (
-                      // How many play is not set until the lineup is out: one cell says so, not a guessed count.
-                      <li data-empty="">
-                        <b>공개 전</b>
-                        <small aria-hidden="true">TBA</small>
-                      </li>
-                    )}
+                <li data-empty="">
+                  <b>공개 전</b>
+                  <small aria-hidden="true">TBA</small>
+                </li>
               </ul>
             )}
           </span>
         )}
-        {mode === 'hero' && (
-          <span className={`${styles.part} ${styles.partEnd}`} data-priority="3">
-            <span className={styles.nextCta} aria-hidden="true">세션 파일 열기<Arrow /></span>
-          </span>
-        )}
       </FitStack>
     </Link>
+  );
+  if (mode !== 'hero') return block;
+  // The block itself opens the session file; the guest request lives there, not on the home plate.
+  return (
+    <>
+      {block}
+      {/* A phone's first screen ends on the ways to the other plates, a row of four. */}
+      <nav className={styles.homeNav} aria-label="바로 가기">
+        {HOME_NAV.map(([href, name, title, surface]) => (
+          <Link key={href} href={href} className={`${styles.card} ${styles.homeNavKey}`} data-surface={surface} scroll={false}>
+            <b>{name}</b>
+            <span>{title}</span>
+          </Link>
+        ))}
+      </nav>
+    </>
   );
 }

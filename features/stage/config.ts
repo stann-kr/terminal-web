@@ -1,4 +1,4 @@
-import type { PlateId } from './state';
+import { PLATE_ORDER, type PlateId } from './state';
 
 /**
  * How much of itself a plate shows. `hero` is the open plate; `panel` and `tile` are summaries with
@@ -7,8 +7,9 @@ import type { PlateId } from './state';
 export type Density = 'hero' | 'panel' | 'tile' | 'index' | 'chip';
 
 /** A layout is a tiling: splits side by side (`row`) or stacked (`col`), each part with a weight. */
-export type LayoutLeaf = { plate: PlateId; density: Density } | { slot: 'detail' } | { slot: 'back' };
-export type LayoutNode = { dir: 'row' | 'col'; parts: [number, LayoutNode | LayoutLeaf][] };
+export type LayoutLeaf = { plate: PlateId; density: Density } | { slot: 'detail' } | { slot: 'back' } | { slot: 'home' };
+/** `gap` overrides the stage gap between this node's parts. A negative weight is a fixed size in px. */
+export type LayoutNode = { dir: 'row' | 'col'; parts: [number, LayoutNode | LayoutLeaf][]; gap?: number };
 export type ViewName = 'home' | 'events' | 'session' | 'artists' | 'artist' | 'log' | 'signal' | 'about' | 'merch';
 
 const row = (...parts: [number, LayoutNode | LayoutLeaf][]): LayoutNode => ({ dir: 'row', parts });
@@ -16,6 +17,7 @@ const col = (...parts: [number, LayoutNode | LayoutLeaf][]): LayoutNode => ({ di
 const p = (plate: PlateId, density: Density): LayoutLeaf => ({ plate, density });
 const DETAIL: LayoutLeaf = { slot: 'detail' };
 const BACK: LayoutLeaf = { slot: 'back' };
+const HOME: LayoutLeaf = { slot: 'home' };
 
 export interface StageConfig {
   /** One tiling per view. Every view places every plate; details add the detail, others the back card. */
@@ -48,57 +50,32 @@ export interface StageConfig {
  */
 const homeNext: [number, LayoutLeaf] = [47, p('next', 'hero')];
 const homeDirectory: [number, LayoutNode] = [30, col([50, p('events', 'panel')], [50, p('artists', 'panel')])];
-const homeCalls: [number, LayoutNode] = [23, col([22, p('instagram', 'tile')], [18, p('signal', 'panel')], [15, p('merch', 'tile')], [32, p('log', 'panel')], [13, p('about', 'tile')])];
+const homeCalls: [number, LayoutNode] = [23, col([22, p('instagram', 'tile')], [18, p('signal', 'panel')], [18, p('merch', 'tile')], [18, p('log', 'panel')], [24, p('about', 'tile')])];
+
+/**
+ * An open view's band: the way back, then every other plate as a chip, in plate order. The band
+ * sits over the open plate (or detail), which takes the whole width below it.
+ */
+const band = (...chips: PlateId[]): [number, LayoutNode] => [
+  -87,
+  { dir: 'row', gap: 6, parts: [[-220, BACK], ...chips.map((id): [number, LayoutLeaf] => [1, p(id, 'chip')]), [-82, HOME]] },
+];
+const others = (...open: PlateId[]) => PLATE_ORDER.filter(id => !open.includes(id));
 
 export const stageConfig: StageConfig = {
   layouts: {
     // The next session leads; directory and roster in the middle; the account and the call to subscribe high on the right.
     home: row(homeNext, homeDirectory, homeCalls),
-    // The directory opens wide on the right; the way back, the next session and the roster step left.
-    events: row(
-      [30, col([15, BACK], [43, p('next', 'panel')], [42, p('artists', 'panel')])],
-      [70, col([86, p('events', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('merch', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
-    ),
-    // The roster mirrors the directory: wide on the left, the rest in a column on the right.
-    artists: row(
-      [70, col([86, p('artists', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('merch', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
-      [30, col([15, BACK], [40, p('next', 'panel')], [45, p('events', 'panel')])],
-    ),
-    // A session: the other sessions as an index on the left, the file beside it, a band of plates on
-    // top. The band holds six (a seventh leaves its keys no room); the account heads the index, by the band.
-    session: col(
-      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('artists', 'chip')], [15, p('signal', 'chip')], [15, p('log', 'chip')], [15, p('about', 'chip')])],
-      [87, row([21, col([12, p('instagram', 'chip')], [12, p('merch', 'chip')], [76, p('events', 'index')])], [79, DETAIL])],
-    ),
-    // An artist file mirrors it: the file with the roster index on the right (the account at its
-    // foot, by the band), the band below.
-    artist: col(
-      [87, row([78, DETAIL], [22, col([76, p('artists', 'index')], [12, p('merch', 'chip')], [12, p('instagram', 'chip')])])],
-      [13, row([18, BACK], [22, p('next', 'chip')], [15, p('events', 'chip')], [15, p('signal', 'chip')], [15, p('log', 'chip')], [15, p('about', 'chip')])],
-    ),
-    // The log sits in the middle between the session side and the rest.
-    log: row(
-      [25, col([15, BACK], [35, p('next', 'tile')], [50, p('events', 'panel')])],
-      [50, p('log', 'hero')],
-      [25, col([32, p('signal', 'panel')], [17, p('artists', 'chip')], [17, p('merch', 'chip')], [17, p('instagram', 'chip')], [17, p('about', 'chip')])],
-    ),
-    // Subscribing sits beside the session it is about.
-    signal: row(
-      [28, col([15, BACK], [85, p('next', 'panel')])],
-      [50, p('signal', 'hero')],
-      [22, col([1, p('events', 'chip')], [1, p('artists', 'chip')], [1, p('merch', 'chip')], [1, p('instagram', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])],
-    ),
-    // About leads wide; the roster and the rest in a column. The next-session tile keeps the height
-    // its name needs; the chips go two by two (four in a row leave INSTAGRAM no room).
-    about: row(
-      [64, p('about', 'hero')],
-      [36, col([12, BACK], [24, p('next', 'tile')], [28, p('artists', 'panel')], [12, row([1, p('events', 'chip')], [1, p('instagram', 'chip')])], [12, row([1, p('signal', 'chip')], [1, p('log', 'chip')])], [12, p('merch', 'chip')])],
-    ),
-    // Merch mirrors About: the piece wide on the left; the session it is sold at heads the column.
-    merch: row(
-      [64, p('merch', 'hero')],
-      [36, col([13, BACK], [27, p('next', 'tile')], [30, p('events', 'panel')], [15, row([1, p('artists', 'chip')], [1, p('instagram', 'chip')])], [15, row([1, p('signal', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
-    ),
+    // Every open view: the band of the other plates on top, the open plate the full width below.
+    events: col(band(...others('events')), [1, p('events', 'hero')]),
+    artists: col(band(...others('artists')), [1, p('artists', 'hero')]),
+    // A session stands in for the next plate and an artist file for the roster; the band keeps the rest.
+    session: col(band(...others('next')), [1, DETAIL]),
+    artist: col(band(...others('artists')), [1, DETAIL]),
+    log: col(band(...others('log')), [1, p('log', 'hero')]),
+    signal: col(band(...others('signal')), [1, p('signal', 'hero')]),
+    about: col(band(...others('about')), [1, p('about', 'hero')]),
+    merch: col(band(...others('merch')), [1, p('merch', 'hero')]),
   },
   narrow: {
     // On a phone the account and the call to subscribe come right after the next session, before
@@ -107,14 +84,9 @@ export const stageConfig: StageConfig = {
   },
   rings: {
     home: { plate: 'next', at: { x: 0.86, y: 0.3 } },
-    events: { plate: 'next', at: { x: 0.8, y: 0.35 } },
-    artists: { plate: 'next', at: { x: 0.8, y: 0.35 } },
     session: { plate: 'detail', at: { x: 0.16, y: 0.3 } },
     artist: { plate: 'detail', at: { x: 0.14, y: 0.35 } },
-    log: { plate: 'signal', at: { x: 0.82, y: 0.3 } },
-    signal: { plate: 'next', at: { x: 0.8, y: 0.3 } },
-    about: { plate: 'next', at: { x: 0.8, y: 0.4 } },
-    merch: { plate: 'next', at: { x: 0.8, y: 0.4 } },
+    signal: { plate: 'signal', at: { x: 0.82, y: 0.17 } },
   },
   flowChips: 'top',
   frameY: 10,

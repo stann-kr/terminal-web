@@ -1,33 +1,32 @@
 /* Length readout: a dark label cell and an outlined digit cell, then the gauge. */
-.counter {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px;
+.intro {
+  font: 500 var(--t-md)/1.5 var(--sans);
 }
-.counter > span {
+/* The save key is a bar with its arrow at the right. */
+.submit {
   display: flex;
   align-items: center;
-  padding: 6px 10px;
-  background: var(--fill);
-  color: var(--on-fill);
-  font: 700 var(--t-md)/1.2 var(--display);
-  letter-spacing: .1em;
+  gap: 12px;
 }
-.counter strong {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 6px 12px;
-  background: var(--well);
-  font: 400 var(--t-2xl)/1 var(--mono);
-  font-variant-numeric: tabular-nums;
+/* The message field with its length printed in the lower right corner, over the field. */
+.messageBox {
+  position: relative;
+  display: grid;
 }
-.counter small {
+.messageBox textarea {
+  padding-bottom: 32px;
+}
+.count {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
   color: var(--muted);
-  font-size: var(--t-sm);
+  font: 400 var(--t-sm)/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
-.gauge {
-  height: 18px;
+.count[data-near] {
+  color: var(--danger);
 }
 .receipt {
   margin-inline: calc(var(--bleed, 0px) * -1);

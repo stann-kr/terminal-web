@@ -36,7 +36,6 @@ const requestBody = {
   name: 'Guest Name',
   email: 'guest@example.com',
   instagram: '@guest.name',
-  privacyConsent: true,
   marketingConsent: false,
 };
 

@@ -2,6 +2,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { defaultMeasurer, fontOf, paginate, whenFontsReady, type TextPage } from './text';
 import { pageAnnouncement, pageKey, pageReadout, useStageMode, useWheelPaging } from './usePaging';
+import { Arrow } from '@/features/ui/Ui';
 import styles from './stage.module.css';
 
 /**
@@ -9,7 +10,14 @@ import styles from './stage.module.css';
  * (measured with pretext at the real font and width) and turned by wheel, keys or buttons. In flow
  * mode, or where text cannot be measured, it is simply all there.
  */
-export function TextPages({ paragraphs, language, label, empty }: { paragraphs: string[]; language?: 'ko' | 'en'; label: string; empty?: string }) {
+export function TextPages({ paragraphs, language, label, empty, more = false }: {
+  paragraphs: string[];
+  language?: 'ko' | 'en';
+  label: string;
+  empty?: string;
+  /** A quiet pager: one small "계속 읽기 · 01 / 02" key under the text instead of the PREV/NEXT bar. */
+  more?: boolean;
+}) {
   const mode = useStageMode();
   const frame = useRef<HTMLDivElement>(null);
   const region = useRef<HTMLDivElement>(null);
@@ -90,7 +98,28 @@ export function TextPages({ paragraphs, language, label, empty }: { paragraphs: 
       </div>
       {/* On the stage the pager row is always reserved, so the text frame never changes height
           (and page count) because the pager came or went. */}
-      {mode === 'stage' && paragraphs.length > 0 && (
+      {mode === 'stage' && paragraphs.length > 0 && more && (
+        <div className={styles.textMore}>
+          {count > 1 && (
+            <>
+              {turns.prev && <button type="button" onClick={() => turn(-1)} aria-label="앞 쪽"><span aria-hidden="true">←</span></button>}
+              <button
+                type="button"
+                onClick={() => {
+                  if (turns.next) return turn(1);
+                  setDirection(-1);
+                  setPage(0);
+                }}
+              >
+                {turns.next ? '계속 읽기' : '처음부터'} · <span className={styles.textMoreCount}>{pageReadout(current + 1, count)}</span>
+                {turns.next ? <Arrow /> : null}
+              </button>
+            </>
+          )}
+          <span className={styles.srOnly} aria-live="polite">{count > 1 ? pageAnnouncement(current + 1, count) : ''}</span>
+        </div>
+      )}
+      {mode === 'stage' && paragraphs.length > 0 && !more && (
         <div className={styles.textPager} data-single={count < 2 || undefined}>
           {/* A key with no turn left is dimmed, not disabled: it keeps focus and turns nothing. */}
           <button type="button" onClick={() => turn(-1)} aria-disabled={!turns.prev} hidden={count < 2}>PREV</button>

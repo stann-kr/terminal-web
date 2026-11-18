@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useRouteHold } from '@/features/ui/useRouteHold';
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import { Loading, StateNotice, type Surface } from '@/features/ui/Ui';
+import { Arrow, Loading, StateNotice, type Surface } from '@/features/ui/Ui';
 import { stageConfig } from './config';
 import { stageSizeFor, useStageData, useViewport } from './data';
 import { Box } from './Box';
@@ -28,8 +28,9 @@ import {
 } from './state';
 import { StageModeContext, pageAnnouncement, pageKey, pageReadout, useWheelPaging, type StageRenderMode } from './usePaging';
 import { PlateContent, plateSurface } from './plates/Plates';
-import { BackCard } from './plates/BackCard';
+import { BackCard, HomeKey } from './plates/BackCard';
 import { EventItem, SessionFile, sessionSurface, type ItemShape } from './plates/EventItem';
+import { accessAvailability } from '@/features/events/model';
 import { ArtistFile, ArtistItem, artistSurface } from './plates/ArtistItem';
 import styles from './stage.module.css';
 
@@ -145,7 +146,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
   const [spilled, setSpilled] = useState<SpillState | null>(null);
   const [heads, setHeads] = useState<Heads>({});
   const items = {
-    event: { order: data.ordered.map(event => event.id), page: state.view === 'plate' && state.plate === 'events' ? state.page : 1 },
+    event: { order: data.ordered.map(event => event.id), page: state.view === 'plate' && state.plate === 'events' ? state.page : 1, lead: !!data.ordered[0] && data.ordered[0].status !== 'ARCHIVED' },
     artist: { order: data.profiles.map(profile => profile.key), page: state.view === 'plate' && state.plate === 'artists' ? state.page : 1 },
   };
   // The stage is first shown with the web fonts in place, so nothing is laid out, measured or paged
@@ -548,12 +549,26 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
         >
           {backHref && previous ? <BackCard href={backHref} target={previous} data={data} /> : null}
         </Box>
+        <Box
+          rect={onStage && layout.home ? layout.home : null}
+          visible={onStage && !!layout.home}
+          contentKey="home"
+          className={styles.backBox}
+          surface="feature"
+          delay={layout.home ? wave(layout.home) : 0}
+          view={key}
+          data={{ home: '' }}
+        >
+          {layout.home ? <HomeKey /> : null}
+        </Box>
         {PLATE_ORDER.map(id => {
           const placed = layout.plates[id];
           const delay = wave(placed.rect);
           const kind: CarrierKind | null = id === 'events' ? 'event' : id === 'artists' ? 'artist' : null;
           const pager = list && kind === list.kind && list.pages > 1 ? list : null;
           // Sub-plates (cells, rows, index lines, the pager) live inside their plate.
+          const artistCols = kind === 'artist' ? columnsOf(layout.items, 'artist') : 1;
+          const sessionsOldestFirst = [...data.ordered].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
           const subPlates = kind && (
             <>
               {kind === 'event'
@@ -561,8 +576,8 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
                     const itemKey = carrierKey('event', event.id);
                     const item = layout.items[itemKey];
                     return item && (
-                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={() => 'inset'}>
-                        {shape => <EventItem event={event} shape={shape} current={item.current} />}
+                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' && event.status !== 'ARCHIVED' ? 'feature' : 'inset')}>
+                        {shape => <EventItem event={event} shape={shape} current={item.current} lead={item.lead} now={data.now} apply={!!data.events && accessAvailability(event, data.events, data.now).canRequest} />}
                       </SubPlate>
                     );
                   })
@@ -570,8 +585,8 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
                     const itemKey = carrierKey('artist', profile.key);
                     const item = layout.items[itemKey];
                     return item && (
-                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' ? artistSurface(profile) : 'inset')}>
-                        {shape => <ArtistItem profile={profile} shape={shape} current={item.current} />}
+                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} cols={artistCols} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' ? artistSurface(profile) : 'inset')}>
+                        {shape => <ArtistItem profile={profile} shape={shape} current={item.current} sessions={sessionsOldestFirst} />}
                       </SubPlate>
                     );
                   })}
@@ -592,6 +607,24 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
                     <span className={styles.srOnly} aria-live="polite">{pageAnnouncement(pager.page, pager.pages)}</span>
                     {pager.page < pager.pages ? <Link href={listHref(pager.kind, pager.page + 1)} scroll={false}>NEXT</Link> : <span>NEXT</span>}
                   </div>
+                </Box>
+              )}
+              {/* A directory on one page keeps the pager's strip for the way to hear of the next one. */}
+              {!pager && kind === 'event' && list?.kind === 'event' && (
+                <Box
+                  rect={onStage ? { ...list.pager, x: list.pager.x - placed.rect.x, y: list.pager.y - placed.rect.y } : null}
+                  visible
+                  contentKey="signal-strip"
+                  className={styles.pagerBox}
+                  surface="mark"
+                  delay={delay}
+                  data={{ strip: 'signal' }}
+                >
+                  <Link href="/signal" className={styles.signalStrip} scroll={false}>
+                    <span className={styles.stripLong}>다음 이벤트 일정이 정해지면 SIGNAL로 먼저 알려 드립니다.</span>
+                    <span className={styles.stripShort}>다음 이벤트 소식 받기</span>
+                    <b><span className={styles.stripLong}>소식 받기</span><Arrow /></b>
+                  </Link>
                 </Box>
               )}
             </>
@@ -677,9 +710,11 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
 }
 
 /** A sub-plate inside its owner plate. Folded, it keeps the shape it last had while it fades. */
-function SubPlate({ itemKey, placed, onStage, delay, view, surface, children }: {
+function SubPlate({ itemKey, placed, cols = 1, onStage, delay, view, surface, children }: {
   itemKey: string;
   placed: PlacedItem;
+  /** Columns of the grid it stands in, for the turns of tone. */
+  cols?: number;
   onStage: boolean;
   delay: number;
   view: string;
@@ -697,7 +732,7 @@ function SubPlate({ itemKey, placed, onStage, delay, view, surface, children }: 
       surface={surface(shape)}
       delay={delay}
       view={view}
-      data={{ item: itemKey, mode: placed.mode, shape, current: placed.current ? '' : undefined, zebra: placed.order % 2 ? '' : undefined }}
+      data={{ item: itemKey, mode: placed.mode, shape, current: placed.current ? '' : undefined, zebra: zebraOf(placed.order, cols) ? '' : undefined }}
     >
       {children(shape)}
     </Box>
@@ -743,4 +778,21 @@ function DetailBox({ kind, id, open, rect, origin, delay, view, surface, decor, 
       {resting ? null : children}
     </Box>
   );
+}
+
+/**
+ * Every other sub-plate is a shade lighter. A list's rows turn by their order; a grid of several
+ * columns turns like a chequerboard by row and column, so neighbours across and down both differ (by
+ * order alone, an even count of columns would only stripe the grid).
+ */
+function zebraOf(order: number, cols: number): boolean {
+  return cols > 1 ? (Math.floor(order / cols) + (order % cols)) % 2 === 1 : order % 2 === 1;
+}
+
+/** How many of a kind's sub-plates stand in its first line (1 for a list of rows). */
+function columnsOf(items: StageLayout['items'], kind: string): number {
+  const shown = Object.entries(items).filter(([key, item]) => key.startsWith(`${kind}:`) && item.visible && item.mode !== 'folded');
+  if (!shown.length) return 1;
+  const top = Math.min(...shown.map(([, item]) => item.rel.y));
+  return Math.max(1, shown.filter(([, item]) => Math.abs(item.rel.y - top) < 1).length);
 }

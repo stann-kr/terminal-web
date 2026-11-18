@@ -3,11 +3,11 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 
 export type AccessDraft = {
   code: string;
-  fields: { name: string; email: string; instagram: string; privacyConsent: boolean; marketingConsent: boolean };
+  fields: { name: string; email: string; instagram: string; marketingConsent: boolean };
 };
 const EMPTY_DRAFT: AccessDraft = {
   code: '',
-  fields: { name: '', email: '', instagram: '', privacyConsent: false, marketingConsent: false },
+  fields: { name: '', email: '', instagram: '', marketingConsent: false },
 };
 type Change = (previous: AccessDraft) => AccessDraft;
 const DraftContext = createContext<{

@@ -1,7 +1,7 @@
 'use client';
+/* eslint-disable @next/next/no-img-element -- A thumbnail of the shirt at its own aspect ratio, no invented dimensions. */
 import { merch } from '@/features/merch/content';
-import { MerchBuy, MerchFacts, MerchGallery } from '@/features/merch/Merch';
-import { FitTitle } from '../FitTitle';
+import { MerchSheet } from '@/features/merch/Merch';
 import { BandName, CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
@@ -11,19 +11,24 @@ export function MerchPlate({ mode }: PlateProps) {
   const item = merch[0];
   if (mode === 'chip' || mode === 'index') return <ChipFace href="/merch" name="MERCH" title={item?.name ?? 'TERMINAL MERCH'} meta={item?.edition.split(' ')[0]} />;
   if (mode !== 'hero') {
-    const line = item ? item.sale : '준비 중입니다';
+    // The price, then where it is sold, a line each beside the back of the shirt.
+    const [price, where] = item ? [item.price, item.sale.split(' · ').slice(1).join(' · ')] : ['준비 중입니다', ''];
+    const thumb = item?.images.find(image => image.label === 'BACK · CENTER') ?? item?.images[0];
     return (
-      <CardLink href="/merch" className={`${styles.summaryCard} ${styles.aboutCard}`}>
-        <span className={styles.band}>
-          <span className={styles.bandTitle}>
-            <span className={styles.bandLabel} aria-hidden="true">Merch</span>
-            <BandName title={item?.name ?? 'TERMINAL MERCH'} link />
+      <CardLink href="/merch" className={`${styles.summaryCard} ${styles.merchCard}`}>
+        {thumb && <img className={styles.merchThumb} src={thumb.src} alt="" decoding="async" />}
+        <span className={styles.merchText}>
+          <span className={styles.band}>
+            <span className={styles.bandTitle}>
+              <span className={styles.bandLabel} aria-hidden="true">Merch</span>
+              <BandName title={item?.name ?? 'TERMINAL MERCH'} link />
+            </span>
           </span>
-          {item && <span className={styles.bandTags} aria-hidden="true"><Tags items={[item.edition]} /></span>}
+          <span className={styles.merchLine}>
+            <span>{price}</span>
+            {where && <span>{where}</span>}
+          </span>
         </span>
-        <FitTitle as="span" text={line} maxLines={1} minPx={14} className={styles.aboutLine}>
-          {line}
-        </FitTitle>
       </CardLink>
     );
   }
@@ -36,17 +41,9 @@ export function MerchPlate({ mode }: PlateProps) {
     );
   }
   return (
-    <div className={styles.face}>
-      <FocusHead label="Merch" title="TERMINAL MERCH" tags={<Tags items={[item.edition, item.price]} />} />
-      <div className={styles.panelRow} data-columns="3" data-paged="first">
-        <MerchGallery item={item} />
-        <div className={styles.fitColumn} data-fit="">
-          <MerchFacts item={item} />
-        </div>
-        <div className={styles.fitColumn} data-fit="">
-          <MerchBuy item={item} />
-        </div>
-      </div>
+    <div className={styles.merchStage}>
+      <FocusHead label="Merch" title={item.name} tags={<Tags items={[item.edition, item.price]} />} />
+      <MerchSheet item={item} />
     </div>
   );
 }

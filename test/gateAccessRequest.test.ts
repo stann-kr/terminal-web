@@ -26,7 +26,6 @@ const validBody = {
   name: '  Guest Name  ',
   email: '  GUEST@EXAMPLE.COM  ',
   instagram: '@guest.name',
-  privacyConsent: true,
   marketingConsent: false,
 };
 
@@ -40,7 +39,6 @@ describe('gate request runtime validation', () => {
         name: 'Guest Name',
         email: null,
         instagram: '@guest.name',
-        privacyConsent: true,
         marketingConsent: false,
         waitlist: false,
       },
@@ -108,11 +106,12 @@ describe('gate request runtime validation', () => {
     expect(parseGateRequestBody(body)).toEqual({ ok: false, error: 'EVENT_ID_REQUIRED' });
   });
 
-  it('does not treat a false privacy boolean as consent', () => {
-    expect(parseGateRequestBody({ ...validBody, privacyConsent: false })).toEqual({
-      ok: false,
-      error: 'PRIVACY_CONSENT_REQUIRED',
-    });
+  it('takes a request with no consent box, and still the boolean an older tab sends, ignored', () => {
+    const plain = parseGateRequestBody(validBody);
+    expect(plain.ok).toBe(true);
+    // A tab opened before the notice replaced the box sends its tick; it is neither needed nor kept.
+    expect(parseGateRequestBody({ ...validBody, privacyConsent: true })).toEqual(plain);
+    expect(parseGateRequestBody({ ...validBody, privacyConsent: false })).toEqual(plain);
   });
 
   it('defaults omitted optional marketing consent to false', () => {
@@ -251,7 +250,6 @@ describe('atomic access request statement contract', () => {
     name: 'Guest Name',
     email: 'guest@example.com',
     instagram: '@guest',
-    privacyConsent: true as const,
     marketingConsent: true,
     guestLimit: 25,
     createdAt: '2026-08-11T00:00:00.000Z',
@@ -313,6 +311,8 @@ describe('atomic access request statement contract', () => {
     });
     expect(prepared[0].values[5]).toBeNull();
     expect(prepared[1].values.at(-2)).toBe(0);
+    // privacy_consent (NOT NULL) records that the request was made under the form's notice.
+    expect(prepared[0].values[7]).toBe(1);
   });
 
   it('only inserts marketing after the request id exists and tolerates subscriber conflicts', () => {

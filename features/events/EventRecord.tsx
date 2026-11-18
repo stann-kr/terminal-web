@@ -52,7 +52,6 @@ export function EventFacts({
             </div>
           ))}
         </div>
-        <SessionKeys event={event} />
       </>
     );
   return (
@@ -80,7 +79,7 @@ function KeyFace({ label, children }: { label: string; children: ReactNode }) {
  * filled like every key so they never read as one more fact line. The calendar key subscribes to
  * the whole TERMINAL feed (later changes reach the subscriber); a past session has no map key.
  */
-function SessionKeys({ event }: { event: TerminalEvent }) {
+export function SessionKeys({ event }: { event: TerminalEvent }) {
   const subscribe = useSubscribeHref();
   const map = event.status === 'ARCHIVED' ? null : venueMapHref(event);
   const { state: shared, share: shareLink } = useShareLink();
@@ -98,13 +97,13 @@ function SessionKeys({ event }: { event: TerminalEvent }) {
           onClick={openCalendar}
         >
           <KeyFace label="CALENDAR">
-            {calendar === 'blocked' ? CALENDAR_BLOCKED : <><BrandText text="TERMINAL" /> 일정 구독</>}
+            {calendar === 'blocked' ? CALENDAR_BLOCKED : <>일정 구독<span className={ui.srOnly}> (<BrandText text="TERMINAL" /> 전체 일정)</span></>}
           </KeyFace>
         </a>
         {map && (
           <Action primary external href={map}>
             <KeyFace label="MAP">
-              지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span>
+              지도<span className={ui.srOnly}>에서 보기 (구글 지도, 새 탭)</span>
             </KeyFace>
           </Action>
         )}
@@ -120,6 +119,20 @@ function SessionKeys({ event }: { event: TerminalEvent }) {
 /** Short, so the key keeps its size when its text changes. */
 const SHARE_TEXT: Record<ShareState, string> = { idle: '링크 공유', copied: '링크 복사됨', failed: '복사 실패' };
 
+/** The access state in a word, printed in the access panel's head (a lamp when requests are open). */
+export function AccessStatus({ event, events, now }: { event: TerminalEvent; events: TerminalEvent[]; now: Date }) {
+  const access = accessAvailability(event, events, now);
+  return (
+    <span data-open={access.canRequest} className={styles.protocolLabel} lang="en">
+      {access.canRequest ? 'ACCESS OPEN' : event.status === 'ARCHIVED' ? 'ARCHIVE RECORD' : 'ACCESS INFO'}
+    </span>
+  );
+}
+
+/**
+ * What a guest can do now: the state in a line, then the guest request and the session's merch
+ * side by side. A session with no request open sends the visitor to the news signup instead.
+ */
 export function EventActions({
   event,
   events,
@@ -132,31 +145,18 @@ export function EventActions({
   const access = accessAvailability(event, events, now);
   return (
     <>
-    <div className={styles.accessProtocol} data-open={access.canRequest}>
-      <p
-        data-open={access.canRequest}
-        className={`${ui.band} ${styles.protocolLabel}`}
-        lang="en"
-      >
-        {access.canRequest
-          ? 'ACCESS OPEN'
-          : event.status === 'ARCHIVED'
-            ? 'ARCHIVE RECORD'
-            : 'ACCESS INFO'}
-      </p>
-      <p className={ui.muted}>{access.message}</p>
-    </div>
-    <ActionDeck className={styles.accessDeck}>
-      {access.canRequest && (
-        <Action primary href={`${eventHref(event.id)}/request`} carrier={`event:${event.id}`}>
-          게스트 신청
-        </Action>
-      )}
-      {merchFor(event.id).map(item => (
-        <Action key={item.id} href="/merch">MERCH · {item.name}</Action>
-      ))}
-      <Action href="/signal">다음 이벤트 소식 신청</Action>
-    </ActionDeck>
+      <p className={styles.accessMessage}>{access.message}</p>
+      <ActionDeck className={styles.accessDeck}>
+        {access.canRequest && (
+          <Action primary href={`${eventHref(event.id)}/request`} carrier={`event:${event.id}`}>
+            게스트 신청
+          </Action>
+        )}
+        {merchFor(event.id).map(item => (
+          <Action key={item.id} href="/merch">MERCH · {item.name}</Action>
+        ))}
+        {!access.canRequest && <Action href="/signal">다음 이벤트 소식 신청</Action>}
+      </ActionDeck>
     </>
   );
 }
@@ -230,7 +230,7 @@ export function Lineup({
                           {identity(artist)}
                         </div>
                         <p className={styles.slotTime}>
-                          <span>TIME</span>
+                          <span className={ui.srOnly}>시간 </span>
                           {artist.time}
                         </p>
                       </li>

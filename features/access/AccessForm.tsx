@@ -16,6 +16,7 @@ import { errorMessage } from '@/features/ui/http';
 import { instagram } from '@/features/about/instagram';
 import { useAccessRequest } from './useAccessRequest';
 import styles from './access.module.css';
+import { PrivacyLink } from '@/features/privacy/PrivacyLink';
 
 export function AccessForm({
   eventId,
@@ -222,30 +223,6 @@ export function AccessForm({
           />
         </div>
         <div>
-          <Consent
-            id="privacy-consent"
-            checked={fields.privacyConsent}
-            required
-            onChange={(value) =>
-              setFields({ ...fields, privacyConsent: value })
-            }
-          >
-            {waitlist ? (
-              <>
-                이름·인스타그램 ID를 대기 명단 관리 목적으로 수집합니다. 이름·인스타그램 ID와 신청
-                시각은 초대한 아티스트에게 공유되며, 명단에 오르면 아티스트가 인스타그램으로
-                연락합니다. 보존 기간: 이벤트 종료 후 1개월. 그 밖의 제3자 미공개.
-                악용 방지와 운영 확인을 위해 접속 국가·지역·통신사, 브라우저 정보와 들어온 경로(아티스트 링크·외부 사이트)를 90일간 따로 보관하며 공개하지 않습니다.
-              </>
-            ) : (
-              <>
-                이름·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다. 이름과
-                신청 시각은 초대한 아티스트에게 공유됩니다. 보존 기간: 이벤트 종료 후
-                1개월. 그 밖의 제3자 미공개.
-                악용 방지와 운영 확인을 위해 접속 국가·지역·통신사, 브라우저 정보와 들어온 경로(아티스트 링크·외부 사이트)를 90일간 따로 보관하며 공개하지 않습니다.
-              </>
-            )}
-          </Consent>
           {!waitlist && (
           <Consent
             id="marketing-consent"
@@ -280,6 +257,20 @@ export function AccessForm({
             }}
           />
         )}
+        {/* The guest came by the artist's own invite link, so the request itself is what they ask
+            for: no consent box, only a plain account, above the key, of what goes where. */}
+        <p id="guest-notice" className={formStyles.notice}>
+          {waitlist ? (
+            <>
+              대기 신청하시면 이름·인스타그램 ID와 신청 시각이 초대한 아티스트에게 전달되고, 명단에
+              오르면 아티스트가 인스타그램으로 연락합니다.
+            </>
+          ) : (
+            <>신청하시면 이름과 신청 시각이 초대한 아티스트에게 전달됩니다.</>
+          )}{' '}
+          신청 정보는 이벤트 종료 후 1개월까지 보관됩니다. 자세한 내용과 악용 방지를 위한 접속 기록
+          보관은 <PrivacyLink />에서 확인해 주십시오.
+        </p>
         <button
           aria-busy={pending}
           className={`${ui.button} ${ui.primary}`}

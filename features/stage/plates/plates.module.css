@@ -14,10 +14,43 @@
   height: 100%;
 }
 /* A file on the stage is exactly as tall as its plate; its columns share that height. */
-:global([data-stage=stage]) :is(.session, .artistFile) {
+:global([data-stage=stage]) .artistFile {
   grid-template-rows: minmax(0, 1fr);
 }
-:global([data-stage=stage]) :is(.nextBlock, .nextChip, .homeKey) {
+:global([data-stage=stage]) .session {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+.sessionMain { grid-area: main; }
+.sessionKeyRow { grid-area: keys; min-width: 0; }
+.sessionOrder { grid-area: order; }
+.sessionSide { grid-area: side; }
+/* The two cells a phone reads instead of the fact bands. */
+.sessionCells {
+  display: none;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin: 12px calc(var(--bleed, 0px) * -1) calc(var(--pad) * -1);
+  background: var(--well);
+}
+.sessionCells > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 14px;
+}
+.sessionCells > div + div {
+  border-left: 1px solid var(--line);
+}
+.sessionCells dt {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+}
+.sessionCells dd {
+  overflow: hidden;
+  font: 700 var(--t-md)/1.1 var(--display);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:global([data-stage=stage]) :is(.nextBlock, .nextChip) {
   height: auto;
 }
 
@@ -121,7 +154,8 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-.tag + .tag::before {
+.tag + .tag::before,
+.tag + .headExtra > .tag:first-child::before {
   content: '·';
   padding-inline: .55em;
 }
@@ -373,19 +407,19 @@
   justify-content: space-between;
   gap: 4px;
   min-height: 44px;
-  padding: 10px 14px 12px;
+  padding: 12px 14px;
 }
 .chipName {
   /* Capitals in this face run about half an em each (spacing included): no larger than the chip's
      inner width allows for the name's length. */
   --fit: calc((100cqw - 28px) / (var(--len, 6) * .5));
-  font: 800 clamp(20px, min(1.6vw, var(--fit)), 30px)/1 var(--display);
-  letter-spacing: .04em;
+  font: 700 clamp(14px, min(20px, var(--fit)), 20px)/1 var(--display);
+  letter-spacing: 0;
 }
 .chipLine {
   min-width: 0;
-  opacity: .9;
-  font: 600 var(--t-sm)/1.2 var(--sans);
+  font: 400 12px/1.2 var(--sans);
+  white-space: nowrap;
 }
 /* A low chip sets its name and line side by side, the name sized by the chip's height. */
 @container layer (max-height: 84px) {
@@ -468,15 +502,13 @@
   font: 700 var(--t-lg)/1.35 var(--display);
   letter-spacing: .02em;
 }
-/* The home's About tile is low: its tags give way first, then its line, so it never spills (a
-   spill would send the tile to a sheet of its own). */
-@container layer (max-height: 150px) {
-  .aboutCard .bandTags {
-    display: none;
-  }
+/* The merch tile keeps its price and where it is sold down to a low tile, set closer and smaller. */
+.merchCard .aboutLine {
+  margin-top: 6px;
+  font-size: var(--t-md);
 }
-@container layer (max-height: 130px) {
-  .aboutCard .aboutLine {
+@container layer (max-height: 92px) {
+  .merchCard .aboutLine {
     display: none;
   }
 }
@@ -500,139 +532,80 @@
   letter-spacing: .04em;
 }
 
-/* ── Back card ───────────────────────────────────────────────────────────── */
-/* BACK over HOME: two cards, each lit and pressed as a whole. */
-.backStack {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  gap: 4px;
-  height: 100%;
-}
-.backStack[data-home] {
-  grid-template-rows: minmax(0, 1fr) auto;
-}
-.homeKey {
-  flex-direction: row;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 16px;
-  border-left: 4px solid var(--accent);
-  font: 700 var(--t-sm)/1 var(--display);
-  letter-spacing: .24em;
-}
-.homeName {
-  display: inline-flex;
-  align-items: center;
-  color: var(--link);
-  white-space: nowrap;
-}
+/* ── Back card and the home key ─────────────────────────────────────────── */
+/* BACK · ESC on a small line over the name and its title; on a phone one low bar. */
 .back {
-  justify-content: space-between;
-  gap: 6px;
-  padding: 12px 16px 14px;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 18px;
   border-left: 4px solid var(--feature);
 }
 .backHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
-.backLabel {
-  color: var(--accent);
-  font: 700 var(--t-sm)/1 var(--display);
-  letter-spacing: .24em;
+.backLabel,
+.backEsc {
+  color: var(--link);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+}
+.backTo {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.backName {
+  display: inline-flex;
+  align-items: center;
+  color: var(--link);
+  font: 700 18px/1 var(--display);
+}
+.backTitle {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--link);
+  font: 400 14px/1 var(--sans);
+  text-overflow: ellipsis;
 }
 @media (hover: hover) {
-  .back:hover .backLabel {
+  .back:hover :is(.backLabel, .backEsc, .backName, .backTitle) {
     color: inherit;
   }
 }
-.backName {
-  --title-ls: .06em;
-  color: var(--link);
-  font: 800 var(--t-lg)/1 var(--display);
+.homeKey {
+  align-items: center;
+  justify-content: center;
 }
-.backTitle {
-  color: var(--link);
-  font: 600 var(--t-sm)/1.2 var(--sans);
+.homeName {
+  display: inline-flex;
+  align-items: center;
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+  white-space: nowrap;
 }
-/* The back card answers its own height and shape, never cutting a line:
-   tall — BACK, the name, the title stacked; short — HOME beside BACK, BACK · ESC on the left and
-   the name over the title on the right; low or long — one line, the name set as large as the card's
-   height allows. */
-@container layer (max-height: 150px) {
-  .backStack[data-home] {
-    grid-template-rows: minmax(0, 1fr);
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .homeKey {
-    padding-inline: 14px;
-  }
-}
-@container layer (max-height: 120px) {
+/* A phone's back bar: BACK on the left, the name and title on the right, one line. */
+@container layer (max-height: 60px) {
   .back {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-content: center;
-    gap: 2px 18px;
-    padding-block: 8px;
-  }
-  .backHead {
-    grid-row: 1 / span 2;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 6px;
-  }
-  .backName {
-    font-size: clamp(var(--t-md), 34cqh, 40px);
-  }
-}
-@container layer (max-height: 76px) {
-  .back {
-    grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr);
-    align-items: baseline;
-    align-content: center;
-    padding-block: 6px;
-  }
-  .backHead {
-    grid-row: auto;
     flex-direction: row;
-    align-self: center;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
   }
-  .backName {
-    font-size: clamp(var(--t-sm), 40cqh, 32px);
-  }
-}
-/* A back card squeezed into a session's band (a laptop, tablet or half-screen window) keeps its keys
-   whole and lets its print give way: beside a HOME key it is BACK alone; on one low line without
-   HOME it drops the title. Its label still names where it leads. */
-@container layer (max-height: 150px) and (max-width: 220px) {
-  .backStack[data-home] :is(.backName, .backTitle, .backHead .tag) {
+  .backEsc {
     display: none;
   }
+  .backName {
+    font-size: 16px;
+  }
 }
-@container layer (max-height: 76px) and (max-width: 200px) {
+/* A narrow band (a laptop or a half-screen window): the title gives way to the name. */
+@container layer (max-width: 170px) {
   .backTitle {
     display: none;
-  }
-}
-@container layer (max-height: 150px) and (min-aspect-ratio: 6 / 1) {
-  .back {
-    display: grid;
-    grid-template-columns: auto minmax(0, max-content) minmax(0, 1fr);
-    align-items: baseline;
-    align-content: center;
-    gap: 2px 20px;
-  }
-  .backHead {
-    grid-row: auto;
-    flex-direction: row;
-    align-self: center;
-  }
-  .backName {
-    font-size: clamp(var(--t-lg), 36cqh, 44px);
   }
 }
 
@@ -651,6 +624,7 @@
 .eventCell {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  align-content: center;
   align-items: center;
   gap: 12px;
   min-height: 48px;
@@ -714,6 +688,18 @@
 .eventRow[data-event-state=LIVE] .rowState {
   --lamp: var(--accent);
   color: var(--ink);
+}
+.cellWhen {
+  grid-column: 2;
+  overflow: hidden;
+  margin-top: -6px;
+  color: var(--ink);
+  font: 400 var(--t-xs)/1.2 var(--mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@container layer (max-height: 72px) {
+  .cellWhen { display: none; }
 }
 .cellMeta {
   color: var(--muted);
@@ -817,19 +803,21 @@
   gap: 0;
   padding-block: 0;
 }
-/* The link's cue along the plate's foot: its name, printed in the link colour with its arrow. */
-.partEnd {
-  margin-top: auto;
-  padding: 0;
-}
-.nextCta {
-  display: flex;
+/* The guest request key at an artist file's foot. */
+.nextKey {
+  flex-direction: row;
   align-items: center;
-  min-height: 52px;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
   padding: 0 var(--pad);
-  color: var(--link);
-  font: 700 var(--t-md)/1 var(--display);
-  letter-spacing: .16em;
+  background: var(--plate);
+  color: var(--ink);
+  font: 700 var(--t-lg)/1 var(--display);
+  letter-spacing: .06em;
+}
+.nextKey > svg {
+  display: inline-block;
 }
 
 .nextHead {
@@ -851,7 +839,7 @@
   text-wrap: balance;
 }
 .next[data-density=hero] .nextSession {
-  font-size: clamp(40px, 5.2vw, 124px);
+  font-size: clamp(40px, 4.6vw, 110px);
 }
 .next[data-density=tile] .nextSession {
   font-size: clamp(22px, 1.8vw, 40px);
@@ -870,7 +858,7 @@
   text-wrap: balance;
 }
 .next[data-density=hero] .nextSubtitle {
-  font-size: clamp(22px, 2.2vw, 52px);
+  font-size: clamp(20px, 1.7vw, 40px);
 }
 .noUpcoming {
   margin-inline: calc(var(--bleed, 0px) * -1);
@@ -893,17 +881,11 @@
 .next[data-density=chip] .brandBar {
   padding-block: 6px;
 }
+/* In the band it reads like every chip: the name on top, the session's code and days at the foot. */
 .next[data-density=chip] .nextChip {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  padding-block: 6px;
-}
-.next[data-density=chip] .nextChip .chipName {
-  font-size: var(--t-lg);
-}
-.next[data-density=chip] .nextChip .chipLine {
-  flex: 1 1 auto;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 12px 14px;
 }
 
 
@@ -1020,11 +1002,155 @@
   margin: -8px calc(var(--pad) * -1) -8px 0;
   letter-spacing: .12em;
 }
+.rowState > svg {
+  display: inline-block;
+}
 /* A narrow row: name, subtitle and one fitted summary line (code · time · venue) beside its state. */
 @container layer (max-width: 760px) {
   .eventRow { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
   .rowId, .rowWhen, .rowVenue { display: none; }
   .rowNarrowMeta { display: block; }
+}
+
+/* A past row: its name and subtitle on one line, the date alone, the state as a mark, and the way
+   into the record at the right. */
+.rowNameSub {
+  font-size: .62em;
+  letter-spacing: .03em;
+}
+.rowMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+.rowMark::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+}
+.rowState[data-past] {
+  color: var(--link);
+  font: 700 var(--t-md)/1 var(--sans);
+  letter-spacing: 0;
+}
+.rowState[data-past]::before {
+  display: none;
+}
+
+/* The leading row: the next session at length. */
+.leadWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  height: 100%;
+}
+.leadRow {
+  position: relative;
+  grid-area: 1 / 1 / 2 / 3;
+  grid-template-columns: 90px minmax(0, 1fr) 190px 250px;
+  align-items: start;
+  overflow: hidden;
+  padding: 20px 0 20px 20px;
+}
+.leadMain {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.leadState {
+  display: block;
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+.leadState::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background: var(--accent);
+}
+.leadName {
+  color: var(--link);
+  font: 800 clamp(28px, 2.7vw, 56px)/1 var(--display);
+  text-transform: uppercase;
+}
+.leadSubtitle {
+  font: 700 clamp(18px, 1.7vw, 32px)/1.05 var(--display);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.leadWhen {
+  display: grid;
+  gap: 6px;
+  white-space: nowrap;
+}
+.leadWhen b {
+  font: 400 20px/1 var(--mono);
+}
+.leadWhen small {
+  font: 400 var(--t-xs)/1.2 var(--mono);
+}
+.leadRow :is(.rowId, .leadMain, .leadWhen) {
+  position: relative;
+}
+
+.narrowSub,
+.leadShort {
+  display: none;
+}
+/* A narrow directory: the leading session is a card; a past row puts
+   its date and mark on top, then the name, the subtitle with the way in, and the lineup. */
+@container layer (max-width: 760px) {
+  .leadWrap {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .leadRow {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 16px;
+  }
+  .leadRow > .rowId {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-size: var(--t-sm);
+  }
+  .leadMain { gap: 6px; }
+  .leadName { font-size: clamp(28px, 9vw, 40px); }
+  .leadSubtitle { font-size: var(--t-lg); }
+  .leadShort {
+    display: block;
+    font: 400 var(--t-sm)/1.2 var(--mono);
+  }
+  .leadOpen,
+  .leadWhen { display: none; }
+
+  .eventRow:has(.rowMark) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'when mark' 'main main';
+    align-content: center;
+    gap: 8px 12px;
+    padding: 12px 16px;
+  }
+  .eventRow:has(.rowMark) .rowWhen { display: grid; grid-area: when; font-size: var(--t-sm); }
+  .eventRow:has(.rowMark) .rowMain { grid-area: main; }
+  .eventRow:has(.rowMark) .rowMark { grid-area: mark; }
+  .eventRow:has(.rowMark) .rowState { display: none; }
+  .rowNameSub { display: none; }
+  .narrowSub {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--t-md);
+  }
 }
 
 /* Artist file cards in the open roster grid. */
@@ -1050,14 +1176,63 @@
   letter-spacing: .12em;
 }
 .cardFoot {
+  align-items: baseline;
   font-family: var(--mono);
   letter-spacing: .04em;
 }
+/* The sessions the card's artist played, lit; the others printed faint, so the run reads at a glance. */
+.cardSessions {
+  display: inline-flex;
+  gap: 4px;
+}
+/* Each session a small box: the ones played filled in the key colour, the others outlined faint. */
+.cardSessions > * {
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  color: var(--ink);
+  font-size: var(--t-xs);
+}
+.cardSessions > [aria-hidden] {
+  opacity: .35;
+}
+.cardSessions > [data-on] {
+  border-color: var(--control);
+  background: var(--control);
+  color: var(--on-control);
+}
 .cardName {
-  color: var(--link);
-  font: 800 var(--t-lg)/1.05 var(--display);
-  letter-spacing: .02em;
+  color: var(--ink);
+  font: 800 clamp(22px, 2vw, 34px)/1.05 var(--display);
+  letter-spacing: .01em;
   text-transform: uppercase;
+}
+.artistCard .cardHead {
+  color: var(--ink);
+}
+.artistCard .cardFoot {
+  flex-wrap: nowrap;
+  align-items: center;
+  color: var(--ink);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+/* A phone's roster card is two lines: name and session boxes, then the note and the state. */
+@container layer (max-height: 90px) {
+  .artistCard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'name sessions' 'note state';
+    align-content: center;
+    gap: 4px 12px;
+    min-height: 0;
+    padding: 6px 12px;
+  }
+  .artistCard :is(.cardHead, .cardFoot) { display: contents; }
+  .artistCard .cardHead > :first-child { display: none; }
+  .artistCard .cardHead > :last-child { grid-area: state; justify-self: end; }
+  .artistCard .cardName { grid-area: name; font-size: var(--t-lg); }
+  .artistCard .cardSessions { grid-area: sessions; justify-self: end; }
+  .artistCard .cardFoot > :last-child { grid-area: note; font: 400 var(--t-xs)/1.2 var(--mono); }
 }
 
 
@@ -1104,43 +1279,127 @@
   :global([data-stage=stage]) .panelRow[data-paged=first] { grid-template-rows: minmax(calc(var(--text-body) * 1.75 * 8 + 230px), 1fr) max-content max-content; }
 }
 
-/* As in .panelRow, the grid publishes no inset of its own. */
+/* The open log: the name and the write form on the left, its save key along the column's foot; the
+   public log on the right. The two columns meet flush and fill the plate. */
 .logGrid {
   --bleed: 0px;
   display: grid;
-  flex: 1 1 auto;
-  grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr);
-  gap: 0;
+  grid-template-columns: minmax(300px, .4fr) minmax(0, .6fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-width: 0;
   min-height: 0;
-  margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
 }
-.logWrite,
+:global([data-stage=stage]) .logGrid {
+  height: 100%;
+}
+.logWrite {
+  --bleed: var(--pad);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 var(--pad);
+  background: var(--plate);
+  color: var(--ink);
+}
 .logPublic {
   min-height: 0;
   overflow: hidden;
+  padding-bottom: 0;
 }
-/* The write column: the length readout and its gauge stay together on top, and the height the
-   column has to spare goes to the message box (at least 140px) instead of opening gaps between the
-   readout, the gauge and the fields. */
-:global([data-stage=stage]) .logWrite form {
+/* The pager is the panel's foot, flush to its bottom edge. */
+.logPublic .logPages {
+  gap: 0;
+}
+.logPublic .logList {
+  margin-bottom: 8px;
+}
+.logWrite form {
   display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+/* The fields run flush across the column like the guest request's: label line on the plate's tone
+   over the input in the well, edge to edge. */
+.logWrite form > :last-child {
+  display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
 }
-:global([data-stage=stage]) .logWrite form > *,
-:global([data-stage=stage]) .logWrite form > :last-child > * {
+.logWrite form > :last-child > * {
   flex: none;
 }
-:global([data-stage=stage]) .logWrite form > :last-child,
+.logWrite form > :last-child > button[class] {
+  justify-content: space-between;
+  width: auto;
+  min-height: 60px;
+  margin: auto 0 0;
+  padding-inline: var(--pad);
+  font: 700 var(--t-lg)/1 var(--display);
+  letter-spacing: .04em;
+}
+/* On the stage the message box takes the column's spare height; the field fills it. */
 :global([data-stage=stage]) .logWrite form > :last-child > :first-child {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
 }
+:global([data-stage=stage]) .logWrite form > :last-child > :first-child > :last-child {
+  flex: 1 1 auto;
+  min-height: 0;
+}
 :global([data-stage=stage]) .logWrite textarea {
   flex: 1 1 auto;
   height: auto;
-  min-height: 140px;
+  min-height: 96px;
+  resize: none;
+}
+.logTotal {
+  margin-left: auto;
+  color: var(--ink);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .14em;
+  white-space: nowrap;
+}
+.logTotal i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background: currentColor;
+  opacity: .35;
+}
+.logTotal[data-state=ready] i {
+  opacity: 1;
+}
+.logTotal[data-state=loading] i {
+  animation: readPulse 1s steps(1) infinite;
+}
+.logTotal[data-state=error] {
+  color: var(--danger);
+}
+@keyframes readPulse {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: .25; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logTotal[data-state=loading] i { animation: none; opacity: .6; }
+}
+.logWhenShort {
+  display: none;
+}
+.backArrow {
+  display: inline-flex;
+  margin-right: 8px;
+  transform: scaleX(-1);
+}
+.logPager button svg {
+  margin-left: 8px;
+}
+.backArrow svg {
+  margin-left: 0;
 }
 .logPages {
   display: flex;
@@ -1247,32 +1506,15 @@
   outline-color: currentColor;
   outline-offset: -4px;
 }
-.feedRule {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 10px;
-  min-height: 24px;
-  color: var(--muted);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .18em;
-}
-.feedRule i {
-  width: 9px;
-  height: 9px;
-  background: currentColor;
-  opacity: .35;
-}
-.feedRule:is([data-state=ready], [data-state=loading], [data-state=error]) i {
-  opacity: 1;
-}
-.feedRule[data-state=error] {
-  color: var(--danger);
-}
 @container layer (max-width: 760px) {
   .logGrid { grid-template-columns: minmax(0, 1fr); }
   /* Stacked, the write form is as tall as it is and the public log (paged by height) takes the rest. */
   :global([data-stage=stage]) .logGrid { grid-template-rows: max-content minmax(260px, 1fr); }
+  .logLast { display: none; }
+  .logWhen { display: none; }
+  .logWhenShort { display: inline; }
+  .logWrite :is(form > p:first-child, [id=transmit-handle-hint]) { display: none; }
+  .logWrite form > :last-child > button[class] { margin-top: 16px; }
 }
 
 
@@ -1286,6 +1528,7 @@
 .session {
   display: grid;
   grid-template-columns: minmax(260px, .95fr) minmax(0, 1.2fr) minmax(280px, 1fr);
+  grid-template-areas: 'main order side' 'keys order side';
   gap: 0;
   min-width: 0;
   padding: 0;
@@ -1330,7 +1573,7 @@
 }
 .sessionTitle {
   margin-top: 12px;
-  font: 800 clamp(34px, 4.2vw, 76px)/.9 var(--display);
+  font: 800 clamp(34px, 3.5vw, 64px)/.95 var(--display);
   text-transform: uppercase;
   outline: none;
 }
@@ -1450,6 +1693,7 @@
 }
 .sessionAccess {
   flex: none;
+  padding-bottom: 0;
 }
 .session[data-request] .sessionAccess {
   flex: 1 1 auto;
@@ -1466,27 +1710,32 @@
    side column takes the rest. The briefing in it keeps --paged-min of height whatever the access
    panel under it needs; a file that needs more than the plate grows its sheet. */
 @container layer (max-width: 1080px) {
-  .session { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .sessionSide { grid-column: 1 / -1; }
-  :global([data-stage=stage]) .session { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+  .session { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: 'main order' 'keys order' 'side side'; }
+  :global([data-stage=stage]) .session { grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr); }
 }
+/* A phone: the title over two cells, then access, the keys, the running order and the briefing. */
 @container layer (max-width: 700px) {
-  .session { grid-template-columns: minmax(0, 1fr); }
-  :global([data-stage=stage]) .session { grid-template-rows: max-content max-content minmax(0, 1fr); }
+  .session { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'main' 'access' 'keys' 'order' 'briefing'; }
+  .sessionSide { display: contents; }
+  .sessionAccess { grid-area: access; }
+  .sessionBriefing { grid-area: briefing; }
+  .sessionCells { display: grid; }
+  :global([data-stage=stage]) .session { grid-template-rows: repeat(4, max-content) minmax(0, 1fr); }
   :global([data-stage=stage]) .sessionBriefing { min-height: var(--paged-min); }
 }
 
 /* ── Artist file ─────────────────────────────────────────────────────────── */
 .artistFile {
   display: grid;
-  grid-template-columns: minmax(240px, .8fr) minmax(0, 1.3fr) minmax(260px, 1fr);
-  grid-template-areas: 'identity records bio' 'identity shared bio';
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(240px, .86fr) minmax(0, 1.31fr) minmax(260px, 1fr);
+  /* The shared lineup's panel runs on to the foot, so the middle column keeps its tone. */
+  grid-template-areas: 'identity records bio' 'identity shared bio' 'identity shared bio';
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 0;
   min-width: 0;
   padding: 0;
 }
-:global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) auto; }
+:global([data-stage=stage]) .artistFile { grid-template-rows: auto auto minmax(0, 1fr); }
 .fileMain {
   --bleed: var(--pad);
   grid-area: identity;
@@ -1497,7 +1746,48 @@
   min-height: 0;
   padding: 0 var(--pad) var(--pad);
 }
-.fileOrigin > span:last-child {
+/* The sessions the artist played as boxes (as on the roster cards), and how many. */
+.fileSessions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+.fileCountInline {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+}
+.fileCount {
+  display: none;
+}
+/* The coming set at the column's foot: a dark strip (label, session and day, dock and time), then the key. */
+.fileFoot {
+  display: grid;
+  gap: 0;
+  margin: auto calc(var(--pad) * -1) calc(var(--pad) * -1);
+}
+.fileNext {
+  display: grid;
+  gap: 6px;
+  padding: 14px var(--pad);
+  background: var(--well);
+}
+.fileNextLabel {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.fileNextName {
+  font: 800 var(--t-xl)/1 var(--display);
+  text-transform: uppercase;
+}
+.fileNextSlot {
+  font: 400 var(--t-md)/1.2 var(--mono);
+}
+.fileFoot > .nextKey {
+  min-height: 56px;
+}
+.fileOrigin > span:is(.fileTag, .fileCount) {
   font-family: var(--mono);
   letter-spacing: .04em;
 }
@@ -1516,8 +1806,8 @@
   padding: 0;
 }
 .fileRecords { grid-area: records; }
-.fileRecords > :first-child { flex: 1; }
 .fileShared { grid-area: shared; }
+.fileShared > :first-child { flex: 1 1 auto; }
 .fileBio { grid-area: bio; }
 :global([data-stage=stage]) :is(.fileRecords, .fileShared) {
   overflow: hidden;
@@ -1536,6 +1826,10 @@
     grid-template-areas: 'identity' 'records' 'bio' 'shared';
     grid-template-rows: auto auto auto auto;
   }
+  .fileTag,
+  .fileCountInline { display: none; }
+  .fileCount { display: inline; }
+  .fileFoot { margin-top: 4px; }
   /* The mobile reading order is also the DOM and keyboard order; no visual-only reordering. */
   :global([data-stage=stage]) .artistFile { grid-template-rows: max-content max-content minmax(var(--paged-min), 1fr) max-content; }
 }
@@ -1605,33 +1899,181 @@
   grid-auto-rows: minmax(auto, 104px);
   align-content: start;
 }
-/* With times out, the lineup is the running order: one slot per line, [time | artist | dock], in
-   start order, whatever the plate's width. */
-.lineupCells.timetable {
-  --lineup-cols: 1;
+/* Date, place and district in three cells across the plate, in turns of tone. */
+.factCells {
+  display: grid;
+  margin-inline: calc(var(--pad) * -1);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
 }
-.lineupCells.timetable li:last-child:nth-child(n) {
-  grid-column: auto;
+.factCells > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px var(--pad);
 }
-.lineupCells.timetable li {
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
+.factCells > span:nth-child(odd) {
+  background: var(--well);
+}
+.factCells small {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+}
+.factCells b {
+  font: 700 var(--t-lg)/1.05 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+/* The roster's one-line summary under its title; the coming session behind a lamp in the accent. */
+.rosterLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin-top: 6px;
+  font: 600 var(--t-sm)/1.3 var(--sans);
+}
+.rosterNext {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+}
+.headExtra > .rosterNext {
+  margin-left: .55em;
+  padding-left: .55em;
+  border-left: 1px solid var(--muted);
+  color: var(--ink);
+}
+.rosterNext > span {
+  width: 9px;
+  height: 9px;
+  background: var(--accent);
+}
+/* The lineup's label printed on the plate (the dock heads under it are the dark bands). */
+.lineupLabel {
+  display: flex;
   align-items: baseline;
-  gap: 4px 14px;
+  gap: 10px;
+  padding: 10px 0 6px;
+  font: 700 var(--t-xs)/1.1 var(--display);
+  letter-spacing: .16em;
+  text-transform: uppercase;
 }
-.slotWhen {
+.lineupLabel > span + span {
+  opacity: .75;
+  font-family: var(--sans);
+  letter-spacing: .04em;
+}
+.partLineup .dockCols {
+  margin-bottom: 10px;
+}
+/* The running order runs edge to edge across the plate like the fact cells above it: the docks
+   meet with the plate showing 2px between them, their words set in by the plate's margin. */
+.next[data-density] .partLineup .dockCols {
+  gap: 2px;
+  margin-inline: calc(var(--pad) * -1);
+}
+.next[data-density] .partLineup :is(.dockHead, .dockCol li) {
+  padding-inline: var(--pad);
+}
+/* On the stage the running order takes the plate's spare height: its slots grow alike (up to 88px),
+   row for row across the docks, rather than leaving the plate empty under it. */
+:global([data-stage=stage]) .partLineup .dockCols {
+  flex: 1 0 auto;
+  align-items: stretch;
+}
+:global([data-stage=stage]) .partLineup .dockCol {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+:global([data-stage=stage]) .partLineup .dockCol ol {
+  display: grid;
+  grid-template-rows: repeat(var(--slots, 1), minmax(auto, 88px));
+  align-content: start;
+}
+:global([data-stage=stage]) .partLineup .dockCol li {
+  align-content: center;
+}
+/* The running order: a column per dock side by side, each under a dark head with its dock and its
+   night, one slot per line [start | artist]. Columns fall under each other when the plate is narrow. */
+.dockCols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  align-items: start;
+  gap: 12px;
+}
+.dockCol {
+  display: grid;
+  min-width: 0;
+}
+.dockHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-xs)/1.1 var(--display);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dockHead > span + span {
+  color: var(--on-fill-muted);
+  font: 400 var(--t-xs)/1.1 var(--mono);
+  letter-spacing: 0;
+}
+.dockCol li {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+}
+.dockCol li:nth-child(even) {
+  background: var(--well);
+}
+.dockCol li:not(:has(> small:first-child)) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.dockCol li > small {
+  font: 400 var(--t-sm)/1 var(--mono);
   font-variant-numeric: tabular-nums;
 }
-.lineupCells.timetable li > small:last-child {
-  text-align: right;
+.dockCol li > b {
+  min-width: 0;
+  font: 700 var(--t-lg)/1.05 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
-:global([data-stage=stage]) .partLineup .timetable {
-  grid-auto-rows: minmax(auto, 56px);
+.dockCol li > b + small {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+}
+/* While the session runs, the slot the timetable is on carries the accent bar and NOW. */
+.dockCol li[data-now] {
+  box-shadow: inset 4px 0 0 var(--accent);
 }
 .logList li:nth-child(odd) {
   background: var(--well);
 }
-.logList li > * {
-  padding-inline: max(10px, var(--bleed, 0px));
+.logList li {
+  padding: 14px max(10px, var(--pad));
+}
+.logList li > *,
+.logList li header > * {
+  padding: 0;
+}
+.logList header {
+  gap: 14px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.logList li p {
+  line-height: 1.6;
 }
 
 
@@ -1737,10 +2179,31 @@
     margin-left: 0;
   }
 }
-/* Too narrow for the session line beside NEXT (and the wordmark, when low): the band of a session
-   on a laptop, tablet or half-screen window. The chip keeps the wordmark and NEXT, and the line stays
-   for screen readers as the link's name. */
+/* A band chip (low and narrow, as in every open view's band): the wordmark gives way and the chip
+   reads like the others, NEXT over its line. Only a sliver keeps NEXT alone, the line staying for
+   screen readers as the link's name. */
 @container layer ((max-height: 96px) and (max-width: 400px)) or (max-width: 250px) {
+  .next[data-density=chip] .brandBar {
+    display: none;
+  }
+  /* With the wordmark gone the chip is the whole plate, edge to edge, so it lights up whole. */
+  .next[data-density=chip] {
+    padding: 0;
+  }
+  .next[data-density=chip] .nextChip {
+    margin: 0;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 10px 14px 12px;
+  }
+  .next[data-density=chip] .nextChip .chipName {
+    --len: 4;
+    font-size: clamp(16px, min(1.6vw, var(--fit)), 30px);
+  }
+}
+@container layer (max-width: 136px) {
   .next[data-density=chip] .nextChip .chipName {
     color: var(--link);
   }
@@ -1777,4 +2240,420 @@
   .signalCard .bandTags {
     display: none;
   }
+}
+
+/* The open signal plate: the note and the form on the left (the save key along its foot), the next
+   session tall on the right over the way to the channels. The parts meet flush. */
+.signalStage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 31%);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'intro next' 'form next' 'form channel';
+  min-width: 0;
+}
+:global([data-stage=stage]) .signalStage {
+  height: 100%;
+}
+.signalIntro {
+  --bleed: var(--pad);
+  grid-area: intro;
+  padding: 0 var(--pad) 18px;
+  background: var(--plate);
+  color: var(--ink);
+}
+.signalForm {
+  grid-area: form;
+  display: flex;
+  min-height: 0;
+  background: var(--plate);
+}
+.signalNext {
+  position: relative;
+  grid-area: next;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 18px var(--pad) 20px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.signalNext > :not(:first-child) {
+  position: relative;
+}
+.signalNextHead {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.signalNextBody {
+  display: grid;
+  gap: 8px;
+}
+.signalNextName {
+  color: var(--link);
+  font: 800 clamp(32px, 3.4vw, 64px)/1 var(--display);
+  text-transform: uppercase;
+}
+.signalNextSub {
+  font: 700 clamp(18px, 1.5vw, 26px)/1.05 var(--display);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.signalNextMeta {
+  font: 400 var(--t-sm)/1.3 var(--mono);
+}
+.signalChannel {
+  grid-area: channel;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 80px;
+  padding: 12px var(--pad);
+  color: var(--ink);
+  text-decoration: none;
+}
+.signalChannel > span {
+  display: grid;
+  gap: 6px;
+}
+.signalChannel b {
+  font: 700 var(--t-lg)/1.1 var(--display);
+}
+.signalChannel small {
+  font: 500 var(--t-xs)/1.2 var(--sans);
+}
+/* On the stage the form fills its area: the fields in the middle, at a readable width, and the save
+   key along the area's foot, edge to edge. */
+.signalForm > section {
+  flex: 1 1 auto;
+  padding-bottom: 0;
+}
+.signalForm form,
+.signalForm fieldset {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.signalForm fieldset > label {
+  background: none;
+}
+.signalForm fieldset > :first-child {
+  margin-top: auto;
+}
+.signalForm fieldset > button[class] {
+  width: auto;
+  min-height: 60px;
+  margin: auto 0 0;
+  padding-inline: var(--pad);
+  font: 700 var(--t-lg)/1 var(--display);
+  letter-spacing: .04em;
+}
+
+/* A phone: the note, the form and its key, then the channels; the next session is on the home. */
+@container layer (max-width: 700px) {
+  .signalStage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'intro' 'form' 'channel';
+  }
+  .signalNext { display: none; }
+  .signalForm fieldset > :first-child { margin-top: 0; }
+  .signalChannel { min-height: 52px; }
+  .signalChannel small { display: none; }
+}
+
+/* The open merch plate: the name over the sheet, which fills the rest. */
+.merchStage {
+  --bleed: var(--pad);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+:global([data-stage=stage]) .merchStage {
+  height: 100%;
+}
+.merchStage > header {
+  flex: none;
+  padding: 0 var(--pad);
+}
+
+/* The open about plate: the name, the wordmark and the opening line over the manifesto in two
+   columns and the architect's sign on the left; the channels over the node facts on the right. */
+.aboutStage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 28%);
+  grid-template-rows: minmax(0, 1fr);
+  min-width: 0;
+}
+:global([data-stage=stage]) .aboutStage {
+  height: 100%;
+}
+.aboutMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.aboutIntro {
+  --bleed: var(--pad);
+  position: relative;
+  padding: 0 var(--pad) 18px;
+  background: var(--plate);
+  color: var(--ink);
+}
+.aboutIntro .statement {
+  display: block;
+  margin: 4px 0 12px;
+  color: var(--link);
+  font-size: clamp(36px, 4.6cqi, 72px);
+}
+.aboutToggle {
+  display: flex;
+  margin-left: auto;
+  align-self: center;
+}
+.aboutLine {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: .6em;
+  font: 500 var(--t-lg)/1.4 var(--sans);
+}
+.aboutBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px var(--pad);
+  background: var(--plate);
+  color: var(--ink);
+}
+.aboutColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 40px;
+}
+.aboutSection p {
+  margin: 0 0 14px;
+  font: 400 var(--text-body)/1.75 var(--sans);
+}
+.aboutLabel {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .16em;
+}
+.aboutSection + .aboutSection .aboutLabel {
+  margin-top: 12px;
+}
+.aboutSign {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 14px var(--pad);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: var(--plate);
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.aboutSign > p {
+  margin: 0;
+}
+.aboutPrivacy {
+  color: var(--link);
+  font: 600 var(--t-xs)/1.2 var(--sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.aboutSide {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: var(--plate);
+}
+/* A phone: everything in one column; the node facts in a row of four. */
+@container layer (max-width: 700px) {
+  .aboutStage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .aboutColumns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .aboutLine {
+    display: block;
+    font-size: var(--t-md);
+  }
+  .aboutToggle {
+    position: absolute;
+    top: 18px;
+    right: var(--pad);
+  }
+  .aboutSection p {
+    font-size: var(--t-sm);
+  }
+  .aboutBody {
+    overflow: visible;
+    padding-block: 16px;
+  }
+}
+
+/* A chip's line is printed in the chip's ink; the whole chip is the link. */
+.chip .chipLine .linkName,
+.nextChip .chipLine .linkName {
+  color: inherit;
+}
+
+/* ── Home merch tile ── the back of the shirt on the left, name, price and where it is sold. */
+.merchCard {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 14px;
+  padding: 12px 14px;
+}
+.merchThumb {
+  flex: none;
+  width: auto;
+  height: 100%;
+  max-width: 40%;
+  aspect-ratio: 4 / 5;
+  /* The whole shirt, sleeves and all, a little back from the frame's edges. The photo's white
+     ground multiplies into the tile's own colour, so the shirt stands on the tile, not on a white card. */
+  padding: 6px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+.merchText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+.merchText .band {
+  margin: 0;
+  padding: 0;
+}
+.merchLine {
+  display: grid;
+  gap: 2px;
+  font: 500 var(--t-sm)/1.35 var(--sans);
+}
+@container layer (max-height: 92px) {
+  .merchLine { display: none; }
+}
+/* The home's About tile: its name alone, centred in the tile. */
+
+/* The home's log tile: low node rows straight under its name, flush down to its foot. */
+.summaryCard:has(.logNodes) {
+  padding-bottom: 0;
+}
+.logNodes {
+  justify-content: flex-start;
+  margin-top: 0;
+  /* The rows are counted to fit (LogPlate); only the brief loading cue could be taller, and it
+     must not send the tile to a sheet of its own. */
+  flex: 1 1 0;
+  overflow: hidden;
+  /* Edge to edge across the tile: the box itself widens, since it clips what overflows it. */
+  margin-inline: calc(var(--pad) * -1);
+}
+/* The node rows run edge to edge across the tile, their words set in by the plate's margin. */
+.logNodes ol {
+  gap: 0;
+  margin-inline: 0;
+}
+.logNodes li > :is(b, span) {
+  padding-inline: var(--pad);
+  padding-block: 5px;
+  font-size: 15px;
+  line-height: 19px;
+}
+.logNodes li > span:is(span) {
+  font-size: 10px;
+}
+
+/* ── The home's next session on a phone ── a short head line, two cells, the docks side by side
+   with time over name, short keys, and a row of four ways on. */
+.narrowOnly,
+.homeNav {
+  display: none;
+}
+@container layer (max-width: 500px) {
+  .next[data-density=hero] .wideOnly {
+    display: none;
+  }
+  .next[data-density=hero] .narrowOnly {
+    display: inline;
+  }
+  .next[data-density=hero] .nextLabel {
+    font-size: var(--t-xs);
+    letter-spacing: .14em;
+  }
+  .next[data-density=hero] .factCells > span:nth-child(3) {
+    display: none;
+  }
+  .next[data-density=hero] .dockCols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .next[data-density=hero] .dockCol li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    padding: 6px 10px;
+  }
+  .next[data-density=hero] .dockHead > span + span {
+    display: none;
+  }
+}
+/* Only a phone (no other plates beside the hero) ends the first screen on the row of four. */
+@media (max-width: 899px) {
+  @container layer (max-width: 500px) {
+    .homeNav {
+      display: grid;
+      flex: none;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
+      padding-top: 10px;
+      background: var(--field);
+    }
+  }
+}
+.homeNavKey {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 10px;
+}
+.homeNavKey b {
+  font: 700 var(--t-md)/1 var(--display);
+}
+.homeNavKey span {
+  overflow: hidden;
+  font: 400 var(--t-xs)/1.1 var(--sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A head's secondary tags (years, places) give way on a phone, so the counts stay beside the title. */
+.headExtra {
+  display: contents;
+}
+@container layer (max-width: 500px) {
+  .headExtra { display: none; }
+  .leadRow > .rowId { display: block; }
+}
+/* A narrow roster card lets its note drop under the session boxes rather than clip it. */
+@container layer (max-width: 320px) {
+  .artistCard .cardFoot { flex-wrap: wrap; }
 }

@@ -67,7 +67,6 @@ export async function POST(request: Request) {
       name,
       email: null,
       instagram,
-      privacyConsent: true,
       marketingConsent: false,
       guestLimit: host.access.guestLimit,
       createdAt: now.toISOString(),

@@ -91,3 +91,14 @@ export function venueMapHref(event: Pick<TerminalEvent, 'venue' | 'district'>) {
   const query = [venue, event.district.replace(/\/+/g, ' ')].join(' ').replace(/\s+/g, ' ').trim();
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+/** `11-28 (토) 23:00`: the month and day with the weekday, and the start time. */
+export function shortWhen(event: TerminalEvent) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(event.date);
+  const time = event.time.replace(' KST', '');
+  if (!match) return `${event.date} ${time}`.trim();
+  const day = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))).getUTCDay();
+  return `${match[2]}-${match[3]} (${WEEKDAYS[day]}) ${time}`.trim();
+}
