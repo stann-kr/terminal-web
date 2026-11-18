@@ -1735,14 +1735,15 @@
 /* ── Artist file ─────────────────────────────────────────────────────────── */
 .artistFile {
   display: grid;
-  grid-template-columns: minmax(240px, .8fr) minmax(0, 1.3fr) minmax(260px, 1fr);
-  grid-template-areas: 'identity records bio' 'identity shared bio';
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(240px, .86fr) minmax(0, 1.31fr) minmax(260px, 1fr);
+  /* The shared lineup's panel runs on to the foot, so the middle column keeps its tone. */
+  grid-template-areas: 'identity records bio' 'identity shared bio' 'identity shared bio';
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 0;
   min-width: 0;
   padding: 0;
 }
-:global([data-stage=stage]) .artistFile { grid-template-rows: minmax(0, 1fr) auto; }
+:global([data-stage=stage]) .artistFile { grid-template-rows: auto auto minmax(0, 1fr); }
 .fileMain {
   --bleed: var(--pad);
   grid-area: identity;
@@ -1753,51 +1754,48 @@
   min-height: 0;
   padding: 0 var(--pad) var(--pad);
 }
-/* The sessions the artist played, lit; the rest faint. */
+/* The sessions the artist played as boxes (as on the roster cards), and how many. */
 .fileSessions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  font: 400 var(--t-md)/1 var(--mono);
+  align-items: center;
+  gap: 6px 12px;
 }
-.fileSessions > [aria-hidden] {
-  opacity: .4;
+.fileCountInline {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
 }
-/* The coming set: a band, the session, then dock, time and place, on a strip of the plate's well. */
+.fileCount {
+  display: none;
+}
+/* The coming set at the column's foot: a dark strip (label, session and day, dock and time), then the key. */
+.fileFoot {
+  display: grid;
+  gap: 0;
+  margin: auto calc(var(--pad) * -1) calc(var(--pad) * -1);
+}
 .fileNext {
   display: grid;
-  gap: 8px;
-  margin-inline: calc(var(--pad) * -1);
-  padding: 0 var(--pad) 12px;
+  gap: 6px;
+  padding: 14px var(--pad);
   background: var(--well);
+}
+.fileNextLabel {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+  text-transform: uppercase;
 }
 .fileNextName {
   font: 800 var(--t-xl)/1 var(--display);
   text-transform: uppercase;
 }
 .fileNextSlot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  font: 700 var(--t-xs)/1.2 var(--display);
-  letter-spacing: .14em;
+  font: 400 var(--t-md)/1.2 var(--mono);
 }
-.fileNextSlot b {
-  font: 400 var(--t-lg)/1 var(--mono);
-  letter-spacing: 0;
+.fileFoot > .nextKey {
+  min-height: 56px;
 }
-.fileNextSlot > span:last-child {
-  flex-basis: 100%;
-  font: 600 var(--t-sm)/1.2 var(--sans);
-  letter-spacing: 0;
-}
-.fileKeys {
-  display: grid;
-  gap: 2px;
-  margin: auto calc(var(--pad) * -1) calc(var(--pad) * -1);
-}
-.fileOrigin > span:last-child {
+.fileOrigin > span:is(.fileTag, .fileCount) {
   font-family: var(--mono);
   letter-spacing: .04em;
 }
@@ -1816,8 +1814,8 @@
   padding: 0;
 }
 .fileRecords { grid-area: records; }
-.fileRecords > :first-child { flex: 1; }
 .fileShared { grid-area: shared; }
+.fileShared > :first-child { flex: 1 1 auto; }
 .fileBio { grid-area: bio; }
 :global([data-stage=stage]) :is(.fileRecords, .fileShared) {
   overflow: hidden;
@@ -1836,6 +1834,10 @@
     grid-template-areas: 'identity' 'records' 'bio' 'shared';
     grid-template-rows: auto auto auto auto;
   }
+  .fileTag,
+  .fileCountInline { display: none; }
+  .fileCount { display: inline; }
+  .fileFoot { margin-top: 4px; }
   /* The mobile reading order is also the DOM and keyboard order; no visual-only reordering. */
   :global([data-stage=stage]) .artistFile { grid-template-rows: max-content max-content minmax(var(--paged-min), 1fr) max-content; }
 }

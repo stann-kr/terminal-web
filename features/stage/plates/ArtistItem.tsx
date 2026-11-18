@@ -3,7 +3,7 @@ import Link from '@/features/ui/RouteLink';
 import { ArtistChronology } from '@/features/artists/ArtistChronology';
 import { artistHref, type ArtistProfile } from '@/features/artists/model';
 import { SignalText } from '@/features/display/Display';
-import { accessAvailability, bilingual, eventHref, paragraphs, sessionShort } from '@/features/events/model';
+import { accessAvailability, bilingual, eventHref, paragraphs, sessionShort, shortWhen } from '@/features/events/model';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { Arrow, BrandText, ui, type Surface } from '@/features/ui/Ui';
@@ -111,42 +111,38 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
       <div className={styles.fileMain} data-fit="">
         <p className={`${ui.band} ${styles.fileOrigin}`} aria-hidden="true">
           <span>ORIGIN / {profile.origin || '—'}</span>
-          <span>출연 {profile.appearances.length}</span>
+          <span className={styles.fileTag}>ARTIST FILE</span>
+          <span className={styles.fileCount}>{profile.appearances.length} SESSIONS</span>
         </p>
         <FitTitle as="h1" id={`artist-${profile.key}`} heading={current} text={profile.name} maxLines={3} minPx={28} className={styles.fileName} />
         <p className={styles.fileSessions}>
           <span className={styles.srOnly}>출연 회차 </span>
-          {sessions.map(event => {
-            const played = profile.appearances.some(row => row.event.id === event.id);
-            return (
-              <span key={event.id} data-on={played || undefined} aria-hidden={!played || undefined}>
-                [{sessionNumber(event)}]
-              </span>
-            );
-          })}
+          <span className={styles.cardSessions}>
+            {sessions.map(event => {
+              const played = profile.appearances.some(row => row.event.id === event.id);
+              return (
+                <span key={event.id} data-on={played || undefined} aria-hidden={!played || undefined}>
+                  [{sessionNumber(event)}]
+                </span>
+              );
+            })}
+          </span>
+          <span className={styles.fileCountInline} aria-hidden="true">{profile.appearances.length} SESSIONS</span>
         </p>
+        {/* The coming set at the foot of the column, with the guest request under it while it is open. */}
         {coming && (
-          <section className={styles.fileNext} aria-label="다음 무대">
-            <p className={ui.band} lang="en"><span>Next set</span><span>{coming.event.id}</span></p>
-            <p className={styles.fileNextName}><BrandText text={sessionShort(coming.event.session)} /></p>
-            <p className={styles.fileNextSlot}>
-              <span>DOCK {coming.artist.dock || 'TBA'}</span>
-              <b>{coming.artist.time || 'TBA'}</b>
-              <span>{coming.event.date} · {coming.event.venue}</span>
-            </p>
-          </section>
-        )}
-        {coming && (
-          <span className={styles.fileKeys}>
+          <div className={styles.fileFoot}>
+            <section className={styles.fileNext} aria-label="다음 무대">
+              <p className={styles.fileNextLabel} lang="en">Next set</p>
+              <p className={styles.fileNextName}>{coming.event.id} · {shortWhen(coming.event).split(' ').slice(0, 2).join(' ')}</p>
+              <p className={styles.fileNextSlot}>DOCK {coming.artist.dock || 'TBA'} · {coming.artist.time || 'TBA'}</p>
+            </section>
             {canRequest && (
               <Link href={`${eventHref(coming.event.id)}/request`} className={`${styles.card} ${styles.nextKey}`} data-surface="paper" data-carrier={`event:${coming.event.id}`} scroll={false}>
                 {coming.event.id} 게스트 신청<Arrow />
               </Link>
             )}
-            <Link href={eventHref(coming.event.id)} className={`${styles.card} ${styles.nextKey}`} data-key="file" data-carrier={`event:${coming.event.id}`} scroll={false}>
-              세션 파일 열기<Arrow />
-            </Link>
-          </span>
+          </div>
         )}
       </div>
       <ArtistChronology profile={profile} events={data.events ?? []} recordsClassName={styles.fileRecords} sharedClassName={styles.fileShared}>

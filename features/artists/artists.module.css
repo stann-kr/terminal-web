@@ -20,20 +20,43 @@
 .timeline li:nth-child(odd) {
   background: var(--well);
 }
+.timeline li {
+  padding-block: 14px;
+}
+.recordWhen {
+  display: grid;
+  gap: 6px;
+}
 .timeline time {
-  color: var(--accent);
-  font: 400 var(--t-md)/1.2 var(--mono);
+  color: var(--ink);
+  font: 400 var(--t-sm)/1.2 var(--mono);
   font-variant-numeric: tabular-nums;
+}
+.recordWhen .state::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  background: currentColor;
+}
+.recordWord {
+  display: block;
+  margin-bottom: 4px;
+  font: 800 var(--t-xl)/1 var(--display);
+}
+/* The session's number stands before the subtitle only where the wordmark gives way (a phone). */
+.recordNum,
+.slotShort {
+  display: none;
 }
 .recordBody {
   min-width: 0;
 }
 .timeline a {
-  display: flex;
-  align-items: center;
-  min-height: 32px;
+  display: block;
   color: var(--link);
-  font: 800 var(--t-lg)/1 var(--display);
+  font: 800 var(--t-md)/1.1 var(--display);
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -65,9 +88,9 @@
   gap: 4px;
 }
 .slot span {
-  color: var(--accent);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .16em;
+  color: var(--ink);
+  font: 400 var(--t-xs)/1 var(--mono);
+  letter-spacing: .04em;
 }
 .slot b {
   color: var(--ink);
@@ -75,7 +98,7 @@
 }
 .state {
   display: inline-block;
-  color: var(--accent);
+  color: var(--ink);
   font: 700 var(--t-xs)/1.3 var(--display);
   letter-spacing: .16em;
 }
@@ -85,14 +108,17 @@
 /* Shared lineups: flush cells across the plate (--bleed), in turns of tone. */
 .sharedCells {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   margin-inline: calc(var(--bleed, 0px) * -1);
 }
+/* A cell: the name and its way in on the left, the session's number on the right. */
 .sharedCells li {
   position: relative;
-  display: grid;
-  gap: 4px;
-  padding: 8px max(10px, var(--bleed, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
   color: var(--ink);
   transition: var(--light-motion);
 }
@@ -101,7 +127,7 @@
 }
 .sharedCells a,
 .sharedCells span {
-  font: 800 var(--t-lg)/1.05 var(--display);
+  font: 800 var(--t-md)/1.05 var(--display);
   text-decoration: none;
   text-transform: uppercase;
 }
@@ -122,22 +148,26 @@
   position: static;
 }
 .sharedCells small {
-  color: var(--muted);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .12em;
+  color: var(--ink);
+  font: 400 var(--t-xs)/1 var(--mono);
 }
 /* A narrower panel puts the date over the session and keeps the dock and time at the right of
    both; only a sliver stacks everything. */
-@container (max-width: 560px) {
+@container (max-width: 480px) {
   .timeline { grid-template-columns: minmax(0, 1fr) max-content; }
-  .timeline time,
+  .recordWhen,
   .recordBody { grid-column: 1; }
   .slot { grid-column: 2; grid-row: 1 / span 2; }
 }
-@container (max-width: 360px) {
-  .timeline,
-  .timeline li { grid-template-columns: minmax(0, 1fr); }
-  .slot { grid-column: 1; grid-row: auto; justify-items: start; }
+/* A phone's record is two lines: date and state over the number and subtitle, the set short at the right. */
+@container (max-width: 420px) {
+  .timeline li { padding-block: 10px; }
+  .recordWhen { display: flex; gap: 8px; }
+  .recordWord,
+  .slotWide { display: none; }
+  .recordNum,
+  .slotShort { display: inline; }
+  .recordWhen .state::before { display: none; }
 }
 
 /* Short labels, codes and times never break mid-phrase. */
