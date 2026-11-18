@@ -47,11 +47,14 @@
   min-height: 120px;
   overflow: hidden;
 }
+/* Every photo takes the same frame (the mockups' 1200 × 1066), so switching never resizes it; the
+   closer detail shot, a little taller, is trimmed at its edges rather than shown larger. */
 .lead img {
   display: block;
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  aspect-ratio: 1200 / 1066;
+  object-fit: cover;
 }
 .lead:focus-visible,
 .thumb:focus-visible {

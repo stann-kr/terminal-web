@@ -815,16 +815,7 @@
   gap: 0;
   padding-block: 0;
 }
-/* While requests are open, the guest request runs edge to edge along the plate's foot on paper (the
-   one thing to do); the block above it opens the session file. */
-.nextBlock:has(+ .nextKeys) {
-  margin-bottom: 0;
-}
-.nextKeys {
-  display: grid;
-  flex: none;
-  margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
-}
+/* The guest request key at an artist file's foot. */
 .nextKey {
   flex-direction: row;
   align-items: center;
@@ -1023,25 +1014,6 @@
   margin: -8px calc(var(--pad) * -1) -8px 0;
   letter-spacing: .12em;
 }
-/* A row whose guest requests are open: the row's link, then the key on paper as tall as the row. */
-.rowWrap {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 22%);
-  gap: 2px;
-  height: 100%;
-}
-.rowKey {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 var(--pad);
-  background: var(--plate);
-  color: var(--ink);
-  font: 700 var(--t-lg)/1 var(--display);
-  letter-spacing: .06em;
-}
-.rowKey > svg,
 .rowState > svg {
   display: inline-block;
 }
@@ -1050,7 +1022,6 @@
   .eventRow { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
   .rowId, .rowWhen, .rowVenue { display: none; }
   .rowNarrowMeta { display: block; }
-  .rowWrap { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 48px; }
 }
 
 /* A past row: its name and subtitle on one line, the date alone, the state as a mark, and the way
@@ -1083,7 +1054,7 @@
   display: none;
 }
 
-/* The leading row: the next session at length, with its keys stacked in the lower right corner. */
+/* The leading row: the next session at length. */
 .leadWrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 250px;
@@ -1137,17 +1108,6 @@
 .leadWhen small {
   font: 400 var(--t-xs)/1.2 var(--mono);
 }
-.leadKeys {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-area: 1 / 2;
-  align-self: end;
-  gap: 2px;
-}
-.leadKeys > .nextKey {
-  min-height: 56px;
-}
 .leadRow :is(.rowId, .leadMain, .leadWhen) {
   position: relative;
 }
@@ -1156,7 +1116,7 @@
 .leadShort {
   display: none;
 }
-/* A narrow directory: the leading session is a card with its guest key under it; a past row puts
+/* A narrow directory: the leading session is a card; a past row puts
    its date and mark on top, then the name, the subtitle with the way in, and the lineup. */
 @container layer (max-width: 760px) {
   .leadWrap {
@@ -1184,8 +1144,6 @@
   }
   .leadOpen,
   .leadWhen { display: none; }
-  .leadKeys { grid-area: 2 / 1; }
-  .leadKeys > .nextKey { min-height: 50px; }
 
   .eventRow:has(.rowMark) {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -2030,6 +1988,23 @@
 .partLineup .dockCols {
   margin-bottom: 10px;
 }
+/* On the stage the running order takes the plate's spare height: its slots grow alike (up to 88px),
+   row for row across the docks, rather than leaving the plate empty under it. */
+:global([data-stage=stage]) .partLineup .dockCols {
+  flex: 1 0 auto;
+  align-items: stretch;
+}
+:global([data-stage=stage]) .partLineup .dockCol {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+:global([data-stage=stage]) .partLineup .dockCol ol {
+  display: grid;
+  grid-template-rows: repeat(var(--slots, 1), minmax(auto, 88px));
+  align-content: start;
+}
+:global([data-stage=stage]) .partLineup .dockCol li {
+  align-content: center;
+}
 /* The running order: a column per dock side by side, each under a dark head with its dock and its
    night, one slot per line [start | artist]. Columns fall under each other when the plate is narrow. */
 .dockCols {
@@ -2400,7 +2375,6 @@
   width: 100%;
   padding-inline: 14px;
   border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
-  border-bottom: 2px solid var(--link);
   background: var(--plate);
 }
 
@@ -2669,9 +2643,6 @@
 /* Only a phone (no other plates beside the hero) ends the first screen on the row of four. */
 @media (max-width: 899px) {
   @container layer (max-width: 500px) {
-    .next[data-density=hero] .nextKeys {
-      margin-bottom: 0;
-    }
     .homeNav {
       display: grid;
       flex: none;

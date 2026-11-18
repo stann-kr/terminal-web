@@ -2,11 +2,7 @@
 .intro {
   font: 500 var(--t-md)/1.5 var(--sans);
 }
-/* The data notice sits small over the save key; the key is a bar with its arrow at the right. */
-.notice {
-  margin-top: 10px;
-  font-size: var(--t-xs);
-}
+/* The save key is a bar with its arrow at the right. */
 .submit {
   display: flex;
   align-items: center;

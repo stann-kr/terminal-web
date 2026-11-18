@@ -307,6 +307,20 @@ describe('stage views', () => {
     }
   });
 
+  it('opens the briefing on the session log line under its full name, in the chosen language', () => {
+    const named = { ...upcoming, session: 'TERMINAL [03] : Vulpecula Junction', log: { ko: '헬리오포즈 돌파 후 204일. 미확인 신호 수신.', en: '204 days past the heliopause. Unidentified signal received.' }, description: { ko: '한국어 소개', en: 'English briefing' } };
+    const { container, go } = shell([named]);
+    go('/events/TRM-03');
+    const briefing = within(detail(container, 'event:TRM-03')).getByRole('group', { name: '이벤트 소개' });
+    const lines = () => Array.from(briefing.querySelectorAll('p'), p => p.textContent);
+    expect(lines()[0]).toBe('TERMINAL [03]: Vulpecula Junction\n헬리오포즈 돌파 후 204일. 미확인 신호 수신.');
+    expect(lines()[1]).toBe('한국어 소개');
+    fireEvent.click(within(detail(container, 'event:TRM-03')).getByRole('button', { name: 'EN' }));
+    expect(lines()[0]).toBe('TERMINAL [03]: Vulpecula Junction\n204 days past the heliopause. Unidentified signal received.');
+    fireEvent.click(within(detail(container, 'event:TRM-03')).getByRole('button', { name: 'KO' }));
+    window.localStorage.removeItem('terminal:language');
+  });
+
   it('offers the language only where a text comes in two, and reads the browser’s language first', () => {
     const bilingualEvent = { ...past, subtitle: 'A Voyage to the Unknown Sector.', stage: { ko: '방향', en: 'Bearing' }, description: { ko: '한국어 소개\n둘째 줄\n\n다음 문단', en: 'English briefing\nSecond line\n\nNext paragraph' } };
     const { container, go } = shell([bilingualEvent]);
@@ -680,6 +694,7 @@ describe('directory and roster contracts', () => {
     expect(row()).toHaveAttribute('data-event-state', 'UPCOMING');
     expect(row()).toHaveAttribute('href', '/events/NEXT');
     expect(within(item(container, 'event:NEXT')).queryByRole('link', { name: /세션 파일 열기/ })).toBeNull();
+    expect(item(container, 'event:NEXT').querySelector('a[href$="/request"]')).toBeNull();
     act(() => vi.advanceTimersByTime(1000));
     expect(row()).toHaveAttribute('data-event-state', 'ARCHIVED');
     expect(order()).toEqual(['event:LATER', 'event:NEXT', 'event:OLD']);
@@ -747,6 +762,8 @@ describe('directory and roster contracts', () => {
     // The plate's block opens the session file; no second key goes to the same place.
     expect(within(home).queryByRole('link', { name: '세션 파일 열기' })).toBeNull();
     expect([...home.querySelectorAll('a[href="/events/TRM-03"]')]).toHaveLength(1);
+    // The guest request is made from the session file alone, not from the home plate.
+    expect(home.querySelector('a[href$="/request"]')).toBeNull();
     go('/events/TRM-03');
     const dock = within(detail(container, 'event:TRM-03')).getByRole('region', { name: '무대 1' });
     expect([...dock.querySelectorAll('li')].map((line) => line.querySelector('a, div:nth-child(2)')?.textContent)).toEqual([

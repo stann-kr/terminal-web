@@ -259,7 +259,7 @@ export function AccessForm({
         )}
         {/* The guest came by the artist's own invite link, so the request itself is what they ask
             for: no consent box, only a plain account, above the key, of what goes where. */}
-        <p id="guest-notice" className={formStyles.hint}>
+        <p id="guest-notice" className={formStyles.notice}>
           {waitlist ? (
             <>
               대기 신청하시면 이름·인스타그램 ID와 신청 시각이 초대한 아티스트에게 전달되고, 명단에

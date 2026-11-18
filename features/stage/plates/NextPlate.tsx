@@ -1,4 +1,5 @@
 'use client';
+import type { CSSProperties } from 'react';
 import Link from '@/features/ui/RouteLink';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getSlotTimes } from '@/lib/events/lifecycle';
@@ -189,7 +190,8 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
               <span>{playing.length > 0 ? '시간표 기준 지금 순서' : timed ? '공연표' : '출연'}</span>
             </span>
             {artists.length ? (
-              <span className={styles.dockCols}>
+              // As many rows as the longest dock, so the columns' slots line up when they grow.
+              <span className={styles.dockCols} style={{ '--slots': Math.max(...docks.map(([, slots]) => slots.length)) } as CSSProperties}>
                 {docks.map(([dock, slots]) => (
                   <span key={dock} className={styles.dockCol}>
                     <span className={styles.dockHead} aria-hidden="true">
@@ -223,18 +225,10 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
     </Link>
   );
   if (mode !== 'hero') return block;
-  // The block itself opens the session file. Under it, not inside its link (a link holds no other
-  // link), the guest request while it is open.
+  // The block itself opens the session file; the guest request lives there, not on the home plate.
   return (
     <>
       {block}
-      {accessOpen && (
-        <span className={styles.nextKeys}>
-          <Link href={`${eventHref(event.id)}/request`} className={`${styles.card} ${styles.nextKey}`} data-surface="paper" data-carrier={carrier} scroll={false}>
-            게스트 신청<Arrow />
-          </Link>
-        </span>
-      )}
       {/* A phone's first screen ends on the ways to the other plates, a row of four. */}
       <nav className={styles.homeNav} aria-label="바로 가기">
         {HOME_NAV.map(([href, name, title, surface]) => (

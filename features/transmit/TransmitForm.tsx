@@ -61,7 +61,7 @@ export function TransmitForm({
         value={draft.handle}
         onChange={(event) => edit({ handle: event.target.value })}
       />
-      <p className={`${formStyles.hint} ${styles.notice}`}>
+      <p className={formStyles.notice}>
         악용 방지를 위한 접속 기록 보관은 <PrivacyLink />을 참고해 주십시오.
       </p>
       <button

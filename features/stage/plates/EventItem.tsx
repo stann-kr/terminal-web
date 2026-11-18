@@ -108,24 +108,14 @@ export function EventItem({ event, shape, current = false, apply = false, lead =
         <span className={styles.rowState} data-past={past || undefined}>{past ? <>기록 보기<Arrow /></> : statusLabel(event.status)}</span>
       </Link>
     );
-    if (!apply) return row;
-    // The key stands beside the row's link, never inside it (a link holds no other link).
-    return (
-      <div className={styles.rowWrap}>
-        {row}
-        <Link href={`${eventHref(event.id)}/request`} className={`${styles.card} ${styles.rowKey}`} data-surface="paper" data-carrier={carrier} scroll={false}>
-          게스트 신청<Arrow />
-        </Link>
-      </div>
-    );
+    return row;
   }
   return null;
 }
 
 /**
  * The directory's leading row: the next session at length (state, name, subtitle, lineup; date,
- * time and venue), with the guest request and the file as keys in its lower right corner, beside
- * the row's link, never inside it.
+ * time and venue). The row opens the session file, where the guest request is.
  */
 function LeadRow({ event, apply, now }: { event: TerminalEvent; apply: boolean; now?: Date }) {
   const carrier = `event:${event.id}`;
@@ -155,14 +145,6 @@ function LeadRow({ event, apply, now }: { event: TerminalEvent; apply: boolean; 
           <small>{event.time.replace(' KST', '')} KST · {event.venue}</small>
         </span>
       </Link>
-      {/* The row itself opens the session file; the one key beside it is the guest request while open. */}
-      {apply && (
-        <span className={styles.leadKeys}>
-          <Link href={`${eventHref(event.id)}/request`} className={`${styles.card} ${styles.nextKey}`} data-surface="paper" data-carrier={carrier} scroll={false}>
-            게스트 신청<Arrow />
-          </Link>
-        </span>
-      )}
     </div>
   );
 }
@@ -175,7 +157,13 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
   const { language } = useLanguage();
   const current = state.view === 'session' && state.eventId === event.id;
   const request = current && state.view === 'session' && state.request;
-  const briefing = paragraphs(event.description, language);
+  // The briefing opens on the session's log line under its full name, as the invitation does:
+  // "TERMINAL [03]: Vulpecula Junction" over "204 days past the heliopause. …".
+  const subtitle = eventSubtitle(event);
+  const opening = event.log?.[language]
+    ? [`${sessionShort(event.session)}${subtitle ? `: ${subtitle}` : ''}\n${event.log[language]}`]
+    : [];
+  const briefing = [...opening, ...paragraphs(event.description, language)];
   // The invitation's text-art frame lines are dropped: drawn in characters, they break with the width.
   const invitation = paragraphs(event.invitationLines, language).filter(line => !isRuleLine(line));
   const hasOrder = publicArtists(event).length > 0;
