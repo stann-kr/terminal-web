@@ -356,7 +356,8 @@ export const NARROW_W = 900;
  * their own.
  */
 /** A sheet's tiling; `h` is set for a narrow stage's secondary sheet, as tall as its plates. */
-type SheetTree = { tree: LayoutNode; h?: number };
+/** `joined`: a sheet that carries on the column above it, a plate's gap apart rather than a sheet's. */
+type SheetTree = { tree: LayoutNode; h?: number; joined?: boolean };
 
 /** What a narrow stage's secondary sheets need to know to be as tall as their plates. */
 type NaturalInput = { counts: Partial<Record<CarrierKind, number>>; heads: Partial<Record<PlateId, number>> };
@@ -405,7 +406,9 @@ function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill, m: StageMetrics
       hasBack ? { tree: { dir: 'col', parts: [[m.natural.back, { slot: 'back' }], [stage.h - m.natural.back - m.gap, node]] } } : { tree: wrap(node) };
     const others = prune(rest, key => key === primary || key === 'back');
     const parts = others && others.dir === 'row' ? others.parts.map(([, child]) => natural(isLeaf(child) ? wrap(child) : stacked(child))) : others ? [natural(stacked(others))] : [];
-    return [...(primaryLeaf ? [main(primaryLeaf)] : []), ...parts, ...own];
+    // The sheets under the main one read as one column of plates: each after the first follows the
+    // one above it a plate's gap apart, not a sheet's.
+    return [...(primaryLeaf ? [main(primaryLeaf)] : []), ...parts.map((part, index) => (index ? { ...part, joined: true } : part)), ...own];
   }
   // A band keeps its chips: the open leaf grows under it instead (see computeLayout).
   if (spill.alone && primaryLeaf && !bandOf(rest)) {
@@ -462,7 +465,8 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
     heads: input.heads ?? {},
   };
   const tiling = (stage.w < NARROW_W && config.narrow[view ?? 'home']) || config.layouts[view ?? 'home'];
-  sheetTrees(tiling, stage, spill, m, natural).forEach(({ tree, h: natural }, index) => {
+  sheetTrees(tiling, stage, spill, m, natural).forEach(({ tree, h: natural, joined }, index) => {
+    if (joined && index) y += m.gap - sheetGap;
     // A sheet with a single leaf (or a band over one) grows by what that leaf still needs.
     const only = leavesOf(tree).filter(leaf => leafKey(leaf) !== 'back');
     const grower = only.length === 1 ? only[0] : bandOf(tree);

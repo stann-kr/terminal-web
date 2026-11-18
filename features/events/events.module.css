@@ -210,6 +210,11 @@
 .accessDeck {
   margin-top: auto;
 }
+/* A hairline of the panel's own colour under the guest request and merch keys parts them from the
+   calendar, map and share keys that stand right below in the same key colour. */
+div.accessDeck {
+  border-bottom: 2px solid var(--plate);
+}
 /* Guest request and the news signup stand side by side while each name fits on one line; once one
    would break, the keys stack one per line instead. */
 div.accessDeck {

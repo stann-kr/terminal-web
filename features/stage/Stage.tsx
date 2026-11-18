@@ -567,6 +567,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
           const kind: CarrierKind | null = id === 'events' ? 'event' : id === 'artists' ? 'artist' : null;
           const pager = list && kind === list.kind && list.pages > 1 ? list : null;
           // Sub-plates (cells, rows, index lines, the pager) live inside their plate.
+          const artistCols = kind === 'artist' ? columnsOf(layout.items, 'artist') : 1;
           const sessionsOldestFirst = [...data.ordered].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
           const subPlates = kind && (
             <>
@@ -584,7 +585,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
                     const itemKey = carrierKey('artist', profile.key);
                     const item = layout.items[itemKey];
                     return item && (
-                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' ? artistSurface(profile) : 'inset')}>
+                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} cols={artistCols} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' ? artistSurface(profile) : 'inset')}>
                         {shape => <ArtistItem profile={profile} shape={shape} current={item.current} sessions={sessionsOldestFirst} />}
                       </SubPlate>
                     );
@@ -709,9 +710,11 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
 }
 
 /** A sub-plate inside its owner plate. Folded, it keeps the shape it last had while it fades. */
-function SubPlate({ itemKey, placed, onStage, delay, view, surface, children }: {
+function SubPlate({ itemKey, placed, cols = 1, onStage, delay, view, surface, children }: {
   itemKey: string;
   placed: PlacedItem;
+  /** Columns of the grid it stands in, for the turns of tone. */
+  cols?: number;
   onStage: boolean;
   delay: number;
   view: string;
@@ -729,7 +732,7 @@ function SubPlate({ itemKey, placed, onStage, delay, view, surface, children }: 
       surface={surface(shape)}
       delay={delay}
       view={view}
-      data={{ item: itemKey, mode: placed.mode, shape, current: placed.current ? '' : undefined, zebra: placed.order % 2 && !(placed.mode === 'cell' && itemKey.startsWith('artist:')) ? '' : undefined }}
+      data={{ item: itemKey, mode: placed.mode, shape, current: placed.current ? '' : undefined, zebra: zebraOf(placed.order, cols) ? '' : undefined }}
     >
       {children(shape)}
     </Box>
@@ -775,4 +778,21 @@ function DetailBox({ kind, id, open, rect, origin, delay, view, surface, decor, 
       {resting ? null : children}
     </Box>
   );
+}
+
+/**
+ * Every other sub-plate is a shade lighter. A list's rows turn by their order; a grid of several
+ * columns turns like a chequerboard by row and column, so neighbours across and down both differ (by
+ * order alone, an even count of columns would only stripe the grid).
+ */
+function zebraOf(order: number, cols: number): boolean {
+  return cols > 1 ? (Math.floor(order / cols) + (order % cols)) % 2 === 1 : order % 2 === 1;
+}
+
+/** How many of a kind's sub-plates stand in its first line (1 for a list of rows). */
+function columnsOf(items: StageLayout['items'], kind: string): number {
+  const shown = Object.entries(items).filter(([key, item]) => key.startsWith(`${kind}:`) && item.visible && item.mode !== 'folded');
+  if (!shown.length) return 1;
+  const top = Math.min(...shown.map(([, item]) => item.rel.y));
+  return Math.max(1, shown.filter(([, item]) => Math.abs(item.rel.y - top) < 1).length);
 }

@@ -848,6 +848,18 @@
   background: var(--fill);
   color: var(--on-fill);
 }
+/* Lit or pressed, the file key takes the card's highlight like any card: its own fill turns to the
+   highlight and its words to the highlight's text, so the words never vanish into the sweep. */
+@media (hover: hover) {
+  .nextKey[data-key=file]:hover {
+    background: var(--hi);
+    color: var(--on-hi);
+  }
+}
+.nextKey[data-key=file][data-pressed] {
+  background: var(--hi);
+  color: var(--on-hi);
+}
 .nextKey > svg {
   display: inline-block;
 }
@@ -1404,7 +1416,6 @@
 .logWrite form :is(input, textarea)[id] {
   padding-inline: 14px;
   border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
-  border-bottom: 2px solid var(--link);
   background: var(--paper);
   color: var(--paper-ink);
 }
@@ -2238,7 +2249,12 @@
   .next[data-density=chip] .brandBar {
     display: none;
   }
+  /* With the wordmark gone the chip is the whole plate, edge to edge, so it lights up whole. */
+  .next[data-density=chip] {
+    padding: 0;
+  }
   .next[data-density=chip] .nextChip {
+    margin: 0;
     flex-direction: column;
     align-items: stretch;
     justify-content: space-between;
@@ -2574,7 +2590,9 @@
   height: 100%;
   max-width: 40%;
   aspect-ratio: 4 / 5;
-  object-fit: cover;
+  /* The whole shirt, sleeves and all, a little back from the frame's edges. */
+  padding: 6px;
+  object-fit: contain;
   background: var(--well);
 }
 .merchText {
