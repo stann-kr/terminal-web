@@ -1555,6 +1555,50 @@
   min-height: 0;
   padding: 0 var(--pad) var(--pad);
 }
+/* The sessions the artist played, lit; the rest faint. */
+.fileSessions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font: 400 var(--t-md)/1 var(--mono);
+}
+.fileSessions > [aria-hidden] {
+  opacity: .4;
+}
+/* The coming set: a band, the session, then dock, time and place, on a strip of the plate's well. */
+.fileNext {
+  display: grid;
+  gap: 8px;
+  margin-inline: calc(var(--pad) * -1);
+  padding: 0 var(--pad) 12px;
+  background: var(--well);
+}
+.fileNextName {
+  font: 800 var(--t-xl)/1 var(--display);
+  text-transform: uppercase;
+}
+.fileNextSlot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .14em;
+}
+.fileNextSlot b {
+  font: 400 var(--t-lg)/1 var(--mono);
+  letter-spacing: 0;
+}
+.fileNextSlot > span:last-child {
+  flex-basis: 100%;
+  font: 600 var(--t-sm)/1.2 var(--sans);
+  letter-spacing: 0;
+}
+.fileKeys {
+  display: grid;
+  gap: 2px;
+  margin: auto calc(var(--pad) * -1) calc(var(--pad) * -1);
+}
 .fileOrigin > span:last-child {
   font-family: var(--mono);
   letter-spacing: .04em;

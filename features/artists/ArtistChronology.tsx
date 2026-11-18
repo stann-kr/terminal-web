@@ -57,9 +57,8 @@ export function ArtistChronology({
               <li key={`${event.id}:${artist.id}`} data-origin="">
                 <time dateTime={event.date}>{event.date}</time>
                 <div className={styles.recordBody}>
-                  <span className={styles.state}>{statusLabel(event.status)}</span>
                   <Link href={eventHref(event.id)} data-carrier={`event:${event.id}`} scroll={false}><span className={styles.recordName}><NameWithArrow text={event.session} /></span></Link>
-                  <p>{event.venue}</p>
+                  <p><span className={styles.state}>{statusLabel(event.status)}</span> · {event.venue}</p>
                 </div>
                 <p className={styles.slot}>
                   <span>DOCK {artist.dock || 'TBA'}</span>
