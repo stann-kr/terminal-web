@@ -9,7 +9,7 @@ export type Density = 'hero' | 'panel' | 'tile' | 'index' | 'chip';
 /** A layout is a tiling: splits side by side (`row`) or stacked (`col`), each part with a weight. */
 export type LayoutLeaf = { plate: PlateId; density: Density } | { slot: 'detail' } | { slot: 'back' };
 export type LayoutNode = { dir: 'row' | 'col'; parts: [number, LayoutNode | LayoutLeaf][] };
-export type ViewName = 'home' | 'events' | 'session' | 'artists' | 'artist' | 'log' | 'signal' | 'about';
+export type ViewName = 'home' | 'events' | 'session' | 'artists' | 'artist' | 'log' | 'signal' | 'about' | 'merch';
 
 const row = (...parts: [number, LayoutNode | LayoutLeaf][]): LayoutNode => ({ dir: 'row', parts });
 const col = (...parts: [number, LayoutNode | LayoutLeaf][]): LayoutNode => ({ dir: 'col', parts });
@@ -48,7 +48,7 @@ export interface StageConfig {
  */
 const homeNext: [number, LayoutLeaf] = [47, p('next', 'hero')];
 const homeDirectory: [number, LayoutNode] = [30, col([50, p('events', 'panel')], [50, p('artists', 'panel')])];
-const homeCalls: [number, LayoutNode] = [23, col([26, p('instagram', 'tile')], [20, p('signal', 'panel')], [37, p('log', 'panel')], [17, p('about', 'tile')])];
+const homeCalls: [number, LayoutNode] = [23, col([22, p('instagram', 'tile')], [18, p('signal', 'panel')], [15, p('merch', 'tile')], [32, p('log', 'panel')], [13, p('about', 'tile')])];
 
 export const stageConfig: StageConfig = {
   layouts: {
@@ -57,42 +57,47 @@ export const stageConfig: StageConfig = {
     // The directory opens wide on the right; the way back, the next session and the roster step left.
     events: row(
       [30, col([15, BACK], [43, p('next', 'panel')], [42, p('artists', 'panel')])],
-      [70, col([86, p('events', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
+      [70, col([86, p('events', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('merch', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
     ),
     // The roster mirrors the directory: wide on the left, the rest in a column on the right.
     artists: row(
-      [70, col([86, p('artists', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
+      [70, col([86, p('artists', 'hero')], [14, row([1, p('instagram', 'chip')], [1, p('signal', 'chip')], [1, p('merch', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
       [30, col([15, BACK], [40, p('next', 'panel')], [45, p('events', 'panel')])],
     ),
     // A session: the other sessions as an index on the left, the file beside it, a band of plates on
     // top. The band holds six (a seventh leaves its keys no room); the account heads the index, by the band.
     session: col(
       [13, row([18, BACK], [22, p('next', 'chip')], [15, p('artists', 'chip')], [15, p('signal', 'chip')], [15, p('log', 'chip')], [15, p('about', 'chip')])],
-      [87, row([21, col([14, p('instagram', 'chip')], [86, p('events', 'index')])], [79, DETAIL])],
+      [87, row([21, col([12, p('instagram', 'chip')], [12, p('merch', 'chip')], [76, p('events', 'index')])], [79, DETAIL])],
     ),
     // An artist file mirrors it: the file with the roster index on the right (the account at its
     // foot, by the band), the band below.
     artist: col(
-      [87, row([78, DETAIL], [22, col([86, p('artists', 'index')], [14, p('instagram', 'chip')])])],
+      [87, row([78, DETAIL], [22, col([76, p('artists', 'index')], [12, p('merch', 'chip')], [12, p('instagram', 'chip')])])],
       [13, row([18, BACK], [22, p('next', 'chip')], [15, p('events', 'chip')], [15, p('signal', 'chip')], [15, p('log', 'chip')], [15, p('about', 'chip')])],
     ),
     // The log sits in the middle between the session side and the rest.
     log: row(
       [25, col([15, BACK], [35, p('next', 'tile')], [50, p('events', 'panel')])],
       [50, p('log', 'hero')],
-      [25, col([37, p('signal', 'panel')], [21, p('artists', 'chip')], [21, p('instagram', 'chip')], [21, p('about', 'chip')])],
+      [25, col([32, p('signal', 'panel')], [17, p('artists', 'chip')], [17, p('merch', 'chip')], [17, p('instagram', 'chip')], [17, p('about', 'chip')])],
     ),
     // Subscribing sits beside the session it is about.
     signal: row(
       [28, col([15, BACK], [85, p('next', 'panel')])],
       [50, p('signal', 'hero')],
-      [22, col([1, p('events', 'chip')], [1, p('artists', 'chip')], [1, p('instagram', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])],
+      [22, col([1, p('events', 'chip')], [1, p('artists', 'chip')], [1, p('merch', 'chip')], [1, p('instagram', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])],
     ),
     // About leads wide; the roster and the rest in a column. The next-session tile keeps the height
     // its name needs; the chips go two by two (four in a row leave INSTAGRAM no room).
     about: row(
       [64, p('about', 'hero')],
-      [36, col([13, BACK], [27, p('next', 'tile')], [30, p('artists', 'panel')], [15, row([1, p('events', 'chip')], [1, p('instagram', 'chip')])], [15, row([1, p('signal', 'chip')], [1, p('log', 'chip')])])],
+      [36, col([12, BACK], [24, p('next', 'tile')], [28, p('artists', 'panel')], [12, row([1, p('events', 'chip')], [1, p('instagram', 'chip')])], [12, row([1, p('signal', 'chip')], [1, p('log', 'chip')])], [12, p('merch', 'chip')])],
+    ),
+    // Merch mirrors About: the piece wide on the left; the session it is sold at heads the column.
+    merch: row(
+      [64, p('merch', 'hero')],
+      [36, col([13, BACK], [27, p('next', 'tile')], [30, p('events', 'panel')], [15, row([1, p('artists', 'chip')], [1, p('instagram', 'chip')])], [15, row([1, p('signal', 'chip')], [1, p('log', 'chip')], [1, p('about', 'chip')])])],
     ),
   },
   narrow: {
@@ -109,6 +114,7 @@ export const stageConfig: StageConfig = {
     log: { plate: 'signal', at: { x: 0.82, y: 0.3 } },
     signal: { plate: 'next', at: { x: 0.8, y: 0.3 } },
     about: { plate: 'next', at: { x: 0.8, y: 0.4 } },
+    merch: { plate: 'next', at: { x: 0.8, y: 0.4 } },
   },
   flowChips: 'top',
   frameY: 10,
