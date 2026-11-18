@@ -555,6 +555,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
           const kind: CarrierKind | null = id === 'events' ? 'event' : id === 'artists' ? 'artist' : null;
           const pager = list && kind === list.kind && list.pages > 1 ? list : null;
           // Sub-plates (cells, rows, index lines, the pager) live inside their plate.
+          const sessionsOldestFirst = [...data.ordered].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
           const subPlates = kind && (
             <>
               {kind === 'event'
@@ -572,7 +573,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
                     const item = layout.items[itemKey];
                     return item && (
                       <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' ? artistSurface(profile) : 'inset')}>
-                        {shape => <ArtistItem profile={profile} shape={shape} current={item.current} />}
+                        {shape => <ArtistItem profile={profile} shape={shape} current={item.current} sessions={sessionsOldestFirst} />}
                       </SubPlate>
                     );
                   })}

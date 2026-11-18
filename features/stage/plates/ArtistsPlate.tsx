@@ -55,7 +55,8 @@ export function ArtistsPlate({ mode, state, data, query }: PlateProps) {
 
   const appearances = profiles.reduce((total, profile) => total + profile.appearances.length, 0);
   const sessions = new Set(profiles.flatMap(profile => profile.appearances.map(row => row.event.id))).size;
-  const origins = [...new Set(profiles.map(profile => profile.origin || '—'))].sort();
+  // The coming session the roster marks (its performers' cards are lit).
+  const coming = profiles.flatMap(profile => profile.appearances).find(row => row.event.status !== 'ARCHIVED')?.event.id;
   const page = state.view === 'plate' ? state.page : 1;
   const missing = state.view === 'plate' ? state.missing : undefined;
   return (
@@ -66,16 +67,14 @@ export function ArtistsPlate({ mode, state, data, query }: PlateProps) {
             <b aria-hidden="true">ERROR</b> 공개된 출연 이력이 없는 아티스트입니다. 아래 명부에서 다시 찾아 주십시오.
           </p>
         ) : data.events && (
-          <div className={styles.summary}>
-            <dl className={styles.counts}>
-              <div><dt>아티스트</dt><dd><LiveValue value={pad(count)} /></dd></div>
-              <div><dt>출연 기록</dt><dd><LiveValue value={pad(appearances)} /></dd></div>
-              <div><dt>참여 세션</dt><dd><LiveValue value={pad(sessions)} /></dd></div>
-            </dl>
-            <span className={styles.bandTags} aria-hidden="true">
-              <Tags items={origins} />
-            </span>
-          </div>
+          <p className={styles.rosterLine}>
+            아티스트 {count} · 출연 {appearances} · 세션 {sessions}
+            {coming && (
+              <span className={styles.rosterNext}>
+                <span aria-hidden="true" />예정 출연 {coming}
+              </span>
+            )}
+          </p>
         )}
       </FocusHead>
       {failure}

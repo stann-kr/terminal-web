@@ -1096,8 +1096,20 @@
   letter-spacing: .12em;
 }
 .cardFoot {
+  align-items: baseline;
   font-family: var(--mono);
   letter-spacing: .04em;
+}
+/* The sessions the card's artist played, lit; the others printed faint, so the run reads at a glance. */
+.cardSessions {
+  display: inline-flex;
+  gap: 4px;
+}
+.cardSessions > [aria-hidden] {
+  opacity: .35;
+}
+.cardSessions > [data-on] {
+  color: var(--ink);
 }
 .cardName {
   color: var(--link);
@@ -1675,6 +1687,27 @@
   letter-spacing: .04em;
   text-transform: uppercase;
   overflow-wrap: anywhere;
+}
+/* The roster's one-line summary under its title; the coming session behind a lamp in the accent. */
+.rosterLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin-top: 6px;
+  font: 600 var(--t-sm)/1.3 var(--sans);
+}
+.rosterNext {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+}
+.rosterNext > span {
+  width: 9px;
+  height: 9px;
+  background: var(--accent);
 }
 /* The lineup's label printed on the plate (the dock heads under it are the dark bands). */
 .lineupLabel {

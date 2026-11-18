@@ -8,6 +8,8 @@ import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { ui, type Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
+import type { TerminalEvent } from '@/lib/events/types';
+import { getSlotTimes } from '@/lib/events/lifecycle';
 import { FitTitle } from '../FitTitle';
 import type { StageState } from '../state';
 import { TextPages } from '../TextPages';
@@ -17,10 +19,18 @@ import styles from './plates.module.css';
 const upcoming = (profile: ArtistProfile) => profile.appearances.some(row => row.event.status !== 'ARCHIVED');
 const featured = (profile: ArtistProfile) => profile.key === 'stann-lumo';
 
-/** A printed four-digit serial derived from the profile key; ornament, not an identifier. */
-function serial(key: string) {
-  const sum = Array.from(key).reduce((total, char, index) => (total * 31 + char.charCodeAt(0) * (index + 1)) % 9973, 7);
-  return String(sum % 10000).padStart(4, '0');
+/** A session's number as printed in its name (`TERMINAL [03]` → `03`), else its code. */
+const sessionNumber = (event: TerminalEvent) => /\[(\d+)\]/.exec(event.session)?.[1] ?? event.id;
+
+/** Where a coming set sits (`TRM-03 · DOCK 2 · 00:00`), else the latest session played (`최근 TRM-02`). */
+function cardNote(profile: ArtistProfile) {
+  const coming = profile.appearances.find(row => row.event.status !== 'ARCHIVED');
+  if (coming) {
+    const start = getSlotTimes(coming.event, coming.artist.time) ? coming.artist.time.split(/\s*[-–]\s*/)[0] : null;
+    return [coming.event.id, `DOCK ${coming.artist.dock || 'TBA'}`, ...(start ? [start] : [])].join(' · ');
+  }
+  const latest = profile.appearances.at(-1);
+  return latest ? `최근 ${latest.event.id}` : '';
 }
 
 /** STANN LUMO is the featured plate, an artist with a coming set is marked, the rest are records. */
@@ -31,7 +41,7 @@ export function artistSurface(profile: ArtistProfile, open = false): Surface {
 }
 
 /** An artist's sub-plate inside the roster plate: a roster cell, a file card in the grid, or an index line. */
-export function ArtistItem({ profile, shape, current = false }: { profile: ArtistProfile; shape: ItemShape; current?: boolean }) {
+export function ArtistItem({ profile, shape, current = false, sessions = [] }: { profile: ArtistProfile; shape: ItemShape; current?: boolean; /** Every session, oldest first: a card marks the ones the artist played. */ sessions?: readonly TerminalEvent[] }) {
   const carrier = `artist:${profile.key}`;
   const records = String(profile.appearances.length).padStart(2, '0');
   if (shape === 'cell') {
@@ -63,13 +73,25 @@ export function ArtistItem({ profile, shape, current = false }: { profile: Artis
         scroll={false}
       >
         <span className={styles.cardHead}>
-          <span>ARTIST / {profile.origin}</span>
+          <span>{profile.origin || '—'}</span>
           <SignalText active={upcoming(profile)}>{live ? 'LIVE 출연' : next ? '예정 출연' : '출연 기록'}</SignalText>
         </span>
         <FitTitle as="h2" text={profile.name} maxLines={2} minPx={18} className={styles.cardName} arrow="in" />
-        <span className={styles.cardFoot} aria-hidden="true">
-          <span>{profile.origin}-{records} REC</span>
-          <span>{serial(profile.key)}</span>
+        <span className={styles.cardFoot}>
+          {sessions.length > 0 && (
+            <span className={styles.cardSessions}>
+              <span className={styles.srOnly}>출연 회차 </span>
+              {sessions.map(event => {
+                const played = profile.appearances.some(row => row.event.id === event.id);
+                return (
+                  <span key={event.id} data-on={played || undefined} aria-hidden={!played || undefined}>
+                    [{sessionNumber(event)}]
+                  </span>
+                );
+              })}
+            </span>
+          )}
+          <span>{cardNote(profile)}</span>
         </span>
       </Link>
     );
@@ -87,7 +109,7 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
       <div className={styles.fileMain} data-fit="">
         <p className={`${ui.band} ${styles.fileOrigin}`} aria-hidden="true">
           <span>ORIGIN / {profile.origin || '—'}</span>
-          <span>{profile.origin || 'XX'}-{serial(profile.key)}</span>
+          <span>출연 {profile.appearances.length}</span>
         </p>
         <FitTitle as="h1" id={`artist-${profile.key}`} heading={current} text={profile.name} maxLines={3} minPx={28} className={styles.fileName} />
       </div>

@@ -73,7 +73,7 @@ export function stageMetrics(viewportW: number): StageMetrics {
     // Sub-plates sit flush against each other and the plate's edges; plates keep their gap.
     rowGap: 0,
     cellMinW: 200,
-    cellH: 128,
+    cellH: 108,
     panelCellH: 52,
     indexRowH: 44,
     panelCells: { event: { max: 4, columns: 1 }, artist: { max: 10, columns: 2 } },
@@ -247,8 +247,11 @@ function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics,
     const h = fillHeight(avail, rowHeight(area.w, m), fit, single ? Math.min(shown, fit) : fit);
     return gridRects(area.x, area.w, top, 1, h, fit);
   }
-  const cols = Math.max(1, Math.floor(area.w / m.cellMinW));
+  const fitCols = Math.max(1, Math.floor(area.w / m.cellMinW));
   const rows = Math.max(1, Math.floor(avail / m.cellH));
+  // A roster on one page takes no more columns than it needs to fill the rows it has (four at
+  // least, as many as fit at most), so a short roster fills the plate instead of leaving a gap.
+  const cols = single ? Math.min(fitCols, Math.max(4, Math.ceil(shown / rows))) : fitCols;
   const onPage = Math.min(shown, cols * rows);
   const h = fillHeight(avail, m.cellH, rows, single ? Math.ceil(onPage / cols) : rows);
   return gridRects(area.x, area.w, top, cols, h, cols * rows, onPage);
