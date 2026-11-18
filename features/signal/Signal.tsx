@@ -1,7 +1,7 @@
 'use client';
 import { Fragment, Suspense, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Action, ActionDeck, Bay, Panel, ui } from '@/features/ui/Ui';
+import { Action, ActionDeck, Panel, ui } from '@/features/ui/Ui';
 import {
   Consent,
   Field,
@@ -20,12 +20,12 @@ import styles from './signal.module.css';
  * The note on the channel and the form around one subscription request, so both read the same
  * state. `wrap` places each part (the stage puts each in its own column).
  */
-export function SignalBody({ wrap = node => node }: { wrap?: (node: ReactNode) => ReactNode }) {
+export function SignalBody({ wrap = node => node, aside }: { wrap?: (node: ReactNode) => ReactNode; aside?: ReactNode }) {
   const request = useSignalSubscription();
   return (
     <>
       {[
-        <SignalInformation key="info" request={request} />,
+        <SignalInformation key="info" request={request} aside={aside} />,
         <SignalForm key="form" request={request} />,
       ].map(part => <Fragment key={part.key}>{wrap(part)}</Fragment>)}
     </>
@@ -33,30 +33,23 @@ export function SignalBody({ wrap = node => node }: { wrap?: (node: ReactNode) =
 }
 function SignalInformation({
   request,
+  aside,
 }: {
   request: ReturnType<typeof useSignalSubscription>;
+  /** What follows the note on the stage (the next session). */
+  aside?: ReactNode;
 }) {
   const { pending, done, error } = request;
+  const state = pending ? 'sending' : done ? 'saved' : error ? 'error' : 'idle';
   return (
-    <Panel title="수신 안내" label="Signal" code="CH 01" surface="mark">
-      <p className={styles.lead}>TERMINAL의 새로운 이벤트와 소식을 안내합니다.</p>
-      <p
-        className={styles.signalMatrix}
-        aria-hidden="true"
-        data-state={
-          pending ? 'sending' : done ? 'saved' : error ? 'error' : 'idle'
-        }
-      >
+    <Panel title="수신 안내" label="Notice" code="CH 01" surface="mark">
+      <p className={styles.signalMatrix} aria-hidden="true" data-state={state}>
         <i />
-        {pending
-          ? 'TRANSMITTING'
-          : done
-            ? 'CHANNEL REGISTERED'
-            : error
-              ? 'TRANSMISSION FAILED'
-              : 'CHANNEL STANDBY'}
+        {{ idle: '신청 전', sending: '보내는 중', saved: '신청 완료', error: '보내지 못함' }[state]}
       </p>
-      <Bay label="CHANNEL 01 / STANDBY" />
+      <p className={styles.lead}>TERMINAL의 새로운 이벤트와 소식을 안내합니다.</p>
+      <p className={styles.note}>메일로 받으며, 인스타그램 ID를 적으면 DM으로도 받습니다.</p>
+      {aside}
       <ActionDeck className={styles.deck}>
         <Action href="/about">소개 / 공식 채널</Action>
       </ActionDeck>
