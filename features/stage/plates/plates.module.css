@@ -815,22 +815,15 @@
   gap: 0;
   padding-block: 0;
 }
-/* The plate's keys under the block, edge to edge at its foot: the guest request on paper (the one
-   thing to do) and the session file in the plate's fill. A single key runs the whole row. */
+/* While requests are open, the guest request runs edge to edge along the plate's foot on paper (the
+   one thing to do); the block above it opens the session file. */
 .nextBlock:has(+ .nextKeys) {
   margin-bottom: 0;
 }
 .nextKeys {
   display: grid;
-  grid-auto-flow: column;
-  grid-template-columns: 1.3fr;
-  grid-auto-columns: 1fr;
-  gap: 0;
   flex: none;
   margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
-}
-.nextKeys > :only-child {
-  grid-column: 1 / -1;
 }
 .nextKey {
   flex-direction: row;
@@ -843,22 +836,6 @@
   color: var(--ink);
   font: 700 var(--t-lg)/1 var(--display);
   letter-spacing: .06em;
-}
-.nextKey[data-key=file] {
-  background: var(--fill);
-  color: var(--on-fill);
-}
-/* Lit or pressed, the file key takes the card's highlight like any card: its own fill turns to the
-   highlight and its words to the highlight's text, so the words never vanish into the sweep. */
-@media (hover: hover) {
-  .nextKey[data-key=file]:hover {
-    background: var(--hi);
-    color: var(--on-hi);
-  }
-}
-.nextKey[data-key=file][data-pressed] {
-  background: var(--hi);
-  color: var(--on-hi);
 }
 .nextKey > svg {
   display: inline-block;
@@ -1171,10 +1148,6 @@
 .leadKeys > .nextKey {
   min-height: 56px;
 }
-.leadKeys > .leadFile {
-  min-height: 48px;
-  font-size: var(--t-md);
-}
 .leadRow :is(.rowId, .leadMain, .leadWhen) {
   position: relative;
 }
@@ -1210,8 +1183,7 @@
     font: 400 var(--t-sm)/1.2 var(--mono);
   }
   .leadOpen,
-  .leadWhen,
-  .leadKeys > .leadFile { display: none; }
+  .leadWhen { display: none; }
   .leadKeys { grid-area: 2 / 1; }
   .leadKeys > .nextKey { min-height: 50px; }
 

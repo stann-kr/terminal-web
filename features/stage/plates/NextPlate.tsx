@@ -223,21 +223,18 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
     </Link>
   );
   if (mode !== 'hero') return block;
-  // The plate's keys stand under the block, not inside its link (a link holds no other link): the
-  // guest request while it is open, and the session file.
+  // The block itself opens the session file. Under it, not inside its link (a link holds no other
+  // link), the guest request while it is open.
   return (
     <>
       {block}
-      <span className={styles.nextKeys}>
-        {accessOpen && (
+      {accessOpen && (
+        <span className={styles.nextKeys}>
           <Link href={`${eventHref(event.id)}/request`} className={`${styles.card} ${styles.nextKey}`} data-surface="paper" data-carrier={carrier} scroll={false}>
             게스트 신청<Arrow />
           </Link>
-        )}
-        <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextKey}`} data-key="file" data-carrier={carrier} scroll={false} aria-label="세션 파일 열기">
-          <span>세션 파일<span className={styles.wideOnly}> 열기</span></span><Arrow />
-        </Link>
-      </span>
+        </span>
+      )}
       {/* A phone's first screen ends on the ways to the other plates, a row of four. */}
       <nav className={styles.homeNav} aria-label="바로 가기">
         {HOME_NAV.map(([href, name, title, surface]) => (

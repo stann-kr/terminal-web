@@ -675,10 +675,11 @@ describe('directory and roster contracts', () => {
     go('/events');
     const order = () => [...container.querySelectorAll<HTMLElement>('[data-item^="event:"][data-mode=row]')].map(row => row.dataset.item);
     expect(order()).toEqual(['event:NEXT', 'event:LATER', 'event:OLD']);
-    // The next session leads the list: its row, then its keys beside it.
+    // The next session leads the list: its row opens the session file, with no second key to it.
     const row = () => within(item(container, 'event:NEXT')).getByRole('link', { name: /Next event/ });
     expect(row()).toHaveAttribute('data-event-state', 'UPCOMING');
-    expect(within(item(container, 'event:NEXT')).getByRole('link', { name: /세션 파일 열기/ })).toHaveAttribute('href', '/events/NEXT');
+    expect(row()).toHaveAttribute('href', '/events/NEXT');
+    expect(within(item(container, 'event:NEXT')).queryByRole('link', { name: /세션 파일 열기/ })).toBeNull();
     act(() => vi.advanceTimersByTime(1000));
     expect(row()).toHaveAttribute('data-event-state', 'ARCHIVED');
     expect(order()).toEqual(['event:LATER', 'event:NEXT', 'event:OLD']);
@@ -743,7 +744,9 @@ describe('directory and roster contracts', () => {
     expect(cells.map((cell) => cell.hasAttribute('data-now'))).toEqual([true, false, true, false]);
     // The plate's keys stand beside its link, never inside it.
     expect(home.querySelector('a a')).toBeNull();
-    expect(within(home).getByRole('link', { name: '세션 파일 열기' })).toHaveAttribute('href', '/events/TRM-03');
+    // The plate's block opens the session file; no second key goes to the same place.
+    expect(within(home).queryByRole('link', { name: '세션 파일 열기' })).toBeNull();
+    expect([...home.querySelectorAll('a[href="/events/TRM-03"]')]).toHaveLength(1);
     go('/events/TRM-03');
     const dock = within(detail(container, 'event:TRM-03')).getByRole('region', { name: '무대 1' });
     expect([...dock.querySelectorAll('li')].map((line) => line.querySelector('a, div:nth-child(2)')?.textContent)).toEqual([

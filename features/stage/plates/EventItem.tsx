@@ -155,16 +155,14 @@ function LeadRow({ event, apply, now }: { event: TerminalEvent; apply: boolean; 
           <small>{event.time.replace(' KST', '')} KST · {event.venue}</small>
         </span>
       </Link>
-      <span className={styles.leadKeys}>
-        {apply && (
+      {/* The row itself opens the session file; the one key beside it is the guest request while open. */}
+      {apply && (
+        <span className={styles.leadKeys}>
           <Link href={`${eventHref(event.id)}/request`} className={`${styles.card} ${styles.nextKey}`} data-surface="paper" data-carrier={carrier} scroll={false}>
             게스트 신청<Arrow />
           </Link>
-        )}
-        <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextKey} ${styles.leadFile}`} data-key="file" data-carrier={carrier} scroll={false}>
-          세션 파일 열기<Arrow />
-        </Link>
-      </span>
+        </span>
+      )}
     </div>
   );
 }
