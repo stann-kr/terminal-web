@@ -1,8 +1,9 @@
 import { PageHeading, ui } from '@/features/ui/Ui';
 import styles from './privacy.module.css';
 
-/** Who may be asked about one's records (the policy's contact). */
-export const PRIVACY_CONTACT = { label: '인스타그램 @terminal.signal DM', href: 'https://www.instagram.com/terminal.signal/' };
+/** Who may be asked about one's records (the policy's contact): mail first, the Instagram DM beside it. */
+export const PRIVACY_EMAIL = 'terminal@stann.kr';
+export const PRIVACY_INSTAGRAM = { label: '@terminal.signal', href: 'https://www.instagram.com/terminal.signal/' };
 export const PRIVACY_EFFECTIVE = '2026-11-19';
 
 /** What each form keeps: the items, why, and for how long. */
@@ -76,14 +77,15 @@ export function PrivacyPage() {
         </section>
 
         <section aria-labelledby="privacy-contact">
-          <h2 id="privacy-contact">6. 문의</h2>
+          <h2 id="privacy-contact">6. 개인정보 보호책임자와 문의</h2>
           <p>
-            개인정보에 관한 문의와 요청은{' '}
-            <a href={PRIVACY_CONTACT.href} target="_blank" rel="noopener noreferrer">
-              {PRIVACY_CONTACT.label}
+            개인정보 보호책임자는 TERMINAL 운영자입니다. 문의와 요청은 이메일{' '}
+            <a href={`mailto:${PRIVACY_EMAIL}`}>{PRIVACY_EMAIL}</a> 또는 인스타그램{' '}
+            <a href={PRIVACY_INSTAGRAM.href} target="_blank" rel="noopener noreferrer">
+              {PRIVACY_INSTAGRAM.label}
               <span className={ui.srOnly}> (새 탭)</span>
-            </a>
-            로 보내 주십시오.
+            </a>{' '}
+            DM으로 보내 주십시오.
           </p>
         </section>
       </article>
