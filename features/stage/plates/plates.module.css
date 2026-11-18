@@ -2528,6 +2528,10 @@
   margin-top: 12px;
 }
 .aboutSign {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 16px;
   margin: 0;
   padding: 14px var(--pad);
   border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
@@ -2536,6 +2540,15 @@
   font: 700 var(--t-xs)/1.2 var(--display);
   letter-spacing: .16em;
   text-transform: uppercase;
+}
+.aboutSign > p {
+  margin: 0;
+}
+.aboutPrivacy {
+  color: var(--link);
+  font: 600 var(--t-xs)/1.2 var(--sans);
+  letter-spacing: 0;
+  text-transform: none;
 }
 .aboutSide {
   display: flex;

@@ -59,9 +59,14 @@ export function PrivacyPage() {
 
         <section aria-labelledby="privacy-host">
           <h2 id="privacy-host">3. 처리 위탁과 국외 보관</h2>
-          <p>
-            사이트와 데이터베이스는 Cloudflare, Inc.(미국)의 서비스에서 운영되며, 위 정보는 이 서비스에 저장됩니다.
-          </p>
+          <ul className={styles.plain}>
+            <li>
+              Cloudflare, Inc.(미국): 사이트와 데이터베이스 운영, 입력 화면의 보안 확인(자동 입력 방지). 위 정보는 이 서비스에 저장됩니다.
+            </li>
+            <li>
+              Google LLC(미국, Gmail): 소식 메일 발송. 소식 수신에 동의하신 이메일이 발송에 쓰입니다.
+            </li>
+          </ul>
         </section>
 
         <section aria-labelledby="privacy-rights">

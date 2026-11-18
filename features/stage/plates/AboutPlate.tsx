@@ -57,7 +57,11 @@ export function AboutPlate({ mode }: PlateProps) {
             <div>{sections.slice(1).map(section)}</div>
           </div>
         </div>
-        <p className={styles.aboutSign} data-surface="inset">{sign}</p>
+        <div className={styles.aboutSign} data-surface="inset">
+          <p>{sign}</p>
+          {/* The privacy policy, kept out of the home: its way in is at the foot of the about page. */}
+          <a href="/privacy" lang="ko" className={styles.aboutPrivacy}>개인정보처리방침</a>
+        </div>
       </div>
       <div className={styles.aboutSide} data-surface="calm" data-fit="">
         <OfficialChannels />
