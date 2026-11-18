@@ -3,10 +3,10 @@ import Link from '@/features/ui/RouteLink';
 import { ArtistChronology } from '@/features/artists/ArtistChronology';
 import { artistHref, type ArtistProfile } from '@/features/artists/model';
 import { SignalText } from '@/features/display/Display';
-import { accessAvailability, bilingual, eventHref, paragraphs, sessionShort, shortWhen } from '@/features/events/model';
+import { bilingual, paragraphs, sessionShort, shortWhen } from '@/features/events/model';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
-import { Arrow, BrandText, ui, type Surface } from '@/features/ui/Ui';
+import { BrandText, ui, type Surface } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import type { TerminalEvent } from '@/lib/events/types';
 import { getSlotTimes } from '@/lib/events/lifecycle';
@@ -105,7 +105,6 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
   const sessions = [...(data.events ?? [])].sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
   // The artist's coming set, with the guest request while it is open.
   const coming = profile.appearances.find(row => row.event.status !== 'ARCHIVED');
-  const canRequest = !!coming && !!data.events && accessAvailability(coming.event, data.events, data.now).canRequest;
   return (
     <article className={styles.artistFile} aria-labelledby={`artist-${profile.key}`}>
       <div className={styles.fileMain} data-fit="">
@@ -129,7 +128,7 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
           </span>
           <span className={styles.fileCountInline} aria-hidden="true">{profile.appearances.length} SESSIONS</span>
         </p>
-        {/* The coming set at the foot of the column, with the guest request under it while it is open. */}
+        {/* The coming set at the foot of the column; the guest request lives only on the event's own file. */}
         {coming && (
           <div className={styles.fileFoot}>
             <section className={styles.fileNext} aria-label="다음 무대">
@@ -137,11 +136,6 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
               <p className={styles.fileNextName}>{coming.event.id} · {shortWhen(coming.event).split(' ').slice(0, 2).join(' ')}</p>
               <p className={styles.fileNextSlot}>DOCK {coming.artist.dock || 'TBA'} · {coming.artist.time || 'TBA'}</p>
             </section>
-            {canRequest && (
-              <Link href={`${eventHref(coming.event.id)}/request`} className={`${styles.card} ${styles.nextKey}`} data-surface="paper" data-carrier={`event:${coming.event.id}`} scroll={false}>
-                {coming.event.id} 게스트 신청<Arrow />
-              </Link>
-            )}
           </div>
         )}
       </div>

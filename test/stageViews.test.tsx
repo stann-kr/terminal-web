@@ -435,6 +435,17 @@ describe('stage views', () => {
     vi.unstubAllGlobals();
   });
 
+  it('shows the coming set on an artist file and leaves the guest request to the event file', () => {
+    // A session three days out with invite codes ready: its guest request is open.
+    const soon = new Date(Date.now() + 3 * 86_400_000 + 9 * 3_600_000).toISOString().slice(0, 10);
+    const { container, go } = shell([past, { ...upcoming, date: soon, guestAccess: true }]);
+    // The fixture's TRM-03 row is mapped to a canonical artist key.
+    go('/artists/stann-lumo');
+    const file = detail(container, 'artist:stann-lumo');
+    expect(within(file).getByRole('region', { name: '다음 무대' })).toHaveTextContent('TRM-03');
+    expect(file.querySelector('a[href$="/request"]')).toBeNull();
+  });
+
   it('reads the mobile artist file as records, biography, then shared lineup in document order', () => {
     viewport(390, 844);
     const event = { ...past, artists: [...past.artists, artist('SECOND', 'SECOND ARTIST')] };
