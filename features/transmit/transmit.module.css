@@ -1,6 +1,16 @@
 /* Length readout: a dark label cell and an outlined digit cell, then the gauge. */
 .intro {
-  font: 600 var(--t-md)/1.5 var(--sans);
+  font: 500 var(--t-md)/1.5 var(--sans);
+}
+/* The data notice sits small over the save key; the key is a bar with its arrow at the right. */
+.notice {
+  margin-top: 10px;
+  font-size: var(--t-xs);
+}
+.submit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 /* The message field with its length printed in the lower right corner, over the field. */
 .messageBox {

@@ -1349,40 +1349,81 @@
   :global([data-stage=stage]) .panelRow[data-paged=first] { grid-template-rows: minmax(calc(var(--text-body) * 1.75 * 8 + 230px), 1fr) max-content max-content; }
 }
 
-/* As in .panelRow, the grid publishes no inset of its own. */
+/* The open log: the name and the write form on the left, its save key along the column's foot; the
+   public log on the right. The two columns meet flush and fill the plate. */
 .logGrid {
   --bleed: 0px;
   display: grid;
-  flex: 1 1 auto;
-  grid-template-columns: minmax(300px, .85fr) minmax(0, 1.15fr);
-  gap: 0;
+  grid-template-columns: minmax(300px, .4fr) minmax(0, .6fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-width: 0;
   min-height: 0;
-  margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
 }
-.logWrite,
+:global([data-stage=stage]) .logGrid {
+  height: 100%;
+}
+.logWrite {
+  --bleed: var(--pad);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 var(--pad);
+  background: var(--plate);
+  color: var(--ink);
+}
 .logPublic {
   min-height: 0;
   overflow: hidden;
+  padding-bottom: 0;
 }
-/* The write column: the length readout and its gauge stay together on top, and the height the
-   column has to spare goes to the message box (at least 140px) instead of opening gaps between the
-   readout, the gauge and the fields. */
-:global([data-stage=stage]) .logWrite form {
+/* The pager is the panel's foot, flush to its bottom edge. */
+.logPublic .logPages {
+  gap: 0;
+}
+.logPublic .logList {
+  margin-bottom: 8px;
+}
+.logWrite form {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
+  min-height: 0;
 }
-:global([data-stage=stage]) .logWrite form > *,
-:global([data-stage=stage]) .logWrite form > :last-child > * {
+/* The fields sit inside the column's margins, each a bordered box on the paper tone. */
+.logWrite form > :last-child {
+  --bleed: 0px;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin-inline: 0;
+}
+.logWrite form > :last-child > * {
   flex: none;
 }
-:global([data-stage=stage]) .logWrite form > :last-child,
+.logWrite form :is(input, textarea)[id] {
+  padding-inline: 14px;
+  border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  border-bottom: 2px solid var(--link);
+  background: var(--paper);
+  color: var(--paper-ink);
+}
+.logWrite form > :last-child > button[class] {
+  justify-content: space-between;
+  width: auto;
+  min-height: 60px;
+  margin: auto calc(var(--pad) * -1) 0;
+  padding-inline: var(--pad);
+  font: 700 var(--t-lg)/1 var(--display);
+  letter-spacing: .04em;
+}
+/* On the stage the message box takes the column's spare height; the field fills it. */
 :global([data-stage=stage]) .logWrite form > :last-child > :first-child {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
 }
-/* The message box (the field and its length) takes the column's spare height; the field fills it. */
 :global([data-stage=stage]) .logWrite form > :last-child > :first-child > :last-child {
   flex: 1 1 auto;
   min-height: 0;
@@ -1390,7 +1431,53 @@
 :global([data-stage=stage]) .logWrite textarea {
   flex: 1 1 auto;
   height: auto;
-  min-height: 140px;
+  min-height: 96px;
+  resize: none;
+}
+.logTotal {
+  margin-left: auto;
+  color: var(--ink);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .14em;
+  white-space: nowrap;
+}
+.logTotal i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background: currentColor;
+  opacity: .35;
+}
+.logTotal[data-state=ready] i {
+  opacity: 1;
+}
+.logTotal[data-state=loading] i {
+  animation: readPulse 1s steps(1) infinite;
+}
+.logTotal[data-state=error] {
+  color: var(--danger);
+}
+@keyframes readPulse {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: .25; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logTotal[data-state=loading] i { animation: none; opacity: .6; }
+}
+.logWhenShort {
+  display: none;
+}
+.backArrow {
+  display: inline-flex;
+  margin-right: 8px;
+  transform: scaleX(-1);
+}
+.logPager button svg {
+  margin-left: 8px;
+}
+.backArrow svg {
+  margin-left: 0;
 }
 .logPages {
   display: flex;
@@ -1497,32 +1584,15 @@
   outline-color: currentColor;
   outline-offset: -4px;
 }
-.feedRule {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 10px;
-  min-height: 24px;
-  color: var(--muted);
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .18em;
-}
-.feedRule i {
-  width: 9px;
-  height: 9px;
-  background: currentColor;
-  opacity: .35;
-}
-.feedRule:is([data-state=ready], [data-state=loading], [data-state=error]) i {
-  opacity: 1;
-}
-.feedRule[data-state=error] {
-  color: var(--danger);
-}
 @container layer (max-width: 760px) {
   .logGrid { grid-template-columns: minmax(0, 1fr); }
   /* Stacked, the write form is as tall as it is and the public log (paged by height) takes the rest. */
   :global([data-stage=stage]) .logGrid { grid-template-rows: max-content minmax(260px, 1fr); }
+  .logLast { display: none; }
+  .logWhen { display: none; }
+  .logWhenShort { display: inline; }
+  .logWrite :is(form > p:first-child, [id=transmit-handle-hint]) { display: none; }
+  .logWrite form > :last-child > button[class] { margin-top: 16px; }
 }
 
 
@@ -2042,8 +2112,20 @@
 .logList li:nth-child(odd) {
   background: var(--well);
 }
-.logList li > * {
-  padding-inline: max(10px, var(--bleed, 0px));
+.logList li {
+  padding: 14px max(10px, var(--pad));
+}
+.logList li > *,
+.logList li header > * {
+  padding: 0;
+}
+.logList header {
+  gap: 14px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.logList li p {
+  line-height: 1.6;
 }
 
 

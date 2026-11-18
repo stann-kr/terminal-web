@@ -6,11 +6,11 @@ import { TRANSMIT_PAGE_SIZE } from '@/lib/transmit/contract';
 import { useTransmit, useTransmitRange } from '@/features/transmit/useTransmit';
 import { NodeActivity } from '@/features/transmit/NodeActivity';
 import { TransmitForm } from '@/features/transmit/TransmitForm';
-import { Loading, Panel, StateNotice, ui } from '@/features/ui/Ui';
+import { Arrow, Loading, Panel, StateNotice, ui } from '@/features/ui/Ui';
 import { useRouteHold } from '@/features/ui/useRouteHold';
 import { packHeights } from '../text';
 import { pageAnnouncement, pageKey, pageReadout, useStageMode } from '../usePaging';
-import { BandName, CardLink, ChipFace, FocusHead, Tags } from './faces';
+import { BandName, CardLink, ChipFace, FocusHead } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
@@ -62,36 +62,30 @@ function LogFocus({ page }: { page: number }) {
   const latest = newest.data?.logs[0];
   const total = query.data?.total ?? newest.data?.total;
   const totalPages = total === undefined ? 1 : Math.max(1, Math.ceil(total / capacity));
+  // The newest entry's time, short (`11.18 12:46`), beside the count at the public log's head.
+  const last = latest ? latest.ts.replace(/^\d{4}\./, '').replace(' / ', ' ') : '';
+  // The readout's lamp says how the list stands: reading, current, or a failed read.
+  const state = query.isFetching ? 'loading' : query.isError ? 'error' : query.data ? 'ready' : 'idle';
+  // The name and the write form on the left, the save key along its foot; the public log on the right.
   return (
-    <div className={styles.face}>
-      <FocusHead label="Log" title="방문자 로그" tags={<Tags items={[total !== undefined ? `${pad(total)} RECORDS` : 'READ', latest ? `LAST ${latest.ts} KST` : null]} />} />
-      <div className={styles.logGrid}>
-        <Panel title="기록 남기기" label="Write log" surface="fresh" className={styles.logWrite}>
-          <div className={styles.fitColumn} data-fit="">
-            <TransmitForm
-              onSaved={() => {
-                void client.invalidateQueries({ queryKey: ['transmit'] });
-              }}
-              onPosted={() => {
-                if (page !== 1) router.replace('/transmit', { scroll: false });
-              }}
-            />
-          </div>
-        </Panel>
-        <Panel title="공개 로그" label="Public log" code={total !== undefined ? `${total} RECORDS` : 'READ'} surface="panel" className={styles.logPublic}>
-          <LogPages page={page} capacity={capacity} totalPages={totalPages} query={query} onCapacity={setCapacity} />
-        </Panel>
+    <div className={styles.logGrid}>
+      <div className={styles.logWrite} data-surface="fresh" data-fit="">
+        <FocusHead label="Log" title="방문자 로그" />
+        <TransmitForm
+          onSaved={() => {
+            void client.invalidateQueries({ queryKey: ['transmit'] });
+          }}
+          onPosted={() => {
+            if (page !== 1) router.replace('/transmit', { scroll: false });
+          }}
+        />
       </div>
+      <Panel title="공개 로그" label="Public log" aside={<span className={styles.logTotal} aria-hidden="true" data-state={state}><i />{total !== undefined ? `${total} RECORDS` : 'READ'}{last && <span className={styles.logLast}> · LAST {last} KST</span>}</span>} surface="panel" className={styles.logPublic}>
+        <LogPages page={page} capacity={capacity} totalPages={totalPages} query={query} onCapacity={setCapacity} />
+      </Panel>
     </div>
   );
 }
-
-const feedStateLabel = {
-  loading: 'READING LOG',
-  error: 'READ FAILED',
-  ready: 'LOG CURRENT',
-  idle: 'STANDBY',
-} as const;
 
 /**
  * The drawn log list cut into sub-pages that fit its height. Stacked under the write form (a narrow
@@ -218,7 +212,6 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
   const next: Turn | undefined = index < subCount - 1 ? () => setSub({ key: logKey, index: index + 1 }) : page < totalPages ? control => go(logHref(page + 1), { control, scroll: false }) : undefined;
   // No wheel paging here: over the log the wheel scrolls the page (its keys and PREV/NEXT turn it).
 
-  const state = query.isFetching ? 'loading' : query.isError ? 'error' : query.data ? 'ready' : 'idle';
   return (
     <div
       ref={region}
@@ -252,7 +245,10 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
               {shown.map(log => (
                 <li key={log.id}>
                   <header>
-                    <time dateTime={log.createdAt}>{log.ts} KST</time>
+                    <time dateTime={log.createdAt}>
+                      <span className={styles.logWhen}>{log.ts} KST</span>
+                      <span className={styles.logWhenShort} aria-hidden="true">{log.ts.replace(/^\d{4}\./, '').replace(' / ', ' ')}</span>
+                    </time>
                     <strong>{log.handle}</strong>
                   </header>
                   <p>{log.message}</p>
@@ -262,20 +258,16 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
           )}
           <nav className={styles.logPager} aria-label="로그 쪽 이동">
             {/* A key with no turn left stays a key (dimmed, turning nothing), so focus is never dropped from under it. */}
-            <button type="button" data-turn="prev" aria-disabled={!prev} onClick={event => prev?.(event.currentTarget)}>더 최근</button>
+            <button type="button" data-turn="prev" aria-disabled={!prev} onClick={event => prev?.(event.currentTarget)}><span className={styles.backArrow}><Arrow /></span>더 최근</button>
             <span aria-hidden="true">{range}</span>
             <span className={ui.srOnly} aria-live="polite">
               {pageAnnouncement(page, Math.max(totalPages, 1))}
               {subCount > 1 ? `, 나눈 쪽 ${subCount}쪽 중 ${index + 1}쪽` : ''}
             </span>
-            <button type="button" data-turn="next" aria-disabled={!next} onClick={event => next?.(event.currentTarget)}>이전 기록</button>
+            <button type="button" data-turn="next" aria-disabled={!next} onClick={event => next?.(event.currentTarget)}>이전 기록<Arrow /></button>
           </nav>
         </>
       )}
-      <p className={styles.feedRule} aria-hidden="true" data-state={state}>
-        <i />
-        {feedStateLabel[state]}
-      </p>
     </div>
   );
 }

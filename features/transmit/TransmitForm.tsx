@@ -1,5 +1,5 @@
 'use client';
-import { ui } from '@/features/ui/Ui';
+import { Arrow, ui } from '@/features/ui/Ui';
 import { Field, FormError, formStyles, literalInput } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
 import { useTransmitPost } from './useTransmitPost';
@@ -50,8 +50,9 @@ export function TransmitForm({
       </div>
       <Field
         id="transmit-handle"
-        label="공개 닉네임 (선택)"
-        hint={`비우면 노드 이름${node ? `(${node})` : ''}으로 기록 · 24자 이내 · 공백은 _로 표시됩니다.`}
+        label="공개 닉네임"
+        optional
+        hint={`비우면 노드 이름${node ? `(${node})` : ''}으로 기록됩니다. 24자 이내, 공백은 _로 표시됩니다.`}
         placeholder={node}
         maxLength={96}
         {...literalInput}
@@ -59,16 +60,17 @@ export function TransmitForm({
         value={draft.handle}
         onChange={(event) => edit({ handle: event.target.value })}
       />
+      <p className={`${formStyles.hint} ${styles.notice}`}>
+        악용 방지와 운영 확인을 위해 접속 국가·지역·통신사, 브라우저 정보와 들어온 경로(아티스트 링크·외부 사이트)를 90일간 따로 보관하며 공개하지 않습니다.
+      </p>
       <button
         aria-busy={pending}
         disabled={pending}
-        className={`${ui.button} ${ui.primary}`}
+        className={`${ui.button} ${ui.primary} ${styles.submit}`}
       >
         {pending ? '남기는 중…' : '기록 남기기'}
+        <Arrow />
       </button>
-      <p className={formStyles.hint}>
-        악용 방지와 운영 확인을 위해 접속 국가·지역·통신사, 브라우저 정보와 들어온 경로(아티스트 링크·외부 사이트)를 90일간 따로 보관하며 공개하지 않습니다.
-      </p>
       </div>
     </form>
   );
