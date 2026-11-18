@@ -8,6 +8,9 @@
 - `/privacy`: 입력마다 받는 정보·목적·보관 기간, 아티스트 제공, Cloudflare 보관, 열람·삭제 요청, 문의처.
 
 ### Changed
+- 판 안쪽 줄·입력칸을 게스트 신청 폼처럼 판 좌우 끝까지 붙였습니다: 홈 NEXT 공연표(DOCK 사이 2px), 홈 방문자 로그 줄, SIGNAL·LOG 입력칸(테두리 상자 대신 판 톤 라벨 줄 + 우물 입력칸).
+- 홈 ABOUT 판을 SIGNAL 판처럼 두 줄(큰 ABOUT, 아래 "TERMINAL 소개 →")로 바꿨습니다.
+- INSTAGRAM 판(alert 역할)의 hover가 밝은 분홍으로 바뀌던 것을 다른 판처럼 어두운 색으로 바꿨습니다(두 팔레트 모두).
 - 게스트 신청 키를 홈 NEXT 판과 이벤트 목록에서 빼고 이벤트 상세(와 아티스트 파일)에만 둡니다.
 - 홈 NEXT 판의 공연표가 판의 남는 높이를 채웁니다(칸당 최대 88px, DOCK끼리 줄 맞춤).
 - 이벤트 상세 BRIEFING 맨 앞에 세션 이름과 로그 줄("TERMINAL [03]: Vulpecula Junction / 204 days past the heliopause. …")을 둡니다. 데이터의 `log`는 있었지만 화면에 그려진 적이 없었습니다.

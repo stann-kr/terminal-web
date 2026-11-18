@@ -2,7 +2,9 @@
 import { aboutCopy, NodeFacts, OfficialChannels } from '@/features/about/About';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
-import { BandName, CardLink, ChipFace, FocusHead } from './faces';
+import { CardLink, ChipFace, FocusHead } from './faces';
+import { FitTitle } from '../FitTitle';
+import { BrandText } from '@/features/ui/Ui';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
@@ -12,13 +14,12 @@ export function AboutPlate({ mode }: PlateProps) {
   if (mode === 'chip' || mode === 'index') return <ChipFace href="/about" name="ABOUT" title="소개" />;
   if (mode !== 'hero') {
     return (
-      <CardLink href="/about" className={`${styles.summaryCard} ${styles.aboutCard}`}>
-        <span className={styles.band}>
-          <span className={styles.bandTitle}>
-            <span className={styles.bandLabel} aria-hidden="true">About</span>
-            <BandName title="TERMINAL 소개" link />
-          </span>
-        </span>
+      // Two lines like the SIGNAL tile: the name large at the head, the way in at the foot.
+      <CardLink href="/about" className={styles.signalCard}>
+        <span className={styles.signalHead} aria-hidden="true">ABOUT</span>
+        <FitTitle as="span" text="TERMINAL 소개" maxLines={1} minPx={14} className={styles.signalText} arrow="in">
+          <BrandText text="TERMINAL" /> 소개
+        </FitTitle>
       </CardLink>
     );
   }

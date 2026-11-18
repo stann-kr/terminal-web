@@ -107,8 +107,9 @@
   --alert-accent: var(--c-porcelain);
   --alert-fill: var(--c-text);
   --alert-on-fill: var(--c-porcelain);
-  --alert-hi: var(--c-rose-tint);
-  --alert-on-hi: var(--c-text);
+  /* Like every other plate, hover goes darker: the rose plate to the deepest ink, not to its tint. */
+  --alert-hi: var(--c-text);
+  --alert-on-hi: var(--c-porcelain);
   --alert-danger: var(--c-porcelain);
 
   --calm: var(--c-lilac-tint);
@@ -261,8 +262,8 @@
   --alert-fill: var(--c-field);
   --alert-on-fill: var(--c-cream);
   --alert-on-fill-muted: var(--c-gold);
-  --alert-hi: var(--c-cream);
-  --alert-on-hi: var(--c-navy);
+  --alert-hi: var(--c-navy);
+  --alert-on-hi: var(--c-cream);
   --alert-danger: var(--c-white);
 
   --calm: var(--c-gold);
