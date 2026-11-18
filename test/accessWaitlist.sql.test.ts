@@ -55,6 +55,16 @@ describe.skipIf(!sqliteAvailable)('access waitlist SQL (SQLite with every migrat
     expect(count('access_waitlist')).toBe(1);
   });
 
+  it('lists guests the artist entered without an Instagram id, same name or not, up to the limit', async () => {
+    const byArtist = { waitlist: false, name: '김지현' };
+    expect(await request('', byArtist)).toEqual({ status: 'created' });
+    expect(await request('', byArtist)).toEqual({ status: 'created' });
+    expect(await request('', byArtist)).toEqual({ status: 'guest_limit_reached' });
+    // An empty id never stands for anyone: a guest's own request still goes through, and still waits.
+    expect(await request('@one')).toEqual({ status: 'waitlisted' });
+    expect(count('access_requests', "instagram = ''")).toBe(2);
+  });
+
   it("keeps the artist's own entry off the waitlist", async () => {
     await request('@one');
     await request('@two');

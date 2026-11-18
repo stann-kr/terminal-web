@@ -3,10 +3,12 @@ import { prepareGateSignalSubscriptionInsert } from '../signal/d1SignalSubscript
 
 /**
  * One guest per event: the same Instagram id (case and a leading @ aside), or the same email when
- * both left one. Email is optional, so the Instagram id is the duplicate key that always exists.
+ * both left one. A guest's own request always has an Instagram id. A guest the artist lists may have
+ * neither (stored as an empty id): nothing matches an empty key, so two guests with the same name are
+ * two guests, and the artist answers for their own list.
  */
 const SAME_GUEST = `(
-      lower(ltrim(instagram, '@')) = ?
+      lower(ltrim(instagram, '@')) = nullif(?, '')
       OR (email IS NOT NULL AND email = ?)
     )`;
 
@@ -40,8 +42,8 @@ export const ACCESS_REQUEST_INSERT_SQL = `
   ON CONFLICT DO NOTHING
 `;
 
-/** The waitlist keeps no email, so a guest there is known by the Instagram id alone. */
-const SAME_WAITLISTED = `lower(ltrim(instagram, '@')) = ?`;
+/** The waitlist keeps no email, so a guest there is known by the Instagram id alone (never an empty one). */
+const SAME_WAITLISTED = `lower(ltrim(instagram, '@')) = nullif(?, '')`;
 
 /**
  * A request the limit turned away waits here instead, in the same batch right after the insert
@@ -297,7 +299,7 @@ const WAITLIST_PROMOTE_SQL = `
       SELECT 1
       FROM access_requests r
       WHERE r.event_id = w.event_id
-        AND lower(ltrim(r.instagram, '@')) = lower(ltrim(w.instagram, '@'))
+        AND lower(ltrim(r.instagram, '@')) = nullif(lower(ltrim(w.instagram, '@')), '')
     )
     AND (
       SELECT COUNT(*)
@@ -314,7 +316,7 @@ const WAITLIST_SETTLE_SQL = `
       SELECT 1
       FROM access_requests r
       WHERE r.event_id = access_waitlist.event_id
-        AND lower(ltrim(r.instagram, '@')) = lower(ltrim(access_waitlist.instagram, '@'))
+        AND lower(ltrim(r.instagram, '@')) = nullif(lower(ltrim(access_waitlist.instagram, '@')), '')
     )
 `;
 

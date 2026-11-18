@@ -293,7 +293,7 @@ describe('atomic access request statement contract', () => {
 
   it('checks a duplicate guest and capacity inside the request insert statement', () => {
     expect(ACCESS_REQUEST_INSERT_SQL).toMatch(
-      /WHERE NOT EXISTS[\s\S]*event_id = \? AND \([\s\S]*lower\(ltrim\(instagram, '@'\)\) = \?[\s\S]*OR \(email IS NOT NULL AND email = \?\)/,
+      /WHERE NOT EXISTS[\s\S]*event_id = \? AND \([\s\S]*lower\(ltrim\(instagram, '@'\)\) = nullif\(\?, ''\)[\s\S]*OR \(email IS NOT NULL AND email = \?\)/,
     );
     expect(ACCESS_REQUEST_INSERT_SQL).toMatch(/SELECT COUNT\(\*\)[\s\S]*event_id = \? AND artist_id = \?/);
     expect(ACCESS_REQUEST_INSERT_SQL).toContain('ON CONFLICT DO NOTHING');

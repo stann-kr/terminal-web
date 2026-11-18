@@ -253,6 +253,7 @@ describe('artist host page', () => {
     page();
     await user.type(await screen.findByLabelText(/게스트 이름/), '이서연');
     const instagram = screen.getByRole('textbox', { name: /인스타그램 ID/ });
+    expect(instagram).not.toBeRequired();
     await user.type(instagram, 'seoyeon');
     expect(instagram).toHaveValue('@seoyeon');
     await user.click(screen.getByRole('checkbox', { name: /동의를 받았습니다/ }));
