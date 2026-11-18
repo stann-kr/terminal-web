@@ -32,6 +32,7 @@ export const transmitLogs = sqliteTable("transmit_logs", {
   ts: text("ts").notNull(),
   createdAt: text("created_at").notNull(),
   deviceId: text("device_id"),  // 레거시 nullable 컬럼. 신규 입력·공개 응답에서는 사용하지 않음.
+  hiddenAt: text("hidden_at"),  // 운영자가 숨긴 시각(UTC ISO). 값이 있으면 공개 목록에서 빠지고 DB에는 남음.
 });
 
 // ──────────────────────────────────────────────────────────

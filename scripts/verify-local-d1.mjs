@@ -49,6 +49,10 @@ const optionalEmailMigration = path.join(
   'migrations',
   '0010_access_request_email_optional.sql',
 );
+const transmitHiddenMigration = path.join(
+  'migrations',
+  '0012_transmit_hidden.sql',
+);
 
 function assertFinalTransmitSchema(persistTo, label) {
   const [tableInfoResult, indexListResult] = execute(persistTo, `
@@ -63,6 +67,7 @@ function assertFinalTransmitSchema(persistTo, label) {
     { name: 'ts', type: 'TEXT', notnull: 1, defaultValue: null, pk: 0 },
     { name: 'created_at', type: 'TEXT', notnull: 1, defaultValue: null, pk: 0 },
     { name: 'device_id', type: 'TEXT', notnull: 0, defaultValue: null, pk: 0 },
+    { name: 'hidden_at', type: 'TEXT', notnull: 0, defaultValue: null, pk: 0 },
   ];
 
   if (columns.length !== expectedColumns.length) {
@@ -120,7 +125,7 @@ try {
   for (const name of ['events', 'artists', 'access_requests', 'access_waitlist', 'signal', 'transmit_logs', 'access_requests_event_email_idx', 'access_waitlist_event_artist_idx', 'signal_email_idx']) {
     if (!objects.has(name)) throw new Error(`missing D1 object: ${name}`);
   }
-  if (results[1].results[0]?.count !== 12) throw new Error('expected all 12 Wrangler migrations');
+  if (results[1].results[0]?.count !== 13) throw new Error('expected all 13 Wrangler migrations');
   if (results[2].results.length !== 0) throw new Error('foreign key check failed');
   if (results[3].results.map((row) => row.name).join(',') !== 'event_id,email') {
     throw new Error('access request unique index columns drifted');
@@ -380,6 +385,7 @@ try {
             '2026-08-23T00:00:00.000Z', 1, 'artist-legacy', 'Artist');
   `);
   executeFile(legacyPersistTo, optionalEmailMigration);
+  executeFile(legacyPersistTo, transmitHiddenMigration);
   assertFinalTransmitSchema(legacyPersistTo, 'legacy migration');
   assertSharedDatabaseContracts(legacyPersistTo, 'legacy migration');
   const [legacyRequest, legacyEmailColumn] = execute(legacyPersistTo, `

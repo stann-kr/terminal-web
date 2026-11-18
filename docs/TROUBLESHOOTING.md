@@ -22,7 +22,7 @@
 
 ## 방문자 로그에 내려야 할 글이 올라왔을 때
 
-`npm run transmit:remove -- list 20 --remote`로 최근 글의 ID를 찾습니다. `npm run transmit:remove -- remove <ID> --remote`는 그 글과 할 일만 보여 주고 아무것도 지우지 않으며, 대상 ID를 확인한 뒤 `npm run transmit:remove -- remove <ID> --remote --confirm <ID>`로 내립니다. 지우기 전에 글 전체를 git이 무시하는 `backups/transmit/`에 백업하며, `npm run transmit:remove -- restore <백업 파일> --remote --confirm <ID>`로 그대로 되돌릴 수 있습니다(`--confirm` 없이는 계획만 출력). 백업은 가져온 곳(운영 또는 로컬)으로만 되돌리며, 다르면 거부합니다. 실행 도중 실패하면 메시지에 백업 경로가 함께 나오므로 `list`로 상태를 확인한 뒤 진행합니다. `--remote`를 빼면 로컬 시뮬레이션에서 확인 없이 동작합니다.
+`npm run transmit:remove -- list 20 --remote`로 최근 글의 ID를 찾습니다. 글을 지우지 않고 공개 목록에서만 빼려면 `npm run transmit:remove -- hide <ID> --remote --confirm <ID>`로 숨깁니다. 숨긴 글은 DB에 남고 `list`에 `[hidden]`으로 표시되며, `unhide`로 다시 보이게 합니다(`--confirm` 없이는 계획만 출력). `npm run transmit:remove -- remove <ID> --remote`는 그 글과 할 일만 보여 주고 아무것도 지우지 않으며, 대상 ID를 확인한 뒤 `npm run transmit:remove -- remove <ID> --remote --confirm <ID>`로 내립니다. 지우기 전에 글 전체를 git이 무시하는 `backups/transmit/`에 백업하며, `npm run transmit:remove -- restore <백업 파일> --remote --confirm <ID>`로 그대로 되돌릴 수 있습니다(`--confirm` 없이는 계획만 출력). 백업은 가져온 곳(운영 또는 로컬)으로만 되돌리며, 다르면 거부합니다. 실행 도중 실패하면 메시지에 백업 경로가 함께 나오므로 `list`로 상태를 확인한 뒤 진행합니다. `--remote`를 빼면 로컬 시뮬레이션에서 확인 없이 동작합니다.
 
 ## 요청이 많다는 안내(429)가 뜰 때
 
