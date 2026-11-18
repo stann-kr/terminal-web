@@ -199,6 +199,16 @@ describe('stage layout', () => {
     expect(fewRows[0].h).toBeGreaterThan(m.rowH);
     expect(fewRows[0].h).toBeLessThanOrEqual(2 * m.rowH);
     expect(fewRows[1].y).toBe(fewRows[0].y + fewRows[0].h);
+    // A leading next session: a tall first row (300px at most) on the first page only, the rest flush under it.
+    const led = computeLayout(stageStateFromUrl('/events'), stage, { viewportW: 1440, items: { event: { order: EVENTS.slice(0, 3), lead: true } } });
+    const ledRows = EVENTS.slice(0, 3).map(id => led.items[`event:${id}`]);
+    expect(ledRows[0].lead).toBe(true);
+    expect(ledRows[0].rect.h).toBeGreaterThan(ledRows[1].rect.h);
+    expect(ledRows[0].rect.h).toBeLessThanOrEqual(m.leadRowH);
+    close(ledRows[1].rect.y, ledRows[0].rect.y + ledRows[0].rect.h);
+    expect(ledRows.slice(1).every(row => !row.lead)).toBe(true);
+    const second = computeLayout(stageStateFromUrl('/events', { page: '2' }), stage, { viewportW: 1440, items: { event: { order: EVENTS, page: 2, lead: true } } });
+    expect(shownItems(second).some(([, item]) => item.lead)).toBe(false);
     // Three artists in a two-column summary: the third cell runs the plate's width.
     const home = computeLayout(stageStateFromUrl('/'), stage, { viewportW: 1440, items: { artist: { order: ARTISTS.slice(0, 3) } } });
     const cells = ARTISTS.slice(0, 3).map(id => home.items[`artist:${id}`].rect);

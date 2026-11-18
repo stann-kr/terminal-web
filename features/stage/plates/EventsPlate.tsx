@@ -2,7 +2,6 @@
 import Link from '@/features/ui/RouteLink';
 import { getArchivedOrElapsedEvents, getLiveEvents } from '@/lib/events/lifecycle';
 import { eventHref, sessionShort, statusLabel } from '@/features/events/model';
-import { LiveValue } from '@/features/display/Display';
 import { Action, Arrow, BrandText, Loading, StateNotice } from '@/features/ui/Ui';
 import { useStageMode } from '../usePaging';
 import { ChipFace, FocusHead, PlateCard, PlateStatus, Tags } from './faces';
@@ -62,29 +61,25 @@ export function EventsPlate({ mode, state, data, query }: PlateProps) {
   const upcoming = events.filter(event => event.status === 'UPCOMING').length;
   const years = [...new Set(events.map(event => event.date.slice(0, 4)))].sort().reverse();
   const venues = [...new Set(events.map(event => event.venue).filter(Boolean))];
-  const page = state.view === 'plate' ? state.page : 1;
   const missing = state.view === 'plate' ? state.missing : undefined;
   return (
     <div className={styles.face}>
-      <FocusHead label="Events" title="이벤트" tags={<Tags items={reading ? [reading] : [`${pad(count)} RECORDS`, `PAGE ${pad(page, 2)}`]} />}>
-        {missing ? (
+      {/* How many are coming and how many are records, then the years and the places, on the right. */}
+      <FocusHead
+        label="Events"
+        title="이벤트"
+        tags={reading ? <Tags items={[reading]} /> : (
+          <>
+            <Tags items={([['진행 중', live], ['예정', upcoming], ['기록', archived]] as const).filter(([, value]) => value > 0).map(([label, value]) => `${label} ${value}`)} />
+            {/* A phone's head keeps the counts only. */}
+            <span className={styles.headExtra}><Tags items={[...years, ...venues]} /></span>
+          </>
+        )}
+      >
+        {missing && (
           <p className={styles.missing} role="alert">
             <b aria-hidden="true">ERROR</b> ‘{missing.id}’ 기록을 찾을 수 없습니다. 아래 목록에서 다시 찾아 주십시오.
           </p>
-        ) : data.events && (
-          <div className={styles.summary}>
-            {/* Only the counts there are: an empty kind prints no zero cell. */}
-            <dl className={styles.counts}>
-              {([['진행 중', live], ['예정', upcoming], ['기록', archived]] as const)
-                .filter(([, value]) => value > 0)
-                .map(([label, value]) => (
-                  <div key={label}><dt>{label}</dt><dd><LiveValue value={value} /></dd></div>
-                ))}
-            </dl>
-            <span className={styles.bandTags} aria-hidden="true">
-              <Tags items={[...years, ...venues]} />
-            </span>
-          </div>
         )}
       </FocusHead>
       {failure}

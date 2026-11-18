@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useRouteHold } from '@/features/ui/useRouteHold';
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import { Loading, StateNotice, type Surface } from '@/features/ui/Ui';
+import { Arrow, Loading, StateNotice, type Surface } from '@/features/ui/Ui';
 import { stageConfig } from './config';
 import { stageSizeFor, useStageData, useViewport } from './data';
 import { Box } from './Box';
@@ -146,7 +146,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
   const [spilled, setSpilled] = useState<SpillState | null>(null);
   const [heads, setHeads] = useState<Heads>({});
   const items = {
-    event: { order: data.ordered.map(event => event.id), page: state.view === 'plate' && state.plate === 'events' ? state.page : 1 },
+    event: { order: data.ordered.map(event => event.id), page: state.view === 'plate' && state.plate === 'events' ? state.page : 1, lead: !!data.ordered[0] && data.ordered[0].status !== 'ARCHIVED' },
     artist: { order: data.profiles.map(profile => profile.key), page: state.view === 'plate' && state.plate === 'artists' ? state.page : 1 },
   };
   // The stage is first shown with the web fonts in place, so nothing is laid out, measured or paged
@@ -576,7 +576,7 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
                     const item = layout.items[itemKey];
                     return item && (
                       <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' && event.status !== 'ARCHIVED' ? 'feature' : 'inset')}>
-                        {shape => <EventItem event={event} shape={shape} current={item.current} apply={!!data.events && accessAvailability(event, data.events, data.now).canRequest} />}
+                        {shape => <EventItem event={event} shape={shape} current={item.current} lead={item.lead} now={data.now} apply={!!data.events && accessAvailability(event, data.events, data.now).canRequest} />}
                       </SubPlate>
                     );
                   })
@@ -606,6 +606,24 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
                     <span className={styles.srOnly} aria-live="polite">{pageAnnouncement(pager.page, pager.pages)}</span>
                     {pager.page < pager.pages ? <Link href={listHref(pager.kind, pager.page + 1)} scroll={false}>NEXT</Link> : <span>NEXT</span>}
                   </div>
+                </Box>
+              )}
+              {/* A directory on one page keeps the pager's strip for the way to hear of the next one. */}
+              {!pager && kind === 'event' && list?.kind === 'event' && (
+                <Box
+                  rect={onStage ? { ...list.pager, x: list.pager.x - placed.rect.x, y: list.pager.y - placed.rect.y } : null}
+                  visible
+                  contentKey="signal-strip"
+                  className={styles.pagerBox}
+                  surface="mark"
+                  delay={delay}
+                  data={{ strip: 'signal' }}
+                >
+                  <Link href="/signal" className={styles.signalStrip} scroll={false}>
+                    <span className={styles.stripLong}>다음 이벤트 일정이 정해지면 SIGNAL로 먼저 알려 드립니다.</span>
+                    <span className={styles.stripShort}>다음 이벤트 소식 받기</span>
+                    <b><span className={styles.stripLong}>소식 받기</span><Arrow /></b>
+                  </Link>
                 </Box>
               )}
             </>

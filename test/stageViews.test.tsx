@@ -481,7 +481,6 @@ describe('stage views', () => {
     const pager = () => within(screen.getByRole('navigation', { name: '목록 쪽 이동' }));
     const last = pager().getByText(/^\d+ \/ \d+$/).textContent!.split('/')[1].trim();
     go('/events', 'page=9');
-    expect(within(plate(container, 'events')).getByText(`PAGE ${last}`)).toBeInTheDocument();
     expect(pager().getByText(`${last} / ${last}`)).toBeInTheDocument();
     // The number of pages follows the window: a wider one must not rewrite where a narrower one was.
     await act(() => new Promise(resolve => setTimeout(resolve, 50)));
@@ -633,9 +632,9 @@ describe('directory and roster contracts', () => {
     const { container, go } = shell();
     go('/events');
     expect(within(item(container, 'event:OLD')).getByRole('link', { name: /Past event/ })).toHaveAttribute('href', '/events/OLD');
-    expect(within(plate(container, 'events')).getByText('기록', { selector: 'dt' }).nextElementSibling).toHaveTextContent('1');
-    // No upcoming session: no zero cell for it.
-    expect(within(plate(container, 'events')).queryByText('예정', { selector: 'dt' })).not.toBeInTheDocument();
+    expect(within(plate(container, 'events')).getByText('기록 1')).toBeInTheDocument();
+    // No upcoming session: no zero count for it.
+    expect(within(plate(container, 'events')).queryByText(/^예정/)).not.toBeInTheDocument();
     expect(within(stage(container)).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
   });
 
@@ -645,7 +644,7 @@ describe('directory and roster contracts', () => {
     expect(within(stage(container)).getByRole('heading', { name: 'VISIBLE ARTIST' })).toBeInTheDocument();
     expect(container).not.toHaveTextContent('PRIVATE NAME');
     go('/events', 'q=absent&year=2024&venue=OTHER');
-    expect(within(stage(container)).getByRole('heading', { name: 'Past event' })).toBeInTheDocument();
+    expect(within(stage(container)).getByRole('heading', { name: /^Past event/ })).toBeInTheDocument();
     expect(within(stage(container)).getAllByRole('heading', { name: 'TERMINAL [03]' }).length).toBeGreaterThan(0);
     expect(within(stage(container)).queryByRole('textbox')).not.toBeInTheDocument();
     expect(within(stage(container)).queryByRole('combobox')).not.toBeInTheDocument();
@@ -671,10 +670,12 @@ describe('directory and roster contracts', () => {
     go('/events');
     const order = () => [...container.querySelectorAll<HTMLElement>('[data-item^="event:"][data-mode=row]')].map(row => row.dataset.item);
     expect(order()).toEqual(['event:NEXT', 'event:LATER', 'event:OLD']);
-    const row = within(item(container, 'event:NEXT')).getByRole('link');
-    expect(row).toHaveAttribute('data-event-state', 'UPCOMING');
+    // The next session leads the list: its row, then its keys beside it.
+    const row = () => within(item(container, 'event:NEXT')).getByRole('link', { name: /Next event/ });
+    expect(row()).toHaveAttribute('data-event-state', 'UPCOMING');
+    expect(within(item(container, 'event:NEXT')).getByRole('link', { name: /세션 파일 열기/ })).toHaveAttribute('href', '/events/NEXT');
     act(() => vi.advanceTimersByTime(1000));
-    expect(row).toHaveAttribute('data-event-state', 'ARCHIVED');
+    expect(row()).toHaveAttribute('data-event-state', 'ARCHIVED');
     expect(order()).toEqual(['event:LATER', 'event:NEXT', 'event:OLD']);
   });
 

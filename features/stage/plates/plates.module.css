@@ -154,7 +154,8 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-.tag + .tag::before {
+.tag + .tag::before,
+.tag + .headExtra > .tag:first-child::before {
   content: '·';
   padding-inline: .55em;
 }
@@ -912,17 +913,11 @@
 .next[data-density=chip] .brandBar {
   padding-block: 6px;
 }
+/* In the band it reads like every chip: the name on top, the session's code and days at the foot. */
 .next[data-density=chip] .nextChip {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  padding-block: 6px;
-}
-.next[data-density=chip] .nextChip .chipName {
-  font-size: var(--t-lg);
-}
-.next[data-density=chip] .nextChip .chipLine {
-  flex: 1 1 auto;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 12px 14px;
 }
 
 
@@ -1067,6 +1062,165 @@
   .rowId, .rowWhen, .rowVenue { display: none; }
   .rowNarrowMeta { display: block; }
   .rowWrap { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 48px; }
+}
+
+/* A past row: its name and subtitle on one line, the date alone, the state as a mark, and the way
+   into the record at the right. */
+.rowNameSub {
+  font-size: .62em;
+  letter-spacing: .03em;
+}
+.rowMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+.rowMark::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+}
+.rowState[data-past] {
+  color: var(--link);
+  font: 700 var(--t-md)/1 var(--sans);
+  letter-spacing: 0;
+}
+.rowState[data-past]::before {
+  display: none;
+}
+
+/* The leading row: the next session at length, with its keys stacked in the lower right corner. */
+.leadWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  height: 100%;
+}
+.leadRow {
+  position: relative;
+  grid-area: 1 / 1 / 2 / 3;
+  grid-template-columns: 90px minmax(0, 1fr) 190px 250px;
+  align-items: start;
+  overflow: hidden;
+  padding: 20px 0 20px 20px;
+}
+.leadMain {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.leadState {
+  display: block;
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+.leadState::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background: var(--accent);
+}
+.leadName {
+  color: var(--link);
+  font: 800 clamp(28px, 2.7vw, 56px)/1 var(--display);
+  text-transform: uppercase;
+}
+.leadSubtitle {
+  font: 700 clamp(18px, 1.7vw, 32px)/1.05 var(--display);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.leadWhen {
+  display: grid;
+  gap: 6px;
+  white-space: nowrap;
+}
+.leadWhen b {
+  font: 400 20px/1 var(--mono);
+}
+.leadWhen small {
+  font: 400 var(--t-xs)/1.2 var(--mono);
+}
+.leadKeys {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-area: 1 / 2;
+  align-self: end;
+  gap: 2px;
+}
+.leadKeys > .nextKey {
+  min-height: 56px;
+}
+.leadKeys > .leadFile {
+  min-height: 48px;
+  font-size: var(--t-md);
+}
+.leadRow :is(.rowId, .leadMain, .leadWhen) {
+  position: relative;
+}
+
+.narrowSub,
+.leadShort {
+  display: none;
+}
+/* A narrow directory: the leading session is a card with its guest key under it; a past row puts
+   its date and mark on top, then the name, the subtitle with the way in, and the lineup. */
+@container layer (max-width: 760px) {
+  .leadWrap {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .leadRow {
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 16px;
+  }
+  .leadRow > .rowId {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-size: var(--t-sm);
+  }
+  .leadMain { gap: 6px; }
+  .leadName { font-size: clamp(28px, 9vw, 40px); }
+  .leadSubtitle { font-size: var(--t-lg); }
+  .leadShort {
+    display: block;
+    font: 400 var(--t-sm)/1.2 var(--mono);
+  }
+  .leadOpen,
+  .leadWhen,
+  .leadKeys > .leadFile { display: none; }
+  .leadKeys { grid-area: 2 / 1; }
+  .leadKeys > .nextKey { min-height: 50px; }
+
+  .eventRow:has(.rowMark) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'when mark' 'main main';
+    align-content: center;
+    gap: 8px 12px;
+    padding: 12px 16px;
+  }
+  .eventRow:has(.rowMark) .rowWhen { display: grid; grid-area: when; font-size: var(--t-sm); }
+  .eventRow:has(.rowMark) .rowMain { grid-area: main; }
+  .eventRow:has(.rowMark) .rowMark { grid-area: mark; }
+  .eventRow:has(.rowMark) .rowState { display: none; }
+  .rowNameSub { display: none; }
+  .narrowSub {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--t-md);
+  }
 }
 
 /* Artist file cards in the open roster grid. */
@@ -2202,4 +2356,13 @@
   font: 400 var(--t-xs)/1.1 var(--sans);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* A head's secondary tags (years, places) give way on a phone, so the counts stay beside the title. */
+.headExtra {
+  display: contents;
+}
+@container layer (max-width: 500px) {
+  .headExtra { display: none; }
+  .leadRow > .rowId { display: block; }
 }

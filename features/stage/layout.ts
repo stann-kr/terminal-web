@@ -37,6 +37,8 @@ export interface StageMetrics {
   /** Default head heights by density, used until the real heads have been measured. */
   head: Record<'hero' | 'panel' | 'index', number>;
   pagerH: number;
+  /** The leading row of a list (the next session in the directory) at its tallest. */
+  leadRowH: number;
   rowH: number;
   /** A row narrower than `narrowRowW` lays out on three lines and needs this height instead. */
   rowHNarrow: number;
@@ -67,6 +69,7 @@ export function stageMetrics(viewportW: number): StageMetrics {
     pad: clamp(16, viewportW * 0.015, 28), // --pad
     head: { hero: 120, panel: 96, index: 72 },
     pagerH: 56,
+    leadRowH: 300,
     rowH: viewportW < 1280 ? 84 : 92,
     rowHNarrow: 124,
     narrowRowW: 760,
@@ -91,6 +94,8 @@ export function stageMetrics(viewportW: number): StageMetrics {
 export interface ItemList {
   order: readonly string[];
   page?: number;
+  /** The first item leads its list: on a wide first page it takes a tall row of its own. */
+  lead?: boolean;
 }
 
 /**
@@ -130,6 +135,8 @@ export interface PlacedItem {
   order: number;
   /** The line of the detail that is open (an index keeps it, marked current). */
   current?: boolean;
+  /** The tall first row of a list whose first item leads (see ItemList.lead). */
+  lead?: boolean;
 }
 
 export interface ListInfo {
@@ -249,9 +256,18 @@ function gridRects(x: number, w: number, top: number, cols: number, h: number, c
  * artists. `shown` is how many sit on this page; `single` says the list has one page only, so a
  * short list may stretch (see `fillHeight`).
  */
-function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics, shown = Infinity, single = false): Rect[] {
+function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics, shown = Infinity, single = false, lead = false): Rect[] {
   const top = area.y + head;
   const avail = area.h - head - m.pagerH;
+  if (kind === 'event' && lead) {
+    // The leading session's row: near half the list, 300px at most, the other rows under it.
+    const rowH = rowHeight(area.w, m);
+    const leadH = Math.min(m.leadRowH, Math.max(rowH * 1.6, avail * 0.46));
+    const rest = avail - leadH;
+    const fit = Math.max(0, Math.floor(rest / rowH));
+    const h = fillHeight(rest, rowH, fit, single ? Math.min(shown - 1, fit) : fit);
+    return [edges(area.x, top, area.x + area.w, top + leadH), ...gridRects(area.x, area.w, top + leadH, 1, h, fit)];
+  }
   if (kind === 'event') {
     const fit = listRowsPerPage(area.h, head, m, area.w);
     const h = fillHeight(avail, rowHeight(area.w, m), fit, single ? Math.min(shown, fit) : fit);
@@ -484,19 +500,21 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
 
     if (owner.mode === 'hero') {
       const head = input.heads?.[ownerId] ?? m.head.hero;
-      const perPage = listSlots(kind, owner.rect, head, m).length;
+      // A leading first item (the next session) shapes the first page only.
+      const lead = !!source.lead && (source.page ?? 1) <= 1;
+      const perPage = listSlots(kind, owner.rect, head, m, Infinity, false, lead).length;
       const pages = Math.max(1, Math.ceil(source.order.length / perPage));
       const page = Math.min(Math.max(1, source.page ?? 1), pages);
       const shownOnPage = Math.min(perPage, source.order.length - (page - 1) * perPage);
       // This page's slots fill the plate; other pages wait beside the plain ones.
-      const slots = listSlots(kind, owner.rect, head, m, shownOnPage, pages === 1);
-      const parked = listSlots(kind, owner.rect, head, m);
+      const slots = listSlots(kind, owner.rect, head, m, shownOnPage, pages === 1, lead && page === 1);
+      const parked = listSlots(kind, owner.rect, head, m, Infinity, false, lead && page === 1);
       const pagerTop = owner.rect.y + owner.rect.h - m.pagerH;
       list = { kind, perPage, pages, page, pager: edges(owner.rect.x, pagerTop, owner.rect.x + owner.rect.w, owner.rect.y + owner.rect.h) };
       source.order.forEach((id, index) => {
         const onPage = Math.floor(index / perPage) + 1;
         // Rows of other pages wait in their own slot, just off it on the side they will come from.
-        if (onPage === page) place(id, { rect: slots[index % perPage], mode: 'row', visible: true }, index % perPage);
+        if (onPage === page) place(id, { rect: slots[index % perPage], mode: 'row', visible: true, lead: lead && page === 1 && index === 0 }, index % perPage);
         else place(id, { rect: shift(parked[index % perPage], onPage < page ? -m.pageShift : m.pageShift), mode: 'folded', visible: false });
       });
     } else if (owner.mode === 'panel') {
