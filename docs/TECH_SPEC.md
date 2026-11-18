@@ -10,7 +10,7 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 - `features/events`: 이벤트 조회·모델·공연표·세션 키(CALENDAR·MAP·SHARE)·캘린더 피드·공유 metadata·구조화 데이터
 - `features/artists`: 인물 식별과 공개 출연 이력
 - `features/about`: 소개 콘텐츠와 인스타그램 핸들(`content.json`)
-- `features/merch`: 머치 상품 정보(`content.ts`, 정적, 회차 id로 묶음)와 사진·정보·구매 패널
+- `features/merch`: MERCH 상품 정보(`content.ts`, 정적, 회차 id로 묶음)와 사진·정보·구매 패널
 - `features/access`, `features/signal`, `features/transmit`: 각 입력 상태와 요청
 - `features/display`: 조회 활동 램프·상태 표식·실제 수치 분할 막대(`Meter`)·공통 모션 정책(`data-display-paused`)
 - `features/ui`: 패널·사실 표·키·예비 칸(`Bay`) 같은 중립 primitive, HTTP 오류

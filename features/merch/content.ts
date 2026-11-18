@@ -16,6 +16,8 @@ export interface MerchItem {
   edition: string;
   name: string;
   price: string;
+  /** The home tile's one line: price and where it is sold. */
+  sale: string;
   /** The open plate's lead image, then the rest. */
   images: readonly [MerchImage, ...MerchImage[]];
   facts: readonly (readonly [string, string])[];
@@ -34,6 +36,7 @@ export const merch: readonly MerchItem[] = [
     edition: '[03] LIMITED',
     name: 'Signal Tee',
     price: '35,000원',
+    sale: '35,000원 · 11.28 인포 현장 판매',
     images: [
       { src: `${MEDIA}/TRM-03-signal-tee-detail.jpg`, alt: 'Signal Tee 뒷면 펄스 프린트 클로즈업', label: 'BACK · DETAIL' },
       { src: `${MEDIA}/TRM-03-signal-tee-front.jpg`, alt: 'Signal Tee 앞면, 왼쪽 가슴 TERMINAL 로고', label: 'FRONT · LEFT CHEST' },

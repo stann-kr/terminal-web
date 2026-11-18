@@ -153,7 +153,7 @@ export function EventActions({
         </Action>
       )}
       {merchFor(event.id).map(item => (
-        <Action key={item.id} href="/merch">머치 · {item.name}</Action>
+        <Action key={item.id} href="/merch">MERCH · {item.name}</Action>
       ))}
       <Action href="/signal">다음 이벤트 소식 신청</Action>
     </ActionDeck>

@@ -346,7 +346,7 @@ describe('stage views', () => {
     const { container, go } = shell();
     go('/merch');
     const merch = plate(container, 'merch');
-    expect(within(merch).getByRole('heading', { level: 1 })).toHaveTextContent('머치');
+    expect(within(merch).getByRole('heading', { level: 1 })).toHaveTextContent('TERMINAL MERCH');
     const ways = within(merch).getAllByRole('listitem').map(item => item.textContent);
     expect(ways[0]).toMatch(/현장 판매.*FAUST SEOUL 인포/);
     expect(ways[1]).toMatch(/인스타그램 DM/);
