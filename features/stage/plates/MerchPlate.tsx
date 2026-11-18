@@ -37,7 +37,7 @@ export function MerchPlate({ mode }: PlateProps) {
   }
   return (
     <div className={styles.face}>
-      <FocusHead label="Merch" title="TERMINAL MERCH" tags={<Tags items={[item.edition, item.price]} />} />
+      <FocusHead label="Merch" title={item.name} tags={<Tags items={[item.edition, item.price]} />} />
       <div className={styles.panelRow} data-columns="3" data-paged="first">
         <MerchGallery item={item} />
         <div className={styles.fitColumn} data-fit="">

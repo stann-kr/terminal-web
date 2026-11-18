@@ -91,6 +91,27 @@
   margin: 0;
 }
 
+/* Sizes: one cell each, the size large over its measurements, flush across the plate. */
+.sizes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0 calc(var(--bleed, 0px) * -1) 2px;
+}
+.sizes > div {
+  display: grid;
+  gap: 6px;
+  padding: 12px max(12px, var(--bleed, 0px));
+  background: var(--well);
+}
+.sizes dt {
+  font: 800 var(--t-2xl)/1 var(--display);
+}
+.sizes dd {
+  color: var(--muted);
+  font: 400 var(--t-sm)/1.2 var(--mono);
+}
+
 /* ── How to buy: on site first ── */
 .buy {
   display: grid;

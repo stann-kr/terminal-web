@@ -20,6 +20,8 @@ export interface MerchItem {
   sale: string;
   /** The open plate's lead image, then the rest. */
   images: readonly [MerchImage, ...MerchImage[]];
+  /** Each size and its measurements, cm. */
+  sizes: readonly (readonly [string, string])[];
   facts: readonly (readonly [string, string])[];
   story: { ko: readonly string[]; en: readonly string[] };
   /** How to buy, in the order to try: on site first. */
@@ -42,13 +44,15 @@ export const merch: readonly MerchItem[] = [
       { src: `${MEDIA}/TRM-03-signal-tee-front.jpg`, alt: 'Signal Tee 앞면, 왼쪽 가슴 TERMINAL 로고', label: 'FRONT · LEFT CHEST' },
       { src: `${MEDIA}/TRM-03-signal-tee-back.jpg`, alt: 'Signal Tee 뒷면, 등 중앙 펄스 그래픽', label: 'BACK · CENTER' },
     ],
+    sizes: [
+      ['L', '가슴 55 / 총장 74'],
+      ['XL', '가슴 58 / 총장 78'],
+    ],
+    // Price and edition stand in the page's head.
     facts: [
-      ['가격', '35,000원'],
-      ['사이즈', 'L (가슴 55 / 총장 74) · XL (가슴 58 / 총장 78)'],
       ['색', 'BLACK'],
       ['원단', 'HEAVY COTTON 7.4 OZ (14수)'],
       ['인쇄', 'WHITE + AMBER'],
-      ['에디션', 'TERMINAL [03] 한정'],
     ],
     story: {
       ko: [

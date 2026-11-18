@@ -346,7 +346,9 @@ describe('stage views', () => {
     const { container, go } = shell();
     go('/merch');
     const merch = plate(container, 'merch');
-    expect(within(merch).getByRole('heading', { level: 1 })).toHaveTextContent('TERMINAL MERCH');
+    expect(within(merch).getByRole('heading', { level: 1 })).toHaveTextContent('Signal Tee');
+    const sizes = merch.querySelector('dl[aria-label="사이즈"]')!;
+    expect(Array.from(sizes.querySelectorAll('dt'), dt => dt.textContent)).toEqual(['L', 'XL']);
     const ways = within(merch).getAllByRole('listitem').map(item => item.textContent);
     expect(ways[0]).toMatch(/현장 판매.*FAUST SEOUL 인포/);
     expect(ways[1]).toMatch(/인스타그램 DM/);

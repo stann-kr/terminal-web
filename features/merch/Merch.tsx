@@ -16,7 +16,7 @@ export function MerchGallery({ item }: { item: MerchItem }) {
   const [shown, setShown] = useState(0);
   const image = item.images[shown] ?? item.images[0];
   return (
-    <Panel title={item.name} label="Merch" code={item.edition} surface="inset" className={styles.galleryPanel}>
+    <Panel title="사진" label="Photos" surface="inset" className={styles.galleryPanel}>
       <div className={styles.gallery}>
         <a className={styles.lead} href={image.src} target="_blank" rel="noopener noreferrer">
           <img src={image.src} alt={`${image.alt} — 새 탭에서 확대`} decoding="async" />
@@ -39,7 +39,15 @@ export function MerchGallery({ item }: { item: MerchItem }) {
 export function MerchFacts({ item }: { item: MerchItem }) {
   const { language } = useLanguage();
   return (
-    <Panel title="정보" label="Spec" code={item.price} aside={<LanguageToggle />} surface="panel" className={styles.factsPanel}>
+    <Panel title="정보" label="Spec" aside={<LanguageToggle />} surface="panel" className={styles.factsPanel}>
+      <dl className={styles.sizes} aria-label="사이즈">
+        {item.sizes.map(([size, measure]) => (
+          <div key={size}>
+            <dt>{size}</dt>
+            <dd>{measure}</dd>
+          </div>
+        ))}
+      </dl>
       <Facts rows={item.facts} />
       <div className={styles.story} lang={language}>
         {item.story[language].map(line => <p key={line}>{line}</p>)}
