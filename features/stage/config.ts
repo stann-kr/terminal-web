@@ -86,7 +86,7 @@ export const stageConfig: StageConfig = {
     home: { plate: 'next', at: { x: 0.86, y: 0.3 } },
     session: { plate: 'detail', at: { x: 0.16, y: 0.3 } },
     artist: { plate: 'detail', at: { x: 0.14, y: 0.35 } },
-    signal: { plate: 'signal', at: { x: 0.85, y: 0.25 } },
+    signal: { plate: 'signal', at: { x: 0.82, y: 0.17 } },
   },
   flowChips: 'top',
   frameY: 10,

@@ -16,7 +16,7 @@ export const channels = [
   ['STANN LUMO INSTAGRAM', 'https://www.instagram.com/stannlumo/'],
 ] as const;
 /** How a channel is known: an Instagram account by its handle, a site by its host. */
-function handle(href: string) {
+export function handle(href: string) {
   const url = new URL(href);
   const account = url.host.endsWith('instagram.com') && url.pathname.split('/').filter(Boolean)[0];
   return account ? `@${account}` : url.host;

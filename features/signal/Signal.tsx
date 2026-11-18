@@ -1,7 +1,7 @@
 'use client';
 import { Fragment, Suspense, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Action, ActionDeck, Panel, ui } from '@/features/ui/Ui';
+import { Action, ActionDeck, Arrow, ui } from '@/features/ui/Ui';
 import {
   Consent,
   Field,
@@ -18,42 +18,32 @@ import styles from './signal.module.css';
 
 /**
  * The note on the channel and the form around one subscription request, so both read the same
- * state. `wrap` places each part (the stage puts each in its own column).
+ * state. `wrap` places each part (the stage gives each its own area); `head` leads the note.
  */
-export function SignalBody({ wrap = node => node, aside }: { wrap?: (node: ReactNode) => ReactNode; aside?: ReactNode }) {
+export function SignalBody({ wrap = node => node, head }: { wrap?: (node: ReactNode, part: 'intro' | 'form') => ReactNode; head?: ReactNode }) {
   const request = useSignalSubscription();
   return (
     <>
-      {[
-        <SignalInformation key="info" request={request} aside={aside} />,
-        <SignalForm key="form" request={request} />,
-      ].map(part => <Fragment key={part.key}>{wrap(part)}</Fragment>)}
+      <Fragment key="intro">{wrap(<SignalInformation request={request} head={head} />, 'intro')}</Fragment>
+      <Fragment key="form">{wrap(<SignalForm request={request} />, 'form')}</Fragment>
     </>
   );
 }
-function SignalInformation({
-  request,
-  aside,
-}: {
-  request: ReturnType<typeof useSignalSubscription>;
-  /** What follows the note on the stage (the next session). */
-  aside?: ReactNode;
-}) {
+function SignalInformation({ request, head }: { request: ReturnType<typeof useSignalSubscription>; head?: ReactNode }) {
   const { pending, done, error } = request;
   const state = pending ? 'sending' : done ? 'saved' : error ? 'error' : 'idle';
   return (
-    <Panel title="수신 안내" label="Notice" code="CH 01" surface="mark">
-      <p className={styles.signalMatrix} aria-hidden="true" data-state={state}>
-        <i />
-        {{ idle: '신청 전', sending: '보내는 중', saved: '신청 완료', error: '보내지 못함' }[state]}
-      </p>
+    <section className={styles.intro} aria-label="수신 안내">
+      <div className={styles.introTop}>
+        {head}
+        <p className={styles.signalMatrix} aria-hidden="true" data-state={state}>
+          <i />
+          {{ idle: '신청 전', sending: '보내는 중', saved: '신청 완료', error: '보내지 못함' }[state]}
+        </p>
+      </div>
       <p className={styles.lead}>TERMINAL의 새로운 이벤트와 소식을 안내합니다.</p>
       <p className={styles.note}>메일로 받으며, 인스타그램 ID를 적으면 DM으로도 받습니다.</p>
-      {aside}
-      <ActionDeck className={styles.deck}>
-        <Action href="/about">소개 / 공식 채널</Action>
-      </ActionDeck>
-    </Panel>
+    </section>
   );
 }
 
@@ -86,7 +76,7 @@ function SignalSubscribeForm({
     errorCode,
   } = request;
   return (
-    <FormPanel title="소식 신청서" code="SIGNAL" label="Form">
+    <FormPanel title="소식 신청서" code="SIGNAL" label="Form" titled={false}>
       {done ? (
         <FormSuccess>
           <p className={ui.eyebrow}>CONTACT SAVED</p>
@@ -104,6 +94,7 @@ function SignalSubscribeForm({
             <Field
               id="signal-email"
               label="이메일"
+              placeholder="name@example.com"
               required
               type="email"
               maxLength={254}
@@ -121,7 +112,8 @@ function SignalSubscribeForm({
             />
             <Field
               id="signal-instagram"
-              label="인스타그램 ID (선택)"
+              label="인스타그램 ID"
+              optional
               hint="적어 두면 인스타그램으로도 소식을 보냅니다. 팔로워에게만 닿습니다."
               maxLength={31}
               pattern="@[A-Za-z0-9_.]{0,30}"
@@ -150,9 +142,10 @@ function SignalSubscribeForm({
             </Consent>
             <button
               aria-busy={pending}
-              className={`${ui.button} ${ui.primary}`}
+              className={`${ui.button} ${ui.primary} ${styles.submit}`}
             >
               {pending ? '저장 중…' : '소식 신청 저장'}
+              <Arrow />
             </button>
           </fieldset>
         </form>

@@ -50,6 +50,7 @@ export function Field({
   error,
   hint,
   ref,
+  optional = false,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & {
   ref?: Ref<HTMLInputElement>;
@@ -57,6 +58,8 @@ export function Field({
   label: string;
   error?: string;
   hint?: string;
+  /** Marks a field one may leave empty ("선택"), where "필수" would sit. */
+  optional?: boolean;
 }) {
   const describedBy =
     [
@@ -81,6 +84,7 @@ export function Field({
         <label htmlFor={props.id}>
           {label}
           {props.required && !error && <span>필수</span>}
+          {optional && !props.required && !error && <span>선택</span>}
         </label>
         {error && (
           <p id={`${props.id}-error`} className={styles.fieldError}>
