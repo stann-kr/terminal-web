@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index, uniqueIndex, primaryKey } from "drizzle-orm/sqlite-core";
 
 // ──────────────────────────────────────────────────────────
 // events 테이블
@@ -32,6 +32,7 @@ export const transmitLogs = sqliteTable("transmit_logs", {
   ts: text("ts").notNull(),
   createdAt: text("created_at").notNull(),
   deviceId: text("device_id"),  // 레거시 nullable 컬럼. 신규 입력·공개 응답에서는 사용하지 않음.
+  hiddenAt: text("hidden_at"),  // 운영자가 숨긴 시각(UTC ISO). 값이 있으면 공개 목록에서 빠지고 DB에는 남음.
 });
 
 // ──────────────────────────────────────────────────────────
@@ -98,6 +99,38 @@ export const signal = sqliteTable(
 );
 
 // 타입 추론
+// ──────────────────────────────────────────────────────────
+// submission_traces 테이블 — 공개 입력(Transmit·게스트 신청·Signal)의 접속 기록, 운영자 전용
+// IP 원문은 두지 않고 비밀 키 해시만 둔다. 90일 지난 행은 새 기록을 쓸 때 지운다.
+// ──────────────────────────────────────────────────────────
+export const submissionTraces = sqliteTable(
+  "submission_traces",
+  {
+    kind: text("kind").notNull(), // transmit | gate | signal
+    recordId: text("record_id").notNull(),
+    createdAt: text("created_at").notNull(),
+    country: text("country"),
+    region: text("region"),
+    city: text("city"),
+    asn: integer("asn"),
+    asOrg: text("as_org"),
+    ipHash: text("ip_hash"),
+    browser: text("browser"),
+    os: text("os"),
+    device: text("device"),
+    entryKind: text("entry_kind"), // code | host | ref
+    entryArtistId: text("entry_artist_id"),
+    entryEventId: text("entry_event_id"),
+    entryReferrer: text("entry_referrer"),
+    entryAt: text("entry_at"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.kind, table.recordId] }),
+    index("submission_traces_created_at_idx").on(table.createdAt),
+    index("submission_traces_ip_hash_idx").on(table.ipHash),
+  ],
+);
+
 export type EventRow = typeof events.$inferSelect;
 export type ArtistRow = typeof artists.$inferSelect;
 export type TransmitLog = typeof transmitLogs.$inferSelect;

@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { SQL } from 'drizzle-orm';
+import { SQLiteSyncDialect } from 'drizzle-orm/sqlite-core';
 import {
   createTransmitLog,
   listTransmitLogs,
@@ -77,13 +79,14 @@ describe('Transmit D1 repository', () => {
       observedPageSize: pageSize,
     }));
     let queryIndex = 0;
+    const filters: unknown[] = [];
     const database = {
       select: vi.fn(() => {
         queryIndex += 1;
         if (queryIndex === 1) {
-          return { from: () => ({ all: vi.fn().mockResolvedValue([{ total: 6 }]) }) };
+          return { from: () => ({ where: (filter: unknown) => (filters.push(filter), { all: vi.fn().mockResolvedValue([{ total: 6 }]) }) }) };
         }
-        return { from: () => ({ orderBy: () => ({ limit }) }) };
+        return { from: () => ({ where: (filter: unknown) => (filters.push(filter), { orderBy: () => ({ limit }) }) }) };
       }),
     };
 
@@ -95,5 +98,9 @@ describe('Transmit D1 repository', () => {
     });
     expect(limit).toHaveBeenCalledWith(5);
     expect(limit.mock.results[0]?.value.offset).toHaveBeenCalledWith(5);
+    // Both the count and the page leave out hidden posts.
+    expect(filters).toHaveLength(2);
+    const dialect = new SQLiteSyncDialect();
+    for (const filter of filters) expect(dialect.sqlToQuery(filter as SQL).sql).toContain('"hidden_at" is null');
   });
 });

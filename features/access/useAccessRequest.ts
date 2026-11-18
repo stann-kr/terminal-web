@@ -28,8 +28,6 @@ export function useAccessRequest(
   const [codeMessage, setCodeMessage] = useState('');
   // Counts the saves a code that filled up meanwhile turned into the waitlist form (see submit).
   const [turned, setTurned] = useState(0);
-  // The terms the consent box last stood under in this visit: null until a code is checked.
-  const waitlistTerms = useRef<boolean | null>(null);
   const revision = useRef(0),
     controller = useRef<AbortController | null>(null),
     submitting = useRef(false);
@@ -70,11 +68,6 @@ export function useAccessRequest(
       if (current !== revision.current) return;
       if (typeof result.name === 'string' && result.name) {
         const open = result.open !== false;
-        // Consent answers the terms on screen. Another code can bring the other terms (the
-        // waitlist shares the Instagram id with the artist), so a tick made before is not kept.
-        if (fields.privacyConsent && (waitlistTerms.current ?? false) !== !open)
-          setFields({ ...fields, privacyConsent: false });
-        waitlistTerms.current = !open;
         setVerified({ code: submittedCode, name: result.name, open });
         setCodeMessage('초대 코드를 확인했습니다.');
       } else setCodeMessage('일치하는 초대 코드가 없습니다.');
@@ -142,11 +135,10 @@ export function useAccessRequest(
       clear(submittedDraft);
     } catch (error) {
       if (error instanceof ApiError && error.code === 'GUEST_LIMIT_REACHED' && !waiting) {
-        // The code filled up while the guest was writing. Waiting shares more with the artist than
-        // they agreed to, so the form turns to the waitlist terms and asks, instead of failing.
-        waitlistTerms.current = true;
+        // The code filled up while the guest was writing. Waiting shares more with the artist (the
+        // Instagram id) than the notice they read, so the form turns to the waitlist notice and waits
+        // for a second press, instead of failing or waiting on its own.
         setVerified({ ...verified, open: false });
-        setFields({ ...fields, privacyConsent: false });
         setCodeMessage('신청하는 사이 초대가 마감되었습니다. 대기 신청 내용을 확인해 주십시오.');
         setTurned((count) => count + 1);
         return;
@@ -180,7 +172,6 @@ export function useAccessRequest(
     fields.name ||
     fields.email ||
     fields.instagram ||
-    fields.privacyConsent ||
     fields.marketingConsent
   );
   return {

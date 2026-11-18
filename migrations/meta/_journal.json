@@ -85,6 +85,20 @@
       "when": 1794452652366,
       "tag": "0011_access_waitlist",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794986530200,
+      "tag": "0012_transmit_hidden",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1794987868224,
+      "tag": "0013_submission_traces",
+      "breakpoints": true
     }
   ]
 }

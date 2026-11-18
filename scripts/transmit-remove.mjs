@@ -3,18 +3,21 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { failureReason, parseWranglerJson } from './lib/cli.mjs';
-import { DATABASE, ID, USAGE, COLUMNS, backupMismatch, parseArgs, restoreSql, writeDecision } from './lib/transmitRemove.mjs';
+import { DATABASE, ID, USAGE, COLUMNS, backupMismatch, hiddenSql, parseArgs, restoreSql, writeDecision } from './lib/transmitRemove.mjs';
 
 /**
  * Takes a visitor-log post down from the public log, and puts it back.
  *
  *   npm run transmit:remove -- list [count] [--remote]
+ *   npm run transmit:remove -- hide <id> [--remote --confirm <id>]
+ *   npm run transmit:remove -- unhide <id> [--remote --confirm <id>]
  *   npm run transmit:remove -- remove <id> [--remote --confirm <id>]
  *   npm run transmit:remove -- restore <backup.json> [--remote --confirm <post id>]
  *
  * Without --remote it works on the local D1 simulation (`--persist-to <dir>` picks another one);
  * --remote is the live database, and there a remove or restore only prints what it would do unless
- * --confirm names the post id. A post is written to backups/transmit/ (git-ignored) before it is
+ * --confirm names the post id. `hide` keeps the post in the database and only drops it from the public
+ * log (`unhide` shows it again); `remove` deletes it. A post is written to backups/transmit/ (git-ignored) before it is
  * deleted, and `restore` inserts that backup again, so a take-down can be undone exactly; a backup
  * goes back only to the place (live or local) it was taken from.
  */
@@ -45,9 +48,30 @@ const relative = (file) => path.relative(process.cwd(), file);
 
 function list(count) {
   const limit = Number.isInteger(Number(count)) && Number(count) > 0 ? Math.min(Number(count), 200) : 20;
-  const latest = query(`SELECT id, handle, ts, message FROM transmit_logs ORDER BY created_at DESC LIMIT ${limit}`);
-  for (const row of latest) console.log(`${row.id}\t${row.ts}\t${row.handle}\t${String(row.message).replace(/\s+/g, ' ').slice(0, 80)}`);
+  const latest = query(`SELECT id, handle, ts, message, hidden_at FROM transmit_logs ORDER BY created_at DESC LIMIT ${limit}`);
+  for (const row of latest) console.log(`${row.id}\t${row.ts}\t${row.handle}${row.hidden_at ? '\t[hidden]' : ''}\t${String(row.message).replace(/\s+/g, ' ').slice(0, 80)}`);
   console.log(`${latest.length} posts (${place})`);
+}
+
+function setHidden(id, hide) {
+  const action = hide ? 'hide' : 'unhide';
+  if (!id || !ID.test(id)) fail(`${action} needs a post id (see \`list\`)`);
+  const [row] = query(`SELECT id, handle, ts, message, hidden_at FROM transmit_logs WHERE id = '${id}'`);
+  if (!row) fail(`no post ${id} in the ${place} log`);
+  if (hide && row.hidden_at) fail(`${id} is already hidden (since ${row.hidden_at})`);
+  if (!hide && !row.hidden_at) fail(`${id} is not hidden`);
+  const decision = writeDecision({ action, id, remote, confirm });
+  if (!decision.write) {
+    console.log(`${row.id}\t${row.ts}\t${row.handle}\t${String(row.message).replace(/\s+/g, ' ').slice(0, 80)}`);
+    console.log(decision.plan);
+    process.exit(0);
+  }
+  query(hiddenSql(id, hide ? new Date().toISOString() : null));
+  const [after] = query(`SELECT hidden_at FROM transmit_logs WHERE id = '${id}'`);
+  if (Boolean(after?.hidden_at) !== hide) fail(`${id} did not change; check with list`);
+  console.log(hide
+    ? `✓ hid ${id} (${row.handle}) at ${after.hidden_at} — undo with: npm run transmit:remove -- unhide ${id}${remote ? ` --remote --confirm ${id}` : ''}`
+    : `✓ ${id} (${row.handle}) is back in the ${place} public log`);
 }
 
 function remove(id) {
@@ -109,6 +133,8 @@ function restore(file) {
 }
 
 if (command === 'list') list(target);
+else if (command === 'hide') setHidden(target, true);
+else if (command === 'unhide') setHidden(target, false);
 else if (command === 'remove') remove(target);
 else if (command === 'restore') restore(target);
 else fail(USAGE);

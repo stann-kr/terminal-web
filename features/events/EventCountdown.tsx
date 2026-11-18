@@ -8,8 +8,11 @@ import styles from './countdown.module.css';
 
 export function EventCountdown({
   event,
+  inline = false,
 }: {
   event: Pick<TerminalEvent, 'date' | 'time'>;
+  /** One band: the mode on the left, the readouts on the right in a line (the next-session plate). */
+  inline?: boolean;
 }) {
   const target = getEventDateTime(event).getTime();
   const [now, setNow] = useState<number | null>(null);
@@ -42,6 +45,18 @@ export function EventCountdown({
     ['분', Math.floor((seconds % 3600) / 60)],
     ['초', seconds % 60],
   ] as const;
+  const readouts = (
+    <dl className={inline ? styles.countdownLine : styles.countdownUnits}>
+      {units.map(([label, value]) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>
+            <LiveValue value={now === null ? '—' : String(value).padStart(2, '0')} />
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
   return (
     <section
       className={styles.countdown}
@@ -53,20 +68,9 @@ export function EventCountdown({
     >
       <div className={ui.band}>
         <span>{remaining ? 'T- COUNTDOWN' : 'T+ ELAPSED'}</span>
-        <span>{remaining ? '이벤트 시작까지' : '이벤트 시작 이후'}</span>
+        {inline ? readouts : <span>{remaining ? '이벤트 시작까지' : '이벤트 시작 이후'}</span>}
       </div>
-      <dl className={styles.countdownUnits}>
-        {units.map(([label, value]) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>
-              <LiveValue
-                value={now === null ? '—' : String(value).padStart(2, '0')}
-              />
-            </dd>
-          </div>
-        ))}
-      </dl>
+      {!inline && readouts}
     </section>
   );
 }

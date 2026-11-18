@@ -1,7 +1,7 @@
 import { afterEach,describe,expect,it,vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { act,cleanup,render,screen,waitFor } from '@testing-library/react';
+import { act,cleanup,render,screen,waitFor,within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TerminalEvent } from '../lib/events/types';
@@ -41,16 +41,13 @@ describe('guest request UI',()=>{
     await user.type(screen.getByLabelText(/초대 코드/), 'CODE-A{Enter}');
     await user.type(screen.getByLabelText(/^이름/), 'Example');
     await user.type(screen.getByRole('textbox', { name: /인스타그램 ID/ }), 'example');
-    await user.click(screen.getByRole('checkbox', { name: /게스트 접근 관리/ }));
     view.rerender(tree('B'));
     expect(screen.getByLabelText(/초대 코드/)).toHaveValue('');
     expect(screen.getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('@');
-    expect(screen.getByRole('checkbox', { name: /게스트 접근 관리/ })).not.toBeChecked();
     await user.type(screen.getByLabelText(/초대 코드/), 'CODE-B');
     view.rerender(tree('A'));
     expect(screen.getByLabelText(/초대 코드/)).toHaveValue('CODE-A');
     expect(screen.getByRole('textbox', { name: /인스타그램 ID/ })).toHaveValue('@example');
-    expect(screen.getByRole('checkbox', { name: /게스트 접근 관리/ })).toBeChecked();
     expect(screen.getByRole('button', { name: '게스트 신청 저장' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: '코드 확인' }));
     await user.click(screen.getByRole('button', { name: '게스트 신청 저장' }));
@@ -74,7 +71,6 @@ describe('guest request UI',()=>{
     await user.type(screen.getByLabelText(/초대 코드/), 'CODE{Enter}');
     await user.type(screen.getByLabelText(/^이름/), 'Example');
     await user.type(screen.getByRole('textbox', { name: /인스타그램 ID/ }), 'example');
-    await user.click(screen.getByRole('checkbox', { name: /게스트 접근 관리/ }));
     await user.click(screen.getByRole('button', { name: '게스트 신청 저장' }));
     view.rerender(tree(false));
     view.rerender(tree(true));
@@ -92,7 +88,7 @@ describe('guest request UI',()=>{
     const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockReturnValueOnce(new Promise<Response>(r=>{resolve=r;}));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();const mounted=render(<QueryClientProvider client={client}><AccessRequest eventId="A"/></QueryClientProvider>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
-    await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     await act(async()=>{client.setQueryData(['events'],[{...event,status:'ARCHIVED'}]);});
     expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');expect(screen.getByRole('button',{name:'신청 저장 중…'})).toBeDisabled();
     await act(async()=>{resolve(saved?json({ok:true}):json({error:'DATA_UNAVAILABLE'},503));});
@@ -115,10 +111,10 @@ describe('guest request UI',()=>{
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
     await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
-    await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     await screen.findByRole('alert');expect(fetch).toHaveBeenCalledTimes(2);
     const payload=JSON.parse(fetch.mock.calls[1][1].body);
-    expect(payload).toEqual({eventId:'A',accessCode:'CODE',name:'Example',instagram:'example',privacyConsent:true,marketingConsent:false});
+    expect(payload).toEqual({eventId:'A',accessCode:'CODE',name:'Example',instagram:'example',marketingConsent:false});
     expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');expect(screen.getByLabelText(/^이름/)).toBeDisabled();expect(screen.getByRole('alert')).toHaveTextContent('접수');expect(screen.queryByText('초대 코드를 확인했습니다.')).not.toBeInTheDocument();
   });
   it('asks for an email only once news is ticked, and sends it only then',async()=>{
@@ -131,9 +127,9 @@ describe('guest request UI',()=>{
     await user.click(news);await user.type(screen.getByLabelText(/소식 받을 이메일/),'example@example.test');
     await user.click(news);expect(screen.queryByLabelText(/소식 받을 이메일/)).not.toBeInTheDocument();
     await user.click(news);expect(screen.getByLabelText(/소식 받을 이메일/)).toHaveValue('example@example.test');
-    await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     const saved=await screen.findByRole('status');
-    expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({eventId:'A',accessCode:'CODE',name:'Example',email:'example@example.test',instagram:'example',privacyConsent:true,marketingConsent:true});
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({eventId:'A',accessCode:'CODE',name:'Example',email:'example@example.test',instagram:'example',marketingConsent:true});
     expect(saved).toHaveTextContent('example@example.test');
   });
   it('takes a guest onto the waitlist once the inviter has no places left',async()=>{
@@ -143,11 +139,11 @@ describe('guest request UI',()=>{
     expect(await screen.findByText('WAITLIST')).toBeInTheDocument();
     expect(screen.getByRole('note')).toHaveTextContent('INVITER의 게스트 초대가 마감되었습니다');
     // The waiting guest shares their Instagram id with the artist, and leaves no email for news.
-    const consent=screen.getByRole('checkbox',{name:/대기 명단 관리/});
-    expect(consent.closest('label')??document.body).toHaveTextContent('이름·인스타그램 ID와 신청 시각은 초대한 아티스트에게 공유되며');
+    expect(screen.queryByRole('checkbox',{name:/대기 명단/})).not.toBeInTheDocument();
+    expect(screen.getByText(/대기 신청하시면/)).toHaveTextContent('이름·인스타그램 ID와 신청 시각이 초대한 아티스트에게 전달되고, 명단에 오르면 아티스트가 인스타그램으로 연락합니다');
     expect(screen.queryByRole('checkbox',{name:/차기 이벤트 소식/})).not.toBeInTheDocument();
     await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
-    await user.click(consent);await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
+    await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
     expect(await screen.findByRole('heading',{name:'대기 명단에 올렸습니다'})).toBeInTheDocument();
     expect(screen.getByText(/아직 게스트 명단은 아닙니다/)).toBeInTheDocument();
     const sent=JSON.parse(fetch.mock.calls[1][1].body);expect(sent.marketingConsent).toBe(false);expect(sent.email).toBeUndefined();expect(sent.waitlist).toBe(true);
@@ -157,7 +153,7 @@ describe('guest request UI',()=>{
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
     await user.type(await screen.findByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
-    await user.click(screen.getByRole('checkbox',{name:/대기 명단 관리/}));await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
+    await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
     const heading=await screen.findByRole('heading',{name:'이미 대기 명단에 있습니다'});
     const saved=heading.closest('section')??heading.parentElement??document.body;
     // The entry that stands may be another inviter's, under another name: only the id is shown.
@@ -172,7 +168,7 @@ describe('guest request UI',()=>{
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
     await user.type(await screen.findByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
-    await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     // The plain terms share the name alone: the guest is not put on the waitlist unasked.
     expect(JSON.parse(fetch.mock.calls[1][1].body).waitlist).toBeUndefined();
     const note=await screen.findByRole('note');
@@ -180,21 +176,22 @@ describe('guest request UI',()=>{
     expect(screen.getByText('신청하는 사이 초대가 마감되었습니다. 대기 신청 내용을 확인해 주십시오.')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');
-    const consent=screen.getByRole('checkbox',{name:/대기 명단 관리/});expect(consent).not.toBeChecked();
-    await user.click(consent);await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
+    // The form turns to the waitlist notice and waits: only a second press puts the guest there.
+    expect(screen.getByText(/대기 신청하시면/)).toBeInTheDocument();expect(fetch).toHaveBeenCalledTimes(2);
+    await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
     expect(await screen.findByRole('heading',{name:'대기 명단에 올렸습니다'})).toBeInTheDocument();
-    expect(JSON.parse(fetch.mock.calls[2][1].body)).toEqual({eventId:'A',accessCode:'CODE',name:'Example',instagram:'example',privacyConsent:true,marketingConsent:false,waitlist:true});
+    expect(JSON.parse(fetch.mock.calls[2][1].body)).toEqual({eventId:'A',accessCode:'CODE',name:'Example',instagram:'example',marketingConsent:false,waitlist:true});
   });
-  it('drops a tick made under other terms, and reports only what was sent',async()=>{
+  it('reports only what was sent when another code turns the form to the waitlist',async()=>{
     const fetch=vi.fn().mockResolvedValueOnce(json({name:'OPEN INVITER',open:true})).mockResolvedValueOnce(json({name:'FULL INVITER',open:false})).mockResolvedValueOnce(json({ok:true}));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
     await user.type(screen.getByLabelText(/초대 코드/),'OPEN{Enter}');
     await user.type(await screen.findByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
     await user.click(screen.getByRole('checkbox',{name:/차기 이벤트 소식/}));await user.type(screen.getByLabelText(/소식 받을 이메일/),'example@example.test');
-    await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));
+    
     await user.clear(screen.getByLabelText(/초대 코드/));await user.type(screen.getByLabelText(/초대 코드/),'FULL{Enter}');
-    const consent=await screen.findByRole('checkbox',{name:/대기 명단 관리/});expect(consent).not.toBeChecked();
-    await user.click(consent);await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
+    await screen.findByText(/대기 신청하시면/);
+    await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
     // A place opened meanwhile, so the guest is listed: without the news the waitlist form never sent.
     const saved=await screen.findByRole('status');
     expect(saved).toHaveTextContent('게스트 신청을 저장했습니다');expect(saved).toHaveTextContent('동의 안 함');expect(saved).not.toHaveTextContent('example@example.test');
@@ -208,7 +205,7 @@ describe('guest request UI',()=>{
       const user=userEvent.setup();render(<AccessForm eventId="A"/>);
       await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
       await user.type(await screen.findByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
-      await user.click(screen.getByRole('checkbox',{name:/대기 명단 관리/}));await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
+      await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
       expect(await screen.findByText('INVITE CLOSED')).toBeInTheDocument();
       const key=screen.getByRole('link',{name:'TERMINAL 일정 구독'});
       expect(key).toHaveAttribute('href','webcal://terminal.stann.kr/calendar.ics');
@@ -220,15 +217,19 @@ describe('guest request UI',()=>{
     render(<AccessForm eventId="A"/>);
     expect(screen.getByLabelText(/^이름/)).toHaveAccessibleDescription('1인 1신청 · 동반인도 각자 신청해 주십시오.');
   });
-  it('tells the guest their name goes to the inviter',()=>{
+  it('tells the guest, without a box to tick, that their name goes to the inviter',()=>{
     render(<AccessForm eventId="A"/>);
-    expect(screen.getByRole('checkbox',{name:/게스트 접근 관리/}).closest('label')??document.body).toHaveTextContent('이름과 신청 시각은 초대한 아티스트에게 공유됩니다');
+    // Only the optional news box is left: the request itself needs no consent tick.
+    expect(screen.getAllByRole('checkbox').map(box=>box.getAttribute('id'))).toEqual(['marketing-consent']);
+    const notice=screen.getByText(/신청하시면 이름과 신청 시각이/);
+    expect(notice).toHaveTextContent('신청하시면 이름과 신청 시각이 초대한 아티스트에게 전달됩니다. 신청 정보는 이벤트 종료 후 1개월까지 보관됩니다.');
+    expect(within(notice).getByRole('link',{name:/개인정보처리방침/})).toHaveAttribute('href','/privacy');
   });
   it('reports a stored request without claiming admission or tickets',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockResolvedValueOnce(json({ok:true})));
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
     await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
-    await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     expect(await screen.findByRole('heading',{name:'게스트 신청을 저장했습니다'})).toBeInTheDocument();expect(screen.getByRole('status')).toHaveTextContent('게스트 신청을 저장했습니다');expect(screen.getByRole('status')).toHaveFocus();
   });
   it('checks the code on Enter, then moves on to the name and summarises the saved request',async()=>{
@@ -240,7 +241,7 @@ describe('guest request UI',()=>{
     expect(fetch.mock.calls[0][0]).toBe('/api/gate/code-info');
     expect(screen.getByLabelText(/^이름/)).toHaveFocus();
     expect(screen.queryByText('초대 코드를 확인하면 02를 입력할 수 있습니다.')).not.toBeInTheDocument();
-    await user.keyboard('Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@example');expect(screen.getByRole('textbox',{name:/인스타그램 ID/})).toHaveValue('@example');await user.click(screen.getByRole('checkbox',{name:/게스트 접근 관리/}));await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    await user.keyboard('Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'@example');expect(screen.getByRole('textbox',{name:/인스타그램 ID/})).toHaveValue('@example');await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
     const saved=await screen.findByRole('status');
     expect(saved).toHaveTextContent('INVITER');expect(saved).toHaveTextContent('@example');expect(saved).not.toHaveTextContent('이메일');
     expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');expect(screen.getByRole('link',{name:'@TERMINAL.SIGNAL 팔로우'})).toHaveAttribute('href','https://www.instagram.com/terminal.signal/');
@@ -273,24 +274,24 @@ describe('transmit UI',()=>{
     vi.stubGlobal('fetch',vi.fn().mockReturnValue(new Promise<Response>(done=>{resolve=done;})));
     const onPosted=vi.fn(),onSaved=vi.fn(),user=userEvent.setup();
     const view=render(<TransmitForm onPosted={onPosted} onSaved={onSaved}/>);
-    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));
+    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));
     view.unmount();await act(async()=>{resolve(json(log,201));});
     expect(onSaved).toHaveBeenCalledOnce();expect(onPosted).not.toHaveBeenCalled();
   });
   it('retries the same uncertain write with the same key, then changes the key for changed content',async()=>{
     const fetch=vi.fn().mockRejectedValue(new TypeError('offline'));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();render(<TransmitForm onPosted={vi.fn()}/>);
-    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));await screen.findByRole('alert');
-    await user.click(screen.getByRole('button',{name:'기록 전송'}));await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(2));
+    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));await screen.findByRole('alert');
+    await user.click(screen.getByRole('button',{name:'기록 남기기'}));await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(2));
     expect(fetch.mock.calls[0][1].headers['Idempotency-Key']).toBe(fetch.mock.calls[1][1].headers['Idempotency-Key']);
-    await user.type(screen.getByLabelText(/메시지/),' again');await user.click(screen.getByRole('button',{name:'기록 전송'}));await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(3));
+    await user.type(screen.getByLabelText(/메시지/),' again');await user.click(screen.getByRole('button',{name:'기록 남기기'}));await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(3));
     expect(fetch.mock.calls[2][1].headers['Idempotency-Key']).not.toBe(fetch.mock.calls[1][1].headers['Idempotency-Key']);
     expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({handle:'VISITOR',message:'hello'});
   });
   it('preserves text edited while a write is pending and refreshes only after a stored log response',async()=>{
     let resolve!:(value:Response)=>void;vi.stubGlobal('fetch',vi.fn().mockReturnValue(new Promise<Response>(r=>{resolve=r;})));
     const onPosted=vi.fn(),user=userEvent.setup();render(<TransmitForm onPosted={onPosted}/>);
-    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));
+    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));
     expect(onPosted).not.toHaveBeenCalled();await user.clear(screen.getByLabelText(/메시지/));await user.type(screen.getByLabelText(/메시지/),'my next draft');
     await act(async()=>{resolve(json(log,201));});expect(onPosted).toHaveBeenCalledOnce();expect(screen.getByLabelText(/메시지/)).toHaveValue('my next draft');expect(screen.getByRole('status')).toHaveTextContent('기록을 저장했습니다');
   });
@@ -298,14 +299,14 @@ describe('transmit UI',()=>{
     localStorage.removeItem('terminal_node_id');
     const fetch=vi.fn().mockResolvedValue(json(log,201));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();const first=render(<TransmitForm onPosted={vi.fn()}/>);
-    await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));await waitFor(()=>expect(fetch).toHaveBeenCalledOnce());
+    await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));await waitFor(()=>expect(fetch).toHaveBeenCalledOnce());
     const {handle}=JSON.parse(fetch.mock.calls[0][1].body);expect(handle).toMatch(/^NODE-[A-HJ-NP-Z2-9]{5}$/);
     first.unmount();render(<TransmitForm onPosted={vi.fn()}/>);
     expect(screen.getByLabelText(/공개 닉네임/)).toHaveAttribute('placeholder',handle);
   });
   it('does not accept a malformed successful HTTP response as a saved log',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue(json({ok:true})));const onPosted=vi.fn(),user=userEvent.setup();render(<TransmitForm onPosted={onPosted}/>);
-    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));
+    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));
     expect(await screen.findByRole('alert')).toHaveTextContent('서버 응답');expect(onPosted).not.toHaveBeenCalled();expect(screen.getByLabelText(/메시지/)).toHaveValue('hello');
   });
 });
@@ -347,7 +348,9 @@ describe('field error recovery',()=>{
     }
     const email=screen.getByLabelText(form==='access'?/소식 받을 이메일/:/^이메일/),instagram=screen.getByRole('textbox',{name:/인스타그램 ID/});
     await user.type(email,'old@example.test');await user.type(instagram,'example');
-    await user.click(screen.getAllByRole('checkbox')[0]);await user.click(screen.getByRole('button',{name:form==='access'?'게스트 신청 저장':'소식 신청 저장'}));
+    // Signal's first box is its required consent; the guest form has none left to tick.
+    if(form==='signal') await user.click(screen.getAllByRole('checkbox')[0]);
+    await user.click(screen.getByRole('button',{name:form==='access'?'게스트 신청 저장':'소식 신청 저장'}));
     await screen.findByRole('alert');expect(email).toHaveAttribute('aria-invalid','true');
     await user.type(instagram,'_changed');expect(email).toHaveAttribute('aria-invalid','true');
     await user.clear(email);await user.type(email,'correct@example.test');

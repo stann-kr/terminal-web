@@ -5,8 +5,8 @@
 
 export const DATABASE = 'terminal-db';
 export const ID = /^[A-Za-z0-9_-]{1,160}$/;
-export const COLUMNS = ['id', 'handle', 'message', 'ts', 'created_at', 'device_id'];
-export const USAGE = 'usage: transmit:remove -- list [count] [--remote] | remove <id> [--remote --confirm <id>] | restore <backup.json> [--remote --confirm <post id>]';
+export const COLUMNS = ['id', 'handle', 'message', 'ts', 'created_at', 'device_id', 'hidden_at'];
+export const USAGE = 'usage: transmit:remove -- list [count] [--remote] | hide <id> [--remote --confirm <id>] | unhide <id> [--remote --confirm <id>] | remove <id> [--remote --confirm <id>] | restore <backup.json> [--remote --confirm <post id>]';
 
 /**
  * @typedef {{ command?: string, target?: string, remote: boolean, persistTo: string | null, confirm: string | null, error?: string }} TransmitArgs
@@ -40,17 +40,23 @@ export function parseArgs(args) {
   return parsed;
 }
 
+/** What each write does to the post, for the dry-run plan. */
+const PLANS = {
+  hide: (id) => `would hide ${id} from the live public log (the post stays in the database)`,
+  unhide: (id) => `would show ${id} in the live public log again`,
+  remove: (id) => `would take ${id} down from the live log (backing it up first)`,
+  restore: (id, backup) => `would put ${id} back into the live log from ${backup ?? 'the backup'}`,
+};
+
 /**
- * Whether a remove or restore of the post `id` may write. The local simulation always may; the live
+ * Whether a hide, unhide, remove or restore of the post `id` may write. The local simulation always may; the live
  * database only when --confirm names that same post id. Otherwise the run prints `plan` and stops.
- * @param {{ action: 'remove' | 'restore', id: string, remote: boolean, confirm: string | null, backup?: string }} input
+ * @param {{ action: 'hide' | 'unhide' | 'remove' | 'restore', id: string, remote: boolean, confirm: string | null, backup?: string }} input
  * @returns {{ write: true } | { write: false, plan: string }}
  */
 export function writeDecision({ action, id, remote, confirm, backup }) {
   if (!remote || confirm === id) return { write: true };
-  const what = action === 'remove'
-    ? `would take ${id} down from the live log (backing it up first)`
-    : `would put ${id} back into the live log from ${backup ?? 'the backup'}`;
+  const what = PLANS[action](id, backup);
   const mismatch = confirm === null ? '' : ` (--confirm ${confirm} does not name this post)`;
   return { write: false, plan: `dry run: ${what}${mismatch}. To do it, run again with --remote --confirm ${id}.` };
 }
@@ -77,6 +83,13 @@ export function backupMismatch(backup, { remote, database = DATABASE }) {
 
 /** SQL text literal: the value is quoted and its quotes doubled; NULL stays NULL. */
 export const literal = (value) => (value === null || value === undefined ? 'NULL' : `'${String(value).replaceAll("'", "''")}'`);
+
+/**
+ * The UPDATE that hides a post (stamping when) or shows it again.
+ * @param {string} id
+ * @param {string | null} hiddenAt UTC ISO time to hide, or null to show again
+ */
+export const hiddenSql = (id, hiddenAt) => `UPDATE transmit_logs SET hidden_at = ${literal(hiddenAt)} WHERE id = ${literal(id)};`;
 
 /**
  * The INSERT that puts a backed-up post back.

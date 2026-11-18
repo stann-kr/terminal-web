@@ -22,7 +22,18 @@
 
 ## 방문자 로그에 내려야 할 글이 올라왔을 때
 
-`npm run transmit:remove -- list 20 --remote`로 최근 글의 ID를 찾습니다. `npm run transmit:remove -- remove <ID> --remote`는 그 글과 할 일만 보여 주고 아무것도 지우지 않으며, 대상 ID를 확인한 뒤 `npm run transmit:remove -- remove <ID> --remote --confirm <ID>`로 내립니다. 지우기 전에 글 전체를 git이 무시하는 `backups/transmit/`에 백업하며, `npm run transmit:remove -- restore <백업 파일> --remote --confirm <ID>`로 그대로 되돌릴 수 있습니다(`--confirm` 없이는 계획만 출력). 백업은 가져온 곳(운영 또는 로컬)으로만 되돌리며, 다르면 거부합니다. 실행 도중 실패하면 메시지에 백업 경로가 함께 나오므로 `list`로 상태를 확인한 뒤 진행합니다. `--remote`를 빼면 로컬 시뮬레이션에서 확인 없이 동작합니다.
+`npm run transmit:remove -- list 20 --remote`로 최근 글의 ID를 찾습니다. 글을 지우지 않고 공개 목록에서만 빼려면 `npm run transmit:remove -- hide <ID> --remote --confirm <ID>`로 숨깁니다. 숨긴 글은 DB에 남고 `list`에 `[hidden]`으로 표시되며, `unhide`로 다시 보이게 합니다(`--confirm` 없이는 계획만 출력). `npm run transmit:remove -- remove <ID> --remote`는 그 글과 할 일만 보여 주고 아무것도 지우지 않으며, 대상 ID를 확인한 뒤 `npm run transmit:remove -- remove <ID> --remote --confirm <ID>`로 내립니다. 지우기 전에 글 전체를 git이 무시하는 `backups/transmit/`에 백업하며, `npm run transmit:remove -- restore <백업 파일> --remote --confirm <ID>`로 그대로 되돌릴 수 있습니다(`--confirm` 없이는 계획만 출력). 백업은 가져온 곳(운영 또는 로컬)으로만 되돌리며, 다르면 거부합니다. 실행 도중 실패하면 메시지에 백업 경로가 함께 나오므로 `list`로 상태를 확인한 뒤 진행합니다. `--remote`를 빼면 로컬 시뮬레이션에서 확인 없이 동작합니다.
+
+## 공개 입력을 누가 어디서 남겼는지 볼 때
+
+Transmit 글·게스트 신청(대기 포함)·Signal 구독이 저장되면 운영자 전용 `submission_traces`에 한 줄이 남습니다. 칸은 접속 국가·지역·도시·통신사(ASN), IP의 비밀 키 해시(`ip_hash`, 원문 IP는 저장하지 않음), 브라우저·OS·기기, 그리고 유입 쿠키(`tw_entry`, 30일)에서 읽은 유입 경로입니다. 유입은 아티스트 코드 링크(`entry_kind = code`, 코드를 아티스트 id로 풀어 `entry_artist_id`), 호스트 페이지(`host`, 링크의 `t`는 저장하지 않음), 외부 사이트(`ref`, `entry_referrer`)입니다. 아티스트 링크·호스트 페이지 방문은 저장된 유입을 바꾸고, 외부 사이트는 비어 있을 때만 채웁니다.
+
+```
+npx wrangler d1 execute terminal-db --remote --command "SELECT * FROM submission_traces WHERE record_id = '<글·신청·구독 id>'"
+npx wrangler d1 execute terminal-db --remote --command "SELECT kind, record_id, created_at, city, browser FROM submission_traces WHERE ip_hash = '<ip_hash>' ORDER BY created_at"
+```
+
+`ip_hash`는 Worker secret `TRACE_HASH_SECRET`이 있을 때만 채워지며, 같은 키 아래에서 같은 주소(IPv6는 /64)는 같은 값입니다. 키를 바꾸면 이전 기록과 묶이지 않습니다. 90일 지난 행은 새 기록을 쓸 때 함께 지워지므로 한동안 입력이 없으면 남아 있을 수 있습니다. Signal 수신 거부는 그 구독의 기록도 지웁니다. 아티스트가 호스트 페이지에서 직접 올린 게스트는 기록하지 않습니다.
 
 ## 요청이 많다는 안내(429)가 뜰 때
 

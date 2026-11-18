@@ -6,39 +6,55 @@
   clip-path: inset(50%);
 }
 
-/* ── Gallery: the chosen picture fills what the panel leaves, keys below ── */
-.galleryPanel,
-.factsPanel,
-.buyPanel {
+/* ── The sheet: pictures, spec and how to buy side by side, meeting flush and filling the plate. ── */
+.sheet {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+}
+.photos,
+.spec,
+.buyColumn {
+  --bleed: var(--pad);
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
+  background: var(--plate);
+  color: var(--ink);
 }
-.galleryPanel > :last-child,
-.factsPanel > :last-child,
-.buyPanel > :last-child {
-  min-height: 0;
+.photos {
+  gap: 10px;
+  padding: var(--pad);
 }
-.gallery {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--gap);
-  min-height: 0;
-  height: 100%;
+.spec,
+.buyColumn {
+  padding: calc(var(--pad) * .7) var(--pad) 0;
 }
+.head {
+  flex: none;
+}
+
+/* Pictures: the chosen one large from the top, the others as small keys under it. */
 .lead {
   display: flex;
-  flex: 1 1 0;
-  align-items: center;
+  flex: 0 1 auto;
+  align-items: flex-start;
   justify-content: center;
   min-height: 120px;
+  overflow: hidden;
 }
+/* Every photo takes the same frame (the mockups' 1200 × 1066), so switching never resizes it; the
+   closer detail shot, a little taller, is trimmed at its edges rather than shown larger. */
 .lead img {
   display: block;
   max-width: 100%;
   max-height: 100%;
-  object-fit: contain;
+  aspect-ratio: 1200 / 1066;
+  object-fit: cover;
 }
 .lead:focus-visible,
 .thumb:focus-visible {
@@ -48,7 +64,7 @@
 .thumbs {
   display: grid;
   flex: none;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(76px, 96px));
   gap: 4px;
 }
 .thumb {
@@ -60,7 +76,7 @@
   background: var(--well);
   color: var(--ink);
   font: 700 var(--t-xs)/1.2 var(--display);
-  letter-spacing: .12em;
+  letter-spacing: .1em;
   cursor: pointer;
 }
 .thumb img {
@@ -75,52 +91,197 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.thumbShort {
+  display: none;
+}
 .thumb[aria-pressed="true"] {
   background: var(--fill);
   color: var(--on-fill);
 }
 
-/* ── Facts and story ── */
+/* Sizes: one cell each, the size large with its measurements on the same line, flush across. */
+.sizes {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0 calc(var(--bleed) * -1) 2px;
+}
+.sizes > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px var(--bleed);
+  background: var(--well);
+}
+.sizes dt {
+  font: 800 var(--t-2xl)/1 var(--display);
+}
+.sizes dd {
+  color: var(--muted);
+  font: 400 var(--t-sm)/1.2 var(--mono);
+  white-space: nowrap;
+}
+.facts {
+  flex: none;
+}
+/* The spec facts read as a label over its value. */
+.facts dl {
+  grid-template-columns: minmax(0, 1fr);
+}
+.facts dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+.facts dt {
+  font-family: var(--sans);
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+.facts dd {
+  text-align: left;
+}
 .story {
   display: grid;
   gap: 10px;
-  margin-top: 14px;
-  font: 400 var(--t-md)/1.6 var(--sans);
+  margin-top: 18px;
+  font: 400 var(--t-sm)/1.7 var(--sans);
 }
 .story p {
   margin: 0;
 }
 
-/* ── How to buy: on site first ── */
+/* How to buy: on site first, on its own plate; the DM and the session's file along the foot. */
 .buy {
   display: grid;
-  gap: 14px;
-  margin: 0 0 var(--gap);
+  flex: none;
+  margin: 0 calc(var(--bleed) * -1);
   padding: 0;
   list-style: none;
 }
 .buy li {
   display: grid;
-  gap: 4px;
+  gap: 6px;
+  padding: 16px var(--bleed);
+  background: var(--plate);
+  color: var(--ink);
 }
 .buy b {
+  color: var(--muted);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .16em;
-  color: var(--muted);
 }
 .buy li:first-child b {
-  color: var(--link);
+  color: var(--accent);
 }
 .buy strong {
-  font: 800 var(--t-lg)/1.15 var(--display);
+  font: 700 var(--t-lg)/1.2 var(--sans);
 }
 .buy p {
   margin: 0;
-  font: 400 var(--t-md)/1.55 var(--sans);
+  font: 400 var(--t-sm)/1.65 var(--sans);
+}
+.price {
+  display: none;
+}
+.dmKey,
+.eventKey {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-inline: calc(var(--bleed) * -1);
+  padding: 0 var(--bleed);
+  background: var(--plate);
+  color: var(--ink);
+  text-decoration: none;
+  font: 700 var(--t-lg)/1 var(--display);
+  letter-spacing: .04em;
+}
+.dmKey {
+  min-height: 56px;
+  margin-top: auto;
+}
+.eventKey {
+  min-height: 56px;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+@media (hover: hover) {
+  .dmKey:hover,
+  .eventKey:hover {
+    box-shadow: inset var(--sweep, 100vw) 0 0 0 var(--hi);
+    color: var(--on-hi);
+  }
+}
+.dmKey:focus-visible,
+.eventKey:focus-visible {
+  outline-offset: -4px;
 }
 
-/* A stacked (narrow) plate gives each panel its natural height; the picture keeps a fixed one. */
-:global([data-stage]:not([data-stage=stage])) .lead {
-  flex: none;
-  height: min(70vw, 420px);
+/* A narrow plate (below three readable columns): the pictures across the top, spec and buying side
+   by side under them. */
+@container layer (max-width: 900px) {
+  .sheet {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+  }
+  .photos {
+    grid-column: 1 / -1;
+  }
+  .lead {
+    flex: none;
+    height: min(60vw, 420px);
+  }
+  .spec,
+  .buyColumn {
+    overflow: visible;
+  }
+}
+
+/* A phone: the columns give way to one run in the order a buyer reads, picture, sizes, the spec on
+   one line, the price with the on-site sale, the DM key; then the story, the DM way and the session. */
+@container layer (max-width: 560px) {
+  .sheet {
+    display: flex;
+    flex-direction: column;
+  }
+  .photos,
+  .spec,
+  .buyColumn {
+    display: contents;
+  }
+  .photos > *, .spec > *, .buyColumn > *,
+  .buy li {
+    margin-inline: 0;
+  }
+  .lead { order: 1; height: min(80vw, 300px); background: var(--paper); align-items: center; }
+  .thumbs { order: 2; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; margin-top: 8px; }
+  .thumb { padding: 8px 0; }
+  .thumb img, .thumbLabel { display: none; }
+  .thumbShort { display: block; text-align: center; }
+  .sizes { order: 3; margin: 8px 0 0; }
+  .sizes > div { gap: 8px; padding: 10px 12px; }
+  .sizes dd { font-size: var(--t-xs); }
+  .facts { order: 4; margin-top: 8px; }
+  .facts dl { display: flex; flex-wrap: wrap; gap: 0 .35em; margin: 0; padding: 10px 12px; background: var(--well); }
+  .facts dl > div:nth-child(n) { display: inline; padding: 0; background: none; }
+  .facts dl > div + div::before { content: '·'; margin-right: .35em; }
+  .facts dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .facts dd { display: inline; font-size: var(--t-sm); }
+  .buy { order: 5; margin-top: 8px; display: contents; }
+  .buy li:first-child { order: 5; margin-top: 8px; grid-template-columns: minmax(0, 1fr) auto; padding: 14px 12px; }
+  .buy li:first-child strong { display: none; }
+  .buy li:first-child b { grid-column: 2; grid-row: 1; align-self: center; }
+  .buy li:first-child .price { display: block; grid-column: 1; grid-row: 1; font: 800 var(--t-2xl)/1 var(--display); }
+  .buy li:first-child p { grid-column: 1 / -1; }
+  .dmKey { order: 6; margin: 8px 0 0; padding: 0 12px; }
+  .head { order: 7; margin-top: 16px; }
+  .buyColumn > .head { display: none; }
+  .story { order: 8; }
+  .buy li:nth-child(2) { order: 9; margin-top: 12px; padding: 14px 12px; }
+  .eventKey { order: 10; margin: 8px 0 0; padding: 0 12px; }
 }

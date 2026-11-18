@@ -1,23 +1,48 @@
 .lead {
-  font: 700 var(--t-lg)/1.4 var(--sans);
+  font: 500 var(--t-lg)/1.4 var(--sans);
 }
-/* Channel state: the real request lifecycle as one flush status line across the plate. */
-.signalMatrix {
+.note {
+  margin-top: 4px;
+  color: var(--muted);
+  font: 500 var(--t-sm)/1.5 var(--sans);
+}
+/* The save key: a bar with its arrow at the right. */
+.submit {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 40px;
-  margin: 16px calc(var(--bleed, 0px) * -1) 14px;
-  padding: 8px max(12px, var(--bleed, 0px));
-  background: var(--well);
-  font: 700 var(--t-sm)/1 var(--display);
-  letter-spacing: .16em;
+  justify-content: space-between;
+  gap: 12px;
+}
+.submit > svg {
+  display: inline-block;
+}
+/* The note: the plate's name with the request's state at its right, then the lead and how it arrives. */
+.introTop {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.introTop > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* Channel state: the real request lifecycle, a lamp and a word. */
+.signalMatrix {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  color: var(--accent);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .12em;
 }
 .signalMatrix i {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   background: currentColor;
-  opacity: .35;
+  opacity: .5;
 }
 .signalMatrix:is([data-state=sending], [data-state=saved], [data-state=error]) i {
   opacity: 1;

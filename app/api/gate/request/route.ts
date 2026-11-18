@@ -16,6 +16,7 @@ import {
   parseGateRequestBody,
   resolveArtistAccessCode,
 } from "@/lib/gate/createAccessRequest";
+import { recordSubmission } from "@/lib/trace/recordSubmission";
 import { generateId } from "@/lib/utils/id";
 
 /** POST /api/gate/request */
@@ -62,8 +63,9 @@ export async function POST(request: Request) {
       return noStoreJson({ error: "INVALID_ACCESS_CODE" }, 401);
     }
 
+    const requestId = generateId("req");
     const result = await createAccessRequestAtomically(env.DB, {
-      id: generateId("req"),
+      id: requestId,
       signalId: generateId("sig"),
       eventId: upcomingEvent.rowId,
       artistId: accessCodeResult.artistId,
@@ -71,7 +73,6 @@ export async function POST(request: Request) {
       name: requestInput.input.name,
       email: requestInput.input.email,
       instagram: requestInput.input.instagram,
-      privacyConsent: requestInput.input.privacyConsent,
       marketingConsent: requestInput.input.marketingConsent,
       guestLimit: accessCodeResult.data.guestLimit,
       createdAt: now.toISOString(),
@@ -79,6 +80,10 @@ export async function POST(request: Request) {
       waitlist: requestInput.input.waitlist,
     });
 
+    // Only a stored request or waitlist entry is traced (a duplicate or a full code stores nothing).
+    if (result.status === "created" || result.status === "waitlisted") {
+      await recordSubmission(request, "gate", requestId, now);
+    }
     if (result.status === "duplicate") return noStoreJson({ ok: true });
     // A full code keeps a guest who asked to wait on its waitlist: the artist can move them up later.
     if (result.status === "waitlisted") return noStoreJson({ ok: true, waitlisted: true });

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getCloudflareContext: vi.fn(),
   getDb: vi.fn(),
   listTransmitLogs: vi.fn(),
+  recordSubmission: vi.fn(),
 }));
 
 vi.mock('@opennextjs/cloudflare', () => ({
@@ -15,6 +16,7 @@ vi.mock('@/lib/api/abuseControl', () => ({
   enforceRateLimit: mocks.enforceRateLimit,
 }));
 vi.mock('@/lib/db/client', () => ({ getDb: mocks.getDb }));
+vi.mock('@/lib/trace/recordSubmission', () => ({ recordSubmission: mocks.recordSubmission }));
 vi.mock('@/lib/transmit/d1TransmitRepository', () => ({
   createTransmitLog: mocks.createTransmitLog,
   listTransmitLogs: mocks.listTransmitLogs,
@@ -113,6 +115,12 @@ describe('Transmit route response contract', () => {
       { database: true },
       publicLog,
     );
+    // Only the first write is traced: a replay keeps the trace the original left.
+    if (status === 'created') {
+      expect(mocks.recordSubmission).toHaveBeenCalledWith(expect.any(Request), 'transmit', publicLog.id, expect.any(Date));
+    } else {
+      expect(mocks.recordSubmission).not.toHaveBeenCalled();
+    }
   });
 
   it('keeps idempotency conflicts opaque and non-cacheable', async () => {

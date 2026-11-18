@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { backupMismatch, parseArgs, restoreSql, writeDecision } from '../scripts/lib/transmitRemove.mjs';
+import { backupMismatch, hiddenSql, parseArgs, restoreSql, writeDecision } from '../scripts/lib/transmitRemove.mjs';
 
 describe('transmit-remove arguments', () => {
   it('reads the command, target and flags in any order', () => {
@@ -62,6 +62,25 @@ describe('transmit-remove restore target', () => {
   });
 
   it('quotes every value of the restored row', () => {
-    expect(restoreSql(row)).toBe("INSERT INTO transmit_logs (id, handle, message, ts, created_at, device_id) VALUES ('post-1', 'h', 'it''s', 't', 'c', NULL);\n");
+    expect(restoreSql(row)).toBe("INSERT INTO transmit_logs (id, handle, message, ts, created_at, device_id, hidden_at) VALUES ('post-1', 'h', 'it''s', 't', 'c', NULL, NULL);\n");
+  });
+});
+
+describe('transmit-remove hide', () => {
+  it('only plans a live hide or unhide without --confirm naming the post', () => {
+    const hide = writeDecision({ action: 'hide', id: 'post-1', remote: true, confirm: null });
+    expect(hide.write === false && hide.plan).toMatch(/would hide post-1 .*stays in the database.*--remote --confirm post-1/);
+    const unhide = writeDecision({ action: 'unhide', id: 'post-1', remote: true, confirm: 'post-2' });
+    expect(unhide.write === false && unhide.plan).toContain('does not name this post');
+    expect(writeDecision({ action: 'hide', id: 'post-1', remote: true, confirm: 'post-1' })).toEqual({ write: true });
+  });
+
+  it('stamps the hide time or clears it, quoting the id', () => {
+    expect(hiddenSql('post-1', '2026-11-18T08:00:00.000Z')).toBe("UPDATE transmit_logs SET hidden_at = '2026-11-18T08:00:00.000Z' WHERE id = 'post-1';");
+    expect(hiddenSql('post-1', null)).toBe("UPDATE transmit_logs SET hidden_at = NULL WHERE id = 'post-1';");
+  });
+
+  it('restores an older backup without hidden_at as a visible post', () => {
+    expect(restoreSql({ id: 'post-1', handle: 'H', message: 'm', ts: 't', created_at: 'c', device_id: null })).toContain(", NULL, NULL);");
   });
 });

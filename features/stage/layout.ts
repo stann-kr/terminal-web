@@ -37,6 +37,8 @@ export interface StageMetrics {
   /** Default head heights by density, used until the real heads have been measured. */
   head: Record<'hero' | 'panel' | 'index', number>;
   pagerH: number;
+  /** The leading row of a list (the next session in the directory) at its tallest. */
+  leadRowH: number;
   rowH: number;
   /** A row narrower than `narrowRowW` lays out on three lines and needs this height instead. */
   rowHNarrow: number;
@@ -47,7 +49,7 @@ export interface StageMetrics {
   panelCellH: number;
   indexRowH: number;
   /** Most cells a summary plate shows, and in how many columns, per kind. */
-  panelCells: Record<CarrierKind, { max: number; columns: number }>;
+  panelCells: Record<CarrierKind, { max: number; columns: number; fill: boolean }>;
   /** Distance a list row travels while paging in or out. */
   pageShift: number;
   /**
@@ -67,20 +69,24 @@ export function stageMetrics(viewportW: number): StageMetrics {
     pad: clamp(16, viewportW * 0.015, 28), // --pad
     head: { hero: 120, panel: 96, index: 72 },
     pagerH: 56,
+    leadRowH: 300,
     rowH: viewportW < 1280 ? 84 : 92,
     rowHNarrow: 124,
     narrowRowW: 760,
     // Sub-plates sit flush against each other and the plate's edges; plates keep their gap.
     rowGap: 0,
     cellMinW: 200,
-    cellH: 128,
+    // A phone's roster is a column of two-line cards.
+    cellH: viewportW < 500 ? 56 : 108,
     panelCellH: 52,
     indexRowH: 44,
-    panelCells: { event: { max: 4, columns: 1 }, artist: { max: 10, columns: 2 } },
+    // A summary's few session cells fill their plate whole, however tall (`fill`).
+    panelCells: { event: { max: 4, columns: 1, fill: true }, artist: { max: 10, columns: 2, fill: false } },
     pageShift: 12,
+    // back: a phone's back bar, one low line;
     // nextChip: the wordmark bar over the session line (stacked, above the chip's side-by-side height);
     // signal: name, line and tags; log: its band and three node rows (LogPlate's NODE_ROW); about and merch: band and a line.
-    natural: { chip: 72, nextChip: 124, tile: 220, panel: 360, index: 320, back: 88, signal: 180, log: 248, about: 180, merch: 180 },
+    natural: { chip: 72, nextChip: 124, tile: 220, panel: 360, index: 320, back: 40, signal: 180, log: 248, about: 180, merch: 180 },
     naturalIndexLines: 8,
   };
 }
@@ -89,6 +95,8 @@ export function stageMetrics(viewportW: number): StageMetrics {
 export interface ItemList {
   order: readonly string[];
   page?: number;
+  /** The first item leads its list: on a wide first page it takes a tall row of its own. */
+  lead?: boolean;
 }
 
 /**
@@ -128,6 +136,8 @@ export interface PlacedItem {
   order: number;
   /** The line of the detail that is open (an index keeps it, marked current). */
   current?: boolean;
+  /** The tall first row of a list whose first item leads (see ItemList.lead). */
+  lead?: boolean;
 }
 
 export interface ListInfo {
@@ -142,11 +152,13 @@ export interface StageLayout {
   /** Screens the view spans, top to bottom; the page snaps from one to the next. */
   sheets: { y: number; h: number }[];
   /** Which sheet each leaf landed on (plate id, `detail` or `back`). */
-  sheetOf: Partial<Record<PlateId | 'detail' | 'back', number>>;
+  sheetOf: Partial<Record<PlateId | 'detail' | 'back' | 'home', number>>;
   plates: Record<PlateId, { mode: PlateMode; rect: Rect }>;
   detail: Rect | null;
   /** The card back to the previous view; null on the home. */
   back: Rect | null;
+  /** The band's key straight home, at its right end; null on the home and on a narrow stage. */
+  home: Rect | null;
   /** Keyed by carrier key (`event:TRM-02`). */
   items: Record<string, PlacedItem>;
   /** Paging of the open list, when a list is open. */
@@ -167,14 +179,20 @@ const edges = (x0: number, y0: number, x1: number, y1: number): Rect => {
 };
 const shift = (rect: Rect, dy: number): Rect => ({ ...rect, y: rect.y + dy });
 
-/** Splits `length` into parts by weight, with `gap` between them. Returns [start, end] pairs. */
+/**
+ * Splits `length` into parts by weight, with `gap` between them. Returns [start, end] pairs. A
+ * negative weight is a fixed size in px (the band's height, the back card's width); the positive
+ * weights share what is left.
+ */
 function split(start: number, length: number, weights: readonly number[], gap: number): [number, number][] {
-  const free = length - gap * (weights.length - 1);
-  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const fixed = weights.reduce((sum, weight) => sum + (weight < 0 ? -weight : 0), 0);
+  const free = Math.max(0, length - gap * (weights.length - 1) - fixed);
+  const total = weights.reduce((sum, weight) => sum + Math.max(0, weight), 0) || 1;
   const out: [number, number][] = [];
   let cursor = start;
   weights.forEach((weight, index) => {
-    const end = index === weights.length - 1 ? start + length : cursor + (free * weight) / total;
+    const size = weight < 0 ? -weight : (free * weight) / total;
+    const end = index === weights.length - 1 ? start + length : cursor + size;
     out.push([cursor, end]);
     cursor = end + gap;
   });
@@ -186,7 +204,7 @@ const isLeaf = (node: LayoutNode | LayoutLeaf): node is LayoutLeaf => !('dir' in
 /** Solves a tiling into leaf rects. */
 export function tile(node: LayoutNode, area: Rect, gap: number, out: [LayoutLeaf, Rect][] = []): [LayoutLeaf, Rect][] {
   const along = node.dir === 'row' ? area.w : area.h;
-  const spans = split(node.dir === 'row' ? area.x : area.y, along, node.parts.map(([weight]) => weight), gap);
+  const spans = split(node.dir === 'row' ? area.x : area.y, along, node.parts.map(([weight]) => weight), node.gap ?? gap);
   node.parts.forEach(([, child], index) => {
     const [a, b] = spans[index];
     const rect = node.dir === 'row' ? edges(a, area.y, b, area.y + area.h) : edges(area.x, a, area.x + area.w, b);
@@ -239,29 +257,46 @@ function gridRects(x: number, w: number, top: number, cols: number, h: number, c
  * artists. `shown` is how many sit on this page; `single` says the list has one page only, so a
  * short list may stretch (see `fillHeight`).
  */
-function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics, shown = Infinity, single = false): Rect[] {
+function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics, shown = Infinity, single = false, lead = false): Rect[] {
   const top = area.y + head;
   const avail = area.h - head - m.pagerH;
+  if (kind === 'event' && lead) {
+    // The leading session's row: near half the list, 300px at most, the other rows under it.
+    const rowH = rowHeight(area.w, m);
+    const leadH = Math.min(m.leadRowH, Math.max(rowH * 1.6, avail * 0.46));
+    const rest = avail - leadH;
+    const fit = Math.max(0, Math.floor(rest / rowH));
+    const h = fillHeight(rest, rowH, fit, single ? Math.min(shown - 1, fit) : fit);
+    return [edges(area.x, top, area.x + area.w, top + leadH), ...gridRects(area.x, area.w, top + leadH, 1, h, fit)];
+  }
   if (kind === 'event') {
     const fit = listRowsPerPage(area.h, head, m, area.w);
     const h = fillHeight(avail, rowHeight(area.w, m), fit, single ? Math.min(shown, fit) : fit);
     return gridRects(area.x, area.w, top, 1, h, fit);
   }
-  const cols = Math.max(1, Math.floor(area.w / m.cellMinW));
-  const rows = Math.max(1, Math.floor(avail / m.cellH));
+  const fitCols = Math.max(1, Math.floor(area.w / m.cellMinW));
+  // A roster on one page has no pager: its cells run to the plate's foot.
+  const room = single && shown <= fitCols * Math.max(1, Math.floor((avail + m.pagerH) / m.cellH)) ? avail + m.pagerH : avail;
+  const rows = Math.max(1, Math.floor(room / m.cellH));
+  // A roster on one page takes no more columns than it needs to fill the rows it has (four at
+  // least, as many as fit at most), so a short roster fills the plate instead of leaving a gap.
+  const cols = single ? Math.min(fitCols, Math.max(4, Math.ceil(shown / rows))) : fitCols;
   const onPage = Math.min(shown, cols * rows);
-  const h = fillHeight(avail, m.cellH, rows, single ? Math.ceil(onPage / cols) : rows);
+  const used = single ? Math.ceil(onPage / cols) : rows;
+  // Three rows or more of one page share the whole plate; fewer grow to twice their height at most.
+  const h = single && used >= 3 ? room / used : fillHeight(room, m.cellH, rows, used);
   return gridRects(area.x, area.w, top, cols, h, cols * rows, onPage);
 }
 
 /** Cells under a summary plate's head, flush, as many as fit up to the kind's max, filling the plate. */
 function panelSlots(kind: CarrierKind, plate: Rect, head: number, m: StageMetrics, total: number): Rect[] {
-  const { max, columns } = m.panelCells[kind];
+  const { max, columns, fill } = m.panelCells[kind];
   const avail = plate.h - head;
   const rows = Math.max(0, Math.floor(avail / m.panelCellH));
   const count = Math.min(max, rows * columns, total);
   if (!count) return [];
-  const h = fillHeight(avail, m.panelCellH, rows, Math.ceil(count / columns));
+  const used = Math.ceil(count / columns);
+  const h = fill ? avail / used : fillHeight(avail, m.panelCellH, rows, used);
   return gridRects(plate.x, plate.w, plate.y + head, columns, h, count);
 }
 
@@ -273,7 +308,7 @@ function indexSlots(plate: Rect, head: number, m: StageMetrics, total: number): 
   return gridRects(plate.x, plate.w, plate.y + head, 1, h, fit);
 }
 
-type LeafKey = PlateId | 'detail' | 'back';
+type LeafKey = PlateId | 'detail' | 'back' | 'home';
 const leafKey = (leaf: LayoutLeaf): LeafKey => ('plate' in leaf ? leaf.plate : leaf.slot);
 
 /** The tree without the leaves `drop` names; empty splits disappear. */
@@ -282,7 +317,7 @@ function prune(node: LayoutNode, drop: (key: LeafKey) => boolean): LayoutNode | 
     .map(([weight, child]) => [weight, isLeaf(child) ? (drop(leafKey(child)) ? null : child) : prune(child, drop)] as const)
     .filter((part): part is readonly [number, LayoutNode | LayoutLeaf] => part[1] !== null)
     .map(([weight, child]) => [weight, child] as [number, LayoutNode | LayoutLeaf]);
-  return parts.length ? { dir: node.dir, parts } : null;
+  return parts.length ? { ...node, parts } : null;
 }
 const leavesOf = (node: LayoutNode): LayoutLeaf[] => node.parts.flatMap(([, child]) => (isLeaf(child) ? [child] : leavesOf(child)));
 /** The same leaves stacked top to bottom, for narrow screens. */
@@ -321,7 +356,8 @@ export const NARROW_W = 900;
  * their own.
  */
 /** A sheet's tiling; `h` is set for a narrow stage's secondary sheet, as tall as its plates. */
-type SheetTree = { tree: LayoutNode; h?: number };
+/** `joined`: a sheet that carries on the column above it, a plate's gap apart rather than a sheet's. */
+type SheetTree = { tree: LayoutNode; h?: number; joined?: boolean };
 
 /** What a narrow stage's secondary sheets need to know to be as tall as their plates. */
 type NaturalInput = { counts: Partial<Record<CarrierKind, number>>; heads: Partial<Record<PlateId, number>> };
@@ -331,7 +367,7 @@ type NaturalInput = { counts: Partial<Record<CarrierKind, number>>; heads: Parti
  * and the cells or lines it really has; the others take their density's (or their own) height.
  */
 function naturalHeight(leaf: LayoutLeaf, stage: Size, m: StageMetrics, input: NaturalInput): number {
-  if ('slot' in leaf) return leaf.slot === 'back' ? m.natural.back : stage.h;
+  if ('slot' in leaf) return leaf.slot === 'back' ? m.natural.back : leaf.slot === 'home' ? 0 : stage.h;
   const { plate, density } = leaf;
   if (density === 'hero') return stage.h;
   if (density === 'chip') return plate === 'next' ? m.natural.nextChip : m.natural.chip;
@@ -350,7 +386,8 @@ function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill, m: StageMetrics
   const primary = primaryOf(tree);
   const moved = new Set<LeafKey>(spill.moved.filter(id => id !== primary));
   const own = [...moved].map(key => ({ tree: wrap(leavesOf(tree).find(leaf => leafKey(leaf) === key)!) }));
-  const rest = prune(tree, key => moved.has(key));
+  // On a narrow stage the band is a back bar alone (it names the way home itself).
+  const rest = prune(tree, key => moved.has(key) || (stage.w < NARROW_W && key === 'home'));
   if (!rest) return own;
   const hasBack = leavesOf(rest).some(leaf => leafKey(leaf) === 'back');
   const primaryLeaf = leavesOf(rest).find(leaf => leafKey(leaf) === primary);
@@ -369,9 +406,12 @@ function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill, m: StageMetrics
       hasBack ? { tree: { dir: 'col', parts: [[m.natural.back, { slot: 'back' }], [stage.h - m.natural.back - m.gap, node]] } } : { tree: wrap(node) };
     const others = prune(rest, key => key === primary || key === 'back');
     const parts = others && others.dir === 'row' ? others.parts.map(([, child]) => natural(isLeaf(child) ? wrap(child) : stacked(child))) : others ? [natural(stacked(others))] : [];
-    return [...(primaryLeaf ? [main(primaryLeaf)] : []), ...parts, ...own];
+    // The sheets under the main one read as one column of plates: each after the first follows the
+    // one above it a plate's gap apart, not a sheet's.
+    return [...(primaryLeaf ? [main(primaryLeaf)] : []), ...parts.map((part, index) => (index ? { ...part, joined: true } : part)), ...own];
   }
-  if (spill.alone && primaryLeaf) {
+  // A band keeps its chips: the open leaf grows under it instead (see computeLayout).
+  if (spill.alone && primaryLeaf && !bandOf(rest)) {
     const others = prune(rest, key => key === primary || key === 'back');
     return [{ tree: alone(primaryLeaf) }, ...(others ? [{ tree: others }] : []), ...own];
   }
@@ -381,15 +421,26 @@ function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill, m: StageMetrics
 const inside = (rect: Rect, w: number) => rect.x >= 0 && rect.y >= 0 && rect.x + rect.w <= w;
 
 /**
- * A sheet that grows for a long plate keeps its back card at the height it had on the sheet as
- * tiled (the split is by weight, so the card would otherwise swell with the plate); the plate under
- * it takes all of the added height.
+ * A band tiling: the way back with the other plates as chips over the open leaf alone (every open
+ * view on a wide stage). Its leaf grows below the band instead of leaving the chips for a sheet.
+ */
+function bandOf(tree: LayoutNode): LayoutLeaf | null {
+  const [first, second] = tree.parts;
+  if (tree.dir !== 'col' || tree.parts.length !== 2 || isLeaf(first[1]) || !isLeaf(second[1])) return null;
+  return leavesOf(first[1]).some(leaf => leafKey(leaf) === 'back') ? second[1] : null;
+}
+
+/**
+ * A sheet that grows for a long plate keeps its back card (or band) at the height it had on the
+ * sheet as tiled (the split is by weight, so the card would otherwise swell with the plate); the
+ * plate under it takes all of the added height.
  */
 function keepBack(tree: LayoutNode, base: number, h: number, gap: number): LayoutNode {
   const [first, second] = tree.parts;
-  if (tree.dir !== 'col' || tree.parts.length !== 2 || !isLeaf(first[1]) || leafKey(first[1]) !== 'back') return tree;
-  const back = ((base - gap) * first[0]) / (first[0] + second[0]);
-  return { dir: 'col', parts: [[back, first[1]], [h - gap - back, second[1]]] };
+  const backCard = isLeaf(first[1]) && leafKey(first[1]) === 'back';
+  if (tree.dir !== 'col' || tree.parts.length !== 2 || !(backCard || bandOf(tree))) return tree;
+  const back = first[0] < 0 ? -first[0] : ((base - gap) * first[0]) / (first[0] + Math.max(0, second[0]));
+  return { dir: 'col', parts: [[-back, first[1]], [1, second[1]]] };
 }
 
 /**
@@ -407,22 +458,26 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
   const sheetOf: StageLayout['sheetOf'] = {};
   let detail: Rect | null = null;
   let back: Rect | null = null;
+  let home: Rect | null = null;
   let y = 0;
   const natural = {
     counts: { event: input.items?.event?.order.length, artist: input.items?.artist?.order.length },
     heads: input.heads ?? {},
   };
   const tiling = (stage.w < NARROW_W && config.narrow[view ?? 'home']) || config.layouts[view ?? 'home'];
-  sheetTrees(tiling, stage, spill, m, natural).forEach(({ tree, h: natural }, index) => {
-    // A sheet with a single leaf grows by what that leaf still needs.
+  sheetTrees(tiling, stage, spill, m, natural).forEach(({ tree, h: natural, joined }, index) => {
+    if (joined && index) y += m.gap - sheetGap;
+    // A sheet with a single leaf (or a band over one) grows by what that leaf still needs.
     const only = leavesOf(tree).filter(leaf => leafKey(leaf) !== 'back');
-    const grow = only.length === 1 ? spill.grow[leafKey(only[0]) as PlateId | 'detail'] ?? 0 : 0;
+    const grower = only.length === 1 ? only[0] : bandOf(tree);
+    const grow = grower ? spill.grow[leafKey(grower) as PlateId | 'detail'] ?? 0 : 0;
     const h = (natural ?? stage.h) + grow;
     sheets.push({ y, h });
     for (const [leaf, rect] of tile(grow > 0 ? keepBack(tree, natural ?? stage.h, h, m.gap) : tree, { x: 0, y, w: stage.w, h }, m.gap)) {
       sheetOf[leafKey(leaf)] = index;
       if ('plate' in leaf) plates[leaf.plate] = { mode: view ? leaf.density : 'hidden', rect };
       else if (leaf.slot === 'detail') detail = rect;
+      else if (leaf.slot === 'home') home = rect;
       else back = rect;
     }
     y += h + sheetGap;
@@ -454,19 +509,24 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
 
     if (owner.mode === 'hero') {
       const head = input.heads?.[ownerId] ?? m.head.hero;
-      const perPage = listSlots(kind, owner.rect, head, m).length;
+      // A leading first item (the next session) shapes the first page only.
+      const lead = !!source.lead && (source.page ?? 1) <= 1;
+      const paged = listSlots(kind, owner.rect, head, m, Infinity, false, lead).length;
+      // A list that fits whole once its pager's strip is given back is one page.
+      const perPage = source.order.length > paged && listSlots(kind, owner.rect, head, m, source.order.length, true, lead).length >= source.order.length ? source.order.length : paged;
       const pages = Math.max(1, Math.ceil(source.order.length / perPage));
       const page = Math.min(Math.max(1, source.page ?? 1), pages);
       const shownOnPage = Math.min(perPage, source.order.length - (page - 1) * perPage);
       // This page's slots fill the plate; other pages wait beside the plain ones.
-      const slots = listSlots(kind, owner.rect, head, m, shownOnPage, pages === 1);
-      const parked = listSlots(kind, owner.rect, head, m);
-      const pagerTop = owner.rect.y + owner.rect.h - m.pagerH;
+      const slots = listSlots(kind, owner.rect, head, m, shownOnPage, pages === 1, lead && page === 1);
+      const parked = listSlots(kind, owner.rect, head, m, Infinity, false, lead && page === 1);
+      // A one-page roster has no pager strip (its cells run to the foot); a directory keeps it for its signal strip.
+      const pagerTop = owner.rect.y + owner.rect.h - (kind === 'artist' && pages === 1 ? 0 : m.pagerH);
       list = { kind, perPage, pages, page, pager: edges(owner.rect.x, pagerTop, owner.rect.x + owner.rect.w, owner.rect.y + owner.rect.h) };
       source.order.forEach((id, index) => {
         const onPage = Math.floor(index / perPage) + 1;
         // Rows of other pages wait in their own slot, just off it on the side they will come from.
-        if (onPage === page) place(id, { rect: slots[index % perPage], mode: 'row', visible: true }, index % perPage);
+        if (onPage === page) place(id, { rect: slots[index % perPage], mode: 'row', visible: true, lead: lead && page === 1 && index === 0 }, index % perPage);
         else place(id, { rect: shift(parked[index % perPage], onPage < page ? -m.pageShift : m.pageShift), mode: 'folded', visible: false });
       });
     } else if (owner.mode === 'panel') {
@@ -495,14 +555,14 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
   const shown = [
     ...PLATE_ORDER.filter(id => plates[id].mode !== 'hidden').map(id => plates[id].rect),
     ...Object.values(items).filter(item => item.visible).map(item => item.rect),
-    ...(list ? [list.pager] : []),
+    ...(list && list.pager.h > 0 ? [list.pager] : []),
   ];
   const fits = shown.every(rect => inside(rect, stage.w) && rect.w > 0 && rect.h > 0)
     && (!list || Object.values(items).every(item => item.mode !== 'row' || item.rect.y + item.rect.h <= list!.pager.y));
 
   const openKind: CarrierKind | null = state.view === 'session' ? 'event' : state.view === 'artist' ? 'artist' : null;
   const open = openKind && detail ? { kind: openKind, id: openId(openKind)! } : null;
-  return { view, sheets, sheetOf, plates, detail, back: view && view !== 'home' ? back : null, items, list, open, fits };
+  return { view, sheets, sheetOf, plates, detail, back: view && view !== 'home' ? back : null, home: view && view !== 'home' ? home : null, items, list, open, fits };
 }
 
 /** Page sizes in flow mode, where lists are not cut to a height: the long-standing 4 and 12. */
@@ -546,5 +606,5 @@ export function computeFlowLayout(state: StageState, input: Pick<LayoutInput, 'i
   }
   const openKind: CarrierKind | null = state.view === 'session' ? 'event' : state.view === 'artist' ? 'artist' : null;
   const openFlow = openKind ? { kind: openKind, id: state.view === 'session' ? state.eventId : state.view === 'artist' ? state.artistKey : '' } : null;
-  return { view, sheets: [], sheetOf: {}, plates, detail: null, back: view && view !== 'home' ? NO_RECT : null, items, list, open: openFlow, fits: true };
+  return { view, sheets: [], sheetOf: {}, plates, detail: null, back: view && view !== 'home' ? NO_RECT : null, home: null, items, list, open: openFlow, fits: true };
 }

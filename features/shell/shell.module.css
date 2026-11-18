@@ -86,8 +86,8 @@
   min-height: 32px;
   padding: 0 6px;
   border: 0;
-  background: var(--control);
-  color: var(--on-control);
+  background: none;
+  color: var(--ink);
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .16em;
   transition: var(--light-motion);
@@ -103,10 +103,10 @@
 .language button:last-child::after {
   right: -8px;
 }
-/* The language being read is printed, not a key: only the other one can be pressed. */
+/* The language being read is the lit key; the other is printed plain beside it. */
 .language button[aria-pressed=true] {
-  background: none;
-  color: var(--ink);
+  background: var(--control);
+  color: var(--on-control);
 }
 @media (hover: hover) {
   .language button:not([aria-pressed=true]):hover {

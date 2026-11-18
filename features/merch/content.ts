@@ -7,6 +7,8 @@ export interface MerchImage {
   alt: string;
   /** Short printed label under a thumbnail. */
   label: string;
+  /** The label in one word, for a phone's row of picture keys. */
+  short: string;
 }
 
 export interface MerchItem {
@@ -20,6 +22,8 @@ export interface MerchItem {
   sale: string;
   /** The open plate's lead image, then the rest. */
   images: readonly [MerchImage, ...MerchImage[]];
+  /** Each size and its measurements, cm. */
+  sizes: readonly (readonly [string, string])[];
   facts: readonly (readonly [string, string])[];
   story: { ko: readonly string[]; en: readonly string[] };
   /** How to buy, in the order to try: on site first. */
@@ -38,17 +42,19 @@ export const merch: readonly MerchItem[] = [
     price: '35,000원',
     sale: '35,000원 · 11.28 인포 현장 판매',
     images: [
-      { src: `${MEDIA}/TRM-03-signal-tee-detail.jpg`, alt: 'Signal Tee 뒷면 펄스 프린트 클로즈업', label: 'BACK · DETAIL' },
-      { src: `${MEDIA}/TRM-03-signal-tee-front.jpg`, alt: 'Signal Tee 앞면, 왼쪽 가슴 TERMINAL 로고', label: 'FRONT · LEFT CHEST' },
-      { src: `${MEDIA}/TRM-03-signal-tee-back.jpg`, alt: 'Signal Tee 뒷면, 등 중앙 펄스 그래픽', label: 'BACK · CENTER' },
+      { src: `${MEDIA}/TRM-03-signal-tee-detail.jpg`, alt: 'Signal Tee 뒷면 펄스 프린트 클로즈업', label: 'BACK · DETAIL', short: 'DETAIL' },
+      { src: `${MEDIA}/TRM-03-signal-tee-front.jpg`, alt: 'Signal Tee 앞면, 왼쪽 가슴 TERMINAL 로고', label: 'FRONT · LEFT CHEST', short: 'FRONT' },
+      { src: `${MEDIA}/TRM-03-signal-tee-back.jpg`, alt: 'Signal Tee 뒷면, 등 중앙 펄스 그래픽', label: 'BACK · CENTER', short: 'BACK' },
     ],
+    sizes: [
+      ['L', '가슴 55 / 총장 74'],
+      ['XL', '가슴 58 / 총장 78'],
+    ],
+    // Price and edition stand in the page's head.
     facts: [
-      ['가격', '35,000원'],
-      ['사이즈', 'L (가슴 55 / 총장 74) · XL (가슴 58 / 총장 78)'],
       ['색', 'BLACK'],
       ['원단', 'HEAVY COTTON 7.4 OZ (14수)'],
       ['인쇄', 'WHITE + AMBER'],
-      ['에디션', 'TERMINAL [03] 한정'],
     ],
     story: {
       ko: [
@@ -61,10 +67,10 @@ export const merch: readonly MerchItem[] = [
       ],
     },
     buy: [
-      { label: 'ON SITE', title: '현장 판매', text: '11월 28일(토) 23:00부터 FAUST SEOUL 인포에서 구매하실 수 있습니다. 결제는 계좌이체입니다.' },
-      { label: 'DM', title: '인스타그램 DM', text: '현장에 오시기 어려우면 인스타그램 @terminal.signal로 원하시는 사이즈를 보내 주십시오.' },
+      { label: 'ON SITE', title: '현장 판매 · FAUST SEOUL 인포', text: '11월 28일(토) 23:00부터 인포에서 구매하실 수 있습니다. 결제는 계좌이체입니다.' },
+      { label: 'DM', title: '인스타그램 DM', text: '현장에 오시기 어려우면 @terminal.signal로 원하시는 사이즈와 함께 문의해 주십시오.' },
     ],
-    dm: { handle: '@terminal.signal', href: 'https://ig.me/m/terminal.signal' },
+    dm: { handle: '@terminal.signal', href: 'https://www.instagram.com/terminal.signal/' },
   },
 ];
 

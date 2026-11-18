@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const events = (await readPublicEvents()) ?? [];
   return [
-    '/', '/events', '/artists', '/transmit', '/signal', '/merch', '/about',
+    '/', '/events', '/artists', '/transmit', '/signal', '/merch', '/about', '/privacy',
     ...events.map((event) => eventHref(event.id)),
     ...buildArtistArchive(events).map((profile) => artistHref(profile.key)),
   ].map((path) => ({ url: new URL(path, SITE_ORIGIN).href }));
