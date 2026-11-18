@@ -16,6 +16,7 @@ import { errorMessage } from '@/features/ui/http';
 import { instagram } from '@/features/about/instagram';
 import { useAccessRequest } from './useAccessRequest';
 import styles from './access.module.css';
+import { PrivacyLink } from '@/features/privacy/PrivacyLink';
 
 export function AccessForm({
   eventId,
@@ -235,14 +236,14 @@ export function AccessForm({
                 이름·인스타그램 ID를 대기 명단 관리 목적으로 수집합니다. 이름·인스타그램 ID와 신청
                 시각은 초대한 아티스트에게 공유되며, 명단에 오르면 아티스트가 인스타그램으로
                 연락합니다. 보존 기간: 이벤트 종료 후 1개월. 그 밖의 제3자 미공개.
-                악용 방지를 위해 접속 정보(지역·통신사·암호화한 IP·브라우저·기기·유입 경로)를 90일간 비공개로 보관합니다.
+                악용 방지를 위한 접속 기록 보관은 <PrivacyLink />을 참고해 주십시오.
               </>
             ) : (
               <>
                 이름·인스타그램 ID를 게스트 접근 관리 목적으로 수집합니다. 이름과
                 신청 시각은 초대한 아티스트에게 공유됩니다. 보존 기간: 이벤트 종료 후
                 1개월. 그 밖의 제3자 미공개.
-                악용 방지를 위해 접속 정보(지역·통신사·암호화한 IP·브라우저·기기·유입 경로)를 90일간 비공개로 보관합니다.
+                악용 방지를 위한 접속 기록 보관은 <PrivacyLink />을 참고해 주십시오.
               </>
             )}
           </Consent>

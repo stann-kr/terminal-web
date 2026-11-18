@@ -15,6 +15,7 @@ import { ApiError, errorMessage, postJson } from '@/features/ui/http';
 import { instagram } from '@/features/about/instagram';
 import { useSignalSubscription } from './useSignalSubscription';
 import styles from './signal.module.css';
+import { PrivacyLink } from '@/features/privacy/PrivacyLink';
 
 /**
  * The note on the channel and the form around one subscription request, so both read the same
@@ -138,7 +139,7 @@ function SignalSubscribeForm({
             >
               이메일과 (적은 경우) 인스타그램 계정을 TERMINAL 이벤트 소식 안내
               목적으로 수집하는 데 동의합니다. 보존 기간: 수신 거부 시까지.
-              악용 방지를 위해 접속 정보(지역·통신사·암호화한 IP·브라우저·기기·유입 경로)를 90일간 비공개로 보관합니다.
+              악용 방지를 위한 접속 기록 보관은 <PrivacyLink />을 참고해 주십시오.
             </Consent>
             <button
               aria-busy={pending}
