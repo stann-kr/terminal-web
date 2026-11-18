@@ -1255,17 +1255,54 @@
   display: inline-flex;
   gap: 4px;
 }
+/* Each session a small box: the ones played filled in the key colour, the others outlined faint. */
+.cardSessions > * {
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  color: var(--ink);
+  font-size: var(--t-xs);
+}
 .cardSessions > [aria-hidden] {
   opacity: .35;
 }
 .cardSessions > [data-on] {
-  color: var(--ink);
+  border-color: var(--control);
+  background: var(--control);
+  color: var(--on-control);
 }
 .cardName {
-  color: var(--link);
-  font: 800 var(--t-lg)/1.05 var(--display);
-  letter-spacing: .02em;
+  color: var(--ink);
+  font: 800 clamp(22px, 2vw, 34px)/1.05 var(--display);
+  letter-spacing: .01em;
   text-transform: uppercase;
+}
+.artistCard .cardHead {
+  color: var(--ink);
+}
+.artistCard .cardFoot {
+  flex-wrap: nowrap;
+  align-items: center;
+  color: var(--ink);
+  font-size: var(--t-xs);
+  white-space: nowrap;
+}
+/* A phone's roster card is two lines: name and session boxes, then the note and the state. */
+@container layer (max-height: 90px) {
+  .artistCard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'name sessions' 'note state';
+    align-content: center;
+    gap: 4px 12px;
+    min-height: 0;
+    padding: 6px 12px;
+  }
+  .artistCard :is(.cardHead, .cardFoot) { display: contents; }
+  .artistCard .cardHead > :first-child { display: none; }
+  .artistCard .cardHead > :last-child { grid-area: state; justify-self: end; }
+  .artistCard .cardName { grid-area: name; font-size: var(--t-lg); }
+  .artistCard .cardSessions { grid-area: sessions; justify-self: end; }
+  .artistCard .cardFoot > :last-child { grid-area: note; font: 400 var(--t-xs)/1.2 var(--mono); }
 }
 
 
@@ -1909,6 +1946,12 @@
   font: 700 var(--t-xs)/1 var(--display);
   letter-spacing: .14em;
 }
+.headExtra > .rosterNext {
+  margin-left: .55em;
+  padding-left: .55em;
+  border-left: 1px solid var(--muted);
+  color: var(--ink);
+}
 .rosterNext > span {
   width: 9px;
   height: 9px;
@@ -2365,4 +2408,8 @@
 @container layer (max-width: 500px) {
   .headExtra { display: none; }
   .leadRow > .rowId { display: block; }
+}
+/* A narrow roster card lets its note drop under the session boxes rather than clip it. */
+@container layer (max-width: 320px) {
+  .artistCard .cardFoot { flex-wrap: wrap; }
 }

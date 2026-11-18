@@ -57,23 +57,26 @@ export function ArtistsPlate({ mode, state, data, query }: PlateProps) {
   const sessions = new Set(profiles.flatMap(profile => profile.appearances.map(row => row.event.id))).size;
   // The coming session the roster marks (its performers' cards are lit).
   const coming = profiles.flatMap(profile => profile.appearances).find(row => row.event.status !== 'ARCHIVED')?.event.id;
-  const page = state.view === 'plate' ? state.page : 1;
   const missing = state.view === 'plate' ? state.missing : undefined;
   return (
     <div className={styles.face}>
-      <FocusHead label="Artists" title="함께한 아티스트" tags={<Tags items={reading ? [reading] : [`${pad(count)} FILES`, `PAGE ${pad(page, 2)}`]} />}>
-        {missing ? (
+      {/* The roster's counts and the coming session on the head's right; a phone keeps two counts. */}
+      <FocusHead
+        label="Artists"
+        title="함께한 아티스트"
+        tags={reading ? <Tags items={[reading]} /> : (
+          <>
+            <Tags items={[`아티스트 ${count}`, `출연 ${appearances}`]} />
+            <span className={styles.headExtra}>
+              <Tags items={[`세션 ${sessions}`]} />
+              {coming && <span className={styles.rosterNext}><span aria-hidden="true" />예정 출연 {coming}</span>}
+            </span>
+          </>
+        )}
+      >
+        {missing && (
           <p className={styles.missing} role="alert">
             <b aria-hidden="true">ERROR</b> 공개된 출연 이력이 없는 아티스트입니다. 아래 명부에서 다시 찾아 주십시오.
-          </p>
-        ) : data.events && (
-          <p className={styles.rosterLine}>
-            아티스트 {count} · 출연 {appearances} · 세션 {sessions}
-            {coming && (
-              <span className={styles.rosterNext}>
-                <span aria-hidden="true" />예정 출연 {coming}
-              </span>
-            )}
           </p>
         )}
       </FocusHead>

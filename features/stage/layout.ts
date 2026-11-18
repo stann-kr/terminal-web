@@ -76,7 +76,8 @@ export function stageMetrics(viewportW: number): StageMetrics {
     // Sub-plates sit flush against each other and the plate's edges; plates keep their gap.
     rowGap: 0,
     cellMinW: 200,
-    cellH: 108,
+    // A phone's roster is a column of two-line cards.
+    cellH: viewportW < 500 ? 56 : 108,
     panelCellH: 52,
     indexRowH: 44,
     // A summary's few session cells fill their plate whole, however tall (`fill`).
@@ -274,12 +275,16 @@ function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics,
     return gridRects(area.x, area.w, top, 1, h, fit);
   }
   const fitCols = Math.max(1, Math.floor(area.w / m.cellMinW));
-  const rows = Math.max(1, Math.floor(avail / m.cellH));
+  // A roster on one page has no pager: its cells run to the plate's foot.
+  const room = single && shown <= fitCols * Math.max(1, Math.floor((avail + m.pagerH) / m.cellH)) ? avail + m.pagerH : avail;
+  const rows = Math.max(1, Math.floor(room / m.cellH));
   // A roster on one page takes no more columns than it needs to fill the rows it has (four at
   // least, as many as fit at most), so a short roster fills the plate instead of leaving a gap.
   const cols = single ? Math.min(fitCols, Math.max(4, Math.ceil(shown / rows))) : fitCols;
   const onPage = Math.min(shown, cols * rows);
-  const h = fillHeight(avail, m.cellH, rows, single ? Math.ceil(onPage / cols) : rows);
+  const used = single ? Math.ceil(onPage / cols) : rows;
+  // Three rows or more of one page share the whole plate; fewer grow to twice their height at most.
+  const h = single && used >= 3 ? room / used : fillHeight(room, m.cellH, rows, used);
   return gridRects(area.x, area.w, top, cols, h, cols * rows, onPage);
 }
 
@@ -502,14 +507,17 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
       const head = input.heads?.[ownerId] ?? m.head.hero;
       // A leading first item (the next session) shapes the first page only.
       const lead = !!source.lead && (source.page ?? 1) <= 1;
-      const perPage = listSlots(kind, owner.rect, head, m, Infinity, false, lead).length;
+      const paged = listSlots(kind, owner.rect, head, m, Infinity, false, lead).length;
+      // A list that fits whole once its pager's strip is given back is one page.
+      const perPage = source.order.length > paged && listSlots(kind, owner.rect, head, m, source.order.length, true, lead).length >= source.order.length ? source.order.length : paged;
       const pages = Math.max(1, Math.ceil(source.order.length / perPage));
       const page = Math.min(Math.max(1, source.page ?? 1), pages);
       const shownOnPage = Math.min(perPage, source.order.length - (page - 1) * perPage);
       // This page's slots fill the plate; other pages wait beside the plain ones.
       const slots = listSlots(kind, owner.rect, head, m, shownOnPage, pages === 1, lead && page === 1);
       const parked = listSlots(kind, owner.rect, head, m, Infinity, false, lead && page === 1);
-      const pagerTop = owner.rect.y + owner.rect.h - m.pagerH;
+      // A one-page roster has no pager strip (its cells run to the foot); a directory keeps it for its signal strip.
+      const pagerTop = owner.rect.y + owner.rect.h - (kind === 'artist' && pages === 1 ? 0 : m.pagerH);
       list = { kind, perPage, pages, page, pager: edges(owner.rect.x, pagerTop, owner.rect.x + owner.rect.w, owner.rect.y + owner.rect.h) };
       source.order.forEach((id, index) => {
         const onPage = Math.floor(index / perPage) + 1;
@@ -543,7 +551,7 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
   const shown = [
     ...PLATE_ORDER.filter(id => plates[id].mode !== 'hidden').map(id => plates[id].rect),
     ...Object.values(items).filter(item => item.visible).map(item => item.rect),
-    ...(list ? [list.pager] : []),
+    ...(list && list.pager.h > 0 ? [list.pager] : []),
   ];
   const fits = shown.every(rect => inside(rect, stage.w) && rect.w > 0 && rect.h > 0)
     && (!list || Object.values(items).every(item => item.mode !== 'row' || item.rect.y + item.rect.h <= list!.pager.y));
