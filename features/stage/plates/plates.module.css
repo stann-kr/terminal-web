@@ -1043,11 +1043,34 @@
   margin: -8px calc(var(--pad) * -1) -8px 0;
   letter-spacing: .12em;
 }
+/* A row whose guest requests are open: the row's link, then the key on paper as tall as the row. */
+.rowWrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 22%);
+  gap: 2px;
+  height: 100%;
+}
+.rowKey {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 var(--pad);
+  background: var(--plate);
+  color: var(--ink);
+  font: 700 var(--t-lg)/1 var(--display);
+  letter-spacing: .06em;
+}
+.rowKey > svg,
+.rowState > svg {
+  display: inline-block;
+}
 /* A narrow row: name, subtitle and one fitted summary line (code · time · venue) beside its state. */
 @container layer (max-width: 760px) {
   .eventRow { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
   .rowId, .rowWhen, .rowVenue { display: none; }
   .rowNarrowMeta { display: block; }
+  .rowWrap { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 48px; }
 }
 
 /* Artist file cards in the open roster grid. */

@@ -73,10 +73,13 @@ export function EventsPlate({ mode, state, data, query }: PlateProps) {
           </p>
         ) : data.events && (
           <div className={styles.summary}>
+            {/* Only the counts there are: an empty kind prints no zero cell. */}
             <dl className={styles.counts}>
-              <div><dt>진행 중</dt><dd><LiveValue value={live} /></dd></div>
-              <div><dt>예정</dt><dd><LiveValue value={upcoming} /></dd></div>
-              <div><dt>지난 이벤트</dt><dd><LiveValue value={archived} /></dd></div>
+              {([['진행 중', live], ['예정', upcoming], ['기록', archived]] as const)
+                .filter(([, value]) => value > 0)
+                .map(([label, value]) => (
+                  <div key={label}><dt>{label}</dt><dd><LiveValue value={value} /></dd></div>
+                ))}
             </dl>
             <span className={styles.bandTags} aria-hidden="true">
               <Tags items={[...years, ...venues]} />

@@ -25,7 +25,7 @@ export function sessionSurface(event: TerminalEvent): Surface {
 }
 
 /** A session's sub-plate inside the directory plate: a summary cell, a directory row, or an index line. */
-export function EventItem({ event, shape, current = false }: { event: TerminalEvent; shape: ItemShape; current?: boolean }) {
+export function EventItem({ event, shape, current = false, apply = false }: { event: TerminalEvent; shape: ItemShape; current?: boolean; /** Guest requests are open: a row carries the key beside it. */ apply?: boolean }) {
   const carrier = `event:${event.id}`;
   if (shape === 'cell') {
     return (
@@ -48,7 +48,7 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
     const artists = publicArtists(event).map(artist => artist.name).join(' · ');
     const subtitle = eventSubtitle(event);
     const when = `${event.date} ${event.time.replace(' KST', '')} KST`;
-    return (
+    const row = (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.eventRow}`} data-event-state={event.status} data-carrier={carrier} scroll={false}>
         <span className={styles.rowId}>{event.id}</span>
         <span className={styles.rowMain}>
@@ -75,8 +75,18 @@ export function EventItem({ event, shape, current = false }: { event: TerminalEv
           <small>{event.time.replace(' KST', '')} KST</small>
         </span>
         <FitTitle as="span" text={event.venue} maxLines={1} minPx={12} className={styles.rowVenue}>{event.venue}</FitTitle>
-        <span className={styles.rowState}>{statusLabel(event.status)}</span>
+        <span className={styles.rowState}>{event.status === 'ARCHIVED' ? <>기록 보기<Arrow /></> : statusLabel(event.status)}</span>
       </Link>
+    );
+    if (!apply) return row;
+    // The key stands beside the row's link, never inside it (a link holds no other link).
+    return (
+      <div className={styles.rowWrap}>
+        {row}
+        <Link href={`${eventHref(event.id)}/request`} className={`${styles.card} ${styles.rowKey}`} data-surface="paper" data-carrier={carrier} scroll={false}>
+          게스트 신청<Arrow />
+        </Link>
+      </div>
     );
   }
   return null;

@@ -652,7 +652,9 @@ describe('directory and roster contracts', () => {
     const { container, go } = shell();
     go('/events');
     expect(within(item(container, 'event:OLD')).getByRole('link', { name: /Past event/ })).toHaveAttribute('href', '/events/OLD');
-    expect(within(plate(container, 'events')).getByText('지난 이벤트').nextElementSibling).toHaveTextContent('1');
+    expect(within(plate(container, 'events')).getByText('기록', { selector: 'dt' }).nextElementSibling).toHaveTextContent('1');
+    // No upcoming session: no zero cell for it.
+    expect(within(plate(container, 'events')).queryByText('예정', { selector: 'dt' })).not.toBeInTheDocument();
     expect(within(stage(container)).queryByRole('link', { name: /게스트 신청/ })).not.toBeInTheDocument();
   });
 

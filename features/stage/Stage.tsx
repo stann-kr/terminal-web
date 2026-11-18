@@ -30,6 +30,7 @@ import { StageModeContext, pageAnnouncement, pageKey, pageReadout, useWheelPagin
 import { PlateContent, plateSurface } from './plates/Plates';
 import { BackCard } from './plates/BackCard';
 import { EventItem, SessionFile, sessionSurface, type ItemShape } from './plates/EventItem';
+import { accessAvailability } from '@/features/events/model';
 import { ArtistFile, ArtistItem, artistSurface } from './plates/ArtistItem';
 import styles from './stage.module.css';
 
@@ -561,8 +562,8 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
                     const itemKey = carrierKey('event', event.id);
                     const item = layout.items[itemKey];
                     return item && (
-                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={() => 'inset'}>
-                        {shape => <EventItem event={event} shape={shape} current={item.current} />}
+                      <SubPlate key={itemKey} itemKey={itemKey} placed={item} onStage={onStage} delay={delay + Math.min(ITEM_STAGGER_MAX, item.order * ITEM_STAGGER)} view={key} surface={shape => (shape === 'row' && event.status !== 'ARCHIVED' ? 'feature' : 'inset')}>
+                        {shape => <EventItem event={event} shape={shape} current={item.current} apply={!!data.events && accessAvailability(event, data.events, data.now).canRequest} />}
                       </SubPlate>
                     );
                   })
