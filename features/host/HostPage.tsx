@@ -238,8 +238,9 @@ function afterRefusal(client: QueryClient, queryKey: readonly unknown[], failure
 }
 
 /**
- * The artist puts a guest on the list themselves (a friend who will not fill in a form): a name and
- * an Instagram id, on the artist's word that the guest agreed. Same limit and duplicate rules.
+ * The artist puts a guest on the list themselves (a friend who will not fill in a form): a name, and
+ * an Instagram id only if the artist has one, on the artist's word that the guest agreed. Same limit;
+ * without an id no duplicate check applies (two guests may share a name).
  */
 function HostGuestForm({ artistId, token, open }: { artistId: string; token: string; open: boolean }) {
   const client = useQueryClient();
@@ -281,10 +282,9 @@ function HostGuestForm({ artistId, token, open }: { artistId: string; token: str
         />
         <Field
           id="host-guest-instagram"
-          label="인스타그램 ID"
-          required
+          label="인스타그램 ID (선택)"
           maxLength={31}
-          pattern="@[A-Za-z0-9_.]{1,30}"
+          pattern="@[A-Za-z0-9_.]{0,30}"
           {...literalInput}
           value={`@${fields.instagram}`}
           error={errorCode === 'INVALID_INSTAGRAM_FORMAT' ? errorMessage(error) : undefined}
@@ -299,7 +299,7 @@ function HostGuestForm({ artistId, token, open }: { artistId: string; token: str
           checked={fields.consent}
           onChange={(value) => setFields({ ...fields, consent: value })}
         >
-          게스트 본인에게 이름과 인스타그램 ID를 TERMINAL 게스트 명단에 올린다는 동의를 받았습니다.
+          게스트 본인에게 이름(적은 경우 인스타그램 ID 포함)을 TERMINAL 게스트 명단에 올린다는 동의를 받았습니다.
           보존 기간: 이벤트 종료 후 1개월.
         </Consent>
         <button aria-busy={pending} className={`${ui.button} ${ui.primary}`}>

@@ -17,9 +17,11 @@ import { generateId } from "@/lib/utils/id";
 
 /**
  * POST /api/invite/host/guests  { artistId, t, name, instagram, consent }
- * An artist puts a guest on their own list from the host page, under the same limit and duplicate
- * rules as a guest's own request. `consent` is the artist's word that the guest agreed to give
- * their name and Instagram id; no email is taken, and no news is sent to such a guest.
+ * An artist puts a guest on their own list from the host page, under the same limit as a guest's
+ * own request. Only the name is needed: the Instagram id is optional, and without one (stored empty)
+ * no duplicate check applies, since two guests may share a name and the artist answers for the list.
+ * `consent` is the artist's word that the guest agreed to give what was entered; no email is taken,
+ * and no news is sent to such a guest.
  */
 export async function POST(request: Request) {
   try {
@@ -37,10 +39,10 @@ export async function POST(request: Request) {
       return noStoreJson({ error: "INVALID_INPUT" }, 400);
     }
     const name = body.name.trim();
-    if (!name || !body.instagram.trim()) return noStoreJson({ error: "ALL_FIELDS_REQUIRED" }, 400);
+    if (!name) return noStoreJson({ error: "ALL_FIELDS_REQUIRED" }, 400);
     if (name.length > 100) return noStoreJson({ error: "INVALID_INPUT" }, 400);
-    const instagram = normalizeInstagram(body.instagram);
-    if (!instagram) return noStoreJson({ error: "INVALID_INSTAGRAM_FORMAT" }, 400);
+    const instagram = body.instagram.trim() ? normalizeInstagram(body.instagram) : "";
+    if (instagram === null) return noStoreJson({ error: "INVALID_INSTAGRAM_FORMAT" }, 400);
     if (!body.consent) return noStoreJson({ error: "GUEST_CONSENT_REQUIRED" }, 400);
 
     const { env } = await getCloudflareContext({ async: true });

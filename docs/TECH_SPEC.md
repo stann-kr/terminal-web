@@ -27,7 +27,7 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 | POST | /api/gate/code-info | 선택 행사 초대인 확인. 응답의 `open`이 false면 정원이 찬 코드이고, 신청 기간 밖이면 403 `REQUEST_PERIOD_INACTIVE` |
 | POST | /api/gate/request | 게스트 신청 저장. 본문에 `waitlist: true`가 있을 때만 정원이 찬 코드의 신청을 대기 명단에 올리고(`waitlisted: true`), 없으면 409 `GUEST_LIMIT_REACHED`. 같은 인스타그램 ID가 그 이벤트의 대기 명단에 이미 있으면(다른 초대인의 명단 포함) 새로 올리지 않고 `waitlisted: true, alreadyWaiting: true`로 답함. `waitlist`와 소식 수신 동의는 함께 보낼 수 없음 |
 | POST | /api/invite/host | 아티스트 초대 페이지 조회(링크의 `t`가 자격). 게스트는 이름·신청 시각만, 대기자는 인스타그램 ID 포함 |
-| POST | /api/invite/host/guests, /api/invite/host/waitlist | 아티스트가 게스트를 직접 등록 · 대기자를 명단으로 올림 |
+| POST | /api/invite/host/guests, /api/invite/host/waitlist | 아티스트가 게스트를 직접 등록 · 대기자를 명단으로 올림. 직접 등록은 이름만 필수이고 인스타그램 ID는 선택. ID 없이 등록한 게스트는 빈 ID로 저장되고 중복 확인을 하지 않음(동명이인 허용). ID가 있으면 이벤트 전체에서 같은 ID를 중복으로 막음 |
 | GET | /api/invite/host/file | 초대 페이지에 실린 홍보 파일 한 건(비공개 R2) |
 | POST | /api/signal | 소식 수신 연락처 저장 |
 | GET, POST | /api/signal/unsubscribe | 수신 거부. POST가 구독 행을 지우고 같은 주소로 게스트 신청에 남긴 이메일·소식 동의도 지움(메일 앱의 one-click 포함). GET은 SIGNAL 화면의 확인 키로 보낼 뿐 지우지 않음 |
