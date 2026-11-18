@@ -208,6 +208,10 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
   }, [read, page, totalPages, router]);
 
   const shown = pages ? pages[index].map(i => logs![i]) : logs ?? [];
+  // Which entries are on screen, counted from the newest: `1 – 6 / 37`.
+  const first = (page - 1) * capacity + (pages?.[index]?.[0] ?? 0) + 1;
+  const total = query.data?.total;
+  const range = shown.length ? `${first} – ${first + shown.length - 1}${total !== undefined ? ` / ${total}` : ''}` : pageReadout(page, Math.max(totalPages, 1));
   // A sub-page turns at once; a server page is a move, and shows the loading cover on `control`, its
   // key (pressed, or stood for by an arrow key) until it arrives.
   type Turn = (control?: HTMLElement | null) => void;
@@ -259,16 +263,13 @@ function LogPages({ page, capacity, totalPages, query, onCapacity }: {
           )}
           <nav className={styles.logPager} aria-label="로그 쪽 이동">
             {/* A key with no turn left stays a key (dimmed, turning nothing), so focus is never dropped from under it. */}
-            <button type="button" data-turn="prev" aria-disabled={!prev} onClick={event => prev?.(event.currentTarget)}>PREV</button>
-            <span aria-hidden="true">
-              {pageReadout(page, Math.max(totalPages, 1))}
-              {subCount > 1 && ` · ${index + 1}/${subCount}`}
-            </span>
+            <button type="button" data-turn="prev" aria-disabled={!prev} onClick={event => prev?.(event.currentTarget)}>더 최근</button>
+            <span aria-hidden="true">{range}</span>
             <span className={ui.srOnly} aria-live="polite">
               {pageAnnouncement(page, Math.max(totalPages, 1))}
               {subCount > 1 ? `, 나눈 쪽 ${subCount}쪽 중 ${index + 1}쪽` : ''}
             </span>
-            <button type="button" data-turn="next" aria-disabled={!next} onClick={event => next?.(event.currentTarget)}>NEXT</button>
+            <button type="button" data-turn="next" aria-disabled={!next} onClick={event => next?.(event.currentTarget)}>이전 기록</button>
           </nav>
         </>
       )}

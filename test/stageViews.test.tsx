@@ -906,7 +906,7 @@ describe('visitor log pager', () => {
   it('covers the pressed PREV/NEXT key until the page arrives and moves once however often it is pressed', () => {
     vi.useFakeTimers();
     const pager = logShell('page=2');
-    const next = pager.getByRole('button', { name: 'NEXT' });
+    const next = pager.getByRole('button', { name: '이전 기록' });
     next.focus();
     fireEvent.click(next);
     fireEvent.click(next);
@@ -920,7 +920,7 @@ describe('visitor log pager', () => {
     expect(router.push).toHaveBeenCalledWith('/transmit?page=3', { scroll: false });
   });
 
-  it('keeps keyboard focus on NEXT when it reaches the last sub-page, where it turns nothing', () => {
+  it('keeps keyboard focus on the older-entries key when it reaches the last sub-page, where it turns nothing', () => {
     const real = window.getComputedStyle.bind(window);
     // Beside the write form (two columns), each entry taller than half the list: one entry per sub-page.
     vi.spyOn(window, 'getComputedStyle').mockImplementation((node, pseudo) =>
@@ -928,19 +928,21 @@ describe('visitor log pager', () => {
     vi.spyOn(HTMLOListElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
     vi.spyOn(HTMLLIElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 60));
     const pager = logShell('page=3');
-    const next = pager.getByRole('button', { name: 'NEXT' });
+    const next = pager.getByRole('button', { name: '이전 기록' });
     next.focus();
-    const subPages = pager.getByText(/· 1\/\d+/).textContent!.split('/').pop()!;
+    const subPages = pager.getByText(/나눈 쪽 \d+쪽 중 1쪽/).textContent!.match(/나눈 쪽 (\d+)쪽/)![1];
     expect(Number(subPages)).toBeGreaterThan(1);
+    // The readout counts the entries on screen from the newest: page 3 of fives starts at the 11th.
+    expect(pager.getByText('11 – 11 / 14')).toBeInTheDocument();
     for (let step = 2; step <= Number(subPages); step += 1) {
       fireEvent.click(next);
-      expect(pager.getByText(new RegExp(`· ${step}/${subPages}`))).toBeInTheDocument();
+      expect(pager.getByText(new RegExp(`나눈 쪽 ${subPages}쪽 중 ${step}쪽`))).toBeInTheDocument();
     }
     expect(next).toHaveFocus();
     expect(next).toHaveAttribute('aria-disabled', 'true');
     fireEvent.click(next);
     fireEvent.keyDown(next, { key: 'ArrowRight' });
-    expect(pager.getByText(new RegExp(`· ${subPages}/${subPages}`))).toBeInTheDocument();
+    expect(pager.getByText(new RegExp(`나눈 쪽 ${subPages}쪽 중 ${subPages}쪽`))).toBeInTheDocument();
     expect(router.push).not.toHaveBeenCalled();
     expect(next).toHaveFocus();
   });
@@ -948,8 +950,8 @@ describe('visitor log pager', () => {
   it('shows an arrow key’s turn on the PREV/NEXT key it stands for', () => {
     vi.useFakeTimers();
     const pager = logShell('page=2');
-    const next = pager.getByRole('button', { name: 'NEXT' });
-    const prev = pager.getByRole('button', { name: 'PREV' });
+    const next = pager.getByRole('button', { name: '이전 기록' });
+    const prev = pager.getByRole('button', { name: '더 최근' });
     next.focus();
     fireEvent.keyDown(next, { key: 'ArrowLeft' });
     expect(prev).toHaveAttribute('data-pending');

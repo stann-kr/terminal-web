@@ -273,24 +273,24 @@ describe('transmit UI',()=>{
     vi.stubGlobal('fetch',vi.fn().mockReturnValue(new Promise<Response>(done=>{resolve=done;})));
     const onPosted=vi.fn(),onSaved=vi.fn(),user=userEvent.setup();
     const view=render(<TransmitForm onPosted={onPosted} onSaved={onSaved}/>);
-    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));
+    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));
     view.unmount();await act(async()=>{resolve(json(log,201));});
     expect(onSaved).toHaveBeenCalledOnce();expect(onPosted).not.toHaveBeenCalled();
   });
   it('retries the same uncertain write with the same key, then changes the key for changed content',async()=>{
     const fetch=vi.fn().mockRejectedValue(new TypeError('offline'));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();render(<TransmitForm onPosted={vi.fn()}/>);
-    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));await screen.findByRole('alert');
-    await user.click(screen.getByRole('button',{name:'기록 전송'}));await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(2));
+    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));await screen.findByRole('alert');
+    await user.click(screen.getByRole('button',{name:'기록 남기기'}));await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(2));
     expect(fetch.mock.calls[0][1].headers['Idempotency-Key']).toBe(fetch.mock.calls[1][1].headers['Idempotency-Key']);
-    await user.type(screen.getByLabelText(/메시지/),' again');await user.click(screen.getByRole('button',{name:'기록 전송'}));await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(3));
+    await user.type(screen.getByLabelText(/메시지/),' again');await user.click(screen.getByRole('button',{name:'기록 남기기'}));await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(3));
     expect(fetch.mock.calls[2][1].headers['Idempotency-Key']).not.toBe(fetch.mock.calls[1][1].headers['Idempotency-Key']);
     expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({handle:'VISITOR',message:'hello'});
   });
   it('preserves text edited while a write is pending and refreshes only after a stored log response',async()=>{
     let resolve!:(value:Response)=>void;vi.stubGlobal('fetch',vi.fn().mockReturnValue(new Promise<Response>(r=>{resolve=r;})));
     const onPosted=vi.fn(),user=userEvent.setup();render(<TransmitForm onPosted={onPosted}/>);
-    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));
+    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));
     expect(onPosted).not.toHaveBeenCalled();await user.clear(screen.getByLabelText(/메시지/));await user.type(screen.getByLabelText(/메시지/),'my next draft');
     await act(async()=>{resolve(json(log,201));});expect(onPosted).toHaveBeenCalledOnce();expect(screen.getByLabelText(/메시지/)).toHaveValue('my next draft');expect(screen.getByRole('status')).toHaveTextContent('기록을 저장했습니다');
   });
@@ -298,14 +298,14 @@ describe('transmit UI',()=>{
     localStorage.removeItem('terminal_node_id');
     const fetch=vi.fn().mockResolvedValue(json(log,201));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();const first=render(<TransmitForm onPosted={vi.fn()}/>);
-    await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));await waitFor(()=>expect(fetch).toHaveBeenCalledOnce());
+    await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));await waitFor(()=>expect(fetch).toHaveBeenCalledOnce());
     const {handle}=JSON.parse(fetch.mock.calls[0][1].body);expect(handle).toMatch(/^NODE-[A-HJ-NP-Z2-9]{5}$/);
     first.unmount();render(<TransmitForm onPosted={vi.fn()}/>);
     expect(screen.getByLabelText(/공개 닉네임/)).toHaveAttribute('placeholder',handle);
   });
   it('does not accept a malformed successful HTTP response as a saved log',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue(json({ok:true})));const onPosted=vi.fn(),user=userEvent.setup();render(<TransmitForm onPosted={onPosted}/>);
-    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 전송'}));
+    await user.type(screen.getByLabelText(/공개 닉네임/),'visitor');await user.type(screen.getByLabelText(/메시지/),'hello');await user.click(screen.getByRole('button',{name:'기록 남기기'}));
     expect(await screen.findByRole('alert')).toHaveTextContent('서버 응답');expect(onPosted).not.toHaveBeenCalled();expect(screen.getByLabelText(/메시지/)).toHaveValue('hello');
   });
 });

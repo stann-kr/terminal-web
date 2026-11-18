@@ -1195,6 +1195,11 @@
   flex-direction: column;
   min-height: 0;
 }
+/* The message box (the field and its length) takes the column's spare height; the field fills it. */
+:global([data-stage=stage]) .logWrite form > :last-child > :first-child > :last-child {
+  flex: 1 1 auto;
+  min-height: 0;
+}
 :global([data-stage=stage]) .logWrite textarea {
   flex: 1 1 auto;
   height: auto;

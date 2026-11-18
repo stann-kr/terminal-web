@@ -2,8 +2,6 @@
 import { ui } from '@/features/ui/Ui';
 import { Field, FormError, formStyles, literalInput } from '@/features/ui/Form';
 import { errorMessage } from '@/features/ui/http';
-import { LiveValue } from '@/features/display/Display';
-import { Meter } from '@/features/display/Meter';
 import { useTransmitPost } from './useTransmitPost';
 import styles from './transmit.module.css';
 
@@ -20,20 +18,7 @@ export function TransmitForm({
   });
   return (
     <form aria-busy={pending} className={formStyles.form} onSubmit={submit}>
-      <div className={styles.counter}>
-        <span>MESSAGE LENGTH</span>
-        <strong>
-          <LiveValue value={String(draft.message.length).padStart(3, '0')} />
-          <small>/ 280</small>
-        </strong>
-      </div>
-      <Meter
-        segments={28}
-        value={Math.ceil((draft.message.length / 280) * 28)}
-        busy={pending}
-        tone={draft.message.length > 260 ? 'danger' : 'ink'}
-        className={styles.gauge}
-      />
+      <p className={styles.intro}>TERMINAL에 남기고 싶은 말을 적어 주십시오. 공개 로그에 바로 올라갑니다.</p>
       <FormError message={error ? errorMessage(error) : ''} />
       {receipt && (
         <div role="status" className={styles.receipt}>
@@ -47,14 +32,21 @@ export function TransmitForm({
             메시지 <span>필수</span>
           </label>
         </div>
-        <textarea
-          id="transmit-message"
-          required
-          maxLength={280}
-          rows={5}
-          value={draft.message}
-          onChange={(event) => edit({ message: event.target.value })}
-        />
+        <div className={styles.messageBox}>
+          <textarea
+            id="transmit-message"
+            required
+            maxLength={280}
+            rows={5}
+            aria-describedby="transmit-count"
+            value={draft.message}
+            onChange={(event) => edit({ message: event.target.value })}
+          />
+          {/* The length so far, in the field's corner; read with the field, not on every key. */}
+          <span id="transmit-count" className={styles.count} data-near={draft.message.length > 260 || undefined}>
+            {draft.message.length} / 280<span className={ui.srOnly}>자</span>
+          </span>
+        </div>
       </div>
       <Field
         id="transmit-handle"
@@ -72,7 +64,7 @@ export function TransmitForm({
         disabled={pending}
         className={`${ui.button} ${ui.primary}`}
       >
-        {pending ? '전송 중…' : '기록 전송'}
+        {pending ? '남기는 중…' : '기록 남기기'}
       </button>
       <p className={formStyles.hint}>
         악용 방지와 운영 확인을 위해 접속 국가·지역·통신사, 브라우저 정보와 들어온 경로(아티스트 링크·외부 사이트)를 90일간 따로 보관하며 공개하지 않습니다.
