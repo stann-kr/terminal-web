@@ -1,4 +1,4 @@
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, isNull, sql } from 'drizzle-orm';
 import type { getDb } from '@/lib/db/client';
 import { transmitLogs } from '@/lib/db/schema';
 import {
@@ -32,6 +32,7 @@ export async function listTransmitLogs(
   const [{ total }] = await database
     .select({ total: sql<number>`count(*)` })
     .from(transmitLogs)
+    .where(isNull(transmitLogs.hiddenAt))
     .all();
 
   const logs = await database
@@ -43,6 +44,8 @@ export async function listTransmitLogs(
       createdAt: transmitLogs.createdAt,
     })
     .from(transmitLogs)
+    // A post the operator hid stays in the database but leaves the public log.
+    .where(isNull(transmitLogs.hiddenAt))
     // The key is whole seconds: the id settles logs of the same second, so pages never repeat or skip one.
     .orderBy(desc(createdAtSortKey), desc(transmitLogs.id))
     .limit(PAGE_SIZE)

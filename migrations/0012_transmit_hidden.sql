@@ -1,0 +1,1 @@
+ALTER TABLE `transmit_logs` ADD `hidden_at` text;
