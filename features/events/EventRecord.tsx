@@ -1,5 +1,6 @@
 'use client';
 import Link from '@/features/ui/RouteLink';
+import { merchFor } from '@/features/merch/content';
 import { type ReactNode } from 'react';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { Action, ActionDeck, Arrow, BrandText, Facts, ui } from '@/features/ui/Ui';
@@ -151,6 +152,9 @@ export function EventActions({
           게스트 신청
         </Action>
       )}
+      {merchFor(event.id).map(item => (
+        <Action key={item.id} href="/merch">MERCH · {item.name}</Action>
+      ))}
       <Action href="/signal">다음 이벤트 소식 신청</Action>
     </ActionDeck>
     </>

@@ -54,7 +54,7 @@ export interface StageMetrics {
    * On a narrow stage, how tall a plate of each density (and the back card) is on a sheet that is
    * not the view's main one: such a sheet is only as tall as its plates, not a whole window.
    */
-  natural: Record<'chip' | 'nextChip' | 'tile' | 'panel' | 'index' | 'back' | 'signal' | 'log' | 'about', number>;
+  natural: Record<'chip' | 'nextChip' | 'tile' | 'panel' | 'index' | 'back' | 'signal' | 'log' | 'about' | 'merch', number>;
   /** Most index lines a narrow stage's index sheet is sized for. */
   naturalIndexLines: number;
 }
@@ -79,8 +79,8 @@ export function stageMetrics(viewportW: number): StageMetrics {
     panelCells: { event: { max: 4, columns: 1 }, artist: { max: 10, columns: 2 } },
     pageShift: 12,
     // nextChip: the wordmark bar over the session line (stacked, above the chip's side-by-side height);
-    // signal: name, line and tags; log: its band and three node rows (LogPlate's NODE_ROW); about: band and a line.
-    natural: { chip: 72, nextChip: 124, tile: 220, panel: 360, index: 320, back: 88, signal: 180, log: 248, about: 180 },
+    // signal: name, line and tags; log: its band and three node rows (LogPlate's NODE_ROW); about and merch: band and a line.
+    natural: { chip: 72, nextChip: 124, tile: 220, panel: 360, index: 320, back: 88, signal: 180, log: 248, about: 180, merch: 180 },
     naturalIndexLines: 8,
   };
 }
@@ -342,7 +342,7 @@ function naturalHeight(leaf: LayoutLeaf, stage: Size, m: StageMetrics, input: Na
     const { max, columns } = m.panelCells[kind];
     return (input.heads[plate] ?? m.head.panel) + Math.max(1, Math.ceil(Math.min(count, max) / columns)) * m.panelCellH;
   }
-  if (plate === 'signal' || plate === 'log' || plate === 'about') return m.natural[plate];
+  if (plate === 'signal' || plate === 'log' || plate === 'about' || plate === 'merch') return m.natural[plate];
   return m.natural[density];
 }
 

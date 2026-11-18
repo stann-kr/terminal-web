@@ -14,6 +14,7 @@ const PLATE_NAME: Record<PlateId, [string, string]> = {
   signal: ['SIGNAL', '소식 신청'],
   instagram: ['INSTAGRAM', '팔로우'],
   about: ['ABOUT', 'TERMINAL 소개'],
+  merch: ['MERCH', 'TERMINAL MERCH'],
 };
 
 /** A view's printed name and title, as the back card shows it. */
