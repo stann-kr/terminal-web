@@ -44,6 +44,14 @@ describe('POST /api/invite/host/guests', () => {
     }));
   });
 
+  it('lists a guest by name alone, with an empty Instagram id', async () => {
+    const response = await post({ instagram: '  ' });
+    expect(response.status).toBe(200);
+    expect(mocks.createAccessRequestAtomically).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      name: '김지현', instagram: '', email: null,
+    }));
+  });
+
   it.each([
     ['duplicate', 'GUEST_ALREADY_LISTED'],
     ['guest_limit_reached', 'GUEST_LIMIT_REACHED'],
@@ -63,6 +71,7 @@ describe('POST /api/invite/host/guests', () => {
   it.each([
     [{ consent: false }, 'GUEST_CONSENT_REQUIRED'],
     [{ instagram: '@@x' }, 'INVALID_INSTAGRAM_FORMAT'],
+    [{ instagram: '@' }, 'INVALID_INSTAGRAM_FORMAT'],
     [{ name: ' ' }, 'ALL_FIELDS_REQUIRED'],
   ])('refuses %j before any read', async (overrides, error) => {
     const response = await post(overrides);
