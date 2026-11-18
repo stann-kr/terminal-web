@@ -43,12 +43,10 @@ export function artistSurface(profile: ArtistProfile, open = false): Surface {
 /** An artist's sub-plate inside the roster plate: a roster cell, a file card in the grid, or an index line. */
 export function ArtistItem({ profile, shape, current = false, sessions = [] }: { profile: ArtistProfile; shape: ItemShape; current?: boolean; /** Every session, oldest first: a card marks the ones the artist played. */ sessions?: readonly TerminalEvent[] }) {
   const carrier = `artist:${profile.key}`;
-  const records = String(profile.appearances.length).padStart(2, '0');
   if (shape === 'cell') {
     return (
       <Link href={artistHref(profile.key)} className={`${styles.card} ${styles.artistCell}`} data-carrier={carrier} scroll={false}>
         <FitTitle as="span" text={profile.name} maxLines={1} minPx={12} className={styles.cellName} arrow="in">{profile.name}</FitTitle>
-        <span className={styles.cellMeta} aria-hidden="true">{profile.origin} · {records} REC</span>
       </Link>
     );
   }

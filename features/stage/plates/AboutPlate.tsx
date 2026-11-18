@@ -1,9 +1,8 @@
 'use client';
-import { aboutCopy, aboutTagline, NodeFacts, OfficialChannels } from '@/features/about/About';
+import { aboutCopy, NodeFacts, OfficialChannels } from '@/features/about/About';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { Panel } from '@/features/ui/Ui';
-import { FitTitle } from '../FitTitle';
 import { BandName, CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
@@ -20,11 +19,7 @@ export function AboutPlate({ mode }: PlateProps) {
             <span className={styles.bandLabel} aria-hidden="true">About</span>
             <BandName title="TERMINAL 소개" link />
           </span>
-          <span className={styles.bandTags} aria-hidden="true"><Tags items={['SEOUL', 'KST']} /></span>
         </span>
-        <FitTitle as="span" text={aboutTagline} maxLines={1} minPx={14} className={styles.aboutLine}>
-          <span lang="en">{aboutTagline}</span>
-        </FitTitle>
       </CardLink>
     );
   }

@@ -3,7 +3,7 @@ import Link from '@/features/ui/RouteLink';
 import type { TerminalEvent } from '@/lib/events/types';
 import { AccessRequest } from '@/features/access/Access';
 import { AccessStatus, EventActions, EventFacts, Lineup, SessionKeys } from '@/features/events/EventRecord';
-import { bilingual, eventHref, eventSubtitle, isRuleLine, paragraphs, publicArtists, sessionShort, statusLabel } from '@/features/events/model';
+import { bilingual, eventHref, eventSubtitle, isRuleLine, paragraphs, publicArtists, sessionShort, shortWhen, statusLabel } from '@/features/events/model';
 import { LanguageToggle } from '@/features/shell/LanguageToggle';
 import { useLanguage } from '@/features/shell/Providers';
 import { Arrow, BrandText, StateNotice, type Surface } from '@/features/ui/Ui';
@@ -32,7 +32,11 @@ export function EventItem({ event, shape, current = false, apply = false }: { ev
         <FitTitle as="span" text={sessionShort(event.session)} maxLines={1} minPx={12} className={styles.cellName} arrow="in"><BrandText text={sessionShort(event.session)} /></FitTitle>
         <span className={styles.cellState}>{statusLabel(event.status)}</span>
         {/* When and where, under the name; a low cell leaves it out. */}
-        <span className={styles.cellWhen}>{event.date} · {event.time.replace(' KST', '') || 'TBA'} · {event.venue}</span>
+        <span className={styles.cellWhen}>
+          {event.status === 'ARCHIVED' && eventSubtitle(event)
+            ? `${event.date} · ${eventSubtitle(event)}`
+            : `${event.date} · ${event.time.replace(' KST', '') || 'TBA'} · ${event.venue}`}
+        </span>
       </Link>
     );
   }
@@ -90,17 +94,6 @@ export function EventItem({ event, shape, current = false, apply = false }: { ev
     );
   }
   return null;
-}
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
-/** `11-28 (토) 23:00`: the month and day with the weekday, and the start time. */
-function shortWhen(event: TerminalEvent) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(event.date);
-  const time = event.time.replace(' KST', '');
-  if (!match) return `${event.date} ${time}`.trim();
-  const day = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))).getUTCDay();
-  return `${match[2]}-${match[3]} (${WEEKDAYS[day]}) ${time}`.trim();
 }
 
 /**

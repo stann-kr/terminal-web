@@ -50,7 +50,7 @@ export interface StageConfig {
  */
 const homeNext: [number, LayoutLeaf] = [47, p('next', 'hero')];
 const homeDirectory: [number, LayoutNode] = [30, col([50, p('events', 'panel')], [50, p('artists', 'panel')])];
-const homeCalls: [number, LayoutNode] = [23, col([22, p('instagram', 'tile')], [18, p('signal', 'panel')], [15, p('merch', 'tile')], [32, p('log', 'panel')], [13, p('about', 'tile')])];
+const homeCalls: [number, LayoutNode] = [23, col([22, p('instagram', 'tile')], [18, p('signal', 'panel')], [18, p('merch', 'tile')], [18, p('log', 'panel')], [24, p('about', 'tile')])];
 
 /**
  * An open view's band: the way back, then every other plate as a chip, in plate order. The band

@@ -711,7 +711,7 @@ function SubPlate({ itemKey, placed, onStage, delay, view, surface, children }: 
       surface={surface(shape)}
       delay={delay}
       view={view}
-      data={{ item: itemKey, mode: placed.mode, shape, current: placed.current ? '' : undefined, zebra: placed.order % 2 ? '' : undefined }}
+      data={{ item: itemKey, mode: placed.mode, shape, current: placed.current ? '' : undefined, zebra: placed.order % 2 && !(placed.mode === 'cell' && itemKey.startsWith('artist:')) ? '' : undefined }}
     >
       {children(shape)}
     </Box>

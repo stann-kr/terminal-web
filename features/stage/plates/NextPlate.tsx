@@ -3,7 +3,7 @@ import Link from '@/features/ui/RouteLink';
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getSlotTimes } from '@/lib/events/lifecycle';
 import { DataActivity } from '@/features/display/Display';
-import { accessAvailability, dayMark, eventHref, eventSubtitle, isSlotOn, runningOrder, sessionShort, statusLabel } from '@/features/events/model';
+import { accessAvailability, dayMark, eventHref, eventSubtitle, isSlotOn, runningOrder, sessionShort, shortWhen, statusLabel } from '@/features/events/model';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { Clock } from '@/features/shell/Clock';
 import { Action, Arrow, BrandText, Chip, Facts, Loading, StateNotice } from '@/features/ui/Ui';
@@ -13,6 +13,13 @@ import { Rings } from '../Rings';
 import { PlateStatus } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
+
+const HOME_NAV = [
+  ['/events', 'EVENTS', '이벤트', 'panel'],
+  ['/artists', 'ARTISTS', '아티스트', 'panel'],
+  ['/signal', 'SIGNAL', '소식 신청', 'mark'],
+  ['/merch', 'MERCH', 'Signal Tee', 'paper'],
+] as const;
 
 /**
  * The console's own plate: the TERMINAL wordmark and the readouts ride on top of it everywhere,
@@ -106,10 +113,12 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
   const dockOf = (artist: Artist) => (artist.dock ? `DOCK ${artist.dock}` : 'DOCK TBA');
   // The running order by dock, a column each, in the order the docks first play.
   const docks = [...new Set(artists.map(dockOf))].map(dock => [dock, artists.filter(artist => dockOf(artist) === dock)] as const);
-  const schedule: [string, string][] = [
-    ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`],
+  // A phone's hero reads the date short, with the weekday (`11-28 (토) 23:00`).
+  const schedule: [string, string, string?][] = [
+    ['일시 / KST', `${event.date} · ${event.time.replace(' KST', '')}`, shortWhen(event)],
     ['장소', event.venue],
-    ...(mode === 'hero' ? [['지역', event.district] as [string, string]] : []),
+    // The hero's region cell keeps the district's first part (YONGSAN-GU), so it stays one line.
+    ...(mode === 'hero' ? [['지역', event.district.split('//')[0].trim()] as [string, string]] : []),
   ];
   // Everything under the wordmark is one link, built of flush sub-plates. When the plate is short
   // the least important sub-plates fold away (priority: higher folds first); nothing is clipped.
@@ -134,7 +143,9 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
             </span>
           </span>
           {event.status === 'ARCHIVED' && mode === 'hero' && <span className={styles.noUpcoming}>다음 이벤트 미정</span>}
-          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={mode === 'tile' ? 2 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession} arrow="in">
+          {/* On the home the name stands on one line, wordmark and number together, with no arrow
+              (the whole block is the link, and the keys below say where it goes). */}
+          <FitTitle as="h2" text={sessionShort(event.session)} maxLines={mode === 'tile' ? 2 : mode === 'hero' ? 1 : 3} minPx={mode === 'hero' ? 32 : 20} className={styles.nextSession} arrow={mode === 'hero' ? undefined : 'in'}>
             <BrandText text={sessionShort(event.session)} />
           </FitTitle>
         </span>
@@ -153,15 +164,22 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
             <span className={styles.nextWhen}>{event.date} · {event.venue}</span>
           ) : mode === 'hero' ? (
             <span className={styles.factCells}>
-              {schedule.map(([label, value]) => (
+              {schedule.map(([label, value, short]) => (
                 <span key={label}>
                   <small>{label}</small>
-                  <b>{value || '미정'}</b>
+                  {short ? (
+                    <b>
+                      <span className={styles.wideOnly}>{value}</span>
+                      <span className={styles.narrowOnly} aria-hidden="true">{short}</span>
+                    </b>
+                  ) : (
+                    <b>{value || '미정'}</b>
+                  )}
                 </span>
               ))}
             </span>
           ) : (
-            <Facts rows={schedule} />
+            <Facts rows={schedule.map(([label, value]) => [label, value])} />
           )}
         </span>
         {mode === 'hero' && (
@@ -216,10 +234,19 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
             게스트 신청<Arrow />
           </Link>
         )}
-        <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextKey}`} data-key="file" data-carrier={carrier} scroll={false}>
-          세션 파일 열기<Arrow />
+        <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextKey}`} data-key="file" data-carrier={carrier} scroll={false} aria-label="세션 파일 열기">
+          <span>세션 파일<span className={styles.wideOnly}> 열기</span></span><Arrow />
         </Link>
       </span>
+      {/* A phone's first screen ends on the ways to the other plates, a row of four. */}
+      <nav className={styles.homeNav} aria-label="바로 가기">
+        {HOME_NAV.map(([href, name, title, surface]) => (
+          <Link key={href} href={href} className={`${styles.card} ${styles.homeNavKey}`} data-surface={surface} scroll={false}>
+            <b>{name}</b>
+            <span>{title}</span>
+          </Link>
+        ))}
+      </nav>
     </>
   );
 }

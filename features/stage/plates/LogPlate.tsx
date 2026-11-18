@@ -16,7 +16,7 @@ import styles from './plates.module.css';
 
 const pad = (value: number, size = 3) => String(value).padStart(size, '0');
 /** Height of one node row on the home plate, gap included (px). */
-const NODE_ROW = 46;
+const NODE_ROW = 29;
 /** The home plate lists as many nodes as fit, up to the open log's own page limit. */
 const MAX_NODES = 30;
 const logHref = (page: number) => `/transmit${page > 1 ? `?page=${page}` : ''}`;
@@ -34,7 +34,7 @@ export function LogPlate({ mode, state, size }: PlateProps) {
   if (mode === 'chip' || mode === 'index') return <ChipFace href="/transmit" name="LOG" title="방문자 로그" />;
   if (mode !== 'hero') {
     // As many node rows as the plate has room for, below its band. The plate is one link.
-    const limit = size ? Math.max(1, Math.min(MAX_NODES, Math.floor((size.h - 110) / NODE_ROW))) : 6;
+    const limit = size ? Math.max(1, Math.min(MAX_NODES, Math.floor((size.h - 62) / NODE_ROW))) : 6;
     return (
       <CardLink href="/transmit" className={styles.summaryCard} label={`방문자 로그 · ${meta}`}>
         <span className={styles.band}>
@@ -42,9 +42,8 @@ export function LogPlate({ mode, state, size }: PlateProps) {
             <span className={styles.bandLabel}>Log</span>
             <BandName title="방문자 로그" link />
           </span>
-          <span className={styles.bandTags}><Tags items={['NODE ACTIVITY']} /></span>
         </span>
-        <span className={styles.cardBody} aria-hidden="true">
+        <span className={`${styles.cardBody} ${styles.logNodes}`} aria-hidden="true">
           <NodeActivity limit={limit} quiet />
         </span>
       </CardLink>

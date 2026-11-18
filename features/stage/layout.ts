@@ -47,7 +47,7 @@ export interface StageMetrics {
   panelCellH: number;
   indexRowH: number;
   /** Most cells a summary plate shows, and in how many columns, per kind. */
-  panelCells: Record<CarrierKind, { max: number; columns: number }>;
+  panelCells: Record<CarrierKind, { max: number; columns: number; fill: boolean }>;
   /** Distance a list row travels while paging in or out. */
   pageShift: number;
   /**
@@ -76,7 +76,8 @@ export function stageMetrics(viewportW: number): StageMetrics {
     cellH: 108,
     panelCellH: 52,
     indexRowH: 44,
-    panelCells: { event: { max: 4, columns: 1 }, artist: { max: 10, columns: 2 } },
+    // A summary's few session cells fill their plate whole, however tall (`fill`).
+    panelCells: { event: { max: 4, columns: 1, fill: true }, artist: { max: 10, columns: 2, fill: false } },
     pageShift: 12,
     // back: a phone's back bar, one low line;
     // nextChip: the wordmark bar over the session line (stacked, above the chip's side-by-side height);
@@ -268,12 +269,13 @@ function listSlots(kind: CarrierKind, area: Rect, head: number, m: StageMetrics,
 
 /** Cells under a summary plate's head, flush, as many as fit up to the kind's max, filling the plate. */
 function panelSlots(kind: CarrierKind, plate: Rect, head: number, m: StageMetrics, total: number): Rect[] {
-  const { max, columns } = m.panelCells[kind];
+  const { max, columns, fill } = m.panelCells[kind];
   const avail = plate.h - head;
   const rows = Math.max(0, Math.floor(avail / m.panelCellH));
   const count = Math.min(max, rows * columns, total);
   if (!count) return [];
-  const h = fillHeight(avail, m.panelCellH, rows, Math.ceil(count / columns));
+  const used = Math.ceil(count / columns);
+  const h = fill ? avail / used : fillHeight(avail, m.panelCellH, rows, used);
   return gridRects(plate.x, plate.w, plate.y + head, columns, h, count);
 }
 
@@ -294,7 +296,7 @@ function prune(node: LayoutNode, drop: (key: LeafKey) => boolean): LayoutNode | 
     .map(([weight, child]) => [weight, isLeaf(child) ? (drop(leafKey(child)) ? null : child) : prune(child, drop)] as const)
     .filter((part): part is readonly [number, LayoutNode | LayoutLeaf] => part[1] !== null)
     .map(([weight, child]) => [weight, child] as [number, LayoutNode | LayoutLeaf]);
-  return parts.length ? { dir: node.dir, parts } : null;
+  return parts.length ? { ...node, parts } : null;
 }
 const leavesOf = (node: LayoutNode): LayoutLeaf[] => node.parts.flatMap(([, child]) => (isLeaf(child) ? [child] : leavesOf(child)));
 /** The same leaves stacked top to bottom, for narrow screens. */

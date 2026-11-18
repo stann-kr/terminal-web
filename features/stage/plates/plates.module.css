@@ -704,8 +704,8 @@
   grid-column: 2;
   overflow: hidden;
   margin-top: -6px;
-  color: var(--muted);
-  font: 600 var(--t-sm)/1.2 var(--sans);
+  color: var(--ink);
+  font: 400 var(--t-xs)/1.2 var(--mono);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -846,7 +846,6 @@
 .nextKey[data-key=file] {
   background: var(--fill);
   color: var(--on-fill);
-  font-size: var(--t-md);
 }
 .nextKey > svg {
   display: inline-block;
@@ -871,7 +870,7 @@
   text-wrap: balance;
 }
 .next[data-density=hero] .nextSession {
-  font-size: clamp(40px, 5.2vw, 124px);
+  font-size: clamp(40px, 4.6vw, 110px);
 }
 .next[data-density=tile] .nextSession {
   font-size: clamp(22px, 1.8vw, 40px);
@@ -890,7 +889,7 @@
   text-wrap: balance;
 }
 .next[data-density=hero] .nextSubtitle {
-  font-size: clamp(22px, 2.2vw, 52px);
+  font-size: clamp(20px, 1.7vw, 40px);
 }
 .noUpcoming {
   margin-inline: calc(var(--bleed, 0px) * -1);
@@ -2073,4 +2072,134 @@
 .chip .chipLine .linkName,
 .nextChip .chipLine .linkName {
   color: inherit;
+}
+
+/* ── Home merch tile ── the back of the shirt on the left, name, price and where it is sold. */
+.merchCard {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 14px;
+  padding: 12px 14px;
+}
+.merchThumb {
+  flex: none;
+  width: auto;
+  height: 100%;
+  max-width: 40%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  background: var(--well);
+}
+.merchText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+.merchText .band {
+  margin: 0;
+  padding: 0;
+}
+.merchLine {
+  display: grid;
+  gap: 2px;
+  font: 500 var(--t-sm)/1.35 var(--sans);
+}
+@container layer (max-height: 92px) {
+  .merchLine { display: none; }
+}
+/* The home's About tile: its name alone, centred in the tile. */
+.aboutCard:not(.merchCard) {
+  justify-content: center;
+}
+
+/* The home's log tile: low node rows straight under its name, flush down to its foot. */
+.summaryCard:has(.logNodes) {
+  padding-bottom: 0;
+}
+.logNodes {
+  justify-content: flex-start;
+  margin-top: 0;
+  /* The rows are counted to fit (LogPlate); only the brief loading cue could be taller, and it
+     must not send the tile to a sheet of its own. */
+  flex: 1 1 0;
+  overflow: hidden;
+}
+.logNodes ol {
+  gap: 0;
+}
+.logNodes li > :is(b, span) {
+  padding-block: 5px;
+  font-size: 15px;
+  line-height: 19px;
+}
+.logNodes li > span:is(span) {
+  font-size: 10px;
+}
+
+/* ── The home's next session on a phone ── a short head line, two cells, the docks side by side
+   with time over name, short keys, and a row of four ways on. */
+.narrowOnly,
+.homeNav {
+  display: none;
+}
+@container layer (max-width: 500px) {
+  .next[data-density=hero] .wideOnly {
+    display: none;
+  }
+  .next[data-density=hero] .narrowOnly {
+    display: inline;
+  }
+  .next[data-density=hero] .nextLabel {
+    font-size: var(--t-xs);
+    letter-spacing: .14em;
+  }
+  .next[data-density=hero] .factCells > span:nth-child(3) {
+    display: none;
+  }
+  .next[data-density=hero] .dockCols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .next[data-density=hero] .dockCol li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    padding: 6px 10px;
+  }
+  .next[data-density=hero] .dockHead > span + span {
+    display: none;
+  }
+}
+/* Only a phone (no other plates beside the hero) ends the first screen on the row of four. */
+@media (max-width: 899px) {
+  @container layer (max-width: 500px) {
+    .next[data-density=hero] .nextKeys {
+      margin-bottom: 0;
+    }
+    .homeNav {
+      display: grid;
+      flex: none;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
+      padding-top: 10px;
+      background: var(--field);
+    }
+  }
+}
+.homeNavKey {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 10px;
+}
+.homeNavKey b {
+  font: 700 var(--t-md)/1 var(--display);
+}
+.homeNavKey span {
+  overflow: hidden;
+  font: 400 var(--t-xs)/1.1 var(--sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
