@@ -2429,6 +2429,21 @@
   .signalChannel small { display: none; }
 }
 
+/* The open merch plate: the name over the sheet, which fills the rest. */
+.merchStage {
+  --bleed: var(--pad);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+:global([data-stage=stage]) .merchStage {
+  height: 100%;
+}
+.merchStage > header {
+  flex: none;
+  padding: 0 var(--pad);
+}
+
 /* The open about plate: the name, the wordmark and the opening line over the manifesto in two
    columns and the architect's sign on the left; the channels over the node facts on the right. */
 .aboutStage {

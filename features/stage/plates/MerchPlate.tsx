@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @next/next/no-img-element -- A thumbnail of the shirt at its own aspect ratio, no invented dimensions. */
 import { merch } from '@/features/merch/content';
-import { MerchBuy, MerchFacts, MerchGallery } from '@/features/merch/Merch';
+import { MerchSheet } from '@/features/merch/Merch';
 import { BandName, CardLink, ChipFace, FocusHead, Tags } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
@@ -41,17 +41,9 @@ export function MerchPlate({ mode }: PlateProps) {
     );
   }
   return (
-    <div className={styles.face}>
+    <div className={styles.merchStage}>
       <FocusHead label="Merch" title={item.name} tags={<Tags items={[item.edition, item.price]} />} />
-      <div className={styles.panelRow} data-columns="3" data-paged="first">
-        <MerchGallery item={item} />
-        <div className={styles.fitColumn} data-fit="">
-          <MerchFacts item={item} />
-        </div>
-        <div className={styles.fitColumn} data-fit="">
-          <MerchBuy item={item} />
-        </div>
-      </div>
+      <MerchSheet item={item} />
     </div>
   );
 }
