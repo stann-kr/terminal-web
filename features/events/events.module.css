@@ -180,21 +180,21 @@
 
 /* Participation: a status line, never a key. Open, it is printed on the plate behind a lamp in the
    accent (a solid cell would read as something to press); otherwise it is a tinted band. */
-.accessProtocol {
-  display: grid;
-  gap: 12px;
-}
-.protocolLabel[data-open=true] {
-  justify-content: flex-start;
-  gap: 10px;
-  background: none;
+.protocolLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
   color: var(--ink);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+  white-space: nowrap;
 }
 .protocolLabel[data-open=true]::before {
   content: '';
   flex: none;
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   background: var(--accent);
 }
 @media (forced-colors: active) {
@@ -203,13 +203,9 @@
     forced-color-adjust: none;
   }
 }
-.protocolLabel[data-open=false] {
-  background: var(--well);
+.accessMessage {
   color: var(--ink);
-}
-.accessProtocol p:not(.protocolLabel) {
-  color: var(--ink);
-  font-weight: 500;
+  font: 500 var(--t-md)/1.4 var(--sans);
 }
 .accessDeck {
   margin-top: auto;
@@ -270,4 +266,25 @@ div.sessionKeys > * {
 .slotArtist small,
 .slotTime {
   white-space: nowrap;
+}
+
+/* In a session file the keys close the overview: at its foot, edge to edge, low. */
+div.sessionKeys.sessionKeys {
+  margin: 0;
+  padding-block: 0;
+}
+div.sessionKeys > * {
+  min-height: 52px;
+  padding-block: 8px;
+}
+div.sessionKeys .keyText > span {
+  font-size: 16px;
+}
+/* A phone reads two cells instead of the fact bands, and the running order by name and time. */
+@container layer (max-width: 700px) {
+  .factModules,
+  .slotCode,
+  .slotArtist small {
+    display: none;
+  }
 }

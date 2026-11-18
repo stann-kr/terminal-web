@@ -100,6 +100,8 @@ const PATHS = ['/', '/events', '/events/TRM-05', '/events/TRM-01/request', '/art
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const contains = (outer: Rect, inner: Rect) => inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.w <= outer.x + outer.w && inner.y + inner.h <= outer.y + outer.h;
 const shownItems = (layout: StageLayout) => Object.entries(layout.items).filter(([, item]) => item.visible);
+/** The plate a file stands in for, left out of its band: a session for the next plate, an artist file for the roster. */
+const STOOD_IN: Record<string, string> = { session: 'next', artist: 'artists' };
 
 describe('stage layout', () => {
   it('tiles every view with every plate, apart, on one screen, carriers inside their plate or the detail', () => {
@@ -109,8 +111,11 @@ describe('stage layout', () => {
         const label = `${viewportW} ${path}`;
         expect(layout.fits, label).toBe(true);
         expect(layout.sheets, label).toEqual([{ y: 0, h: stage.h }]);
-        const boxes = [...PLATE_ORDER.map(id => layout.plates[id].rect), ...(layout.detail ? [layout.detail] : []), ...(layout.back ? [layout.back] : [])];
-        expect(PLATE_ORDER.every(id => layout.plates[id].mode !== 'hidden'), label).toBe(true);
+        const stoodIn = STOOD_IN[layout.view ?? ''];
+        const onStage = PLATE_ORDER.filter(id => id !== stoodIn);
+        const boxes = [...onStage.map(id => layout.plates[id].rect), ...(layout.detail ? [layout.detail] : []), ...(layout.back ? [layout.back] : []), ...(layout.home ? [layout.home] : [])];
+        expect(onStage.every(id => layout.plates[id].mode !== 'hidden'), label).toBe(true);
+        if (stoodIn) expect(layout.plates[stoodIn as (typeof PLATE_ORDER)[number]].mode, label).toBe('hidden');
         boxes.forEach((a, i) => boxes.slice(i + 1).forEach(b => expect(overlaps(a, b), label).toBe(false)));
         boxes.forEach(box => expect(contains({ x: 0, y: 0, ...stage }, box), label).toBe(true));
         const shown = shownItems(layout);
@@ -130,10 +135,15 @@ describe('stage layout', () => {
     const signature = (path: string) => JSON.stringify(PLATE_ORDER.map(id => computeLayout(stageStateFromUrl(path), stage).plates[id]));
     const views = ['/', '/events', '/events/TRM-05', '/artists', '/transmit', '/signal', '/about', '/merch'];
     expect(new Set(views.map(signature)).size).toBe(views.length);
-    // The two files (a session, an artist) share one band of every plate over the open file.
-    expect(signature('/artists/lucii')).toBe(signature('/events/TRM-05'));
+    // The two files (a session, an artist) share the band's shape over the open file.
+    const file = (path: string) => computeLayout(stageStateFromUrl(path), stage);
+    expect(file('/artists/lucii').detail).toEqual(file('/events/TRM-05').detail);
     expect(computeLayout({ view: 'home' }, stage).back).toBeNull();
-    for (const path of views.slice(1)) expect(computeLayout(stageStateFromUrl(path), stage).back, path).not.toBeNull();
+    expect(computeLayout({ view: 'home' }, stage).home).toBeNull();
+    for (const path of views.slice(1)) {
+      expect(computeLayout(stageStateFromUrl(path), stage).back, path).not.toBeNull();
+      expect(computeLayout(stageStateFromUrl(path), stage).home, path).not.toBeNull();
+    }
     const home = computeLayout({ view: 'home' }, stage);
     expect(home.plates.next.mode).toBe('hero');
     expect(home.plates.next.rect.h).toBe(stage.h);
@@ -151,10 +161,13 @@ describe('stage layout', () => {
       const open = layout.detail ?? Object.values(layout.plates).find(plate => plate.mode === 'hero')!.rect;
       // The open plate (or file) takes the whole width under the band.
       expect(open, path).toMatchObject({ x: 0, w: stage.w });
-      expect(layout.back!.y, path).toBe(0);
+      // The band: a fixed back card on the left, seven chips, and the home key at the right end.
+      expect(layout.back!, path).toMatchObject({ x: 0, y: 0, w: 220, h: 87 });
+      expect(layout.home!, path).toMatchObject({ y: 0, w: 82, h: 87 });
+      expect(layout.home!.x + layout.home!.w, path).toBe(stage.w);
       expect(open.y, path).toBeGreaterThan(layout.back!.y + layout.back!.h);
       const chips = PLATE_ORDER.filter(id => layout.plates[id].mode === 'chip');
-      expect(chips.length, path).toBe(layout.detail ? PLATE_ORDER.length : PLATE_ORDER.length - 1);
+      expect(chips.length, path).toBe(PLATE_ORDER.length - 1);
       chips.forEach(id => expect(layout.plates[id].rect, `${path} ${id}`).toMatchObject({ y: 0, h: layout.back!.h }));
     }
     // A file folds its list's lines away: the list is a chip in the band, the way to the others.
@@ -243,10 +256,11 @@ describe('stage layout', () => {
     expect(layout.sheetOf.signal).toBe(layout.sheetOf.log);
     expect(chips.h).toBeLessThan(narrow.h);
     expect(Math.round(layout.plates.log.rect.h)).toBe(m.natural.chip);
-    // In a session the next-session chip keeps room for its wordmark bar over the session line.
-    const session = computeLayout(stageStateFromUrl('/events/TRM-05'), narrow, { viewportW: 390, items: items() });
-    expect(session.plates.next.mode).toBe('chip');
-    expect(Math.round(session.plates.next.rect.h)).toBe(m.natural.nextChip);
+    // The next-session chip keeps room for its wordmark bar over the session line; a phone's band is
+    // the back bar alone.
+    expect(layout.plates.next.mode).toBe('chip');
+    expect(Math.round(layout.plates.next.rect.h)).toBe(m.natural.nextChip);
+    expect(layout.home).toBeNull();
     expect(Math.round(layout.back!.h)).toBe(m.natural.back);
     expect(layout.sheets[0].h).toBe(narrow.h);
   });
@@ -307,9 +321,10 @@ describe('stage layout', () => {
   it('keeps every configured view complete: every plate once each, a detail only on details', () => {
     for (const [view, tree] of [...Object.entries(stageConfig.layouts), ...Object.entries(stageConfig.narrow)]) {
       const leaves = tile(tree, { x: 0, y: 0, w: 1000, h: 1000 }, 0).map(([leaf]) => ('plate' in leaf ? leaf.plate : leaf.slot));
-      expect(leaves.filter(key => (PLATE_ORDER as readonly string[]).includes(key)).sort(), view).toEqual([...PLATE_ORDER].sort());
+      expect(leaves.filter(key => (PLATE_ORDER as readonly string[]).includes(key)).sort(), view).toEqual(PLATE_ORDER.filter(id => id !== STOOD_IN[view]).sort());
       expect(leaves.includes('detail'), view).toBe(view === 'session' || view === 'artist');
       expect(leaves.includes('back'), view).toBe(view !== 'home');
+      expect(leaves.includes('home'), view).toBe(view !== 'home');
     }
   });
 });

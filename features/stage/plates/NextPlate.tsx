@@ -90,10 +90,9 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
     return (
       <Link href={eventHref(event.id)} className={`${styles.card} ${styles.nextChip}`} data-carrier={carrier} scroll={false}>
         <span className={styles.chipName} aria-hidden="true">NEXT<Arrow /></span>
-        <FitTitle as="span" text={`${sessionShort(event.session)} · ${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine} arrow="in">
-          <span className={styles.srOnly}>{spoken} </span>
-          <span className={styles.linkName}><BrandText text={sessionShort(event.session)} /></span>
-          <span aria-hidden="true"> · {event.id} · {dayMark(event, now)}</span>
+        <FitTitle as="span" text={`${event.id} · ${dayMark(event, now)}`} maxLines={1} minPx={12} className={styles.chipLine} arrow="in">
+          <span className={styles.srOnly}>{spoken} <BrandText text={sessionShort(event.session)} /> </span>
+          <span className={styles.linkName}>{event.id} · {dayMark(event, now)}</span>
         </FitTitle>
       </Link>
     );

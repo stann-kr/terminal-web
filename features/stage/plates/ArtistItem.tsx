@@ -154,7 +154,7 @@ export function ArtistFile({ profile, state, data }: { profile: ArtistProfile; s
       <ArtistChronology profile={profile} events={data.events ?? []} recordsClassName={styles.fileRecords} sharedClassName={styles.fileShared}>
         <section className={styles.fileBio} data-surface="inset" aria-label="소개">
           <p className={styles.columnHead}><b aria-hidden="true">Biography</b><span>소개</span>{bilingual(biography?.artist.description) && <LanguageToggle />}</p>
-          <TextPages paragraphs={paragraphs(biography?.artist.description, language)} language={language} label="아티스트 소개" empty="소개는 공개되는 대로 이곳에 표시됩니다." />
+          <TextPages paragraphs={paragraphs(biography?.artist.description, language)} language={language} label="아티스트 소개" empty="소개는 공개되는 대로 이곳에 표시됩니다." more />
         </section>
       </ArtistChronology>
     </article>

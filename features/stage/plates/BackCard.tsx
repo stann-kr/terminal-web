@@ -2,7 +2,6 @@ import { sessionShort } from '@/features/events/model';
 import { Arrow, BrandText } from '@/features/ui/Ui';
 import type { StageData } from '../data';
 import type { PlateId, StageState } from '../state';
-import { FitTitle } from '../FitTitle';
 import { CardLink } from './faces';
 import styles from './plates.module.css';
 
@@ -34,30 +33,31 @@ function describe(state: StageState, data: StageData): [string, string] {
 }
 
 /**
- * The way back: a card naming the view it returns to (Escape does the same). When that view is not
- * the home, a second card under it goes straight home, however far the visit has wandered; it wears
- * the home's own colour (the featured plate's), so the two keys never read as one.
+ * The way back: a card naming the view it returns to (Escape does the same). BACK and ESC on a
+ * small line, the view's name and its Korean title under it; on a phone it is one low bar, BACK on
+ * the left and the name on the right.
  */
 export function BackCard({ href, target, data }: { href: string; target: StageState; data: StageData }) {
   const [name, title] = describe(target, data);
-  const home = target.view !== 'home';
   return (
-    <div className={styles.backStack} data-home={home || undefined}>
-      <CardLink href={href} className={styles.back} label={`이전 화면으로: ${title}`}>
-        <span className={styles.backHead} aria-hidden="true">
-          <span className={styles.backLabel}>BACK</span>
-          <span className={styles.tag}>ESC</span>
-        </span>
-        <FitTitle as="span" text={name} maxLines={1} minPx={12} className={styles.backName} arrow="in">{name}</FitTitle>
-        <FitTitle as="span" text={title} maxLines={1} minPx={12} className={styles.backTitle}>
-          <BrandText text={title} />
-        </FitTitle>
-      </CardLink>
-      {home && (
-        <CardLink href="/" className={styles.homeKey} label="홈으로" surface="feature">
-          <span className={styles.homeName} aria-hidden="true">HOME<Arrow /></span>
-        </CardLink>
-      )}
-    </div>
+    <CardLink href={href} className={styles.back} label={`이전 화면으로: ${title}`}>
+      <span className={styles.backHead} aria-hidden="true">
+        <span className={styles.backLabel}>BACK</span>
+        <span className={styles.backEsc}>ESC</span>
+      </span>
+      <span className={styles.backTo}>
+        <span className={styles.backName}>{name}<Arrow /></span>
+        <span className={styles.backTitle}><BrandText text={title} /></span>
+      </span>
+    </CardLink>
+  );
+}
+
+/** The band's last key: straight home, however far the visit has wandered, in the home's own colour. */
+export function HomeKey() {
+  return (
+    <CardLink href="/" className={styles.homeKey} label="홈으로" surface="feature">
+      <span className={styles.homeName} aria-hidden="true">HOME<Arrow /></span>
+    </CardLink>
   );
 }

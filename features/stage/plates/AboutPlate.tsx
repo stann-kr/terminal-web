@@ -11,7 +11,7 @@ import styles from './plates.module.css';
 /** About TERMINAL: one line on the home; the introduction, channels and node when open. */
 export function AboutPlate({ mode }: PlateProps) {
   const { language } = useLanguage();
-  if (mode === 'chip' || mode === 'index') return <ChipFace href="/about" name="ABOUT" title="소개" meta="SEOUL / KST" />;
+  if (mode === 'chip' || mode === 'index') return <ChipFace href="/about" name="ABOUT" title="소개" />;
   if (mode !== 'hero') {
     return (
       <CardLink href="/about" className={`${styles.summaryCard} ${styles.aboutCard}`}>

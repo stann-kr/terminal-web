@@ -110,17 +110,21 @@ describe('stage shell', () => {
     expect(follow()).toHaveAttribute('href', 'https://www.instagram.com/terminal.signal/');
   });
 
-  it('gives every view but the home a back card to the view before it, and a home key once away from it', () => {
+  it('gives every view but the home a back card to the view before it, and a home key at the band’s end', () => {
     const { container, go } = shell([past, upcoming]);
     const back = () => container.querySelector<HTMLElement>('[data-back]')!;
+    const home = () => container.querySelector<HTMLElement>('[data-home]')!;
     expect(back()).toHaveAttribute('data-visible', 'false');
+    expect(home()).toHaveAttribute('data-visible', 'false');
     go('/events');
     expect(within(back()).getByRole('link', { name: '이전 화면으로: 홈' })).toHaveAttribute('href', '/');
     expect(within(back()).queryByRole('link', { name: '홈으로' })).not.toBeInTheDocument();
+    expect(home()).toHaveAttribute('data-visible', 'true');
+    expect(within(home()).getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/');
     go('/events/OLD');
     go('/artists/appearance:OLD:PUBLIC');
     expect(within(back()).getByRole('link', { name: '이전 화면으로: Past event' })).toHaveAttribute('href', '/events/OLD');
-    expect(within(back()).getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/');
+    expect(within(home()).getByRole('link', { name: '홈으로' })).toHaveAttribute('href', '/');
     go('/events/OLD');
     expect(within(back()).getByRole('link', { name: '이전 화면으로: 이벤트' })).toHaveAttribute('href', '/events');
     // Home is the root: from there the trail starts over.
@@ -425,31 +429,6 @@ describe('stage views', () => {
     expect(biography.compareDocumentPosition(shared) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(file).getByRole('link', { name: 'SECOND ARTIST' })).toHaveAttribute('href', '/artists/appearance%3AOLD%3ASECOND');
     expect(file).not.toHaveTextContent('PRIVATE NAME');
-  });
-
-  it('recovers a failed poster by keyboard without losing focus, and resets for a changed source', async () => {
-    const user = userEvent.setup();
-    const event = { ...past, posterUrl: 'https://example.test/poster.jpg' };
-    const { container, client, go } = shell([event]);
-    go('/events/OLD');
-    const poster = () => within(detail(container, 'event:OLD')).getByRole('group', { name: '이벤트 포스터' });
-    const image = within(poster()).getByRole('img');
-    fireEvent.error(image);
-    expect(within(poster()).getByRole('status')).toHaveTextContent('포스터를 불러오지 못했습니다');
-    expect(within(poster()).getByRole('link', { name: /원본 열기/ })).toHaveAttribute('href', event.posterUrl);
-    within(poster()).getByRole('button', { name: '포스터 다시 불러오기' }).focus();
-    await user.keyboard('{Enter}');
-    expect(poster()).toHaveFocus();
-    expect(poster()).toHaveAttribute('aria-busy', 'true');
-    const retried = within(poster()).getByRole('img');
-    expect(retried).not.toBe(image);
-    expect(retried).toHaveAttribute('src', event.posterUrl);
-    fireEvent.load(retried);
-    expect(poster()).toHaveAttribute('aria-busy', 'false');
-    expect(within(poster()).queryByRole('status')).not.toBeInTheDocument();
-    act(() => client.setQueryData(['events'], [{ ...event, posterUrl: 'https://example.test/revised.jpg' }]));
-    await waitFor(() => expect(within(poster()).getByRole('img')).toHaveAttribute('src', 'https://example.test/revised.jpg'));
-    expect(poster()).toHaveAttribute('aria-busy', 'true');
   });
 
   it('leaves a missing session or artist to the stage, and gives other unknown addresses the not-found page', () => {

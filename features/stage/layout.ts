@@ -78,9 +78,10 @@ export function stageMetrics(viewportW: number): StageMetrics {
     indexRowH: 44,
     panelCells: { event: { max: 4, columns: 1 }, artist: { max: 10, columns: 2 } },
     pageShift: 12,
+    // back: a phone's back bar, one low line;
     // nextChip: the wordmark bar over the session line (stacked, above the chip's side-by-side height);
     // signal: name, line and tags; log: its band and three node rows (LogPlate's NODE_ROW); about and merch: band and a line.
-    natural: { chip: 72, nextChip: 124, tile: 220, panel: 360, index: 320, back: 88, signal: 180, log: 248, about: 180, merch: 180 },
+    natural: { chip: 72, nextChip: 124, tile: 220, panel: 360, index: 320, back: 40, signal: 180, log: 248, about: 180, merch: 180 },
     naturalIndexLines: 8,
   };
 }
@@ -142,11 +143,13 @@ export interface StageLayout {
   /** Screens the view spans, top to bottom; the page snaps from one to the next. */
   sheets: { y: number; h: number }[];
   /** Which sheet each leaf landed on (plate id, `detail` or `back`). */
-  sheetOf: Partial<Record<PlateId | 'detail' | 'back', number>>;
+  sheetOf: Partial<Record<PlateId | 'detail' | 'back' | 'home', number>>;
   plates: Record<PlateId, { mode: PlateMode; rect: Rect }>;
   detail: Rect | null;
   /** The card back to the previous view; null on the home. */
   back: Rect | null;
+  /** The band's key straight home, at its right end; null on the home and on a narrow stage. */
+  home: Rect | null;
   /** Keyed by carrier key (`event:TRM-02`). */
   items: Record<string, PlacedItem>;
   /** Paging of the open list, when a list is open. */
@@ -167,14 +170,20 @@ const edges = (x0: number, y0: number, x1: number, y1: number): Rect => {
 };
 const shift = (rect: Rect, dy: number): Rect => ({ ...rect, y: rect.y + dy });
 
-/** Splits `length` into parts by weight, with `gap` between them. Returns [start, end] pairs. */
+/**
+ * Splits `length` into parts by weight, with `gap` between them. Returns [start, end] pairs. A
+ * negative weight is a fixed size in px (the band's height, the back card's width); the positive
+ * weights share what is left.
+ */
 function split(start: number, length: number, weights: readonly number[], gap: number): [number, number][] {
-  const free = length - gap * (weights.length - 1);
-  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const fixed = weights.reduce((sum, weight) => sum + (weight < 0 ? -weight : 0), 0);
+  const free = Math.max(0, length - gap * (weights.length - 1) - fixed);
+  const total = weights.reduce((sum, weight) => sum + Math.max(0, weight), 0) || 1;
   const out: [number, number][] = [];
   let cursor = start;
   weights.forEach((weight, index) => {
-    const end = index === weights.length - 1 ? start + length : cursor + (free * weight) / total;
+    const size = weight < 0 ? -weight : (free * weight) / total;
+    const end = index === weights.length - 1 ? start + length : cursor + size;
     out.push([cursor, end]);
     cursor = end + gap;
   });
@@ -186,7 +195,7 @@ const isLeaf = (node: LayoutNode | LayoutLeaf): node is LayoutLeaf => !('dir' in
 /** Solves a tiling into leaf rects. */
 export function tile(node: LayoutNode, area: Rect, gap: number, out: [LayoutLeaf, Rect][] = []): [LayoutLeaf, Rect][] {
   const along = node.dir === 'row' ? area.w : area.h;
-  const spans = split(node.dir === 'row' ? area.x : area.y, along, node.parts.map(([weight]) => weight), gap);
+  const spans = split(node.dir === 'row' ? area.x : area.y, along, node.parts.map(([weight]) => weight), node.gap ?? gap);
   node.parts.forEach(([, child], index) => {
     const [a, b] = spans[index];
     const rect = node.dir === 'row' ? edges(a, area.y, b, area.y + area.h) : edges(area.x, a, area.x + area.w, b);
@@ -276,7 +285,7 @@ function indexSlots(plate: Rect, head: number, m: StageMetrics, total: number): 
   return gridRects(plate.x, plate.w, plate.y + head, 1, h, fit);
 }
 
-type LeafKey = PlateId | 'detail' | 'back';
+type LeafKey = PlateId | 'detail' | 'back' | 'home';
 const leafKey = (leaf: LayoutLeaf): LeafKey => ('plate' in leaf ? leaf.plate : leaf.slot);
 
 /** The tree without the leaves `drop` names; empty splits disappear. */
@@ -334,7 +343,7 @@ type NaturalInput = { counts: Partial<Record<CarrierKind, number>>; heads: Parti
  * and the cells or lines it really has; the others take their density's (or their own) height.
  */
 function naturalHeight(leaf: LayoutLeaf, stage: Size, m: StageMetrics, input: NaturalInput): number {
-  if ('slot' in leaf) return leaf.slot === 'back' ? m.natural.back : stage.h;
+  if ('slot' in leaf) return leaf.slot === 'back' ? m.natural.back : leaf.slot === 'home' ? 0 : stage.h;
   const { plate, density } = leaf;
   if (density === 'hero') return stage.h;
   if (density === 'chip') return plate === 'next' ? m.natural.nextChip : m.natural.chip;
@@ -353,7 +362,8 @@ function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill, m: StageMetrics
   const primary = primaryOf(tree);
   const moved = new Set<LeafKey>(spill.moved.filter(id => id !== primary));
   const own = [...moved].map(key => ({ tree: wrap(leavesOf(tree).find(leaf => leafKey(leaf) === key)!) }));
-  const rest = prune(tree, key => moved.has(key));
+  // On a narrow stage the band is a back bar alone (it names the way home itself).
+  const rest = prune(tree, key => moved.has(key) || (stage.w < NARROW_W && key === 'home'));
   if (!rest) return own;
   const hasBack = leavesOf(rest).some(leaf => leafKey(leaf) === 'back');
   const primaryLeaf = leavesOf(rest).find(leaf => leafKey(leaf) === primary);
@@ -403,8 +413,8 @@ function keepBack(tree: LayoutNode, base: number, h: number, gap: number): Layou
   const [first, second] = tree.parts;
   const backCard = isLeaf(first[1]) && leafKey(first[1]) === 'back';
   if (tree.dir !== 'col' || tree.parts.length !== 2 || !(backCard || bandOf(tree))) return tree;
-  const back = ((base - gap) * first[0]) / (first[0] + second[0]);
-  return { dir: 'col', parts: [[back, first[1]], [h - gap - back, second[1]]] };
+  const back = first[0] < 0 ? -first[0] : ((base - gap) * first[0]) / (first[0] + Math.max(0, second[0]));
+  return { dir: 'col', parts: [[-back, first[1]], [1, second[1]]] };
 }
 
 /**
@@ -422,6 +432,7 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
   const sheetOf: StageLayout['sheetOf'] = {};
   let detail: Rect | null = null;
   let back: Rect | null = null;
+  let home: Rect | null = null;
   let y = 0;
   const natural = {
     counts: { event: input.items?.event?.order.length, artist: input.items?.artist?.order.length },
@@ -439,6 +450,7 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
       sheetOf[leafKey(leaf)] = index;
       if ('plate' in leaf) plates[leaf.plate] = { mode: view ? leaf.density : 'hidden', rect };
       else if (leaf.slot === 'detail') detail = rect;
+      else if (leaf.slot === 'home') home = rect;
       else back = rect;
     }
     y += h + sheetGap;
@@ -518,7 +530,7 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
 
   const openKind: CarrierKind | null = state.view === 'session' ? 'event' : state.view === 'artist' ? 'artist' : null;
   const open = openKind && detail ? { kind: openKind, id: openId(openKind)! } : null;
-  return { view, sheets, sheetOf, plates, detail, back: view && view !== 'home' ? back : null, items, list, open, fits };
+  return { view, sheets, sheetOf, plates, detail, back: view && view !== 'home' ? back : null, home: view && view !== 'home' ? home : null, items, list, open, fits };
 }
 
 /** Page sizes in flow mode, where lists are not cut to a height: the long-standing 4 and 12. */
@@ -562,5 +574,5 @@ export function computeFlowLayout(state: StageState, input: Pick<LayoutInput, 'i
   }
   const openKind: CarrierKind | null = state.view === 'session' ? 'event' : state.view === 'artist' ? 'artist' : null;
   const openFlow = openKind ? { kind: openKind, id: state.view === 'session' ? state.eventId : state.view === 'artist' ? state.artistKey : '' } : null;
-  return { view, sheets: [], sheetOf: {}, plates, detail: null, back: view && view !== 'home' ? NO_RECT : null, items, list, open: openFlow, fits: true };
+  return { view, sheets: [], sheetOf: {}, plates, detail: null, back: view && view !== 'home' ? NO_RECT : null, home: null, items, list, open: openFlow, fits: true };
 }

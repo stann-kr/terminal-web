@@ -28,7 +28,7 @@ import {
 } from './state';
 import { StageModeContext, pageAnnouncement, pageKey, pageReadout, useWheelPaging, type StageRenderMode } from './usePaging';
 import { PlateContent, plateSurface } from './plates/Plates';
-import { BackCard } from './plates/BackCard';
+import { BackCard, HomeKey } from './plates/BackCard';
 import { EventItem, SessionFile, sessionSurface, type ItemShape } from './plates/EventItem';
 import { accessAvailability } from '@/features/events/model';
 import { ArtistFile, ArtistItem, artistSurface } from './plates/ArtistItem';
@@ -548,6 +548,18 @@ export function Stage({ state: address, addressKnown = true }: { state: StageSta
           data={{ back: '' }}
         >
           {backHref && previous ? <BackCard href={backHref} target={previous} data={data} /> : null}
+        </Box>
+        <Box
+          rect={onStage && layout.home ? layout.home : null}
+          visible={onStage && !!layout.home}
+          contentKey="home"
+          className={styles.backBox}
+          surface="feature"
+          delay={layout.home ? wave(layout.home) : 0}
+          view={key}
+          data={{ home: '' }}
+        >
+          {layout.home ? <HomeKey /> : null}
         </Box>
         {PLATE_ORDER.map(id => {
           const placed = layout.plates[id];

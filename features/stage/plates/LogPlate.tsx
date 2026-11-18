@@ -31,7 +31,7 @@ export function LogPlate({ mode, state, size }: PlateProps) {
   const summary = useTransmit(1);
   const total = summary.data?.total;
   const meta = total !== undefined ? `${pad(total)} REC` : summary.isError ? 'ERROR' : 'READ';
-  if (mode === 'chip' || mode === 'index') return <ChipFace href="/transmit" name="LOG" title="방문자 로그" meta={meta} />;
+  if (mode === 'chip' || mode === 'index') return <ChipFace href="/transmit" name="LOG" title="방문자 로그" />;
   if (mode !== 'hero') {
     // As many node rows as the plate has room for, below its band. The plate is one link.
     const limit = size ? Math.max(1, Math.min(MAX_NODES, Math.floor((size.h - 110) / NODE_ROW))) : 6;

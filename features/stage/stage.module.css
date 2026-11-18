@@ -390,6 +390,39 @@
   outline-offset: -4px;
   outline-color: currentColor;
 }
+/* The quiet pager: a small key under the text, its row always kept so the text never changes
+   height when the key comes or goes. */
+.textMore {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+}
+.textMore button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .12em;
+}
+.textMore button + button {
+  margin-left: 10px;
+}
+.textMoreCount {
+  font-family: var(--mono);
+  letter-spacing: .04em;
+}
+@media (hover: hover) {
+  .textMore button:hover {
+    color: var(--accent);
+  }
+}
 /* A page turn past either end is printed, not keyed. */
 .textPager button[aria-disabled="true"] {
   cursor: default;
