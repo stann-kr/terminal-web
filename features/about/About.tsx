@@ -15,6 +15,13 @@ export const channels = [
   ['STANN LUMO WEB', 'https://lumo.stann.kr'],
   ['STANN LUMO INSTAGRAM', 'https://www.instagram.com/stannlumo/'],
 ] as const;
+/** How a channel is known: an Instagram account by its handle, a site by its host. */
+function handle(href: string) {
+  const url = new URL(href);
+  const account = url.host.endsWith('instagram.com') && url.pathname.split('/').filter(Boolean)[0];
+  return account ? `@${account}` : url.host;
+}
+
 export function NodeFacts() {
   return (
     <Panel title="노드 정보" label="Node" surface="calm" className={styles.node}>
@@ -35,12 +42,11 @@ export function OfficialChannels() {
   return (
     <Panel title="공식 채널" label="Channels" surface="panel">
       <ul className={styles.channels}>
-        {channels.map(([label, href], index) => (
+        {channels.map(([label, href]) => (
           <li key={href}>
             <a href={href} target="_blank" rel="noopener noreferrer">
-              <span>0{index + 1}</span>
               <strong>{label}<Arrow external /></strong>
-              <span className={styles.host} aria-hidden="true">{new URL(href).host}</span>
+              <span className={styles.host} aria-hidden="true">{handle(href)}</span>
               <span className={styles.srOnly}>새 탭에서 열기</span>
             </a>
           </li>
