@@ -1737,10 +1737,26 @@
     margin-left: 0;
   }
 }
-/* Too narrow for the session line beside NEXT (and the wordmark, when low): the band of a session
-   on a laptop, tablet or half-screen window. The chip keeps the wordmark and NEXT, and the line stays
-   for screen readers as the link's name. */
+/* A band chip (low and narrow, as in every open view's band): the wordmark gives way and the chip
+   reads like the others, NEXT over its line. Only a sliver keeps NEXT alone, the line staying for
+   screen readers as the link's name. */
 @container layer ((max-height: 96px) and (max-width: 400px)) or (max-width: 250px) {
+  .next[data-density=chip] .brandBar {
+    display: none;
+  }
+  .next[data-density=chip] .nextChip {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 10px 14px 12px;
+  }
+  .next[data-density=chip] .nextChip .chipName {
+    --len: 4;
+    font-size: clamp(16px, min(1.6vw, var(--fit)), 30px);
+  }
+}
+@container layer (max-width: 136px) {
   .next[data-density=chip] .nextChip .chipName {
     color: var(--link);
   }

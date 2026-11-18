@@ -371,7 +371,8 @@ function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill, m: StageMetrics
     const parts = others && others.dir === 'row' ? others.parts.map(([, child]) => natural(isLeaf(child) ? wrap(child) : stacked(child))) : others ? [natural(stacked(others))] : [];
     return [...(primaryLeaf ? [main(primaryLeaf)] : []), ...parts, ...own];
   }
-  if (spill.alone && primaryLeaf) {
+  // A band keeps its chips: the open leaf grows under it instead (see computeLayout).
+  if (spill.alone && primaryLeaf && !bandOf(rest)) {
     const others = prune(rest, key => key === primary || key === 'back');
     return [{ tree: alone(primaryLeaf) }, ...(others ? [{ tree: others }] : []), ...own];
   }
@@ -381,13 +382,24 @@ function sheetTrees(tree: LayoutNode, stage: Size, spill: Spill, m: StageMetrics
 const inside = (rect: Rect, w: number) => rect.x >= 0 && rect.y >= 0 && rect.x + rect.w <= w;
 
 /**
- * A sheet that grows for a long plate keeps its back card at the height it had on the sheet as
- * tiled (the split is by weight, so the card would otherwise swell with the plate); the plate under
- * it takes all of the added height.
+ * A band tiling: the way back with the other plates as chips over the open leaf alone (every open
+ * view on a wide stage). Its leaf grows below the band instead of leaving the chips for a sheet.
+ */
+function bandOf(tree: LayoutNode): LayoutLeaf | null {
+  const [first, second] = tree.parts;
+  if (tree.dir !== 'col' || tree.parts.length !== 2 || isLeaf(first[1]) || !isLeaf(second[1])) return null;
+  return leavesOf(first[1]).some(leaf => leafKey(leaf) === 'back') ? second[1] : null;
+}
+
+/**
+ * A sheet that grows for a long plate keeps its back card (or band) at the height it had on the
+ * sheet as tiled (the split is by weight, so the card would otherwise swell with the plate); the
+ * plate under it takes all of the added height.
  */
 function keepBack(tree: LayoutNode, base: number, h: number, gap: number): LayoutNode {
   const [first, second] = tree.parts;
-  if (tree.dir !== 'col' || tree.parts.length !== 2 || !isLeaf(first[1]) || leafKey(first[1]) !== 'back') return tree;
+  const backCard = isLeaf(first[1]) && leafKey(first[1]) === 'back';
+  if (tree.dir !== 'col' || tree.parts.length !== 2 || !(backCard || bandOf(tree))) return tree;
   const back = ((base - gap) * first[0]) / (first[0] + second[0]);
   return { dir: 'col', parts: [[back, first[1]], [h - gap - back, second[1]]] };
 }
@@ -414,9 +426,10 @@ export function computeLayout(state: StageState, stage: Size, input: LayoutInput
   };
   const tiling = (stage.w < NARROW_W && config.narrow[view ?? 'home']) || config.layouts[view ?? 'home'];
   sheetTrees(tiling, stage, spill, m, natural).forEach(({ tree, h: natural }, index) => {
-    // A sheet with a single leaf grows by what that leaf still needs.
+    // A sheet with a single leaf (or a band over one) grows by what that leaf still needs.
     const only = leavesOf(tree).filter(leaf => leafKey(leaf) !== 'back');
-    const grow = only.length === 1 ? spill.grow[leafKey(only[0]) as PlateId | 'detail'] ?? 0 : 0;
+    const grower = only.length === 1 ? only[0] : bandOf(tree);
+    const grow = grower ? spill.grow[leafKey(grower) as PlateId | 'detail'] ?? 0 : 0;
     const h = (natural ?? stage.h) + grow;
     sheets.push({ y, h });
     for (const [leaf, rect] of tile(grow > 0 ? keepBack(tree, natural ?? stage.h, h, m.gap) : tree, { x: 0, y, w: stage.w, h }, m.gap)) {

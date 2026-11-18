@@ -128,8 +128,10 @@ describe('stage layout', () => {
   it('gives every view its own arrangement and a way back everywhere but the home', () => {
     const stage = STAGES[0].stage;
     const signature = (path: string) => JSON.stringify(PLATE_ORDER.map(id => computeLayout(stageStateFromUrl(path), stage).plates[id]));
-    const views = ['/', '/events', '/events/TRM-05', '/artists', '/artists/lucii', '/transmit', '/signal', '/about'];
+    const views = ['/', '/events', '/events/TRM-05', '/artists', '/transmit', '/signal', '/about', '/merch'];
     expect(new Set(views.map(signature)).size).toBe(views.length);
+    // The two files (a session, an artist) share one band of every plate over the open file.
+    expect(signature('/artists/lucii')).toBe(signature('/events/TRM-05'));
     expect(computeLayout({ view: 'home' }, stage).back).toBeNull();
     for (const path of views.slice(1)) expect(computeLayout(stageStateFromUrl(path), stage).back, path).not.toBeNull();
     const home = computeLayout({ view: 'home' }, stage);
@@ -142,19 +144,24 @@ describe('stage layout', () => {
     expect(instagram.rect.y).toBeLessThan(signal.rect.y);
   });
 
-  it('opens a detail as a plate of its own beside an index that keeps the open line, marked current', () => {
-    const layout = computeLayout(stageStateFromUrl('/events/TRM-05'), STAGES[0].stage, { viewportW: 1440, items: items() });
-    expect(layout.plates.events.mode).toBe('index');
-    expect(layout.open).toEqual({ kind: 'event', id: 'TRM-05' });
-    expect(layout.detail).not.toBeNull();
-    expect(overlaps(layout.detail!, layout.plates.events.rect)).toBe(false);
-    expect(layout.items['event:TRM-05']).toMatchObject({ mode: 'index', visible: true, current: true });
-    const lines = shownItems(layout).filter(([, item]) => item.mode === 'index').map(([key]) => key);
-    expect(lines).toEqual(expect.arrayContaining(['event:TRM-06', 'event:TRM-05', 'event:TRM-04']));
-    // Sub-plates are flush: each line starts where the one above ends, from edge to edge.
-    const [first, second] = lines.map(key => layout.items[key].rect);
-    expect(second.y).toBe(first.y + first.h);
-    expect(first.w).toBe(layout.plates.events.rect.w);
+  it('opens every view under a band of the way back and the other plates as chips', () => {
+    const stage = STAGES[0].stage;
+    for (const path of ['/events', '/events/TRM-05', '/artists', '/artists/lucii', '/transmit', '/signal', '/about', '/merch']) {
+      const layout = computeLayout(stageStateFromUrl(path), stage, { viewportW: 1440, items: items() });
+      const open = layout.detail ?? Object.values(layout.plates).find(plate => plate.mode === 'hero')!.rect;
+      // The open plate (or file) takes the whole width under the band.
+      expect(open, path).toMatchObject({ x: 0, w: stage.w });
+      expect(layout.back!.y, path).toBe(0);
+      expect(open.y, path).toBeGreaterThan(layout.back!.y + layout.back!.h);
+      const chips = PLATE_ORDER.filter(id => layout.plates[id].mode === 'chip');
+      expect(chips.length, path).toBe(layout.detail ? PLATE_ORDER.length : PLATE_ORDER.length - 1);
+      chips.forEach(id => expect(layout.plates[id].rect, `${path} ${id}`).toMatchObject({ y: 0, h: layout.back!.h }));
+    }
+    // A file folds its list's lines away: the list is a chip in the band, the way to the others.
+    const file = computeLayout(stageStateFromUrl('/events/TRM-05'), stage, { viewportW: 1440, items: items() });
+    expect(file.open).toEqual({ kind: 'event', id: 'TRM-05' });
+    expect(file.plates.events.mode).toBe('chip');
+    expect(shownItems(file)).toEqual([]);
   });
 
   it('starts carriers under the measured head of their plate', () => {
@@ -200,19 +207,23 @@ describe('stage layout', () => {
     expect(computeLayout(stageStateFromUrl('/events', { page: '99' }), STAGES[0].stage, { items: items(99) }).list!.page).toBe(last);
   });
 
-  it('spreads a view over sheets instead of scrolling: the open plate first, spilled plates after, growing last', () => {
+  it('spreads a view over sheets instead of scrolling: the band stays, spilled chips move, the open plate grows', () => {
     const stage = STAGES[1].stage;
     const state = stageStateFromUrl('/transmit');
+    const base = computeLayout(state, stage, { sheetGap: 20 });
+    // Under a band the open plate never takes a sheet alone: the chips stay over it.
     const alone = computeLayout(state, stage, { spill: { alone: true, moved: [], grow: {} }, sheetGap: 20 });
-    expect(alone.sheets).toEqual([{ y: 0, h: stage.h }, { y: stage.h + 20, h: stage.h }]);
-    expect(alone.sheetOf).toMatchObject({ log: 0, back: 0, next: 1, events: 1, signal: 1 });
-    expect(alone.plates.log.rect.w).toBe(stage.w);
+    expect(alone.sheets).toEqual([{ y: 0, h: stage.h }]);
+    expect(alone.plates).toEqual(base.plates);
     const moved = computeLayout(state, stage, { spill: { alone: false, moved: ['signal'], grow: {} }, sheetGap: 20 });
     expect(moved.sheetOf.signal).toBe(1);
     expect(moved.plates.signal.rect).toMatchObject({ y: stage.h + 20, h: stage.h, w: stage.w });
     const grown = computeLayout(state, stage, { spill: { alone: true, moved: [], grow: { log: 300 } }, sheetGap: 20 });
-    expect(grown.sheets[0].h).toBe(stage.h + 300);
-    expect(grown.sheets[1].y).toBe(stage.h + 300 + 20);
+    expect(grown.sheets).toEqual([{ y: 0, h: stage.h + 300 }]);
+    // The band keeps its height; the open plate under it takes all of the added height.
+    expect(grown.back).toEqual(base.back);
+    expect(grown.plates.log.rect.h).toBe(base.plates.log.rect.h + 300);
+    expect(grown.plates.about.rect).toEqual(base.plates.about.rect);
   });
 
   it('puts a narrow window’s columns on sheets of their own, the open plate first', () => {

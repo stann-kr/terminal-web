@@ -98,13 +98,13 @@ function SessionKeys({ event }: { event: TerminalEvent }) {
           onClick={openCalendar}
         >
           <KeyFace label="CALENDAR">
-            {calendar === 'blocked' ? CALENDAR_BLOCKED : <><BrandText text="TERMINAL" /> 일정 구독</>}
+            {calendar === 'blocked' ? CALENDAR_BLOCKED : <>일정 구독<span className={ui.srOnly}> (<BrandText text="TERMINAL" /> 전체 일정)</span></>}
           </KeyFace>
         </a>
         {map && (
           <Action primary external href={map}>
             <KeyFace label="MAP">
-              지도에서 보기<span className={ui.srOnly}> (구글 지도, 새 탭)</span>
+              지도<span className={ui.srOnly}>에서 보기 (구글 지도, 새 탭)</span>
             </KeyFace>
           </Action>
         )}

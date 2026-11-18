@@ -506,17 +506,18 @@
 
 /* ── Scroll cue: an icon key at the foot of the window while sheets lie below ──
    Two chevrons on a translucent square in the palette's cue colour (one of its own source colours), letting the
-   plates show through. Hover fills it solid. */
+   plates show through. Hover fills it solid. It sits in the window's bottom right corner, over the
+   frame's gutter and a plate's padding, so it never covers a plate's text or figures. */
 .scrollHint {
   position: fixed;
-  left: 50%;
-  bottom: 18px;
+  right: 4px;
+  bottom: 4px;
   z-index: 40;
   display: grid;
   place-content: center;
   justify-items: center;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: 0;
   background: color-mix(in srgb, var(--cue) 65%, transparent);
@@ -524,13 +525,13 @@
   backdrop-filter: blur(6px);
   color: var(--on-cue);
   opacity: 0;
-  translate: -50% 12px;
+  translate: 0 12px;
   visibility: hidden;
   transition: opacity var(--dur-enter) var(--ease-move), translate var(--dur-enter) var(--ease-move), visibility 0s linear var(--dur-enter), var(--light-motion);
 }
 .scrollHint[data-shown] {
   opacity: 1;
-  translate: -50% 0;
+  translate: 0 0;
   visibility: visible;
   transition-delay: 0s;
 }

@@ -231,7 +231,7 @@ div.accessDeck > * {
    over one. Each names its kind in a small label above what it does, in the key's own text colour
    (lit or pressed, it follows the key). */
 div.sessionKeys {
-  --keys-row: 480px;
+  --keys-row: 300px;
   display: flex;
   flex-wrap: wrap;
   gap: 2px;
@@ -246,11 +246,11 @@ div.sessionKeys[data-surface] {
   background: var(--field);
 }
 div.sessionKeys:has(> :nth-child(3)) {
-  --keys-row: 510px;
+  --keys-row: 330px;
 }
 div.sessionKeys > * {
   flex: 1 1 calc((var(--keys-row) - 100%) * 999);
-  min-height: 64px;
+  min-height: 56px;
   padding-block: 10px;
   white-space: normal;
 }

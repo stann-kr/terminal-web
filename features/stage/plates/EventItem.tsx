@@ -126,8 +126,8 @@ function Poster({ src, alt }: { src: string; alt: string }) {
 }
 
 /**
- * The session file a row grows into: overview, running order, and the briefing over the access
- * panel. On `/request` the access panel opens into the guest form and the briefing folds away.
+ * The session file a row grows into: overview, running order, and the access panel over the
+ * briefing. On `/request` the access panel opens into the guest form and the briefing folds away.
  */
 export function SessionFile({ event, state, data }: { event: TerminalEvent; state: StageState; data: StageData }) {
   const { language } = useLanguage();
@@ -162,17 +162,6 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
         </div>
       </section>
       <div className={styles.sessionSide}>
-        {!request && (
-          <section className={styles.sessionBriefing} data-surface="inset" aria-label="이벤트 소개">
-            <p className={styles.columnHead}><b aria-hidden="true">Briefing</b><span>이벤트 소개</span>{bilingual(event.description, event.invitationLines) && <LanguageToggle />}</p>
-            <TextPages
-              paragraphs={invitation.length ? [...briefing, '초대 안내', ...invitation] : briefing}
-              language={language}
-              label="이벤트 소개"
-              empty="이벤트 소개는 공개되는 대로 이곳에 표시됩니다."
-            />
-          </section>
-        )}
         <section className={styles.sessionAccess} data-surface="paper" aria-label="참여 안내" data-origin="">
           {request ? (
             <>
@@ -197,6 +186,17 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
             </>
           )}
         </section>
+        {!request && (
+          <section className={styles.sessionBriefing} data-surface="inset" aria-label="이벤트 소개">
+            <p className={styles.columnHead}><b aria-hidden="true">Briefing</b><span>이벤트 소개</span>{bilingual(event.description, event.invitationLines) && <LanguageToggle />}</p>
+            <TextPages
+              paragraphs={invitation.length ? [...briefing, '초대 안내', ...invitation] : briefing}
+              language={language}
+              label="이벤트 소개"
+              empty="이벤트 소개는 공개되는 대로 이곳에 표시됩니다."
+            />
+          </section>
+        )}
       </div>
     </article>
   );

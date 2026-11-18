@@ -155,8 +155,8 @@ describe('stage shell', () => {
     expect(within(item(container, 'event:TRM-03')).getByRole('link')).toHaveAttribute('href', '/events/TRM-03');
     go('/events');
     expect(face('events')?.tagName).not.toBe('A');
-    expect(face('next')?.tagName).not.toBe('A');
-    expect(within(plate(container, 'next')).getByRole('link', { name: /상세 보기/ })).toHaveAttribute('href', '/events/TRM-03');
+    // In the band the next session is a chip: one link to its file.
+    expect(within(plate(container, 'next')).getByRole('link', { name: /다음 이벤트\s*TERMINAL \[03\]/ })).toHaveAttribute('href', '/events/TRM-03');
   });
 
   it('keeps layout children and typed drafts mounted across views', () => {
@@ -207,13 +207,13 @@ describe('stage views', () => {
     expect(within(row).getByRole('link', { name: /Past event/ })).toHaveAttribute('href', '/events/OLD');
     go('/events/OLD');
     expect(item(container, 'event:OLD')).toBe(row);
-    expect(row).toHaveAttribute('data-mode', 'index');
-    expect(within(row).getByRole('link')).toHaveAttribute('aria-current', 'page');
+    // The list is a chip in the file's band: its rows fold away (kept mounted, to grow back).
+    expect(row).toHaveAttribute('data-mode', 'folded');
     const file = detail(container, 'event:OLD');
     expect(file).toHaveAttribute('data-mode', 'open');
     const title = await within(file).findByRole('heading', { level: 1, name: 'Past event' });
     await waitFor(() => expect(title).toHaveFocus());
-    expect(plate(container, 'events')).toHaveAttribute('data-mode', 'index');
+    expect(plate(container, 'events')).toHaveAttribute('data-mode', 'chip');
     go('/events');
     expect(item(container, 'event:OLD')).toBe(row);
     expect(row).toHaveAttribute('data-mode', 'row');
