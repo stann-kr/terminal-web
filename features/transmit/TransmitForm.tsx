@@ -61,7 +61,7 @@ export function TransmitForm({
         onChange={(event) => edit({ handle: event.target.value })}
       />
       <p className={`${formStyles.hint} ${styles.notice}`}>
-        악용 방지와 운영 확인을 위해 접속 국가·지역·통신사, 브라우저 정보와 들어온 경로(아티스트 링크·외부 사이트)를 90일간 따로 보관하며 공개하지 않습니다.
+        악용 방지를 위해 접속 정보(지역·통신사·암호화한 IP·브라우저·기기·유입 경로)를 90일간 비공개로 보관합니다.
       </p>
       <button
         aria-busy={pending}
