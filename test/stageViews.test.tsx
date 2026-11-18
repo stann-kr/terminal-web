@@ -726,7 +726,7 @@ describe('directory and roster contracts', () => {
     expect(within(detail(container, 'event:TRM-03')).getByText('기록', { selector: '[data-event-state]' })).toHaveAttribute('data-event-state', 'ARCHIVED');
   });
 
-  it('lists the running order by slot start, one line per slot on the home plate, and marks the slots on now', () => {
+  it('lists the running order on the home plate in a column per dock, by slot start, and marks the slots on now', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-29T00:30:00+09:00'));
     const night = { ...upcoming, date: '2026-11-28', time: '23:00 KST', endTime: '05:00', artists: [
@@ -738,16 +738,23 @@ describe('directory and roster contracts', () => {
     const { container, go } = shell([past, night]);
     const home = plate(container, 'next');
     expect(within(home).getByRole('link', { name: /시간표 기준 지금 순서 OPENING ARTIST, SECOND DOCK/ })).toBeInTheDocument();
-    const cells = [...home.querySelectorAll('li')];
-    expect(cells.map((cell) => cell.querySelector('b')?.textContent)).toEqual(['OPENING ARTIST', 'SECOND DOCK', 'LATE ARTIST', 'UNTIMED ARTIST']);
-    expect(home.querySelector('ol')).toBe(cells[0].parentElement);
+    // A column per dock, in the order the docks first play; each lists its slots by start.
+    const columns = [...home.querySelectorAll('ol')];
+    expect(columns).toHaveLength(2);
+    const names = (list: Element) => [...list.querySelectorAll('li')].map((cell) => cell.querySelector('b')?.textContent);
+    expect(columns.map(names)).toEqual([['OPENING ARTIST', 'LATE ARTIST'], ['SECOND DOCK', 'UNTIMED ARTIST']]);
+    expect(columns.map((list) => list.previousElementSibling?.textContent)).toEqual(['DOCK 123:00 – 05:00', 'DOCK 200:00 – 02:00']);
+    const cells = columns.flatMap((list) => [...list.querySelectorAll('li')]);
     expect(cells.map((cell) => [...cell.querySelectorAll('small')].map((small) => small.textContent))).toEqual([
-      ['23:00 - 01:00', 'NOW · DOCK 1'],
-      ['00:00 - 02:00', 'NOW · DOCK 2'],
-      ['01:00 - 05:00', 'DOCK 1'],
-      ['TBA', 'DOCK 2'],
+      ['23:00', 'NOW'],
+      ['01:00'],
+      ['00:00', 'NOW'],
+      ['TBA'],
     ]);
-    expect(cells.map((cell) => cell.hasAttribute('data-now'))).toEqual([true, true, false, false]);
+    expect(cells.map((cell) => cell.hasAttribute('data-now'))).toEqual([true, false, true, false]);
+    // The plate's keys stand beside its link, never inside it.
+    expect(home.querySelector('a a')).toBeNull();
+    expect(within(home).getByRole('link', { name: '세션 파일 열기' })).toHaveAttribute('href', '/events/TRM-03');
     go('/events/TRM-03');
     const dock = within(detail(container, 'event:TRM-03')).getByRole('region', { name: '무대 1' });
     expect([...dock.querySelectorAll('li')].map((line) => line.querySelector('a, div:nth-child(2)')?.textContent)).toEqual([

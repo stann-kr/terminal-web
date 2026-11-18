@@ -817,19 +817,42 @@
   gap: 0;
   padding-block: 0;
 }
-/* The link's cue along the plate's foot: its name, printed in the link colour with its arrow. */
-.partEnd {
-  margin-top: auto;
-  padding: 0;
+/* The plate's keys under the block, edge to edge at its foot: the guest request on paper (the one
+   thing to do) and the session file in the plate's fill. A single key runs the whole row. */
+.nextBlock:has(+ .nextKeys) {
+  margin-bottom: 0;
 }
-.nextCta {
-  display: flex;
+.nextKeys {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: 1.3fr;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  flex: none;
+  margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
+}
+.nextKeys > :only-child {
+  grid-column: 1 / -1;
+}
+.nextKey {
+  flex-direction: row;
   align-items: center;
-  min-height: 52px;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 60px;
   padding: 0 var(--pad);
-  color: var(--link);
-  font: 700 var(--t-md)/1 var(--display);
-  letter-spacing: .16em;
+  background: var(--plate);
+  color: var(--ink);
+  font: 700 var(--t-lg)/1 var(--display);
+  letter-spacing: .06em;
+}
+.nextKey[data-key=file] {
+  background: var(--fill);
+  color: var(--on-fill);
+  font-size: var(--t-md);
+}
+.nextKey > svg {
+  display: inline-block;
 }
 
 .nextHead {
@@ -1605,27 +1628,110 @@
   grid-auto-rows: minmax(auto, 104px);
   align-content: start;
 }
-/* With times out, the lineup is the running order: one slot per line, [time | artist | dock], in
-   start order, whatever the plate's width. */
-.lineupCells.timetable {
-  --lineup-cols: 1;
+/* Date, place and district in three cells across the plate, in turns of tone. */
+.factCells {
+  display: grid;
+  margin-inline: calc(var(--pad) * -1);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
 }
-.lineupCells.timetable li:last-child:nth-child(n) {
-  grid-column: auto;
+.factCells > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px var(--pad);
 }
-.lineupCells.timetable li {
-  grid-template-columns: max-content minmax(0, 1fr) max-content;
+.factCells > span:nth-child(odd) {
+  background: var(--well);
+}
+.factCells small {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .16em;
+}
+.factCells b {
+  font: 700 var(--t-lg)/1.05 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+/* The lineup's label printed on the plate (the dock heads under it are the dark bands). */
+.lineupLabel {
+  display: flex;
   align-items: baseline;
-  gap: 4px 14px;
+  gap: 10px;
+  padding: 10px 0 6px;
+  font: 700 var(--t-xs)/1.1 var(--display);
+  letter-spacing: .16em;
+  text-transform: uppercase;
 }
-.slotWhen {
+.lineupLabel > span + span {
+  opacity: .75;
+  font-family: var(--sans);
+  letter-spacing: .04em;
+}
+.partLineup .dockCols {
+  margin-bottom: 10px;
+}
+/* The running order: a column per dock side by side, each under a dark head with its dock and its
+   night, one slot per line [start | artist]. Columns fall under each other when the plate is narrow. */
+.dockCols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  align-items: start;
+  gap: 12px;
+}
+.dockCol {
+  display: grid;
+  min-width: 0;
+}
+.dockHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--fill);
+  color: var(--on-fill);
+  font: 700 var(--t-xs)/1.1 var(--display);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dockHead > span + span {
+  color: var(--on-fill-muted);
+  font: 400 var(--t-xs)/1.1 var(--mono);
+  letter-spacing: 0;
+}
+.dockCol li {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+}
+.dockCol li:nth-child(even) {
+  background: var(--well);
+}
+.dockCol li:not(:has(> small:first-child)) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.dockCol li > small {
+  font: 400 var(--t-sm)/1 var(--mono);
   font-variant-numeric: tabular-nums;
 }
-.lineupCells.timetable li > small:last-child {
-  text-align: right;
+.dockCol li > b {
+  min-width: 0;
+  font: 700 var(--t-lg)/1.05 var(--display);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
-:global([data-stage=stage]) .partLineup .timetable {
-  grid-auto-rows: minmax(auto, 56px);
+.dockCol li > b + small {
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+}
+/* While the session runs, the slot the timetable is on carries the accent bar and NOW. */
+.dockCol li[data-now] {
+  box-shadow: inset 4px 0 0 var(--accent);
 }
 .logList li:nth-child(odd) {
   background: var(--well);
