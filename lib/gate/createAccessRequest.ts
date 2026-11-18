@@ -13,6 +13,8 @@ const REQUEST_KEYS = [
   'name',
   'email',
   'instagram',
+  // The form once sent a ticked privacy box. It shows a notice now; a tab opened before that still
+  // sends the field, so it is allowed (a boolean) and ignored.
   'privacyConsent',
   'marketingConsent',
   'waitlist',
@@ -25,7 +27,6 @@ export interface GateRequestInput {
   /** Kept only for a guest who asked for news; everyone else is found by Instagram id. */
   email: string | null;
   instagram: string;
-  privacyConsent: true;
   marketingConsent: boolean;
   /**
    * The guest agreed to the waitlist terms (the artist sees their Instagram id, no news is sent).
@@ -149,7 +150,7 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   if (body.invitedBy !== undefined && !isString(body.invitedBy)) {
     return { ok: false, error: 'INVALID_INPUT' };
   }
-  if (!isBoolean(body.privacyConsent)) {
+  if (body.privacyConsent !== undefined && !isBoolean(body.privacyConsent)) {
     return { ok: false, error: 'INVALID_INPUT' };
   }
   if (body.marketingConsent !== undefined && !isBoolean(body.marketingConsent)) {
@@ -172,9 +173,6 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
 
   if (!name || !instagram || !accessCode) {
     return { ok: false, error: 'ALL_FIELDS_REQUIRED' };
-  }
-  if (!body.privacyConsent) {
-    return { ok: false, error: 'PRIVACY_CONSENT_REQUIRED' };
   }
   if (email === '') {
     return { ok: false, error: 'EMAIL_REQUIRED_FOR_NEWS' };
@@ -202,7 +200,6 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
       name,
       email,
       instagram: storedInstagram,
-      privacyConsent: true,
       marketingConsent,
       waitlist,
     },

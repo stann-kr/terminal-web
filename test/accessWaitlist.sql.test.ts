@@ -25,7 +25,6 @@ describe.skipIf(!sqliteAvailable)('access waitlist SQL (SQLite with every migrat
     name: `Guest ${serial}`,
     email: null,
     instagram,
-    privacyConsent: true,
     marketingConsent: false,
     guestLimit: 2,
     createdAt: `2026-11-12T00:00:${String(serial).padStart(2, '0')}.000Z`,

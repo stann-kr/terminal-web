@@ -12,6 +12,14 @@ const SAME_GUEST = `(
       OR (email IS NOT NULL AND email = ?)
     )`;
 
+/**
+ * `privacy_consent` (NOT NULL) is always 1. Rows made before 2026-11-19 record a ticked privacy box;
+ * from then on the guest form shows a notice instead of a box (the guest came by the artist's own
+ * invite link, and the request itself is what they ask for), and 1 records that the request was made
+ * under that notice. An artist adding a guest from the host page writes the same.
+ */
+const PRIVACY_NOTICED = 1;
+
 export const ACCESS_REQUEST_INSERT_SQL = `
   INSERT INTO access_requests (
     id,
@@ -119,7 +127,6 @@ export interface AtomicAccessRequestInput {
   name: string;
   email: string | null;
   instagram: string;
-  privacyConsent: true;
   marketingConsent: boolean;
   guestLimit: number | null;
   createdAt: string;
@@ -197,7 +204,7 @@ export async function createAccessRequestAtomically(
     input.name,
     input.email,
     input.instagram,
-    input.privacyConsent ? 1 : 0,
+    PRIVACY_NOTICED,
     input.marketingConsent ? 1 : 0,
     input.createdAt,
     input.eventId,
@@ -230,7 +237,7 @@ export async function createAccessRequestAtomically(
       input.invitedBy,
       input.name,
       input.instagram,
-      input.privacyConsent ? 1 : 0,
+      PRIVACY_NOTICED,
       input.createdAt,
       input.eventId,
       key,

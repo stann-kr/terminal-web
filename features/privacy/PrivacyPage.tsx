@@ -53,7 +53,7 @@ export function PrivacyPage() {
         <section aria-labelledby="privacy-share">
           <h2 id="privacy-share">2. 제공</h2>
           <p>
-            게스트 신청과 대기 명단의 이름·인스타그램 ID·신청 시각은 신청하신 초대 링크의 아티스트에게 제공됩니다. 그 밖의 제3자에게는 제공하지 않습니다.
+            게스트 신청의 이름과 신청 시각, 대기 명단의 이름·인스타그램 ID와 신청 시각은 신청하신 초대 링크의 아티스트에게 제공됩니다. 그 밖의 제3자에게는 제공하지 않습니다.
           </p>
         </section>
 
