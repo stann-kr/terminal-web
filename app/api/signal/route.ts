@@ -4,6 +4,8 @@ import { enforceRateLimit } from "@/lib/api/abuseControl";
 import { safeLogError } from "@/lib/api/safeLog";
 import { noStoreJson } from "@/lib/api/responses";
 import { createSignalSubscription } from "@/lib/signal/createSignalSubscription";
+import { recordSubmission } from "@/lib/trace/recordSubmission";
+import { generateId } from "@/lib/utils/id";
 import { validateSignalSubscriptionInput } from "@/lib/signal/subscriptionPolicy";
 
 export async function POST(request: Request) {
@@ -19,7 +21,10 @@ export async function POST(request: Request) {
       return noStoreJson({ error: abuseDecision.error }, abuseDecision.status);
     }
 
-    await createSignalSubscription(env.DB, validation.input);
+    const now = new Date();
+    const id = generateId("sig");
+    const result = await createSignalSubscription(env.DB, validation.input, now, id);
+    if (result.status === "created") await recordSubmission(request, "signal", id, now);
 
     return noStoreJson({ ok: true });
   } catch (error) {

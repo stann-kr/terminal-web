@@ -9,6 +9,7 @@ import {
   listTransmitLogs,
 } from '@/lib/transmit/d1TransmitRepository';
 import { createTransmitRecord } from '@/lib/transmit/domain';
+import { recordSubmission } from '@/lib/trace/recordSubmission';
 import { parseIdempotencyKey } from '@/lib/transmit/idempotency';
 import {
   parseTransmitPage,
@@ -46,13 +47,15 @@ export async function POST(request: Request) {
       return noStoreJson({ error: abuseDecision.error }, abuseDecision.status);
     }
 
+    const now = new Date();
     const result = await createTransmitLog(
       getDb(env.DB),
-      createTransmitRecord(parsedInput.input, new Date()),
+      createTransmitRecord(parsedInput.input, now),
     );
     if (result.status === 'conflict') {
       return noStoreJson({ error: 'IDEMPOTENCY_CONFLICT' }, 409);
     }
+    if (result.status === 'created') await recordSubmission(request, 'transmit', result.log.id, now);
     return noStoreJson(result.log, result.status === 'created' ? 201 : 200);
   } catch (error) {
     safeLogError('transmit.create_failed', { error });

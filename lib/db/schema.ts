@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index, uniqueIndex, primaryKey } from "drizzle-orm/sqlite-core";
 
 // ──────────────────────────────────────────────────────────
 // events 테이블
@@ -99,6 +99,38 @@ export const signal = sqliteTable(
 );
 
 // 타입 추론
+// ──────────────────────────────────────────────────────────
+// submission_traces 테이블 — 공개 입력(Transmit·게스트 신청·Signal)의 접속 기록, 운영자 전용
+// IP 원문은 두지 않고 비밀 키 해시만 둔다. 90일 지난 행은 새 기록을 쓸 때 지운다.
+// ──────────────────────────────────────────────────────────
+export const submissionTraces = sqliteTable(
+  "submission_traces",
+  {
+    kind: text("kind").notNull(), // transmit | gate | signal
+    recordId: text("record_id").notNull(),
+    createdAt: text("created_at").notNull(),
+    country: text("country"),
+    region: text("region"),
+    city: text("city"),
+    asn: integer("asn"),
+    asOrg: text("as_org"),
+    ipHash: text("ip_hash"),
+    browser: text("browser"),
+    os: text("os"),
+    device: text("device"),
+    entryKind: text("entry_kind"), // code | host | ref
+    entryArtistId: text("entry_artist_id"),
+    entryEventId: text("entry_event_id"),
+    entryReferrer: text("entry_referrer"),
+    entryAt: text("entry_at"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.kind, table.recordId] }),
+    index("submission_traces_created_at_idx").on(table.createdAt),
+    index("submission_traces_ip_hash_idx").on(table.ipHash),
+  ],
+);
+
 export type EventRow = typeof events.$inferSelect;
 export type ArtistRow = typeof artists.$inferSelect;
 export type TransmitLog = typeof transmitLogs.$inferSelect;
