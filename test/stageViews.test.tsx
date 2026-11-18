@@ -342,6 +342,23 @@ describe('stage views', () => {
     window.localStorage.removeItem('terminal:language');
   });
 
+  it('opens the merch with on-site sale first, a picture chooser, and the DM as an outside link', () => {
+    const { container, go } = shell();
+    go('/merch');
+    const merch = plate(container, 'merch');
+    expect(within(merch).getByRole('heading', { level: 1 })).toHaveTextContent('머치');
+    const ways = within(merch).getAllByRole('listitem').map(item => item.textContent);
+    expect(ways[0]).toMatch(/현장 판매.*FAUST SEOUL 인포/);
+    expect(ways[1]).toMatch(/인스타그램 DM/);
+    const lead = within(merch).getByRole('link', { name: /Signal Tee 뒷면 펄스 프린트 클로즈업/ });
+    const chooser = within(merch).getByRole('group', { name: '사진 고르기' });
+    fireEvent.click(within(chooser).getByRole('button', { name: /앞면/ }));
+    expect(lead).toHaveAccessibleName(/Signal Tee 앞면/);
+    expect(within(chooser).getByRole('button', { name: /앞면/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(merch).getByRole('link', { name: /DM으로 구매/ })).toHaveAttribute('target', '_blank');
+    expect(merch).not.toHaveTextContent(/계좌번호/);
+  });
+
   it('shows no language switch for a text in one language', () => {
     const { container, go } = shell([{ ...past, description: { ko: '한국어만', en: '' } }]);
     go('/events/OLD');

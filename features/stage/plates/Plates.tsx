@@ -11,6 +11,7 @@ import { LogPlate } from './LogPlate';
 import { SignalPlate } from './SignalPlate';
 import { AboutPlate } from './AboutPlate';
 import { InstagramPlate } from './InstagramPlate';
+import { MerchPlate } from './MerchPlate';
 
 export interface PlateProps {
   mode: PlateMode;
@@ -31,6 +32,7 @@ const PLATES: Record<PlateId, (props: PlateProps) => React.ReactNode> = {
   signal: SignalPlate,
   about: AboutPlate,
   instagram: InstagramPlate,
+  merch: MerchPlate,
 };
 
 export function PlateContent({ id, ...props }: PlateProps & { id: PlateId }) {
@@ -48,9 +50,10 @@ export function plateSurface(id: PlateId, mode: PlateMode, data: StageData): Sur
     const status = data.next?.status;
     return !data.next || status === 'ARCHIVED' ? 'paper' : 'feature';
   }
-  if (mode === 'hero' && (id === 'log' || id === 'signal' || id === 'about')) return 'inset';
+  if (mode === 'hero' && (id === 'log' || id === 'signal' || id === 'about' || id === 'merch')) return 'inset';
   if (id === 'instagram') return 'alert';
   if (id === 'signal') return 'mark';
   if (id === 'about') return 'calm';
+  if (id === 'merch') return 'paper';
   return 'panel';
 }

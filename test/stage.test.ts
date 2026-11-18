@@ -16,6 +16,7 @@ describe('stage state from the address', () => {
       ['/transmit', '?page=4', { view: 'plate', plate: 'log', page: 4 }],
       ['/signal', '?page=9', { view: 'plate', plate: 'signal', page: 1 }],
       ['/about/', '', { view: 'plate', plate: 'about', page: 1 }],
+      ['/merch', '?page=2', { view: 'plate', plate: 'merch', page: 1 }],
     ];
     for (const [path, search, state] of cases) expect(stageStateFromUrl(path, new URLSearchParams(search)), path).toEqual(state);
     expect(stageStateFromUrl('/events', { page: '2' })).toEqual({ view: 'plate', plate: 'events', page: 2 });
@@ -94,7 +95,7 @@ const STAGES = [
 const EVENTS = ['TRM-09', 'TRM-08', 'TRM-07', 'TRM-06', 'TRM-05', 'TRM-04', 'TRM-03', 'TRM-02', 'TRM-01'];
 const ARTISTS = ['stann-lumo', 'lucii', 'marcus-l', 'nusnoom', 'a', 'b', 'c', 'd', 'e'];
 const items = (eventPage = 1, artistPage = 1): LayoutInput['items'] => ({ event: { order: EVENTS, page: eventPage }, artist: { order: ARTISTS, page: artistPage } });
-const PATHS = ['/', '/events', '/events/TRM-05', '/events/TRM-01/request', '/artists', '/artists/lucii', '/transmit', '/signal', '/about'];
+const PATHS = ['/', '/events', '/events/TRM-05', '/events/TRM-01/request', '/artists', '/artists/lucii', '/transmit', '/signal', '/about', '/merch'];
 
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const contains = (outer: Rect, inner: Rect) => inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.w <= outer.x + outer.w && inner.y + inner.h <= outer.y + outer.h;
@@ -221,7 +222,7 @@ describe('stage layout', () => {
     expect(layout.sheetOf.events).toBe(0);
     // A phone's home reads the next session, then the account and the call to subscribe, then the directory.
     const home = computeLayout({ view: 'home' }, narrow, { viewportW: 390, items: items() });
-    expect(home.sheetOf).toMatchObject({ next: 0, instagram: 1, signal: 1, log: 1, about: 1, events: 2, artists: 2 });
+    expect(home.sheetOf).toMatchObject({ next: 0, instagram: 1, signal: 1, merch: 1, log: 1, about: 1, events: 2, artists: 2 });
     expect(home.plates.instagram.rect.y).toBeLessThan(home.plates.signal.rect.y);
     expect(PLATE_ORDER.every(id => layout.plates[id].rect.w === narrow.w)).toBe(true);
     // Secondary sheets are as tall as their plates, not a whole window: chips stay chip-sized, and
