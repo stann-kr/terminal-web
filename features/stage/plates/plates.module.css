@@ -2347,36 +2347,115 @@
   .signalChannel small { display: none; }
 }
 
-/* About: the manifesto wide on the left, channels over node facts on the right. */
-@container layer (min-width: 901px) {
-  .aboutRow:where([data-columns="2"]) {
-    grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr);
-  }
-}
-.manifesto {
+/* The open about plate: the name, the wordmark and the opening line over the manifesto in two
+   columns and the architect's sign on the left; the channels over the node facts on the right. */
+.aboutStage {
   display: grid;
-  gap: 14px;
-  font-size: var(--text-body);
-  line-height: 1.75;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 28%);
+  grid-template-rows: minmax(0, 1fr);
+  min-width: 0;
 }
-.manifestoLead {
-  font: 700 var(--t-lg)/1.4 var(--sans);
+:global([data-stage=stage]) .aboutStage {
+  height: 100%;
 }
-/* The manifesto in two columns, a paragraph never split between them. */
-.manifestoBody {
-  columns: 2 15em;
-  column-gap: 32px;
+.aboutMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
-.manifestoBody p {
-  margin-bottom: 14px;
-  break-inside: avoid;
-  white-space: pre-line;
+.aboutIntro {
+  --bleed: var(--pad);
+  position: relative;
+  padding: 0 var(--pad) 18px;
+  background: var(--plate);
+  color: var(--ink);
 }
-.manifestoSign {
+.aboutIntro .statement {
+  display: block;
+  margin: 4px 0 12px;
+  color: var(--link);
+  font-size: clamp(36px, 4.6cqi, 72px);
+}
+.aboutToggle {
+  display: flex;
+  margin-left: auto;
+  align-self: center;
+}
+.aboutLine {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: .6em;
+  font: 500 var(--t-lg)/1.4 var(--sans);
+}
+.aboutBody {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px var(--pad);
+  background: var(--plate);
+  color: var(--ink);
+}
+.aboutColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 40px;
+}
+.aboutSection p {
+  margin: 0 0 14px;
+  font: 400 var(--text-body)/1.75 var(--sans);
+}
+.aboutLabel {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font: 700 var(--t-xs)/1.2 var(--display);
+  letter-spacing: .16em;
+}
+.aboutSection + .aboutSection .aboutLabel {
+  margin-top: 12px;
+}
+.aboutSign {
+  margin: 0;
+  padding: 14px var(--pad);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  background: var(--plate);
   color: var(--muted);
   font: 700 var(--t-xs)/1.2 var(--display);
   letter-spacing: .16em;
   text-transform: uppercase;
+}
+.aboutSide {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: var(--plate);
+}
+/* A phone: everything in one column; the node facts in a row of four. */
+@container layer (max-width: 700px) {
+  .aboutStage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .aboutColumns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .aboutLine {
+    display: block;
+    font-size: var(--t-md);
+  }
+  .aboutToggle {
+    position: absolute;
+    top: 18px;
+    right: var(--pad);
+  }
+  .aboutSection p {
+    font-size: var(--t-sm);
+  }
+  .aboutBody {
+    overflow: visible;
+    padding-block: 16px;
+  }
 }
 
 /* A chip's line is printed in the chip's ink; the whole chip is the link. */

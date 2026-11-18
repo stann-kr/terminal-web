@@ -107,3 +107,65 @@
 .host {
   font-size: var(--t-sm);
 }
+
+/* ── The about plate's side: the channels as rows of their own plates, the name and handle on the
+   left and the way out on the right; the node facts as a label over its value. ── */
+.channelPanel,
+.node {
+  --bleed: var(--pad);
+}
+.channels {
+  gap: 2px;
+}
+.channels li:nth-child(n) a {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "name arrow" "host arrow";
+  align-items: center;
+  padding: 12px var(--pad);
+  background: var(--plate);
+}
+.channels a > strong,
+.channels a > .host {
+  padding: 0;
+  background: none;
+}
+.channels a > strong {
+  color: var(--ink);
+  font: 800 var(--t-lg)/1.15 var(--display);
+}
+.channels a > .host {
+  color: inherit;
+  opacity: .8;
+}
+.channels a > svg {
+  grid-area: arrow;
+}
+.node dl {
+  grid-template-columns: minmax(0, 1fr);
+}
+.node dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+.node dt {
+  letter-spacing: .04em;
+  font-family: var(--sans);
+  font-weight: 500;
+}
+.node dd {
+  text-align: left;
+}
+@container layer (max-width: 700px) {
+  .node dl {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .node dl > div {
+    grid-column: auto;
+    padding-inline: 8px;
+  }
+  .node dd {
+    font-size: var(--t-sm);
+    white-space: nowrap;
+  }
+}

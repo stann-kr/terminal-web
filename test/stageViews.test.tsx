@@ -328,7 +328,7 @@ describe('stage views', () => {
     window.localStorage.removeItem('terminal:language');
   });
 
-  it('reads the complete manifesto in either language with authored lines and paragraphs intact', () => {
+  it('reads the complete manifesto in either language, its section labels as headings and its paragraphs intact', () => {
     const { container, go } = shell();
     go('/about');
     const about = plate(container, 'about');
@@ -336,11 +336,16 @@ describe('stage views', () => {
     const toggle = within(about).getByRole('group', { name: '소개글 언어' });
     for (const language of ['ko', 'en'] as const) {
       fireEvent.click(within(toggle).getByRole('button', { name: language.toUpperCase() }));
+      const paragraphs = siteContent.manifesto[language].split('\n\n');
+      const label = /^\[ (.+?) \]\n/;
       expect(Array.from(copy.querySelectorAll('p'), p => p.textContent)).toEqual([
         siteContent.tagline,
-        ...siteContent.manifesto[language].split('\n\n'),
+        ...paragraphs.map(text => text.replace(label, '')),
         'Terminal Architect : STANN LUMO',
       ]);
+      expect(within(copy).getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(
+        paragraphs.flatMap(text => text.match(label)?.[1] ?? []),
+      );
     }
     fireEvent.click(within(toggle).getByRole('button', { name: 'KO' }));
     window.localStorage.removeItem('terminal:language');

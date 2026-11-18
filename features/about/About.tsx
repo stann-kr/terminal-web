@@ -1,5 +1,5 @@
 'use client';
-import { Arrow, Bay, Facts, Panel } from '@/features/ui/Ui';
+import { Arrow, Facts, Panel } from '@/features/ui/Ui';
 import styles from './about.module.css';
 import content from './content.json';
 /** The home About plate's one line; the same in every language. */
@@ -33,26 +33,26 @@ export function NodeFacts() {
           ['설계', 'STANN LUMO'],
         ]}
       />
-      <Bay label="TERMINAL / NODE" />
     </Panel>
   );
 }
 
 export function OfficialChannels() {
   return (
-    <Panel title="공식 채널" label="Channels" surface="panel">
+    <Panel title="공식 채널" label="Channels" surface="calm" className={styles.channelPanel}>
       <ul className={styles.channels}>
-        {channels.map(([label, href]) => (
+        {channels.map(([label, href], index) => (
           <li key={href}>
-            <a href={href} target="_blank" rel="noopener noreferrer">
-              <strong>{label}<Arrow external /></strong>
+            {/* The festival's own account leads, on the alert plate; the architect's two follow. */}
+            <a href={href} target="_blank" rel="noopener noreferrer" data-surface={index === 0 ? 'alert' : 'panel'}>
+              <strong>{label}</strong>
               <span className={styles.host} aria-hidden="true">{handle(href)}</span>
+              <Arrow external />
               <span className={styles.srOnly}>새 탭에서 열기</span>
             </a>
           </li>
         ))}
       </ul>
-      <Bay label="CHANNELS / SEOUL" />
     </Panel>
   );
 }
