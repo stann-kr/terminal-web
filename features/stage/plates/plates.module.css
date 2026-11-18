@@ -825,7 +825,7 @@
   grid-auto-flow: column;
   grid-template-columns: 1.3fr;
   grid-auto-columns: 1fr;
-  gap: 2px;
+  gap: 0;
   flex: none;
   margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
 }
@@ -2631,10 +2631,14 @@
   flex: 1 1 0;
   overflow: hidden;
 }
+/* The node rows sit inside the tile's margins like the running order's rows, each with its words
+   set in from the row's own edges. */
 .logNodes ol {
   gap: 0;
+  margin-inline: 0;
 }
 .logNodes li > :is(b, span) {
+  padding-inline: 12px;
   padding-block: 5px;
   font-size: 15px;
   line-height: 19px;

@@ -366,7 +366,7 @@ describe('stage views', () => {
     fireEvent.click(within(chooser).getByRole('button', { name: /앞면/ }));
     expect(lead).toHaveAccessibleName(/Signal Tee 앞면/);
     expect(within(chooser).getByRole('button', { name: /앞면/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(within(merch).getByRole('link', { name: /DM으로 사이즈 보내기\s*@terminal\.signal/ })).toHaveAttribute('target', '_blank');
+    expect(within(merch).getByRole('link', { name: /DM으로 문의\s*@terminal\.signal/ })).toHaveAttribute('target', '_blank');
     expect(merch).not.toHaveTextContent(/계좌번호/);
   });
 

@@ -80,7 +80,7 @@ export function MerchSheet({ item }: { item: MerchItem }) {
           ))}
         </ol>
         <a className={styles.dmKey} href={item.dm.href} target="_blank" rel="noopener noreferrer" data-surface="feature">
-          <span>DM으로 사이즈 보내기</span>
+          <span>DM으로 문의</span>
           <span className={styles.srOnly}> {item.dm.handle} (새 탭)</span>
           <Arrow external />
         </a>

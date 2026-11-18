@@ -68,9 +68,9 @@ export const merch: readonly MerchItem[] = [
     },
     buy: [
       { label: 'ON SITE', title: '현장 판매 · FAUST SEOUL 인포', text: '11월 28일(토) 23:00부터 인포에서 구매하실 수 있습니다. 결제는 계좌이체입니다.' },
-      { label: 'DM', title: '인스타그램 DM', text: '현장에 오시기 어려우면 @terminal.signal로 원하시는 사이즈를 보내 주십시오.' },
+      { label: 'DM', title: '인스타그램 DM', text: '현장에 오시기 어려우면 @terminal.signal로 원하시는 사이즈와 함께 문의해 주십시오.' },
     ],
-    dm: { handle: '@terminal.signal', href: 'https://ig.me/m/terminal.signal' },
+    dm: { handle: '@terminal.signal', href: 'https://www.instagram.com/terminal.signal/' },
   },
 ];
 
