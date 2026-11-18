@@ -105,6 +105,9 @@ const FORGET_GATE_EMAIL_SQL = `
 
 const SIGNAL_SUBSCRIPTION_DELETE_SQL = `DELETE FROM signal WHERE id = ?`;
 
+/** The subscription's own access trace (submission_traces) goes with it. */
+const SIGNAL_TRACE_DELETE_SQL = `DELETE FROM submission_traces WHERE kind = 'signal' AND record_id = ?`;
+
 /** One batch, so the email is never left behind on a request; a repeat finds nothing and still succeeds. */
 export async function removeSignalSubscription(
   database: Pick<D1Database, 'prepare' | 'batch'>,
@@ -113,5 +116,6 @@ export async function removeSignalSubscription(
   await database.batch([
     database.prepare(FORGET_GATE_EMAIL_SQL).bind(id),
     database.prepare(SIGNAL_SUBSCRIPTION_DELETE_SQL).bind(id),
+    database.prepare(SIGNAL_TRACE_DELETE_SQL).bind(id),
   ]);
 }

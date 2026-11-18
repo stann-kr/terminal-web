@@ -55,6 +55,10 @@
       "sha256": "e2b16f1387025d6e91e22f92cdbd8639caeb07ee02e7580c25033a43bc9e562b"
     },
     {
+      "path": "migrations/0013_submission_traces.sql",
+      "sha256": "fc68ca297779b7b1c2ce89ccb3b77e0e9a81f9d5c5c1c3bd35034541e295b349"
+    },
+    {
       "path": "migrations/meta/0000_snapshot.json",
       "sha256": "9f692fcfb6eb815b1d41dc50dbd43499966359a0f490159ef1350d40a43ad645"
     },
@@ -107,8 +111,12 @@
       "sha256": "7b17296dbaec73c1b9daa043c84280b2a1422e32f607f959d1b30c4386bf4e8a"
     },
     {
+      "path": "migrations/meta/0013_snapshot.json",
+      "sha256": "31afea03bcdc1b92f56d56333689ce0af69a9d13f7d33a989f6aeccad5351dac"
+    },
+    {
       "path": "migrations/meta/_journal.json",
-      "sha256": "7d8f78ad9afe276a37085d764ac801bff9a2008c3357d425a2ec90c7461c6dbc"
+      "sha256": "723b73a1f210cf57145ecc74e6fc0f50da278409f985144e13594adae16f39b3"
     }
   ]
 }

@@ -9,9 +9,10 @@ export function createSignalSubscription(
   database: Pick<D1Database, 'prepare'>,
   input: SignalSubscriptionInput,
   now: Date = new Date(),
+  id: string = generateId('sig'),
 ): Promise<SignalSubscriptionInsertResult> {
   return insertSignalSubscription(database, {
-    id: generateId('sig'),
+    id,
     name: null,
     email: input.email,
     instagram: input.instagram,

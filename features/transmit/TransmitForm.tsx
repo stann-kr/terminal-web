@@ -74,6 +74,9 @@ export function TransmitForm({
       >
         {pending ? '전송 중…' : '기록 전송'}
       </button>
+      <p className={formStyles.hint}>
+        악용 방지와 운영 확인을 위해 접속 국가·지역·통신사, 브라우저 정보와 들어온 경로(아티스트 링크·외부 사이트)를 90일간 따로 보관하며 공개하지 않습니다.
+      </p>
       </div>
     </form>
   );
