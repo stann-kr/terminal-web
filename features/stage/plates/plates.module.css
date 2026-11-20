@@ -2563,9 +2563,8 @@
 }
 
 /* ── The home's next session on a phone ── a short head line, two cells, the docks side by side
-   with time over name, short keys, and a row of four ways on. */
-.narrowOnly,
-.homeNav {
+   with time over name. */
+.narrowOnly {
   display: none;
 }
 @container layer (max-width: 500px) {
@@ -2594,35 +2593,6 @@
   .next[data-density=hero] .dockHead > span + span {
     display: none;
   }
-}
-/* Only a phone (no other plates beside the hero) ends the first screen on the row of four. */
-@media (max-width: 899px) {
-  @container layer (max-width: 500px) {
-    .homeNav {
-      display: grid;
-      flex: none;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 6px;
-      margin: 0 calc(var(--pad) * -1) calc(var(--pad) * -1);
-      padding-top: 10px;
-      background: var(--field);
-    }
-  }
-}
-.homeNavKey {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-  padding: 8px 10px;
-}
-.homeNavKey b {
-  font: 700 var(--t-md)/1 var(--display);
-}
-.homeNavKey span {
-  overflow: hidden;
-  font: 400 var(--t-xs)/1.1 var(--sans);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* A head's secondary tags (years, places) give way on a phone, so the counts stay beside the title. */

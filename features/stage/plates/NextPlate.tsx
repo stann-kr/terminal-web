@@ -15,13 +15,6 @@ import { PlateStatus } from './faces';
 import type { PlateProps } from './Plates';
 import styles from './plates.module.css';
 
-const HOME_NAV = [
-  ['/events', 'EVENTS', '이벤트', 'panel'],
-  ['/artists', 'ARTISTS', '아티스트', 'panel'],
-  ['/signal', 'SIGNAL', '소식 신청', 'mark'],
-  ['/merch', 'MERCH', 'Signal Tee', 'paper'],
-] as const;
-
 /**
  * The console's own plate: the TERMINAL wordmark and the readouts ride on top of it everywhere,
  * over the next session drawn as large as the plate is. The wordmark is a name, not a control.
@@ -224,20 +217,6 @@ function NextSession({ event, events, mode, now, rings }: { event: TerminalEvent
       </FitStack>
     </Link>
   );
-  if (mode !== 'hero') return block;
   // The block itself opens the session file; the guest request lives there, not on the home plate.
-  return (
-    <>
-      {block}
-      {/* A phone's first screen ends on the ways to the other plates, a row of four. */}
-      <nav className={styles.homeNav} aria-label="바로 가기">
-        {HOME_NAV.map(([href, name, title, surface]) => (
-          <Link key={href} href={href} className={`${styles.card} ${styles.homeNavKey}`} data-surface={surface} scroll={false}>
-            <b>{name}</b>
-            <span>{title}</span>
-          </Link>
-        ))}
-      </nav>
-    </>
-  );
+  return block;
 }
