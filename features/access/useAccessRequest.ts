@@ -111,13 +111,18 @@ export function useAccessRequest(
     // A full code takes no email: waiting guests hear from the artist, not from TERMINAL's news.
     const waiting = !verified.open;
     const marketingConsent = waiting ? false : fields.marketingConsent;
+    // "No account" stands in for the id on the plain form only: a waiting guest is reached by it.
+    const noInstagram = !waiting && fields.noInstagram;
+    const { noInstagram: _noInstagram, ...contact } = fields;
     setPending(true);
     setError(null);
     try {
       const result = await postJson<{ ok: boolean; waitlisted?: boolean; alreadyWaiting?: boolean }>('/api/gate/request', {
         eventId,
         accessCode: verified.code,
-        ...fields,
+        ...contact,
+        instagram: noInstagram ? '' : fields.instagram,
+        ...(noInstagram ? { noInstagram: true } : {}),
         marketingConsent,
         // A guest who unticked news keeps the typed email in the draft but never sends it.
         email: marketingConsent ? fields.email : undefined,
@@ -130,7 +135,7 @@ export function useAccessRequest(
       // The summary shows what was sent, not what a hidden box still held.
       setSaved({
         ...submittedDraft,
-        fields: { ...submittedDraft.fields, marketingConsent, email: marketingConsent ? submittedDraft.fields.email : '' },
+        fields: { ...submittedDraft.fields, marketingConsent, email: marketingConsent ? submittedDraft.fields.email : '', instagram: noInstagram ? '' : submittedDraft.fields.instagram },
       });
       clear(submittedDraft);
     } catch (error) {
@@ -172,6 +177,7 @@ export function useAccessRequest(
     fields.name ||
     fields.email ||
     fields.instagram ||
+    fields.noInstagram ||
     fields.marketingConsent
   );
   return {

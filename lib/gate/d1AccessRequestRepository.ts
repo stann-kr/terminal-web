@@ -3,9 +3,10 @@ import { prepareGateSignalSubscriptionInsert } from '../signal/d1SignalSubscript
 
 /**
  * One guest per event: the same Instagram id (case and a leading @ aside), or the same email when
- * both left one. A guest's own request always has an Instagram id. A guest the artist lists may have
- * neither (stored as an empty id): nothing matches an empty key, so two guests with the same name are
- * two guests, and the artist answers for their own list.
+ * both left one. A guest may have neither, whether the artist lists them or they ask without an
+ * Instagram id (stored as an empty id): nothing matches an empty key, so two guests with the same
+ * name are two guests. Names are not compared: a repeat is answered as a success without saying so,
+ * and a namesake would be told they were listed when they were not.
  */
 const SAME_GUEST = `(
       lower(ltrim(instagram, '@')) = nullif(?, '')

@@ -109,3 +109,13 @@ describe('GET /calendar/subscribe', () => {
     expect(go('Mozilla/5.0 (Linux; Android 15)')).toBe(`https://calendar.google.com/calendar/render?cid=${encodeURIComponent('webcal://terminal.stann.kr/calendar.ics')}`);
   });
 });
+
+describe('GET /q', () => {
+  it('sends a QR scan to Home on the host it came in on, uncached', async () => {
+    const { GET: qr } = await import('../app/q/route');
+    const response = qr(new Request('https://terminal.stann.kr/q'));
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe('https://terminal.stann.kr/');
+    expect(response.headers.get('cache-control')).toBe('no-store');
+  });
+});

@@ -62,6 +62,23 @@ describe('gate request runtime validation', () => {
     }
   });
 
+  it('asks every guest for an Instagram id unless they say they have no account, and never on the waitlist', () => {
+    const { instagram: _instagram, ...body } = validBody;
+    // An empty id alone is a field forgotten.
+    for (const sent of [body, { ...body, instagram: '' }, { ...body, instagram: '  ' }]) {
+      expect(parseGateRequestBody(sent)).toEqual({ ok: false, error: 'ALL_FIELDS_REQUIRED' });
+    }
+    // "No account" lets it go, stored empty.
+    for (const sent of [{ ...body, noInstagram: true }, { ...body, instagram: '', noInstagram: true }]) {
+      const result = parseGateRequestBody(sent);
+      expect(result.ok && result.input.instagram).toBe('');
+    }
+    expect(parseGateRequestBody({ ...validBody, noInstagram: true })).toEqual({ ok: false, error: 'INVALID_INPUT' });
+    expect(parseGateRequestBody({ ...body, noInstagram: 'yes' })).toEqual({ ok: false, error: 'INVALID_INPUT' });
+    expect(parseGateRequestBody({ ...body, noInstagram: true, waitlist: true })).toEqual({ ok: false, error: 'INSTAGRAM_REQUIRED_FOR_WAITLIST' });
+    expect(parseGateRequestBody({ ...validBody, instagram: 'not an id' })).toEqual({ ok: false, error: 'INVALID_INSTAGRAM_FORMAT' });
+  });
+
   it('keeps an email only for a guest who asked for news', () => {
     const result = parseGateRequestBody({ ...validBody, marketingConsent: true });
     expect(result.ok && result.input.email).toBe('guest@example.com');

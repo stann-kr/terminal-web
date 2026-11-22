@@ -26,7 +26,7 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 | GET | /api/events | 행사 배열과 출연 레코드 |
 | GET | /api/artists?eventId=... | 행사별 출연 |
 | POST | /api/gate/code-info | 선택 행사 초대인 확인. 응답의 `open`이 false면 정원이 찬 코드이고, 신청 기간 밖이면 403 `REQUEST_PERIOD_INACTIVE` |
-| POST | /api/gate/request | 게스트 신청 저장. 본문에 `waitlist: true`가 있을 때만 정원이 찬 코드의 신청을 대기 명단에 올리고(`waitlisted: true`), 없으면 409 `GUEST_LIMIT_REACHED`. 같은 인스타그램 ID가 그 이벤트의 대기 명단에 이미 있으면(다른 초대인의 명단 포함) 새로 올리지 않고 `waitlisted: true, alreadyWaiting: true`로 답함. `waitlist`와 소식 수신 동의는 함께 보낼 수 없음 |
+| POST | /api/gate/request | 게스트 신청 저장. 본문에 `waitlist: true`가 있을 때만 정원이 찬 코드의 신청을 대기 명단에 올리고(`waitlisted: true`), 없으면 409 `GUEST_LIMIT_REACHED`. 같은 인스타그램 ID가 그 이벤트의 대기 명단에 이미 있으면(다른 초대인의 명단 포함) 새로 올리지 않고 `waitlisted: true, alreadyWaiting: true`로 답함. `waitlist`와 소식 수신 동의는 함께 보낼 수 없음. 인스타그램 ID는 필수이고, 계정이 없는 게스트는 `noInstagram: true`와 함께 ID를 비워 보냄(ID와 함께 보내면 400 `INVALID_INPUT`, 둘 다 없으면 400 `ALL_FIELDS_REQUIRED`). ID 없는 신청은 빈 ID로 저장되고 중복 확인을 하지 않음(이름은 비교하지 않음: 중복은 성공처럼 답하므로 동명이인이 저장된 줄 알게 됨). 대기 신청(`waitlist: true`)은 `noInstagram`을 받지 않음(400 `INSTAGRAM_REQUIRED_FOR_WAITLIST`) |
 | POST | /api/invite/host | 아티스트 초대 페이지 조회(링크의 `t`가 자격). 게스트는 이름·신청 시각만, 대기자는 인스타그램 ID 포함 |
 | POST | /api/invite/host/guests, /api/invite/host/waitlist | 아티스트가 게스트를 직접 등록 · 대기자를 명단으로 올림. 직접 등록은 이름만 필수이고 인스타그램 ID는 선택. ID 없이 등록한 게스트는 빈 ID로 저장되고 중복 확인을 하지 않음(동명이인 허용). ID가 있으면 이벤트 전체에서 같은 ID를 중복으로 막음 |
 | GET | /api/invite/host/file | 초대 페이지에 실린 홍보 파일 한 건(비공개 R2) |
@@ -34,6 +34,7 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 | GET, POST | /api/signal/unsubscribe | 수신 거부. POST가 구독 행을 지우고 같은 주소로 게스트 신청에 남긴 이메일·소식 동의도 지움(메일 앱의 one-click 포함). GET은 SIGNAL 화면의 확인 키로 보낼 뿐 지우지 않음 |
 | GET, POST | /api/transmit | 공개 로그 조회와 저장 |
 | GET | /calendar.ics | 공개 세션 일정 구독 피드 |
+| GET | /q | QR 스티커 링크. Home(`/`)으로 302, `Cache-Control: no-store`. 스캔 수는 Cloudflare zone 요청 분석에서 경로 `/q`로 셈(화면 RUM에는 Home으로 잡힘) |
 | GET | /robots.txt, /sitemap.xml | 검색엔진 규칙(운영 주소만 허용)과 화면·세션·아티스트 주소 목록 |
 
 브라우저는 same-origin API만 호출합니다. POST content type·payload·identity·중복/한도 경쟁을 서버에서 검증하며 no-store와 Idempotency-Key 경계를 유지합니다. 쓰기 API 네 곳(초대 코드 확인·게스트 신청·소식 신청·방문자 로그)은 Workers Rate Limiting 바인딩 `PUBLIC_RATE_LIMITER`로 접속 IP·작업마다 60초에 20회까지 받고(초대 코드 확인과 게스트 신청은 한 예산), 넘으면 429 `RATE_LIMITED`입니다. 아티스트 초대 페이지의 조회·등록과 홍보 파일 받기는 각각 별도 예산(`host`, `host-file`)을 써서, 미리보기 이미지 요청이 명단 조회를 막지 않습니다. 바인딩은 `wrangler.toml`의 환경마다 따로 선언하며, 이 제한은 위치별·근사 카운터라 정확한 집계가 아닙니다. 공개 event DTO에 초대 코드·한도는 포함하지 않습니다. 비공개 상태 인물 표시를 UI에서 제외하며, 기존 DTO의 상태별 이름 마스킹은 별도 서버 계약입니다.

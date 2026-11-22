@@ -57,6 +57,43 @@
 .contacts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Side by side, the two wells part by the plate showing through, as bars do everywhere. */
+  column-gap: 2px;
+}
+/* Side by side the fields keep their own height: only the name carries a hint, and a stretched
+   instagram field would spread that height over its label bar and input, out of line with the name's. */
+.contacts > * {
+  align-self: start;
+}
+/* Waived, the id field reads as off, not just refuses typing: its label, well and @ fade, while
+   the box that turned it off stays at full strength to turn it back on. */
+.idField[data-waived] > :first-child {
+  opacity: .4;
+}
+/* "No Instagram account" under the id: a hint-sized line, not a consent strip. */
+.noId {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 6px var(--bleed) 0;
+  color: var(--muted);
+  font-size: var(--text-label);
+  line-height: 1.5;
+  cursor: pointer;
+}
+/* Smaller than the site's 20px box (globals.css), its mark scaled with it; the whole line takes the click. */
+.noId input[type=checkbox] {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  min-height: 14px;
+  margin: 0;
+  border-width: 1.5px;
+}
+.noId input[type=checkbox]::before {
+  width: 6px;
+  height: 6px;
 }
 /* The form answers the width of its own plate (the form plate is a container), not the window's:
    in a session file's access column it is narrow on a wide window too. */
