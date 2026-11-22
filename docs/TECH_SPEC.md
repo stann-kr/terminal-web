@@ -34,7 +34,7 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 | GET, POST | /api/signal/unsubscribe | 수신 거부. POST가 구독 행을 지우고 같은 주소로 게스트 신청에 남긴 이메일·소식 동의도 지움(메일 앱의 one-click 포함). GET은 SIGNAL 화면의 확인 키로 보낼 뿐 지우지 않음 |
 | GET, POST | /api/transmit | 공개 로그 조회와 저장 |
 | GET | /calendar.ics | 공개 세션 일정 구독 피드 |
-| GET | /q | QR 스티커 링크. Home(`/`)으로 302, `Cache-Control: no-store`. 스캔 수는 Cloudflare zone 요청 분석에서 경로 `/q`로 셈(화면 RUM에는 Home으로 잡힘) |
+| GET | /q, /Q | QR 스티커 링크. Home(`/`)으로 302, `Cache-Control: no-store`. `/Q`는 middleware가 `/q`로 rewrite(대문자 QR 주소용). 스캔 수는 Cloudflare zone 요청 분석에서 경로 `/q`·`/Q`로 셈(화면 RUM에는 Home으로 잡힘) |
 | GET | /robots.txt, /sitemap.xml | 검색엔진 규칙(운영 주소만 허용)과 화면·세션·아티스트 주소 목록 |
 
 브라우저는 same-origin API만 호출합니다. POST content type·payload·identity·중복/한도 경쟁을 서버에서 검증하며 no-store와 Idempotency-Key 경계를 유지합니다. 쓰기 API 네 곳(초대 코드 확인·게스트 신청·소식 신청·방문자 로그)은 Workers Rate Limiting 바인딩 `PUBLIC_RATE_LIMITER`로 접속 IP·작업마다 60초에 20회까지 받고(초대 코드 확인과 게스트 신청은 한 예산), 넘으면 429 `RATE_LIMITED`입니다. 아티스트 초대 페이지의 조회·등록과 홍보 파일 받기는 각각 별도 예산(`host`, `host-file`)을 써서, 미리보기 이미지 요청이 명단 조회를 막지 않습니다. 바인딩은 `wrangler.toml`의 환경마다 따로 선언하며, 이 제한은 위치별·근사 카운터라 정확한 집계가 아닙니다. 공개 event DTO에 초대 코드·한도는 포함하지 않습니다. 비공개 상태 인물 표시를 UI에서 제외하며, 기존 DTO의 상태별 이름 마스킹은 별도 서버 계약입니다.
