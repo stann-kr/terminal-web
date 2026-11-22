@@ -48,14 +48,15 @@ function decodeSegment(segment: string): string | undefined {
 
 /**
  * The entry a page visit carries, or null when it carries none: an artist code link
- * (`/events/<id>/request?code=`), an artist's host page (`/host/<artistId>`), or an outside referrer.
+ * (`/events/<id>/request?invite=`, features/access/invite), an artist's host page (`/host/<artistId>`), or an outside referrer.
  */
 export function entryFromVisit(url: URL, referer: string | null, now: Date): Entry | null {
   const at = now.toISOString();
   const referrer = referrerHost(referer, url.hostname);
   const [first, second, third] = url.pathname.split('/').filter(Boolean);
 
-  const code = url.searchParams.get('code')?.trim();
+  // The same query key as INVITE_PARAM (features/access/invite): the link artists share.
+  const code = url.searchParams.get('invite')?.trim();
   if (first === 'events' && third === 'request' && code) {
     const eventId = second && decodeSegment(second);
     if (eventId && TOKEN.test(eventId) && TOKEN.test(code)) {
