@@ -324,6 +324,12 @@ html[data-cursor=console] :is(input, textarea):disabled,
 :is(input, textarea):disabled {
   cursor: not-allowed;
 }
+/* A click on a locked field still lands a text selection in it, and some browsers draw a blinking
+   caret there though it takes no typing: no selection, and no caret to draw. */
+:is(input, textarea):disabled {
+  user-select: none;
+  caret-color: transparent;
+}
 
 /* A sub-plate folded away by its stack (FitStack) is gone, whatever its display. */
 [data-priority][hidden] {
