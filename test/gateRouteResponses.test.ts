@@ -256,6 +256,31 @@ describe('opaque public success responses', () => {
     );
   });
 
+  it('counts an invite link open only when the browser says so, with the link tag from the entry cookie', async () => {
+    const { POST } = await import('../app/api/gate/code-info/route');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-01T12:00:00+09:00'));
+    const statements: { sql: string; args: unknown[] }[] = [];
+    const prepare = (sql: string) => ({
+      bind: (...args: unknown[]) => {
+        statements.push({ sql, args });
+        return { first: async () => ({ count: 0 }), run: async () => ({}) };
+      },
+    });
+    mocks.getCloudflareContext.mockReturnValue({ env: { DB: { prepare } } });
+    const entry = encodeURIComponent(JSON.stringify({ kind: 'code', target: 'event-1', code: 'artist-01', source: 'ig-story', at: '2026-08-01T00:00:00.000Z' }));
+    const post = (body: unknown) => POST(new Request('https://terminal.test/api/gate/code-info', {
+      method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json', cookie: `tw_entry=${entry}` },
+    }));
+
+    expect((await post({ code: 'artist-01', eventId: 'event-1' })).status).toBe(200);
+    expect(statements.filter(({ sql }) => sql.includes('link_opens'))).toEqual([]);
+    expect((await post({ code: 'artist-01', eventId: 'event-1', link: true })).status).toBe(200);
+    expect(statements.filter(({ sql }) => sql.includes('link_opens')).map(({ args }) => args))
+      .toEqual([['2026-08-01', 'event-1', 'artist-1', 'ig-story']]);
+    expect((await responseDetails(await post({ code: 'artist-01', eventId: 'event-1', link: 'yes' }))).status).toBe(400);
+  });
+
   it('reports an unavailable event separately from an invalid code without reading artists', async () => {
     const { POST } = await import('../app/api/gate/code-info/route');
     mocks.listGateEventRows.mockResolvedValue([]);

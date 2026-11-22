@@ -14,6 +14,9 @@ import {
   listGateArtistRowsByEvent,
   listGateEventRows,
 } from "@/lib/gate/d1GateReadRepository";
+import { safeLogError } from "@/lib/api/safeLog";
+import { readEntryCookie } from "@/lib/trace/entry";
+import { recordLinkOpen } from "@/lib/trace/linkOpens";
 
 function json(body: { name: string | null; open?: boolean } | { error: string }, status = 200) {
   return noStoreJson(body, status);
@@ -26,6 +29,7 @@ function json(body: { name: string | null; open?: boolean } | { error: string },
  *
  * @body code - 인증 코드
  * @body eventId - 화면에 표시된 신청 대상 이벤트
+ * @body link - (선택) true면 초대 링크를 연 브라우저의 그날 첫 확인: 맞는 코드면 link_opens에 1을 더함
  * @returns { name: string | null, open?: boolean } — `open` is false once the code's guest limit is
  *   reached, so an invite link shows its closed notice before the form; a no-store 503 error when
  *   verification is unavailable
@@ -38,7 +42,11 @@ export async function POST(request: Request) {
       return parsed.response;
     }
 
-    if (!hasOnlyKeys(parsed.body, ["code", "eventId"]) || !isString(parsed.body.code)) {
+    if (
+      !hasOnlyKeys(parsed.body, ["code", "eventId", "link"]) ||
+      !isString(parsed.body.code) ||
+      (parsed.body.link !== undefined && parsed.body.link !== true)
+    ) {
       return json({ error: "INVALID_INPUT" }, 400);
     }
 
@@ -55,7 +63,7 @@ export async function POST(request: Request) {
       return json({ name: null });
     }
 
-    const { env } = await getCloudflareContext({ async: true });
+    const { env, ctx } = await getCloudflareContext({ async: true });
     const abuseDecision = await enforceRateLimit(env, 'code-info', request);
     if (!abuseDecision.ok) return json({ error: abuseDecision.error }, abuseDecision.status);
     const db = getDb(env.DB);
@@ -86,6 +94,18 @@ export async function POST(request: Request) {
     }
     if (accessCodeResult.kind === 'not_found') {
       return json({ name: null });
+    }
+
+    if (parsed.body.link === true) {
+      // Counted in the background; a failure here never changes the answer.
+      const open = recordLinkOpen(env.DB, {
+        eventId: upcomingEvent.rowId,
+        artistId: accessCodeResult.artistId,
+        source: readEntryCookie(request.headers.get("cookie"))?.source ?? null,
+        now,
+      }).catch((error) => safeLogError("link_open.write_failed", { error }));
+      if (ctx?.waitUntil) ctx.waitUntil(open);
+      else await open;
     }
 
     const used = await env.DB.prepare(

@@ -34,10 +34,12 @@ export function migratedSqlite(): SqliteDatabase {
 }
 
 export function d1(sqlite: SqliteDatabase) {
-  const statement = (sql: string, values: unknown[] = []) => ({
+  type Statement = { sql: string; values: unknown[]; bind: (...next: unknown[]) => Statement; run: () => Promise<unknown> };
+  const statement = (sql: string, values: unknown[] = []): Statement => ({
     sql,
     values,
     bind: (...next: unknown[]) => statement(sql, next),
+    run: async () => run({ sql, values }),
   });
   const run = ({ sql, values }: { sql: string; values: unknown[] }) => {
     const prepared = sqlite.prepare(sql);

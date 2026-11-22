@@ -23,6 +23,7 @@ export type SubmissionTrace = {
   entryArtistId: string | null;
   entryEventId: string | null;
   entryReferrer: string | null;
+  entrySource: string | null;
   entryAt: string | null;
 };
 
@@ -125,6 +126,7 @@ export async function buildTrace(input: TraceInput): Promise<SubmissionTrace> {
     entryArtistId: entry?.kind === 'host' ? entry.target ?? null : entry?.kind === 'code' ? input.codeArtistId ?? null : null,
     entryEventId: entry?.kind === 'code' ? entry.target ?? null : null,
     entryReferrer: entry?.referrer ?? null,
+    entrySource: entry?.source ?? null,
     entryAt: entry?.at ?? null,
   };
 }

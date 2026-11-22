@@ -4,7 +4,7 @@ export const TRACE_RETENTION_DAYS = 90;
 
 const COLUMNS = [
   'kind', 'record_id', 'created_at', 'country', 'region', 'city', 'asn', 'as_org', 'ip_hash',
-  'browser', 'os', 'device', 'entry_kind', 'entry_artist_id', 'entry_event_id', 'entry_referrer', 'entry_at',
+  'browser', 'os', 'device', 'entry_kind', 'entry_artist_id', 'entry_event_id', 'entry_referrer', 'entry_at', 'entry_source',
 ] as const;
 
 // A replayed submission (the same Transmit idempotency key) keeps its first trace.
@@ -26,7 +26,7 @@ export async function writeTrace(database: Pick<D1Database, 'prepare' | 'batch'>
     database.prepare(INSERT_TRACE_SQL).bind(
       trace.kind, trace.recordId, trace.createdAt, trace.country, trace.region, trace.city, trace.asn,
       trace.asOrg, trace.ipHash, trace.browser, trace.os, trace.device, trace.entryKind,
-      trace.entryArtistId, trace.entryEventId, trace.entryReferrer, trace.entryAt,
+      trace.entryArtistId, trace.entryEventId, trace.entryReferrer, trace.entryAt, trace.entrySource,
     ),
     database.prepare(PURGE_TRACES_SQL).bind(retentionCutoff(now)),
   ]);

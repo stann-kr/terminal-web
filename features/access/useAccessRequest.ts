@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ApiError, postJson } from '@/features/ui/http';
 import { useAccessDraft, type AccessDraft } from './AccessDraftProvider';
 import { inviteCodeFrom } from './invite';
+import { takeLinkOpen } from './linkOpenMark';
 
 export type AccessAvailability = { canRequest: boolean; message: string };
 
@@ -47,7 +48,8 @@ export function useAccessRequest(
     setCodeMessage('');
     setError(null);
   };
-  async function verifyCode(requested = code) {
+  /** `link`: the first check of an invite link opened today, counted as a link open on the server. */
+  async function verifyCode(requested = code, link = false) {
     if (!requested.trim() || checking || !availability.canRequest) return;
     controller.current?.abort();
     const abort = new AbortController();
@@ -61,7 +63,7 @@ export function useAccessRequest(
     try {
       const result = await postJson<{ name: string | null; open?: boolean }>(
         '/api/gate/code-info',
-        { eventId, code: submittedCode },
+        link ? { eventId, code: submittedCode, link: true } : { eventId, code: submittedCode },
         undefined,
         abort.signal,
       );
@@ -95,8 +97,8 @@ export function useAccessRequest(
     const { code: typed, changeCode: fill, verifyCode: check } = latest.current;
     if (!invite || (typed.trim() && typed.trim() !== invite)) return;
     fill(invite);
-    void check(invite);
-  }, [availability.canRequest]);
+    void check(invite, takeLinkOpen(eventId, invite));
+  }, [availability.canRequest, eventId]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (

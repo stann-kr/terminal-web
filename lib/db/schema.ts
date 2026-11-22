@@ -123,12 +123,29 @@ export const submissionTraces = sqliteTable(
     entryEventId: text("entry_event_id"),
     entryReferrer: text("entry_referrer"),
     entryAt: text("entry_at"),
+    entrySource: text("entry_source"), // ?from= 링크 태그(ig-bio 등)
   },
   (table) => [
     primaryKey({ columns: [table.kind, table.recordId] }),
     index("submission_traces_created_at_idx").on(table.createdAt),
     index("submission_traces_ip_hash_idx").on(table.ipHash),
   ],
+);
+
+// ──────────────────────────────────────────────────────────
+// link_opens 테이블 — 아티스트 초대 링크가 브라우저에서 열린 횟수(KST 날짜·아티스트·링크 태그별 합계)
+// 사람을 가리키는 값은 두지 않는다. 같은 브라우저는 하루에 한 번만 센다(클라이언트 표시).
+// ──────────────────────────────────────────────────────────
+export const linkOpens = sqliteTable(
+  "link_opens",
+  {
+    day: text("day").notNull(), // KST YYYY-MM-DD
+    eventId: text("event_id").notNull(),
+    artistId: text("artist_id").notNull(),
+    source: text("source").notNull().default(""), // ?from= 태그, 없으면 ''
+    opens: integer("opens").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.day, table.eventId, table.artistId, table.source] })],
 );
 
 export type EventRow = typeof events.$inferSelect;
