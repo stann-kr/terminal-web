@@ -10,6 +10,8 @@ import {
   type Entry,
 } from '../lib/trace/entry';
 import { retentionCutoff, writeTrace } from '../lib/trace/d1TraceRepository';
+import { kstDay, recordLinkOpen } from '../lib/trace/linkOpens';
+import { takeLinkOpen } from '../features/access/linkOpenMark';
 import { addressKey, buildTrace, hashAddress, summarizeUserAgent } from '../lib/trace/record';
 import { d1, migratedSqlite, sqliteAvailable } from './sqliteD1';
 
@@ -46,6 +48,26 @@ describe('entry from a page visit', () => {
     expect(shouldStoreEntry(visit('/', 'https://google.com/'), null)).toBe(true);
     expect(shouldStoreEntry(visit('/events/TRM-03/request?invite=X1'), stored)).toBe(true);
     expect(shouldStoreEntry(null, null)).toBe(false);
+  });
+
+  it('carries a ?from= tag on an artist link, a host page or alone, and drops a malformed one', () => {
+    expect(visit('/events/TRM-03/request?invite=Z5JR&from=IG-Story')).toMatchObject({ kind: 'code', code: 'Z5JR', source: 'ig-story' });
+    expect(visit('/host/03-B?t=x&from=ig-bio')).toMatchObject({ kind: 'host', source: 'ig-bio' });
+    expect(visit('/?from=ig-bio')).toEqual({ kind: 'ref', source: 'ig-bio', at: NOW.toISOString() });
+    expect(visit('/?from=%3Cx%3E')).toBeNull();
+    expect(visit('/?from=' + 'a'.repeat(40))).toBeNull();
+  });
+
+  it('lets a tag replace an outside site or another tag, never an artist link', () => {
+    const tagged = visit('/?from=ig-story');
+    expect(shouldStoreEntry(tagged, visit('/', 'https://google.com/'))).toBe(true);
+    expect(shouldStoreEntry(tagged, visit('/?from=ig-bio'))).toBe(true);
+    expect(shouldStoreEntry(tagged, visit('/events/TRM-03/request?invite=X1'))).toBe(false);
+    expect(shouldStoreEntry(visit('/', 'https://google.com/'), visit('/?from=ig-bio'))).toBe(false);
+    // A cookie written before tags existed still reads.
+    expect(parseEntry('{"kind":"ref","referrer":"instagram.com","at":"2026-11-18T00:00:00.000Z"}')).toMatchObject({ kind: 'ref' });
+    expect(parseEntry(serializeEntry(tagged!))).toEqual(tagged);
+    expect(parseEntry('{"kind":"ref","source":"<x>","at":"2026-11-18T00:00:00.000Z"}')).toBeNull();
   });
 
   it('round-trips through the cookie and rejects one it did not write', () => {
@@ -97,15 +119,37 @@ describe('trace record', () => {
       kind: 'transmit', recordId: 'tx_1', createdAt: NOW.toISOString(),
       country: 'KR', region: 'Seoul', city: 'Seoul', asn: 4766, asOrg: 'Korea Telecom',
       ipHash: null, browser: 'Safari', os: 'macOS', device: 'desktop',
-      entryKind: 'code', entryArtistId: '03-B', entryEventId: 'TRM-03', entryReferrer: 'l.instagram.com', entryAt: entry.at,
+      entryKind: 'code', entryArtistId: '03-B', entryEventId: 'TRM-03', entryReferrer: 'l.instagram.com', entrySource: null, entryAt: entry.at,
     });
+  });
+});
+
+describe('invite link opens', () => {
+  it('counts a browser once per KST day for one code', () => {
+    const store = new Map<string, string>();
+    const storage = { getItem: (key: string) => store.get(key) ?? null, setItem: (key: string, value: string) => void store.set(key, value) };
+    const day = new Date('2026-11-22T14:59:00.000Z'); // 23:59 KST
+    expect(takeLinkOpen('TRM-03', 'z5jr', day, storage)).toBe(true);
+    expect(takeLinkOpen('TRM-03', 'Z5JR', day, storage)).toBe(false);
+    expect(takeLinkOpen('TRM-03', 'Z5JR', new Date('2026-11-22T15:00:00.000Z'), storage)).toBe(true);
+    expect(takeLinkOpen('TRM-03', 'Z5JR', day, null)).toBe(true);
+    expect(kstDay(new Date('2026-11-22T15:00:00.000Z'))).toBe('2026-11-23');
+  });
+
+  it.skipIf(!sqliteAvailable)('adds up opens per day, artist and tag', async () => {
+    const sqlite = migratedSqlite();
+    for (const source of ['ig-story', 'ig-story', null]) await recordLinkOpen(d1(sqlite), { eventId: 'TRM-03', artistId: '03-B', source, now: NOW });
+    expect(sqlite.prepare('SELECT day, artist_id, source, opens FROM link_opens ORDER BY source').all()).toEqual([
+      { day: '2026-11-18', artist_id: '03-B', source: '', opens: 1 },
+      { day: '2026-11-18', artist_id: '03-B', source: 'ig-story', opens: 2 },
+    ]);
   });
 });
 
 describe.skipIf(!sqliteAvailable)('submission_traces (SQLite with every migration)', () => {
   const trace = (recordId: string, createdAt: string, kind: 'transmit' | 'signal' = 'transmit') => ({
     kind, recordId, createdAt, country: 'KR', region: null, city: null, asn: null, asOrg: null, ipHash: 'h',
-    browser: null, os: null, device: null, entryKind: null, entryArtistId: null, entryEventId: null, entryReferrer: null, entryAt: null,
+    browser: null, os: null, device: null, entryKind: null, entryArtistId: null, entryEventId: null, entryReferrer: null, entryAt: null, entrySource: null,
   } as const);
 
   it('keeps the first trace of a record and drops traces past 90 days on each write', async () => {

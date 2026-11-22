@@ -26,7 +26,7 @@
 
 ## 공개 입력을 누가 어디서 남겼는지 볼 때
 
-Transmit 글·게스트 신청(대기 포함)·Signal 구독이 저장되면 운영자 전용 `submission_traces`에 한 줄이 남습니다. 칸은 접속 국가·지역·도시·통신사(ASN), IP의 비밀 키 해시(`ip_hash`, 원문 IP는 저장하지 않음), 브라우저·OS·기기, 그리고 유입 쿠키(`tw_entry`, 30일)에서 읽은 유입 경로입니다. 유입은 아티스트 코드 링크(`entry_kind = code`, 코드를 아티스트 id로 풀어 `entry_artist_id`), 호스트 페이지(`host`, 링크의 `t`는 저장하지 않음), 외부 사이트(`ref`, `entry_referrer`)입니다. 아티스트 링크·호스트 페이지 방문은 저장된 유입을 바꾸고, 외부 사이트는 비어 있을 때만 채웁니다.
+Transmit 글·게스트 신청(대기 포함)·Signal 구독이 저장되면 운영자 전용 `submission_traces`에 한 줄이 남습니다. 칸은 접속 국가·지역·도시·통신사(ASN), IP의 비밀 키 해시(`ip_hash`, 원문 IP는 저장하지 않음), 브라우저·OS·기기, 그리고 유입 쿠키(`tw_entry`, 30일)에서 읽은 유입 경로입니다. 유입은 아티스트 코드 링크(`entry_kind = code`, 코드를 아티스트 id로 풀어 `entry_artist_id`), 호스트 페이지(`host`, 링크의 `t`는 저장하지 않음), 외부 사이트(`ref`, `entry_referrer`)입니다. 링크 끝의 `?from=<태그>`(소문자·숫자·`-`·`_`, 32자까지, 예: `ig-bio`, `ig-story`)는 어느 유입에든 붙어 `entry_source`에 남고, QR 스티커(`/q`)는 홈을 `?from=qr`로 엽니다. 아티스트 링크·호스트 페이지 방문은 저장된 유입을 바꾸고, 태그 링크는 외부 사이트나 다른 태그만 바꾸며, 태그 없는 외부 사이트는 비어 있을 때만 채웁니다.
 
 ```
 npx wrangler d1 execute terminal-db --remote --command "SELECT * FROM submission_traces WHERE record_id = '<글·신청·구독 id>'"
@@ -34,6 +34,18 @@ npx wrangler d1 execute terminal-db --remote --command "SELECT kind, record_id, 
 ```
 
 `ip_hash`는 Worker secret `TRACE_HASH_SECRET`이 있을 때만 채워지며, 같은 키 아래에서 같은 주소(IPv6는 /64)는 같은 값입니다. 키를 바꾸면 이전 기록과 묶이지 않습니다. 90일 지난 행은 새 기록을 쓸 때 함께 지워지므로 한동안 입력이 없으면 남아 있을 수 있습니다. Signal 수신 거부는 그 구독의 기록도 지웁니다. 아티스트가 호스트 페이지에서 직접 올린 게스트는 기록하지 않습니다.
+
+## 아티스트 링크가 몇 번 열리고 몇 명이 신청했는지 볼 때
+
+초대 링크(`/events/<id>/request?invite=<코드>`)를 브라우저가 열어 코드가 확인되면 `link_opens`에 KST 날짜·아티스트·태그(`source`, 없으면 빈 값)별로 1이 더해집니다. 같은 브라우저는 같은 코드를 하루 한 번만 셉니다(localStorage). 미리보기 크롤러는 스크립트를 돌리지 않아 세지 않습니다. 사람을 가리키는 값은 두지 않습니다. 코드를 직접 입력한 확인은 세지 않습니다.
+
+```
+npx wrangler d1 execute terminal-db --remote --env production --command "SELECT o.artist_id, SUM(o.opens) AS opens, (SELECT COUNT(*) FROM access_requests r WHERE r.event_id = o.event_id AND r.artist_id = o.artist_id) AS requests FROM link_opens o WHERE o.event_id = 'TRM-03' GROUP BY o.artist_id ORDER BY opens DESC"
+npx wrangler d1 execute terminal-db --remote --env production --command "SELECT day, artist_id, source, opens FROM link_opens WHERE event_id = 'TRM-03' ORDER BY day DESC, opens DESC"
+npx wrangler d1 execute terminal-db --remote --env production --command "SELECT entry_source, kind, COUNT(*) FROM submission_traces WHERE entry_source IS NOT NULL GROUP BY 1, 2"
+```
+
+`requests`는 링크를 열지 않고 코드를 입력한 신청까지 포함하므로 열람 수와 1:1 비율이 아닙니다. 링크 열람 수는 이 기능이 배포된 날부터 셉니다.
 
 ## 요청이 많다는 안내(429)가 뜰 때
 

@@ -11,7 +11,7 @@ export const ENTRY_COOKIE = 'tw_entry';
 export const ENTRY_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
 export type Entry = {
-  /** `code`: an artist invite link, `host`: an artist's host page, `ref`: an outside site. */
+  /** `code`: an artist invite link, `host`: an artist's host page, `ref`: an outside site or a tagged link. */
   kind: 'code' | 'host' | 'ref';
   /** Event id (code) or artist id (host). */
   target?: string;
@@ -19,12 +19,17 @@ export type Entry = {
   code?: string;
   /** Outside site the visitor came from, when the browser said. */
   referrer?: string;
+  /** The tag a shared link carries (`?from=ig-story`), naming where TERMINAL posted it. */
+  source?: string;
   /** First seen, UTC ISO. */
   at: string;
 };
 
 const TOKEN = /^[A-Za-z0-9_.-]{1,64}$/;
 const HOST = /^[a-z0-9.-]{1,253}$/;
+/** A link tag: lowercase words joined by `-` or `_` (`ig-bio`, `ig_story_1121`). */
+export const SOURCE = /^[a-z0-9][a-z0-9_-]{0,31}$/;
+export const SOURCE_PARAM = 'from';
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
 
 function referrerHost(referer: string | null, ownHost: string): string | undefined {
@@ -48,11 +53,15 @@ function decodeSegment(segment: string): string | undefined {
 
 /**
  * The entry a page visit carries, or null when it carries none: an artist code link
- * (`/events/<id>/request?invite=`, features/access/invite), an artist's host page (`/host/<artistId>`), or an outside referrer.
+ * (`/events/<id>/request?invite=`, features/access/invite), an artist's host page (`/host/<artistId>`), or an outside referrer
+ * or a link tag (`?from=`). A tag rides on any of them.
  */
 export function entryFromVisit(url: URL, referer: string | null, now: Date): Entry | null {
   const at = now.toISOString();
   const referrer = referrerHost(referer, url.hostname);
+  const tag = url.searchParams.get(SOURCE_PARAM)?.trim().toLowerCase();
+  const source = tag && SOURCE.test(tag) ? tag : undefined;
+  const extra = { ...(referrer ? { referrer } : {}), ...(source ? { source } : {}) };
   const [first, second, third] = url.pathname.split('/').filter(Boolean);
 
   // The same query key as INVITE_PARAM (features/access/invite): the link artists share.
@@ -60,23 +69,25 @@ export function entryFromVisit(url: URL, referer: string | null, now: Date): Ent
   if (first === 'events' && third === 'request' && code) {
     const eventId = second && decodeSegment(second);
     if (eventId && TOKEN.test(eventId) && TOKEN.test(code)) {
-      return { kind: 'code', target: eventId, code, ...(referrer ? { referrer } : {}), at };
+      return { kind: 'code', target: eventId, code, ...extra, at };
     }
   }
   if (first === 'host' && second) {
     const artistId = decodeSegment(second);
-    if (artistId && TOKEN.test(artistId)) return { kind: 'host', target: artistId, ...(referrer ? { referrer } : {}), at };
+    if (artistId && TOKEN.test(artistId)) return { kind: 'host', target: artistId, ...extra, at };
   }
-  return referrer ? { kind: 'ref', referrer, at } : null;
+  return referrer || source ? { kind: 'ref', ...extra, at } : null;
 }
 
 /**
  * Whether a visit's entry replaces the stored one: an artist link or host page always does (it is
- * the strongest sign of who brought the visitor), an outside site only when nothing is stored yet.
+ * the strongest sign of who brought the visitor); a tagged link replaces an outside site or another
+ * tag but not an artist link; an untagged outside site only fills an empty cookie.
  */
 export function shouldStoreEntry(next: Entry | null, stored: Entry | null): next is Entry {
   if (!next) return false;
-  return next.kind !== 'ref' || stored === null;
+  if (next.kind !== 'ref' || stored === null) return true;
+  return Boolean(next.source) && stored.kind === 'ref';
 }
 
 /** The cookie value as JSON; Next's cookie API percent-encodes it on the way out and decodes it on the way in. */
@@ -88,21 +99,23 @@ export function parseEntry(value: string | undefined | null): Entry | null {
   try {
     const raw = JSON.parse(value) as Record<string, unknown>;
     if (!raw || typeof raw !== 'object') return null;
-    const { kind, target, code, referrer, at } = raw;
+    const { kind, target, code, referrer, source, at } = raw;
     if (kind !== 'code' && kind !== 'host' && kind !== 'ref') return null;
     if (typeof at !== 'string' || !ISO.test(at)) return null;
     if (target !== undefined && (typeof target !== 'string' || !TOKEN.test(target))) return null;
     if (code !== undefined && (typeof code !== 'string' || !TOKEN.test(code))) return null;
     if (referrer !== undefined && (typeof referrer !== 'string' || !HOST.test(referrer))) return null;
+    if (source !== undefined && (typeof source !== 'string' || !SOURCE.test(source))) return null;
     if (kind !== 'ref' && !target) return null;
     if (kind === 'code' && !code) return null;
-    if (kind === 'ref' && !referrer) return null;
+    if (kind === 'ref' && !referrer && !source) return null;
     return {
       kind,
       at,
       ...(target ? { target } : {}),
       ...(code ? { code } : {}),
       ...(referrer ? { referrer } : {}),
+      ...(source ? { source } : {}),
     };
   } catch {
     return null;

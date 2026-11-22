@@ -59,6 +59,10 @@
       "sha256": "fc68ca297779b7b1c2ce89ccb3b77e0e9a81f9d5c5c1c3bd35034541e295b349"
     },
     {
+      "path": "migrations/0014_link_opens.sql",
+      "sha256": "a6688f91b88ab4c8fe4b99e41c58d15f6ed0900365adc4e7b5c668905a9208b2"
+    },
+    {
       "path": "migrations/meta/0000_snapshot.json",
       "sha256": "9f692fcfb6eb815b1d41dc50dbd43499966359a0f490159ef1350d40a43ad645"
     },
@@ -115,8 +119,12 @@
       "sha256": "31afea03bcdc1b92f56d56333689ce0af69a9d13f7d33a989f6aeccad5351dac"
     },
     {
+      "path": "migrations/meta/0014_snapshot.json",
+      "sha256": "65f98674dc0a91bf750fd7ff9028a015a69c627eedbf9934d04d34f95682ebec"
+    },
+    {
       "path": "migrations/meta/_journal.json",
-      "sha256": "723b73a1f210cf57145ecc74e6fc0f50da278409f985144e13594adae16f39b3"
+      "sha256": "3084edf9bc31741a176dbe76755ef5e273233b63aa981e26c70516f62827f22c"
     }
   ]
 }

@@ -266,11 +266,15 @@ describe('guest request UI',()=>{
     expect(screen.getByRole('link',{name:'다음 이벤트 소식 신청'})).toHaveAttribute('href','/signal');expect(screen.getByRole('link',{name:'@TERMINAL.SIGNAL 팔로우'})).toHaveAttribute('href','https://www.instagram.com/terminal.signal/');
   });
   it('fills in and checks the code an invite link carries, so the guest only writes their details',async()=>{
-    window.history.replaceState(null,'',inviteHref('A','AB12'));
-    const fetch=vi.fn().mockResolvedValueOnce(json({name:'TERMINAL'}));vi.stubGlobal('fetch',fetch);
-    render(<AccessForm eventId="A"/>);
+    window.history.replaceState(null,'',inviteHref('A','AB12'));window.localStorage.clear();
+    const fetch=vi.fn().mockImplementation(async()=>json({name:'TERMINAL'}));vi.stubGlobal('fetch',fetch);
+    const first=render(<AccessForm eventId="A"/>);
     expect(await screen.findByText('초대 코드를 확인했습니다.')).toBeInTheDocument();
-    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({eventId:'A',code:'AB12'});
+    // The day's first open of the link is counted; a reload the same day checks the code without counting.
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({eventId:'A',code:'AB12',link:true});
+    first.unmount();render(<AccessForm eventId="A"/>);
+    await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(2));
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({eventId:'A',code:'AB12'});
     expect(screen.getByLabelText(/초대 코드/)).toHaveValue('AB12');
     expect(screen.getByText('TERMINAL')).toBeInTheDocument();
     // The name field takes focus in an effect after the notice renders; on a slow runner that lands a moment later.
