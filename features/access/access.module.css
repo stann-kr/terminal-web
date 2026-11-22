@@ -58,6 +58,11 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+/* Side by side the fields keep their own height: only the name carries a hint, and a stretched
+   instagram field would spread that height over its label bar and input, out of line with the name's. */
+.contacts > * {
+  align-self: start;
+}
 /* The form answers the width of its own plate (the form plate is a container), not the window's:
    in a session file's access column it is narrow on a wide window too. */
 @container (max-width: 560px) {
