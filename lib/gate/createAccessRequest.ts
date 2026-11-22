@@ -13,6 +13,8 @@ const REQUEST_KEYS = [
   'name',
   'email',
   'instagram',
+  // The guest said they have no Instagram account: the one way to ask without an id.
+  'noInstagram',
   // The form once sent a ticked privacy box. It shows a notice now; a tab opened before that still
   // sends the field, so it is allowed (a boolean) and ignored.
   'privacyConsent',
@@ -142,7 +144,7 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   if (
     !isString(body.name)
     || (body.email !== undefined && !isString(body.email))
-    || !isString(body.instagram)
+    || (body.instagram !== undefined && !isString(body.instagram))
     || !isString(body.accessCode)
   ) {
     return { ok: false, error: 'INVALID_INPUT' };
@@ -159,6 +161,9 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   if (body.waitlist !== undefined && !isBoolean(body.waitlist)) {
     return { ok: false, error: 'INVALID_INPUT' };
   }
+  if (body.noInstagram !== undefined && !isBoolean(body.noInstagram)) {
+    return { ok: false, error: 'INVALID_INPUT' };
+  }
 
   const name = body.name.trim();
   const marketingConsent = body.marketingConsent ?? false;
@@ -167,11 +172,21 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
   if (waitlist && marketingConsent) return { ok: false, error: 'INVALID_INPUT' };
   // Email exists only to send news, so a guest who did not ask for news leaves none behind.
   const email = marketingConsent ? (body.email ?? '').trim().toLowerCase() : null;
-  const instagram = body.instagram.trim();
+  const instagram = (body.instagram ?? '').trim();
   const accessCode = body.accessCode.trim();
   const invitedBy = body.invitedBy?.trim() || null;
 
-  if (!name || !instagram || !accessCode) {
+  const noInstagram = body.noInstagram ?? false;
+  // The id is asked of every guest. One who has no account says so instead, and only then may the
+  // id be left out (an empty field alone is a field forgotten). Waiting may not go without it: the
+  // artist reaches a waiting guest by that id alone.
+  if (waitlist && noInstagram) {
+    return { ok: false, error: 'INSTAGRAM_REQUIRED_FOR_WAITLIST' };
+  }
+  if (noInstagram && instagram) {
+    return { ok: false, error: 'INVALID_INPUT' };
+  }
+  if (!name || !accessCode || (!instagram && !noInstagram)) {
     return { ok: false, error: 'ALL_FIELDS_REQUIRED' };
   }
   if (email === '') {
@@ -189,8 +204,9 @@ export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRe
     return { ok: false, error: 'INVALID_EMAIL_FORMAT' };
   }
 
-  const storedInstagram = normalizeInstagram(instagram);
-  if (!storedInstagram) return { ok: false, error: 'INVALID_INSTAGRAM_FORMAT' };
+  // Without an account the id is stored empty (the column is NOT NULL), as for a guest the artist lists.
+  const storedInstagram = instagram ? normalizeInstagram(instagram) : '';
+  if (storedInstagram === null) return { ok: false, error: 'INVALID_INSTAGRAM_FORMAT' };
 
   return {
     ok: true,

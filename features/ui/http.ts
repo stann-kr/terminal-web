@@ -34,6 +34,7 @@ const messages: Record<string,string> = {
   EMAIL_REQUIRED_FOR_NEWS: '소식을 받을 이메일을 입력해 주십시오.',
   INVALID_UNSUBSCRIBE_LINK: '수신 거부 링크가 올바르지 않습니다. 메일의 링크를 다시 눌러 주십시오.',
   INVALID_INSTAGRAM_FORMAT: '인스타그램 ID는 영문·숫자·마침표·밑줄로 입력해 주십시오.',
+  INSTAGRAM_REQUIRED_FOR_WAITLIST: '대기 신청에는 인스타그램 ID가 필요합니다. 명단에 오르면 이 ID로 연락드립니다.',
   CONSENT_REQUIRED: '소식 안내를 위한 수집 동의가 필요합니다.',
   ALL_FIELDS_REQUIRED: '모든 필수 항목을 입력해 주십시오.', INVALID_INPUT: '입력한 항목과 길이를 확인해 주십시오.',
   HANDLE_REQUIRED: '공개 닉네임을 입력해 주십시오.', HANDLE_TOO_LONG: '정규화된 닉네임은 24자 이하여야 합니다.',

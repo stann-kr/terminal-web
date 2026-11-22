@@ -49,6 +49,8 @@ export function AccessForm({
     alreadyWaiting,
     turned,
   } = useAccessRequest(eventId, availability);
+  // A guest without an account goes without the id, on the plain form only (see the field).
+  const idWaived = !waitlist && fields.noInstagram;
   // A checked code unlocks step 02; the guest carries on typing there.
   const nameField = useRef<HTMLInputElement>(null);
   // Back from a closed invite to type another code: the code field takes the focus once it is drawn.
@@ -110,7 +112,7 @@ export function AccessForm({
             ...(event ? [['이벤트', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
             ...(verified ? [['초대인', verified.name] as [string, string]] : []),
             ['이름', fields.name.trim()],
-            ['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`],
+            ...(fields.instagram.trim() ? [['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`] as [string, string]] : []),
             ...(fields.marketingConsent ? [['이메일', fields.email.trim()] as [string, string]] : []),
             ['소식 수신', fields.marketingConsent ? '동의' : '동의 안 함'],
           ]}
@@ -202,26 +204,41 @@ export function AccessForm({
               setFields({ ...fields, name: event.target.value })
             }
           />
+          {/* The id is asked of every guest; one who has no account ticks the box below instead,
+              which turns the field off. The waitlist offers no box: the artist reaches a waiting
+              guest by the id alone. The field always shows its @, so "required" alone would pass
+              on it; the pattern is what asks for an id. */}
           <Field
             id="guest-instagram"
             label="인스타그램 ID"
-            required
+            required={!idWaived}
+            hint={waitlist ? '명단에 오르면 이 ID로 연락드립니다.' : undefined}
+            disabled={idWaived}
             maxLength={31}
-            pattern="@[A-Za-z0-9_.]{1,30}"
+            pattern={idWaived ? undefined : '@[A-Za-z0-9_.]{1,30}'}
             {...literalInput}
             // The @ is part of what the field shows, never of what is stored.
-            value={`@${fields.instagram}`}
+            value={idWaived ? '' : `@${fields.instagram}`}
             error={
-              errorCode === 'INVALID_INSTAGRAM_FORMAT'
+              errorCode === 'INVALID_INSTAGRAM_FORMAT' || errorCode === 'INSTAGRAM_REQUIRED_FOR_WAITLIST'
                 ? errorMessage(error)
                 : undefined
             }
             onChange={(event) => {
               setFields({ ...fields, instagram: event.target.value.replace(/^@+/, '') });
-              if (errorCode === 'INVALID_INSTAGRAM_FORMAT') setError(null);
+              if (errorCode === 'INVALID_INSTAGRAM_FORMAT' || errorCode === 'INSTAGRAM_REQUIRED_FOR_WAITLIST') setError(null);
             }}
           />
         </div>
+        {!waitlist && (
+          <Consent
+            id="no-instagram"
+            checked={fields.noInstagram}
+            onChange={(value) => setFields({ ...fields, noInstagram: value })}
+          >
+            인스타그램 계정이 없습니다.
+          </Consent>
+        )}
         <div>
           {!waitlist && (
           <Consent
