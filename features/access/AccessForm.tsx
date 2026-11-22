@@ -204,7 +204,7 @@ export function AccessForm({
               setFields({ ...fields, name: event.target.value })
             }
           />
-          <div>
+          <div className={styles.idField} data-waived={idWaived || undefined}>
             {/* The id is asked of every guest; one who has no account ticks the small box under it instead,
                 which turns the field off. The waitlist offers no box: the artist reaches a waiting
                 guest by the id alone. The field always shows its @, so "required" alone would pass

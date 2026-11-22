@@ -57,11 +57,21 @@
 .contacts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Side by side, the two wells part by the plate showing through, as bars do everywhere. */
+  column-gap: 2px;
 }
 /* Side by side the fields keep their own height: only the name carries a hint, and a stretched
    instagram field would spread that height over its label bar and input, out of line with the name's. */
 .contacts > * {
   align-self: start;
+}
+/* Waived, the id field reads as off, not just refuses typing: its label, well and @ fade, while
+   the box that turned it off stays at full strength to turn it back on. */
+.idField[data-waived] > :first-child {
+  opacity: .4;
+}
+.idField[data-waived] input:not([type=checkbox]) {
+  cursor: not-allowed;
 }
 /* "No Instagram account" under the id: a hint-sized line, not a consent strip. */
 .noId {
