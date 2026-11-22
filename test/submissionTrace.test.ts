@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { inviteHref } from '../features/access/invite';
 import { removeSignalSubscription } from '../lib/signal/d1SignalSubscriptionRepository';
 import {
   entryFromVisit,
@@ -18,7 +19,7 @@ const visit = (path: string, referer: string | null = null) =>
 
 describe('entry from a page visit', () => {
   it('reads an artist code link, a host page (never its token) and an outside site', () => {
-    expect(visit('/events/TRM-03/request?code=HOGUN03', 'https://l.instagram.com/')).toEqual({
+    expect(visit('/events/TRM-03/request?invite=HOGUN03', 'https://l.instagram.com/')).toEqual({
       kind: 'code', target: 'TRM-03', code: 'HOGUN03', referrer: 'l.instagram.com', at: NOW.toISOString(),
     });
     const host = visit('/host/03-B?t=secret-token', 'https://www.facebook.com/');
@@ -27,10 +28,15 @@ describe('entry from a page visit', () => {
     expect(visit('/', 'https://l.instagram.com/x')).toEqual({ kind: 'ref', referrer: 'l.instagram.com', at: NOW.toISOString() });
   });
 
+  it('reads the very link an artist shares (inviteHref), not a look-alike key', () => {
+    expect(visit(inviteHref('TRM-03', '3J5W'))).toMatchObject({ kind: 'code', target: 'TRM-03', code: '3J5W' });
+    expect(visit('/events/TRM-03/request?code=3J5W')).toBeNull();
+  });
+
   it('names no entry for a direct or same-site visit, or a malformed link', () => {
     expect(visit('/transmit')).toBeNull();
     expect(visit('/events/TRM-03', 'https://terminal.stann.kr/')).toBeNull();
-    expect(visit('/events/TRM-03/request?code=%3Cscript%3E')).toBeNull();
+    expect(visit('/events/TRM-03/request?invite=%3Cscript%3E')).toBeNull();
     expect(visit('/host/%E0%A4%A')).toBeNull();
   });
 
@@ -38,12 +44,12 @@ describe('entry from a page visit', () => {
     const stored = visit('/host/03-B')!;
     expect(shouldStoreEntry(visit('/', 'https://google.com/'), stored)).toBe(false);
     expect(shouldStoreEntry(visit('/', 'https://google.com/'), null)).toBe(true);
-    expect(shouldStoreEntry(visit('/events/TRM-03/request?code=X1'), stored)).toBe(true);
+    expect(shouldStoreEntry(visit('/events/TRM-03/request?invite=X1'), stored)).toBe(true);
     expect(shouldStoreEntry(null, null)).toBe(false);
   });
 
   it('round-trips through the cookie and rejects one it did not write', () => {
-    const entry = visit('/events/TRM-03/request?code=HOGUN03')!;
+    const entry = visit('/events/TRM-03/request?invite=HOGUN03')!;
     expect(parseEntry(serializeEntry(entry))).toEqual(entry);
     // The raw header carries the value percent-encoded, as Next writes it.
     expect(readEntryCookie(`a=1; tw_entry=${encodeURIComponent(serializeEntry(entry))}; b=2`)).toEqual(entry);
