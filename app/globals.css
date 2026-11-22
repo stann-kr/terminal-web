@@ -311,13 +311,18 @@ details[open] > summary { margin-bottom: 6px; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }
 
-/* The console draws its own pointer (Shell); the system caret returns over text fields. */
+/* The console draws its own pointer (Shell); the system caret returns over text fields. A field
+   that cannot take typing (its own or its fieldset's disabled) shows it cannot, never the caret. */
 html[data-cursor=console],
 html[data-cursor=console] * {
   cursor: none;
 }
 html[data-cursor=console] :is(input:not([type=checkbox]), textarea, [contenteditable=true]) {
   cursor: text;
+}
+html[data-cursor=console] :is(input, textarea):disabled,
+:is(input, textarea):disabled {
+  cursor: not-allowed;
 }
 
 /* A sub-plate folded away by its stack (FitStack) is gone, whatever its display. */

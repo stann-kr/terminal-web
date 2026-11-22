@@ -70,9 +70,6 @@
 .idField[data-waived] > :first-child {
   opacity: .4;
 }
-.idField[data-waived] input:not([type=checkbox]) {
-  cursor: not-allowed;
-}
 /* "No Instagram account" under the id: a hint-sized line, not a consent strip. */
 .noId {
   display: flex;
