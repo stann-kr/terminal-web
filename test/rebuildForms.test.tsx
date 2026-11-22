@@ -117,6 +117,21 @@ describe('guest request UI',()=>{
     expect(payload).toEqual({eventId:'A',accessCode:'CODE',name:'Example',instagram:'example',marketingConsent:false});
     expect(screen.getByLabelText(/^이름/)).toHaveValue('Example');expect(screen.getByLabelText(/^이름/)).toBeDisabled();expect(screen.getByRole('alert')).toHaveTextContent('접수');expect(screen.queryByText('초대 코드를 확인했습니다.')).not.toBeInTheDocument();
   });
+  it('asks for the Instagram id, and lets a guest with no account say so instead',async()=>{
+    const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockResolvedValueOnce(json({ok:true}));vi.stubGlobal('fetch',fetch);
+    const user=userEvent.setup();render(<AccessForm eventId="A"/>);
+    await user.type(screen.getByLabelText(/초대 코드/),'CODE');await user.click(screen.getByRole('button',{name:'코드 확인'}));
+    const id=screen.getByRole('textbox',{name:/인스타그램 ID/});
+    expect(id).toBeRequired();expect(id).toBeInvalid();
+    await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(id,'typed');
+    await user.click(screen.getByRole('checkbox',{name:'인스타그램 계정이 없습니다.'}));
+    expect(id).toBeDisabled();expect(id).not.toBeRequired();expect(id).toHaveValue('');
+    await user.click(screen.getByRole('button',{name:'게스트 신청 저장'}));
+    const saved=await screen.findByRole('status');
+    // What was typed before the box was ticked is not sent.
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({eventId:'A',accessCode:'CODE',name:'Example',instagram:'',noInstagram:true,marketingConsent:false});
+    expect(saved).not.toHaveTextContent('@typed');
+  });
   it('asks for an email only once news is ticked, and sends it only then',async()=>{
     const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER'})).mockResolvedValueOnce(json({ok:true}));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
@@ -142,7 +157,11 @@ describe('guest request UI',()=>{
     expect(screen.queryByRole('checkbox',{name:/대기 명단/})).not.toBeInTheDocument();
     expect(screen.getByText(/대기 신청하시면/)).toHaveTextContent('이름·인스타그램 ID와 신청 시각이 초대한 아티스트에게 전달되고, 명단에 오르면 아티스트가 인스타그램으로 연락합니다');
     expect(screen.queryByRole('checkbox',{name:/차기 이벤트 소식/})).not.toBeInTheDocument();
-    await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
+    // The artist reaches a waiting guest by Instagram alone: here the id is asked for.
+    const id=screen.getByRole('textbox',{name:/인스타그램 ID/});
+    expect(id).toBeRequired();expect(id).toBeInvalid();
+    expect(screen.queryByRole('checkbox',{name:/인스타그램 계정이 없습니다/})).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^이름/),'Example');await user.type(id,'example');expect(id).toBeValid();
     await user.click(screen.getByRole('button',{name:'대기 명단에 올리기'}));
     expect(await screen.findByRole('heading',{name:'대기 명단에 올렸습니다'})).toBeInTheDocument();
     expect(screen.getByText(/아직 게스트 명단은 아닙니다/)).toBeInTheDocument();
@@ -219,8 +238,8 @@ describe('guest request UI',()=>{
   });
   it('tells the guest, without a box to tick, that their name goes to the inviter',()=>{
     render(<AccessForm eventId="A"/>);
-    // Only the optional news box is left: the request itself needs no consent tick.
-    expect(screen.getAllByRole('checkbox').map(box=>box.getAttribute('id'))).toEqual(['marketing-consent']);
+    // No consent tick for the request itself: only "no Instagram account" and the optional news box.
+    expect(screen.getAllByRole('checkbox').map(box=>box.getAttribute('id'))).toEqual(['no-instagram','marketing-consent']);
     const notice=screen.getByText(/신청하시면 이름과 신청 시각이/);
     expect(notice).toHaveTextContent('신청하시면 이름과 신청 시각이 초대한 아티스트에게 전달됩니다. 신청 정보는 이벤트 종료 후 1개월까지 보관됩니다.');
     expect(within(notice).getByRole('link',{name:/개인정보처리방침/})).toHaveAttribute('href','/privacy');
