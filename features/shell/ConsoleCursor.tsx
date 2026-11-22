@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import styles from './shell.module.css';
 
 const INTERACTIVE = 'a[href], button:not(:disabled), summary, label, select, [role=button], input[type=checkbox]';
-const TEXT = 'input:not([type=checkbox]), textarea, [contenteditable=true]';
+const TEXT = 'input:not([type=checkbox]):not(:disabled), textarea:not(:disabled), [contenteditable=true]';
 
 /**
  * The console's own pointer: a point that sits exactly on the pointer and a ring that trails it

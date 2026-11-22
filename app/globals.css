@@ -311,18 +311,14 @@ details[open] > summary { margin-bottom: 6px; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 [data-display-paused] *,[data-display-paused] *::before,[data-display-paused] *::after { animation: none !important; transition: none !important; }
 
-/* The console draws its own pointer (Shell); the system caret returns over text fields. A field
-   that cannot take typing (its own or its fieldset's disabled) shows it cannot, never the caret. */
+/* The console draws its own pointer (Shell); the system caret returns over text fields that take
+   typing. A locked field (its own or its fieldset's disabled) keeps the console pointer. */
 html[data-cursor=console],
 html[data-cursor=console] * {
   cursor: none;
 }
-html[data-cursor=console] :is(input:not([type=checkbox]), textarea, [contenteditable=true]) {
+html[data-cursor=console] :is(input:not([type=checkbox]):not(:disabled), textarea:not(:disabled), [contenteditable=true]) {
   cursor: text;
-}
-html[data-cursor=console] :is(input, textarea):disabled,
-:is(input, textarea):disabled {
-  cursor: not-allowed;
 }
 /* A click on a locked field still lands a text selection in it, and some browsers draw a blinking
    caret there though it takes no typing: no selection, and no caret to draw. */
