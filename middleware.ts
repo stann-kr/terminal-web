@@ -9,6 +9,9 @@ import {
   shouldStoreEntry,
 } from '@/lib/trace/entry';
 
+/** The public host: only here is plain http turned to https (local dev and previews run on http). */
+const PUBLIC_HOST = 'terminal.stann.kr';
+
 /** A page the visitor opened (not a fetch, prefetch or API call), the only visit that names an entry. */
 function isPageVisit(request: NextRequest): boolean {
   if (request.method !== 'GET' || request.nextUrl.pathname.startsWith('/api/')) return false;
@@ -18,6 +21,9 @@ function isPageVisit(request: NextRequest): boolean {
 }
 
 /**
+ * 공개 주소로 http 요청이 오면 같은 경로의 https로 308 보낸다(zone 전체 설정 대신 이 사이트만).
+ * QR 스티커가 대문자 주소(`HTTPS://TERMINAL.STANN.KR/Q`)를 담을 수 있게 `/Q`는 `/q`로 rewrite한다.
+ * 요청 분석에는 들어온 경로(`/Q`) 그대로 남는다.
  * 깨진 percent-encoding 경로(`/events/%E0%A4%A`)는 라우트에서 decode 오류로 500이 나므로 여기서 404로 끊는다.
  * 페이지 방문이 아티스트 링크·호스트 페이지·외부 사이트에서 왔으면 운영자 전용 접속 기록을 위해
  * 유입 쿠키(`tw_entry`, 30일)를 남긴다(lib/trace/entry).
@@ -25,6 +31,14 @@ function isPageVisit(request: NextRequest): boolean {
  * runtime은 지정하지 않는다: middleware는 기본이 edge이고, 명시하면 Edge Runtime 폐기 경고만 늘어난다.
  */
 export function middleware(request: NextRequest) {
+  if (request.nextUrl.protocol === 'http:' && request.nextUrl.hostname === PUBLIC_HOST) {
+    const secure = request.nextUrl.clone();
+    secure.protocol = 'https:';
+    secure.port = '';
+    return NextResponse.redirect(secure, 308);
+  }
+  if (request.nextUrl.pathname === '/Q') return NextResponse.rewrite(new URL('/q', request.url));
+
   if (hasMalformedPercentEncoding(request.nextUrl.pathname)) {
     return new Response('Not Found', {
       status: 404,

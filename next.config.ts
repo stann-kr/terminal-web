@@ -27,6 +27,9 @@ const securityHeaders = [
       "worker-src 'self' blob:",
     ].join("; "),
   },
+  // Browsers that have reached the site once over https never try http for it again (this host
+  // only: other stann.kr sites are not bound). Ignored on the http local dev server.
+  { key: "Strict-Transport-Security", value: "max-age=31536000" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
