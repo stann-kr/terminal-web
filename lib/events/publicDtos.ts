@@ -135,6 +135,7 @@ export function parsePublicEventRow(
   const invitationLines = parseLocalizedLines(data.invitationLines);
   const description = parseLocalizedText(data.description);
   const posterUrl = data.posterUrl === undefined ? undefined : parseBoundedString(data.posterUrl, 2_048);
+  const timetableUrl = data.timetableUrl === undefined ? undefined : parseBoundedString(data.timetableUrl, 2_048);
 
   if (
     !session || !subtitle || !date
@@ -142,7 +143,7 @@ export function parsePublicEventRow(
     || !isValidEventDateTime({ date, time })
     || endTime === null || (endTime !== undefined && !getEventEndTime({ date, time, endTime }))
     || !isString(data.status) || !EVENT_STATUSES.has(data.status as EventStatus)
-    || invitationLines === null || description === null || posterUrl === null
+    || invitationLines === null || description === null || posterUrl === null || timetableUrl === null
     || stage === null || log === null
   ) {
     return null;
@@ -168,5 +169,6 @@ export function parsePublicEventRow(
     ...(invitationLines === undefined ? {} : { invitationLines }),
     ...(description === undefined ? {} : { description }),
     ...(posterUrl === undefined ? {} : { posterUrl }),
+    ...(timetableUrl === undefined ? {} : { timetableUrl }),
   };
 }

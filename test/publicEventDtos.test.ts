@@ -72,6 +72,13 @@ describe('public event DTOs', () => {
     )).toBeNull();
   });
 
+  it('passes a timetable image address and rejects one that is not a short string', () => {
+    const url = 'https://media.stann.kr/terminal/TRM-03-timetable.c7c03c586ea9.jpg';
+    expect(parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, timetableUrl: url }) }, [])).toMatchObject({ timetableUrl: url });
+    expect(parsePublicEventRow({ id: 'e1', data: JSON.stringify(eventData) }, [])).not.toHaveProperty('timetableUrl');
+    expect(parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, timetableUrl: 42 }) }, [])).toBeNull();
+  });
+
   it('preserves bilingual editorial line breaks while whitelisting narrative fields', () => {
     const stage = { ko: '방향', en: 'Bearing' };
     const log = { ko: '헬리오포즈 돌파 후 204일. 미확인 신호 수신.', en: '204 days past the heliopause. Unidentified signal received.' };

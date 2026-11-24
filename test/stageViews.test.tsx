@@ -321,6 +321,19 @@ describe('stage views', () => {
     window.localStorage.removeItem('terminal:language');
   });
 
+  it('puts the timetable image under the running order, one link out to the full image, and drops it when it fails', () => {
+    const src = 'https://media.stann.kr/terminal/TRM-03-timetable.test.jpg';
+    const { container, go } = shell([{ ...upcoming, timetableUrl: src }]);
+    go('/events/TRM-03');
+    const order = within(detail(container, 'event:TRM-03')).getByRole('region', { name: '공연표' });
+    const link = within(order).getByRole('link', { name: /타임테이블 — 새 탭에서 확대/ });
+    expect(link).toHaveAttribute('href', src);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(order).toHaveTextContent('NEXT ARTIST');
+    fireEvent.error(within(link).getByRole('img'));
+    expect(within(order).queryByRole('link', { name: /타임테이블/ })).not.toBeInTheDocument();
+  });
+
   it('offers the language only where a text comes in two, and reads the browser’s language first', () => {
     const bilingualEvent = { ...past, subtitle: 'A Voyage to the Unknown Sector.', stage: { ko: '방향', en: 'Bearing' }, description: { ko: '한국어 소개\n둘째 줄\n\n다음 문단', en: 'English briefing\nSecond line\n\nNext paragraph' } };
     const { container, go } = shell([bilingualEvent]);

@@ -51,4 +51,6 @@ export interface TerminalEvent {
     ko: string;
   };
   posterUrl?: string;
+  /** The timetable image (landscape), opened full size from under the running order. */
+  timetableUrl?: string;
 }
