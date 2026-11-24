@@ -151,7 +151,7 @@ function LeadRow({ event, apply, now }: { event: TerminalEvent; apply: boolean; 
 }
 
 /**
- * The timetable image under the running order: a strip-sized preview that opens the image full size.
+ * The timetable image under the running order, as large as the column lets it be; pressed, it opens full size.
  * The text order above stays the record (it marks who is on now); an image that fails to load is
  * left out, since the order above already says the same.
  */
@@ -161,7 +161,6 @@ function TimetableImage({ src, alt }: { src: string; alt: string }) {
   return (
     <a className={styles.timetable} href={src} target="_blank" rel="noopener noreferrer">
       <img src={src} alt={alt} width={3368} height={2382} loading="lazy" decoding="async" onError={() => setFailed(true)} />
-      <span className={styles.timetableCue} aria-hidden="true">타임테이블 이미지<Arrow external /></span>
     </a>
   );
 }

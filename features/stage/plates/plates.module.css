@@ -1651,53 +1651,51 @@
     aspect-ratio: 707 / 1000;
   }
 }
-/* The timetable image under the running order: a low preview with its cue beside it, the whole
-   strip one link out to the full image. Stacked on a phone it takes the column's width. */
+/* The timetable image under the running order: the image alone, as large as the column lets it be,
+   one link out to the full image. On the stage it takes the height the order leaves (scaled to fit,
+   never cut); elsewhere, and stacked on a phone, it takes the column's width. */
 .timetable {
   display: flex;
-  align-items: flex-end;
-  gap: 12px;
+  flex-direction: column;
   min-width: 0;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-  color: var(--link);
-  text-decoration: none;
+  cursor: zoom-in;
 }
 .timetable img {
   display: block;
-  flex: none;
-  width: auto;
-  height: 84px;
-  max-width: 60%;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3368 / 2382;
+}
+:global([data-stage=stage]) .fitColumn > .timetable {
+  flex: 1 1 0;
+  min-height: 96px;
+}
+:global([data-stage=stage]) .timetable img {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  aspect-ratio: auto;
   object-fit: contain;
-  object-position: left bottom;
+  object-position: center top;
 }
-.timetableCue {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  font: 700 var(--t-xs)/1 var(--display);
-  letter-spacing: .14em;
-}
-@media (hover: hover) {
-  .timetable:hover .timetableCue {
-    text-decoration: underline;
+@container layer (max-width: 700px) {
+  :global([data-stage=stage]) .fitColumn > .timetable {
+    flex: none;
+    min-height: 0;
+  }
+  :global([data-stage=stage]) .timetable img {
+    flex: none;
+    height: auto;
+    aspect-ratio: 3368 / 2382;
   }
 }
 .timetable:focus-visible {
-  outline-color: currentColor;
+  outline: 2px solid currentColor;
   outline-offset: 2px;
 }
-@container layer (max-width: 700px) {
-  .timetable {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .timetable img {
-    width: 100%;
-    height: auto;
-    max-width: 100%;
-    aspect-ratio: 3368 / 2382;
+@media (hover: hover) {
+  .timetable:hover img {
+    opacity: .92;
   }
 }
 .sessionOrder,
