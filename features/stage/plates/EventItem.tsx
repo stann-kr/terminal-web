@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Link from '@/features/ui/RouteLink';
 import type { TerminalEvent } from '@/lib/events/types';
 import { AccessRequest } from '@/features/access/Access';
@@ -150,6 +151,22 @@ function LeadRow({ event, apply, now }: { event: TerminalEvent; apply: boolean; 
 }
 
 /**
+ * The timetable image under the running order: a strip-sized preview that opens the image full size.
+ * The text order above stays the record (it marks who is on now); an image that fails to load is
+ * left out, since the order above already says the same.
+ */
+function TimetableImage({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <a className={styles.timetable} href={src} target="_blank" rel="noopener noreferrer">
+      <img src={src} alt={alt} width={3368} height={2382} loading="lazy" decoding="async" onError={() => setFailed(true)} />
+      <span className={styles.timetableCue} aria-hidden="true">타임테이블 이미지<Arrow external /></span>
+    </a>
+  );
+}
+
+/**
  * The session file a row grows into: overview, running order, and the access panel over the
  * briefing. On `/request` the access panel opens into the guest form and the briefing folds away.
  */
@@ -192,7 +209,10 @@ export function SessionFile({ event, state, data }: { event: TerminalEvent; stat
         <p className={styles.columnHead}><b aria-hidden="true">Running order</b><span>공연표</span></p>
         <div className={styles.fitColumn} data-fit="">
           {hasOrder && data.events ? (
-            <Lineup event={event} events={data.events} stages now={data.now} />
+            <>
+              <Lineup event={event} events={data.events} stages now={data.now} />
+              {event.timetableUrl && <TimetableImage key={event.timetableUrl} src={event.timetableUrl} alt={`${sessionShort(event.session)} 타임테이블 — 새 탭에서 확대`} />}
+            </>
           ) : (
             <StateNotice title="공연표 공개 전입니다" className={styles.columnNotice}>출연진과 시간표는 공개되는 대로 이곳에 표시됩니다.</StateNotice>
           )}

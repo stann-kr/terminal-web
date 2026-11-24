@@ -1651,6 +1651,55 @@
     aspect-ratio: 707 / 1000;
   }
 }
+/* The timetable image under the running order: a low preview with its cue beside it, the whole
+   strip one link out to the full image. Stacked on a phone it takes the column's width. */
+.timetable {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  min-width: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--link);
+  text-decoration: none;
+}
+.timetable img {
+  display: block;
+  flex: none;
+  width: auto;
+  height: 84px;
+  max-width: 60%;
+  object-fit: contain;
+  object-position: left bottom;
+}
+.timetableCue {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  font: 700 var(--t-xs)/1 var(--display);
+  letter-spacing: .14em;
+}
+@media (hover: hover) {
+  .timetable:hover .timetableCue {
+    text-decoration: underline;
+  }
+}
+.timetable:focus-visible {
+  outline-color: currentColor;
+  outline-offset: 2px;
+}
+@container layer (max-width: 700px) {
+  .timetable {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .timetable img {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    aspect-ratio: 3368 / 2382;
+  }
+}
 .sessionOrder,
 .sessionBriefing,
 .sessionAccess,
