@@ -1678,6 +1678,17 @@
   object-fit: contain;
   object-position: center top;
 }
+@container layer (max-width: 700px) {
+  :global([data-stage=stage]) .fitColumn > .timetable {
+    flex: none;
+    min-height: 0;
+  }
+  :global([data-stage=stage]) .timetable img {
+    flex: none;
+    height: auto;
+    aspect-ratio: 3368 / 2382;
+  }
+}
 .timetable:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
