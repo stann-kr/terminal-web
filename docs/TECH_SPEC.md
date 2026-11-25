@@ -51,7 +51,8 @@ CI(`.github/workflows/validate.yml`)는 push와 PR마다 migration 이력·테�
 ## FAUST 출입 명단 연동
 
 - 명단에 오른 게스트(신청 저장, 아티스트 직접 등록, 대기자 올림)는 응답 뒤 백그라운드(`waitUntil`)로 authon-worker `/api/internal/sync-guest`에 복사됩니다(`lib/authon/syncGuest.ts`). 대기 명단에만 있는 게스트는 올라가기 전까지 보내지 않습니다.
-- payload는 요청 ID(`terminalRequestId`), 이름·이메일·인스타그램, 이벤트 날짜, 초대 아티스트 이름(`invited_by`)과 그 아티스트의 정원입니다(`lib/authon/syncPayload.mjs`, 재전송 스크립트와 공유). authon은 그 날짜의 FAUST 이벤트에 아티스트별 담당자형 외부 링크를 만들거나 재사용해 게스트를 붙입니다. 정원 권위는 terminal에 있고 authon은 거부하지 않습니다.
+- payload는 요청 ID(`terminalRequestId`), 이름·인스타그램, 이벤트 날짜, 초대 아티스트 이름(`invited_by`)과 그 아티스트의 정원입니다(`lib/authon/syncPayload.mjs`, 재전송 스크립트와 공유). authon은 그 날짜의 FAUST 이벤트에 아티스트별 담당자형 외부 링크를 만들거나 재사용해 게스트를 붙입니다. 정원 권위는 terminal에 있고 authon은 거부하지 않습니다. 이메일은 보내지 않습니다(소식 발송 동의 범위로만 보관하고 수신 거부 때 지움).
 - 운영 Worker에만 Service Binding `AUTHON`이 있고 secret `AUTHON_SYNC_SECRET`(authon `INTERNAL_API_SECRET`과 같은 값)이 있어야 동작합니다. 로컬·development는 보내지 않습니다(authon은 dev Worker도 운영 D1을 씀).
 - 복사 실패는 게스트 신청을 실패시키지 않고 `authon.sync_missed`/`authon.sync_failed` 로그만 남깁니다. authon에 그날 이벤트가 아직 없으면 `503 EVENT_NOT_READY`이므로, 이벤트를 만든 뒤 `npm run authon:sync -- <이벤트 ID> --confirm <이벤트 ID>`로 다시 보냅니다. authon이 요청 ID로 중복을 막으므로 여러 번 보내도 한 명입니다.
+- 켜는 순서: authon production 배포(아티스트 링크 경로 포함) → authon에 그날 FAUST 이벤트 생성(호환용이 아닌 `draft`·`open` 하나) → terminal 운영 secret `AUTHON_SYNC_SECRET` 설정 → `npm run authon:sync`로 이전 명단 보내기. 구버전 authon은 `artistName`을 무시하고 호환용 이벤트에 넣으며, 그 뒤 같은 요청은 다른 payload로 409가 되므로 secret은 마지막에 설정합니다.
 - 한 방향·추가만 합니다. terminal에서 게스트를 지우거나 바꾼 것은 authon에 반영되지 않습니다.

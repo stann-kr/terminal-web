@@ -22,11 +22,11 @@ function row(overrides: Record<string, unknown> = {}) {
 }
 
 describe('authon guest payload', () => {
-  it('carries the guest, the event date, and the inviting artist with its limit', () => {
+  it('carries the guest, the event date, and the inviting artist with its limit, never the email', () => {
     expect(buildAuthonGuestPayload(row())).toEqual({
       terminalRequestId: 'req_1',
       name: 'Guest One',
-      email: 'guest@example.com',
+      email: null,
       instagram: 'guest.one',
       date: '2026-11-28',
       createdAt: '2026-11-26T03:00:00.000Z',
