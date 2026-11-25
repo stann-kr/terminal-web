@@ -84,7 +84,10 @@ export async function POST(request: Request) {
     if (result.status === "created" || result.status === "waitlisted") {
       await recordSubmission(request, "gate", requestId, now);
     }
-    if (result.status === "duplicate") return noStoreJson({ ok: true });
+    // A guest already on the list (same Instagram id, or same email) is told so: nothing new was
+    // stored. The operator chose this over an opaque success, accepting that the reply shows whether
+    // an id is on this event's list.
+    if (result.status === "duplicate") return noStoreJson({ ok: true, alreadyListed: true });
     // A full code keeps a guest who asked to wait on its waitlist: the artist can move them up later.
     if (result.status === "waitlisted") return noStoreJson({ ok: true, waitlisted: true });
     // Already waiting for this event, under this code or another inviter's: nothing new was stored.
