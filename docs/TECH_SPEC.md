@@ -44,6 +44,14 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 
 Next dev/start 및 Docker는 3005 포트입니다. `wrangler.toml` 맨 위 설정(`terminal-web-local`)은 로컬 개발만 쓰고, 배포하는 Worker는 `[env.production]`의 `terminal-web`과 `[env.development]`의 `terminal-web-dev`입니다. 배포 명령은 항상 `--env`를 줍니다. 요청마다 자동으로 남는 로그(`invocation_logs`)는 꺼 두었습니다. 초대 페이지·홍보 파일·수신 거부 링크가 서명 토큰을 주소 쿼리로 받아, 요청 주소가 로그에 남지 않게 하기 위해서입니다. Wrangler의 `--local`로 생성한 DB는 해당 checkout `.wrangler/state`에 격리됩니다. 공유 운영 D1을 사용하는 development binding과 local simulation을 혼동하지 않습니다. 원격 migration·secret·배포는 별도 작업입니다.
 
-`npm run build`는 Next 산출물을 만들고 token verifier를 실행합니다. `npm run transmit:remove`는 방문자 로그 글을 숨기거나(`hide`·`unhide`, DB에 남김) 백업 후 내리고 되돌립니다(`--remote`는 운영 DB이며 `--confirm <글 ID>` 없이는 계획만 출력, [문제 해결](TROUBLESHOOTING.md) 참고). `npm run signal:mail`은 발송한 구독자를 메일 내용(제목·본문)별 로그에 signal id로만 남기고, 같은 메일을 다시 실행하면 로그에 있는 구독자를 건너뜁니다. 회신 주소는 저장소에 두지 않고 환경 변수나 `.env`의 `SIGNAL_REPLY_TO`에서 읽으며, 없거나 메일 주소 하나가 아니면 아무것도 하지 않고 멈춥니다. Worker 패키징은 `npm run build:worker:development` / `npm run build:worker:production`입니다. 로컬 테스트·build가 운영 배포 성공을 의미하지 않습니다.
+`npm run build`는 Next 산출물을 만들고 token verifier를 실행합니다. `npm run transmit:remove`는 방문자 로그 글을 숨기거나(`hide`·`unhide`, DB에 남김) 백업 후 내리고 되돌립니다(`--remote`는 운영 DB이며 `--confirm <글 ID>` 없이는 계획만 출력, [문제 해결](TROUBLESHOOTING.md) 참고). `npm run signal:mail`은 발송한 구독자를 메일 내용(제목·본문)별 로그에 signal id로만 남기고, 같은 메일을 다시 실행하면 로그에 있는 구독자를 건너뜁니다. 회신 주소는 저장소에 두지 않고 환경 변수나 `.env`의 `SIGNAL_REPLY_TO`에서 읽으며, 없거나 메일 주소 하나가 아니면 아무것도 하지 않고 멈춥니다. `npm run authon:sync -- <이벤트 ID>`는 그 이벤트의 명단을 FAUST 출입 명단(authon)에 다시 보낼 계획을 아티스트별 인원으로 출력하고, `--confirm <이벤트 ID>`를 붙이면 보냅니다(아래 "FAUST 출입 명단 연동"). Worker 패키징은 `npm run build:worker:development` / `npm run build:worker:production`입니다. 로컬 테스트·build가 운영 배포 성공을 의미하지 않습니다.
 
 CI(`.github/workflows/validate.yml`)는 push와 PR마다 migration 이력·테스트·lint·typecheck·build·smoke·production 설정 dry-run을 실행합니다. PR에서는 `npm run db:check-history -- --base <기준 브랜치>`로 기준 브랜치에 이미 있는 migration SQL과 snapshot이 바뀌지 않았는지도 대조합니다(lock만으로는 migration과 lock을 함께 고친 변경을 잡지 못합니다). `npm audit --omit=dev`는 `.github/workflows/audit.yml`이 매주 월요일과 수동 실행으로 돌립니다.
+
+## FAUST 출입 명단 연동
+
+- 명단에 오른 게스트(신청 저장, 아티스트 직접 등록, 대기자 올림)는 응답 뒤 백그라운드(`waitUntil`)로 authon-worker `/api/internal/sync-guest`에 복사됩니다(`lib/authon/syncGuest.ts`). 대기 명단에만 있는 게스트는 올라가기 전까지 보내지 않습니다.
+- payload는 요청 ID(`terminalRequestId`), 이름·이메일·인스타그램, 이벤트 날짜, 초대 아티스트 이름(`invited_by`)과 그 아티스트의 정원입니다(`lib/authon/syncPayload.mjs`, 재전송 스크립트와 공유). authon은 그 날짜의 FAUST 이벤트에 아티스트별 담당자형 외부 링크를 만들거나 재사용해 게스트를 붙입니다. 정원 권위는 terminal에 있고 authon은 거부하지 않습니다.
+- 운영 Worker에만 Service Binding `AUTHON`이 있고 secret `AUTHON_SYNC_SECRET`(authon `INTERNAL_API_SECRET`과 같은 값)이 있어야 동작합니다. 로컬·development는 보내지 않습니다(authon은 dev Worker도 운영 D1을 씀).
+- 복사 실패는 게스트 신청을 실패시키지 않고 `authon.sync_missed`/`authon.sync_failed` 로그만 남깁니다. authon에 그날 이벤트가 아직 없으면 `503 EVENT_NOT_READY`이므로, 이벤트를 만든 뒤 `npm run authon:sync -- <이벤트 ID> --confirm <이벤트 ID>`로 다시 보냅니다. authon이 요청 ID로 중복을 막으므로 여러 번 보내도 한 명입니다.
+- 한 방향·추가만 합니다. terminal에서 게스트를 지우거나 바꾼 것은 authon에 반영되지 않습니다.

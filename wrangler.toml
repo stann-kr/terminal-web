@@ -73,6 +73,13 @@ namespace_id = "2026101001"
   limit = 20
   period = 60
 
+# 명단에 오른 게스트를 FAUST 출입 명단(authon-worker)에 복사한다(lib/authon/syncGuest.ts). 운영에만 둔다:
+# authon은 dev Worker도 운영 D1을 쓰므로, 로컬·development에서 실제 명단에 쓰지 않게 한다.
+# secret AUTHON_SYNC_SECRET(authon의 INTERNAL_API_SECRET과 같은 값)이 없으면 복사하지 않는다.
+[[env.production.services]]
+binding = "AUTHON"
+service = "authon-worker"
+
 [env.development]
 name = "terminal-web-dev"
 workers_dev = true

@@ -53,6 +53,7 @@
     "lint": "eslint .",
     "signal:mail": "node scripts/signal-mail.mjs",
     "signal:stats": "node scripts/signal-stats.mjs",
+    "authon:sync": "node scripts/authon-sync.mjs",
     "invite": "node scripts/artist-invite.mjs",
     "kit": "node scripts/promo-kit.mjs",
     "smoke:http": "node scripts/http-smoke.mjs",

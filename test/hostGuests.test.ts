@@ -6,7 +6,9 @@ const mocks = vi.hoisted(() => ({
   getCloudflareContext: vi.fn(),
   listGateEventRows: vi.fn(),
   createAccessRequestAtomically: vi.fn(),
+  scheduleAuthonSync: vi.fn(),
 }));
+vi.mock('@/lib/authon/syncGuest', () => ({ scheduleAuthonSync: mocks.scheduleAuthonSync }));
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: mocks.getCloudflareContext }));
 vi.mock('@/lib/api/abuseControl', () => ({ enforceRateLimit: mocks.enforceRateLimit }));
 vi.mock('@/lib/db/client', () => ({ getDb: () => ({}) }));
@@ -42,6 +44,7 @@ describe('POST /api/invite/host/guests', () => {
       eventId: 'TRM-03', artistId: '03-B', invitedBy: 'HOGUN', name: '김지현', instagram: '@ji.hyun',
       email: null, marketingConsent: false, guestLimit: 10,
     }));
+    expect(mocks.scheduleAuthonSync).toHaveBeenCalledWith('req-1');
   });
 
   it('lists a guest by name alone, with an empty Instagram id', async () => {
@@ -60,6 +63,7 @@ describe('POST /api/invite/host/guests', () => {
     const response = await post();
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ error });
+    expect(mocks.scheduleAuthonSync).not.toHaveBeenCalled();
   });
 
   it('writes nothing for a link that does not hold', async () => {

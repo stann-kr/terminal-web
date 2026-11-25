@@ -9,7 +9,9 @@ const mocks = vi.hoisted(() => ({
   generateId: vi.fn(),
   listGateArtistRowsByEvent: vi.fn(),
   listGateEventRows: vi.fn(),
+  scheduleAuthonSync: vi.fn(),
 }));
+vi.mock('@/lib/authon/syncGuest', () => ({ scheduleAuthonSync: mocks.scheduleAuthonSync }));
 
 vi.mock('@opennextjs/cloudflare', () => ({
   getCloudflareContext: mocks.getCloudflareContext,
@@ -83,6 +85,9 @@ describe('opaque public success responses', () => {
 
     expect(created).toEqual({ status: 200, cacheControl: 'no-store', body: { ok: true } });
     expect(duplicate).toEqual({ status: 200, cacheControl: 'no-store', body: { ok: true, alreadyListed: true } });
+    // Only the new guest is copied to the venue's door list; the one already listed was copied then.
+    expect(mocks.scheduleAuthonSync).toHaveBeenCalledTimes(1);
+    expect(mocks.scheduleAuthonSync).toHaveBeenCalledWith('generated-id');
     expect(mocks.listGateEventRows).toHaveBeenCalledWith({ database: true });
     expect(mocks.listGateArtistRowsByEvent).toHaveBeenCalledWith(
       { database: true },
@@ -213,6 +218,8 @@ describe('opaque public success responses', () => {
     expect(await responseDetails(await post({ ...requestBody, waitlist: true }))).toEqual({
       status: 200, cacheControl: 'no-store', body: { ok: true, waitlisted: true, alreadyWaiting: true },
     });
+    // Nobody here is on the list yet, so nothing goes to the venue's door list.
+    expect(mocks.scheduleAuthonSync).not.toHaveBeenCalled();
   });
 
   it.each(['request', 'code-info'])('closes %s for an open-window event with no guest code before any write', async (route) => {

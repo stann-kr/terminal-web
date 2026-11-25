@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { readJsonBody } from "@/lib/api/guards";
+import { scheduleAuthonSync } from "@/lib/authon/syncGuest";
 import { enforceRateLimit } from "@/lib/api/abuseControl";
 import { safeLogError } from "@/lib/api/safeLog";
 import { noStoreJson } from "@/lib/api/responses";
@@ -58,8 +59,9 @@ export async function POST(request: Request) {
       return noStoreJson({ error: "REQUEST_PERIOD_INACTIVE" }, 403);
     }
 
+    const requestId = generateId("req");
     const result = await createAccessRequestAtomically(env.DB, {
-      id: generateId("req"),
+      id: requestId,
       signalId: generateId("sig"),
       eventId: host.eventId,
       artistId: body.artistId,
@@ -74,6 +76,7 @@ export async function POST(request: Request) {
     // The artist is the one asking, so a repeat or a full list is told plainly.
     if (result.status === "duplicate") return noStoreJson({ error: "GUEST_ALREADY_LISTED" }, 409);
     if (result.status === "guest_limit_reached") return noStoreJson({ error: "GUEST_LIMIT_REACHED" }, 409);
+    if (result.status === "created") await scheduleAuthonSync(requestId);
     return noStoreJson({ ok: true });
   } catch (error) {
     safeLogError('invite.host_guest_failed', { error });

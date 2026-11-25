@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { readJsonBody } from "@/lib/api/guards";
+import { scheduleAuthonSync } from "@/lib/authon/syncGuest";
 import { enforceRateLimit } from "@/lib/api/abuseControl";
 import { safeLogError } from "@/lib/api/safeLog";
 import { noStoreJson } from "@/lib/api/responses";
@@ -52,6 +53,8 @@ export async function POST(request: Request) {
     });
     if (result === "not_found") return noStoreJson({ error: "WAITLIST_ENTRY_NOT_FOUND" }, 404);
     if (result === "guest_limit_reached") return noStoreJson({ error: "GUEST_LIMIT_REACHED" }, 409);
+    // The moved entry keeps its waitlist id as its request id; one listed another way was copied then.
+    if (result === "promoted") await scheduleAuthonSync(body.id);
     // Listed by this move or already by another way: either way the guest is on the list now.
     return noStoreJson({ ok: true });
   } catch (error) {
