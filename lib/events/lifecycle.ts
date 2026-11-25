@@ -193,6 +193,7 @@ export function selectEvent(
 export function getEventBoundaryTimes(
   events: readonly TerminalEvent[],
   accessWindowDays?: number | ((event: TerminalEvent) => number),
+  accessCloseMinutes?: (event: TerminalEvent) => number,
 ): number[] {
   const times = events
     .filter((event) => event.status !== 'ARCHIVED')
@@ -204,12 +205,14 @@ export function getEventBoundaryTimes(
         && days !== undefined && Number.isFinite(days) && days >= 0
         ? [startsAt - days * MILLISECONDS_PER_DAY]
         : [];
+      const closeMinutes = event.status === 'UPCOMING' ? accessCloseMinutes?.(event) ?? 0 : 0;
+      const closes = closeMinutes > 0 ? [startsAt - closeMinutes * 60_000] : [];
       const end = getEventEndTime(event);
       const slots = event.artists.filter(isPublicArtist).flatMap((artist) => {
         const slot = getSlotTimes(event, artist.time);
         return slot ? [slot.start.getTime(), slot.end.getTime()] : [];
       });
-      return [...opens, ...(event.status === 'UPCOMING' ? [startsAt] : []), ...(end ? [end.getTime()] : []), ...slots];
+      return [...opens, ...closes, ...(event.status === 'UPCOMING' ? [startsAt] : []), ...(end ? [end.getTime()] : []), ...slots];
     });
   return [...new Set(times)].sort((a, b) => a - b);
 }
@@ -217,6 +220,8 @@ export function getEventBoundaryTimes(
 export interface RequestWindowState {
   daysUntil: number;
   isActive: boolean;
+  /** Requests closed before the start (`accessCloseMinutes`), the event not yet started. */
+  isClosed: boolean;
   isElapsed: boolean;
   opensInDays: number | null;
 }
@@ -225,10 +230,11 @@ export function getRequestWindowState(
   event: Pick<TerminalEvent, 'date' | 'time'>,
   accessWindowDays: number,
   now: Date = new Date(),
+  accessCloseMinutes = 0,
 ): RequestWindowState {
   const eventTime = getEventDateTime(event).getTime();
   if (Number.isNaN(eventTime)) {
-    return { daysUntil: -1, isElapsed: true, opensInDays: null, isActive: false };
+    return { daysUntil: -1, isElapsed: true, isClosed: false, opensInDays: null, isActive: false };
   }
 
   const millisecondsUntil = eventTime - now.getTime();
@@ -237,11 +243,13 @@ export function getRequestWindowState(
     ? Math.min(-1, Math.floor(millisecondsUntil / MILLISECONDS_PER_DAY))
     : Math.ceil(millisecondsUntil / MILLISECONDS_PER_DAY);
   const opensInDays = isElapsed ? null : Math.max(0, daysUntil - accessWindowDays);
+  const isClosed = !isElapsed && now.getTime() >= eventTime - accessCloseMinutes * 60_000;
 
   return {
     daysUntil,
     isElapsed,
+    isClosed,
     opensInDays,
-    isActive: !isElapsed && daysUntil <= accessWindowDays,
+    isActive: !isElapsed && !isClosed && daysUntil <= accessWindowDays,
   };
 }

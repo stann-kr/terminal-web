@@ -13,3 +13,18 @@ export function accessWindowDays(event: { accessWindowDays?: unknown }): number 
     ? days
     : ACCESS_WINDOW_DAYS;
 }
+
+/** The most minutes before its start an event may stop taking guest requests (a day). */
+export const MAX_ACCESS_CLOSE_MINUTES = 1_440;
+
+/**
+ * How many minutes before its start an event stops taking guest requests: its own
+ * `accessCloseMinutes` when that is a whole number from 0 to MAX_ACCESS_CLOSE_MINUTES, otherwise 0
+ * (requests run until the start). The gate, the host page and the pages read it through here.
+ */
+export function accessCloseMinutes(event: { accessCloseMinutes?: unknown }): number {
+  const minutes = event.accessCloseMinutes;
+  return typeof minutes === 'number' && Number.isSafeInteger(minutes) && minutes >= 0 && minutes <= MAX_ACCESS_CLOSE_MINUTES
+    ? minutes
+    : 0;
+}

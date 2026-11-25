@@ -6,7 +6,7 @@ import {
   getEventBoundaryTimes,
   withEffectiveEventStatus,
 } from '@/lib/events/lifecycle';
-import { accessWindowDays } from '@/lib/gate/requestPolicy';
+import { accessCloseMinutes, accessWindowDays } from '@/lib/gate/requestPolicy';
 import { requestJson } from '@/features/ui/http';
 
 export function useEvents() {
@@ -21,6 +21,7 @@ export function useEvents() {
     const boundaries = getEventBoundaryTimes(
       query.data ?? [],
       accessWindowDays,
+      accessCloseMinutes,
     );
     const next = boundaries.find((time) => time > Date.now());
     const timer = window.setTimeout(

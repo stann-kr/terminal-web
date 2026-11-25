@@ -1,7 +1,7 @@
 import { hasOnlyKeys, isBoolean, isJsonObject, isString } from '../api/validation';
 import type { EventStatus, TerminalEvent } from '../events/types';
 import { getEffectiveEventStatus, getEventDateTime, getRequestWindowState } from '../events/lifecycle';
-import { accessWindowDays } from './requestPolicy';
+import { accessCloseMinutes, accessWindowDays } from './requestPolicy';
 
 const MAX_ACCESS_CODE_LENGTH = 64;
 const MAX_EMAIL_LENGTH = 254;
@@ -54,7 +54,7 @@ export type ArtistAccessInspection =
 
 export interface UpcomingEventCandidate {
   rowId: string;
-  lifecycle: Pick<TerminalEvent, 'date' | 'time' | 'status' | 'accessWindowDays'>;
+  lifecycle: Pick<TerminalEvent, 'date' | 'time' | 'status' | 'accessWindowDays' | 'accessCloseMinutes'>;
 }
 
 export interface StoredGateEventRow {
@@ -99,6 +99,7 @@ export function decodeStoredEventLifecycle(
     time: data.time,
     status: data.status as EventStatus,
     accessWindowDays: accessWindowDays(data),
+    accessCloseMinutes: accessCloseMinutes(data),
   };
 
   if (!Number.isFinite(getEventDateTime(lifecycle).getTime())) return null;
@@ -132,7 +133,7 @@ export function findUpcomingGateEvent(
 }
 
 export function isGateRequestWindowActive(event: UpcomingEventCandidate, now: Date): boolean {
-  return getRequestWindowState(event.lifecycle, accessWindowDays(event.lifecycle), now).isActive;
+  return getRequestWindowState(event.lifecycle, accessWindowDays(event.lifecycle), now, accessCloseMinutes(event.lifecycle)).isActive;
 }
 
 export function parseGateRequestBody(body: Record<string, unknown>): ParseGateRequestResult {

@@ -1,6 +1,6 @@
 import type { Artist, TerminalEvent } from '@/lib/events/types';
 import { getArchivedOrElapsedEvents, getEventDateTime, getFutureUpcomingEvent, getLiveEvents, getRequestWindowState, getSlotTimes, isPublicArtist, withEffectiveEventStatus } from '@/lib/events/lifecycle';
-import { accessWindowDays } from '@/lib/gate/requestPolicy';
+import { accessCloseMinutes, accessWindowDays } from '@/lib/gate/requestPolicy';
 import aboutContent from '@/features/about/content.json';
 
 export const publicArtists = (event: TerminalEvent) => event.artists.filter(isPublicArtist);
@@ -61,12 +61,20 @@ export function accessAvailability(event: TerminalEvent, events: TerminalEvent[]
   if (event.status !== 'UPCOMING') return { canRequest: false, message: event.status === 'ARCHIVED' ? '이 이벤트의 접수는 종료되었습니다.' : '진행 중인 이벤트는 접수할 수 없습니다.' };
   if (target?.id !== event.id) return { canRequest: false, message: '현재는 가장 가까운 예정 이벤트만 접수합니다.' };
   const days = accessWindowDays(event);
-  const window = getRequestWindowState(event, days,now);
+  const closeMinutes = accessCloseMinutes(event);
+  const window = getRequestWindowState(event, days, now, closeMinutes);
+  if (window.isClosed) return { canRequest: false, message: `게스트 신청은 ${closeClock(event, closeMinutes)}에 마감되었습니다.` };
   if (!window.isActive) return { canRequest: false, message: `이벤트 시작 ${days}일 전부터 신청할 수 있습니다. ${window.opensInDays ?? 0}일 후 열립니다.` };
   // Requests run on invite codes: an event none of whose artists has one yet stays closed.
   if (event.guestAccess !== true) return { canRequest: false, message: '초대 코드가 준비되면 게스트 신청을 받습니다.' };
   return { canRequest: true, message: '게스트 신청을 접수하고 있습니다.' };
 }
+/** The KST clock time requests closed at (`22:00`), `closeMinutes` before the start. */
+function closeClock(event: TerminalEvent, closeMinutes: number) {
+  const close = new Date(getEventDateTime(event).getTime() - closeMinutes * 60_000 + KST_OFFSET);
+  return close.toISOString().slice(11, 16);
+}
+const KST_OFFSET = 9 * 3_600_000;
 export function pageNumber(value: string | null, max = 1000) { return value && /^[1-9]\d*$/.test(value) && Number(value) <= max ? Number(value) : 1; }
 
 const KST_OFFSET_MS = 9 * 3_600_000;
