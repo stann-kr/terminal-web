@@ -4,7 +4,7 @@ import styles from './privacy.module.css';
 /** Who may be asked about one's records (the policy's contact): mail first, the Instagram DM beside it. */
 export const PRIVACY_EMAIL = 'terminal@stann.kr';
 export const PRIVACY_INSTAGRAM = { label: '@terminal.signal', href: 'https://www.instagram.com/terminal.signal/' };
-export const PRIVACY_EFFECTIVE = '2026-11-19';
+export const PRIVACY_EFFECTIVE = '2026-11-26';
 
 /** What each form keeps: the items, why, and for how long. */
 const RECORDS = [
@@ -47,6 +47,9 @@ export function PrivacyPage() {
           </ul>
           <p>
             접속 기록의 IP는 원래 주소로 되돌릴 수 없도록 비밀 키로 바꾼 값만 저장합니다. 같은 사람이 반복해서 입력하는지 가려내는 데만 씁니다.
+          </p>
+          <p>
+            소식 메일에는 열람을 세는 작은 이미지와 링크 클릭을 세는 주소가 들어 있습니다. 메일·날짜별 총 횟수만 저장하며, 누가 열거나 눌렀는지는 저장하지 않습니다.
           </p>
         </section>
 

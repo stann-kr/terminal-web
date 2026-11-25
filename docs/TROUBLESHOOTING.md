@@ -47,6 +47,17 @@ npx wrangler d1 execute terminal-db --remote --env production --command "SELECT 
 
 `requests`는 링크를 열지 않고 코드를 입력한 신청까지 포함하므로 열람 수와 1:1 비율이 아닙니다. 링크 열람 수는 이 기능이 배포된 날부터 셉니다.
 
+## 소식 메일 열람·클릭 수
+
+`npm run signal:mail`로 보낸 메일은 html의 https 링크가 `/api/mail/click`을 거치고, 끝에 열람 확인용 1×1 이미지(`/api/mail/open`)가 붙습니다(`--no-track`이면 그대로 보냄). 메일 키는 발송 로그 이름(`backups/signal-mail/<키>.log`)과 같습니다. 집계는 메일·KST 날짜·종류·링크별 합계뿐이고, 누가 열었는지는 남지 않습니다.
+
+```
+npm run signal:stats                 # 메일별 보낸 수 · 열람 · 클릭과 링크별 수
+npm run signal:stats -- <메일 키>     # 한 메일을 날짜별로
+```
+
+숫자는 사람 수가 아니라 불러온 횟수입니다. Gmail은 이미지를 Google 프록시로 가져와 한 번 열어도 한 번 또는 여러 번 잡힐 수 있고, Apple 메일은 열지 않아도 미리 불러올 수 있으며(실제보다 많게), 이미지를 꺼 둔 사람은 잡히지 않습니다(적게). 회사 메일의 링크 검사기가 링크를 누를 수도 있습니다. 이 기능 전에 보낸 메일(2026-11-24 TRM-03 안내 포함)은 세지 않습니다.
+
 ## 요청이 많다는 안내(429)가 뜰 때
 
 쓰기 API 네 곳은 접속 IP·작업마다 60초에 20회까지 받습니다(`wrangler.toml`의 `PUBLIC_RATE_LIMITER`). 같은 와이파이·통신사 주소를 여럿이 함께 쓰면 일찍 걸릴 수 있으므로, 현장에서 자주 보이면 `limit`를 올려 다시 배포합니다.

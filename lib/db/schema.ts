@@ -156,3 +156,19 @@ export type AccessRequest = typeof accessRequests.$inferSelect;
 export type NewAccessRequest = typeof accessRequests.$inferInsert;
 export type SignalSubscriber = typeof signal.$inferSelect;
 export type NewSignalSubscriber = typeof signal.$inferInsert;
+
+// ──────────────────────────────────────────────────────────
+// mail_stats 테이블 — 소식 메일의 열람(이미지 로드)·링크 클릭 수(메일·KST 날짜·종류·대상별 합계)
+// 받는 사람을 가리키는 값은 두지 않는다. mail_key는 발송 로그 키(scripts/lib/signalMail mailKey).
+// ──────────────────────────────────────────────────────────
+export const mailStats = sqliteTable(
+  "mail_stats",
+  {
+    mailKey: text("mail_key").notNull(),
+    day: text("day").notNull(), // KST YYYY-MM-DD
+    kind: text("kind").notNull(), // 'open' | 'click'
+    target: text("target").notNull().default(""), // 클릭한 링크 주소, 열람은 ''
+    count: integer("count").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.mailKey, table.day, table.kind, table.target] })],
+);
