@@ -4,7 +4,7 @@ import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFi
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { failureReason, parseWranglerJson, positionalArgs, readEnvValue } from './lib/cli.mjs';
-import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, readSentLog, replyToAddress, sendPending } from './lib/signalMail.mjs';
+import { VALUE_FLAGS, defaultLogFile, logLine, mailKey, otherLogs, pendingRecipients, readSentLog, replyToAddress, sendPending, trackMail } from './lib/signalMail.mjs';
 
 /**
  * Sends one mail to everyone on the Signal list (production D1 `signal`), one message per address.
@@ -31,6 +31,11 @@ import { VALUE_FLAGS, defaultLogFile, logLine, otherLogs, pendingRecipients, rea
  * --only does not read the log: running it twice sends twice. The log is opened before the first
  * mail goes out (a log that cannot be written sends nothing), and a mail that went out but could
  * not be logged stops the run with the id to add by hand.
+ *
+ * The html counts its opens and link presses (lib/mail/stats, table mail_stats): its https links go
+ * through /api/mail/click and an open pixel is added, both signed with the same secret under the
+ * mail's log key (taken before they are added, so the key and log stay the same). The text part is
+ * not changed. --no-track sends the html as written. Totals: npm run signal:stats.
  */
 const DATABASE = 'terminal-db';
 const FROM = 'terminal@stann.kr';
@@ -64,13 +69,18 @@ function confirmed(count, what) {
   console.log(`not sent: ${what}. To send, run again with --confirm ${count}.`);
   return false;
 }
-const html = readFileSync(htmlFile, 'utf8');
+const written = readFileSync(htmlFile, 'utf8');
 const text = readFileSync(textFile, 'utf8');
 const secret = readEnvValue('SIGNAL_UNSUBSCRIBE_SECRET');
 if (!secret) fail('SIGNAL_UNSUBSCRIBE_SECRET is not set (environment or .env)');
 // Where replies and the mailto unsubscribe go; also the one address --only does not log.
 const REPLY_TO = replyToAddress(readEnvValue('SIGNAL_REPLY_TO'));
 if (!REPLY_TO) fail('SIGNAL_REPLY_TO is not set to one mail address (environment or .env): replies and the mailto unsubscribe go there');
+const sign = message => createHmac('sha256', secret).update(message).digest('hex');
+const key = mailKey({ subject, html: written, text });
+const tracked = args.includes('--no-track') ? { html: written, links: 0, off: true } : trackMail(written, { site: SITE, key, sign });
+const html = tracked.html;
+console.log(tracked.off ? 'stats: off (--no-track)' : `stats: key ${key}, ${tracked.links} links counted, open pixel added`);
 const unsubscribeUrl = id => `${SITE}/api/signal/unsubscribe?${new URLSearchParams({ s: id, t: createHmac('sha256', secret).update(id).digest('hex') })}`;
 
 const wrangler = (rest, { oauth = false } = {}) => {
@@ -94,15 +104,15 @@ function subscribers() {
 
 function sendTo({ id, email }) {
   const link = unsubscribeUrl(id);
-  const fill = body => body.replaceAll('{{UNSUBSCRIBE_URL}}', link.replaceAll('&', body === html ? '&amp;' : '&'));
+  const fill = (body, escape) => body.replaceAll('{{UNSUBSCRIBE_URL}}', escape ? link.replaceAll('&', '&amp;') : link);
   wrangler(['email', 'sending', 'send',
     '--from', FROM, '--from-name', 'Stann · TERMINAL', '--reply-to', REPLY_TO, '--reply-to-name', 'Stann',
-    '--to', email, '--subject', subject, '--html', fill(html), '--text', fill(text),
+    '--to', email, '--subject', subject, '--html', fill(html, true), '--text', fill(text, false),
     '--header', `List-Unsubscribe:<${link}>, <mailto:${REPLY_TO}?subject=unsubscribe>`,
     '--header', 'List-Unsubscribe-Post:List-Unsubscribe=One-Click'], { oauth: true });
 }
 
-const logFile = option('--log') ?? defaultLogFile(process.cwd(), { subject, html, text });
+const logFile = option('--log') ?? defaultLogFile(process.cwd(), { subject, html: written, text });
 /**
  * Makes sure the log can be written, before anything is sent: a mail that goes out and cannot be
  * logged would go out again on the next run. A new log starts with a note of what mail it is for.

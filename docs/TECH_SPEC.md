@@ -32,6 +32,7 @@ Next.js App Router / React / TypeScript / TanStack Query, Cloudflare OpenNext와
 | GET | /api/invite/host/file | 초대 페이지에 실린 홍보 파일 한 건(비공개 R2) |
 | POST | /api/signal | 소식 수신 연락처 저장 |
 | GET, POST | /api/signal/unsubscribe | 수신 거부. POST가 구독 행을 지우고 같은 주소로 게스트 신청에 남긴 이메일·소식 동의도 지움(메일 앱의 one-click 포함). GET은 SIGNAL 화면의 확인 키로 보낼 뿐 지우지 않음 |
+| GET | /api/mail/open, /api/mail/click | 소식 메일 집계(`mail_stats`, 메일 키·KST 날짜·종류·링크별 합계, 받는 사람 식별값 없음). 발송 스크립트가 html의 https 링크를 `click?k=&u=&s=`로, 끝에 `open?k=&s=` 1×1 이미지를 넣음. `s`는 `SIGNAL_UNSUBSCRIBE_SECRET`로 `mail-stat:<키>:<링크>`에 서명한 값. open은 늘 GIF(`no-store`)로 답하고 서명이 맞을 때만 셈. click은 서명이 맞는 링크만 세고 그 주소로 302, 아니면 Home으로 302(열린 리디렉트 없음). 저장 실패는 응답을 바꾸지 않음. rate limit 없음(Gmail은 모든 독자의 이미지를 같은 프록시에서 가져옴) |
 | GET, POST | /api/transmit | 공개 로그 조회와 저장 |
 | GET | /calendar.ics | 공개 세션 일정 구독 피드 |
 | GET | /q, /Q | QR 스티커 링크. Home(`/`)으로 302, `Cache-Control: no-store`. `/Q`는 middleware가 `/q`로 rewrite(대문자 QR 주소용). 스캔 수는 Cloudflare zone 요청 분석에서 경로 `/q`·`/Q`로 셈(화면 RUM에는 Home으로 잡힘) |

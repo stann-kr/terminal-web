@@ -9,6 +9,30 @@ import path from 'node:path';
 /** Flags of signal-mail that take a value (the value is not a file argument). */
 export const VALUE_FLAGS = ['--subject', '--only', '--log', '--confirm'];
 
+/** What a mail's stat signature covers (lib/mail/stats mailStatMessage); never an unsubscribe id. */
+export const mailStatMessage = (key, target = '') => `mail-stat:${key}:${target}`;
+
+/**
+ * Counts a mail's opens and link presses (lib/mail/stats): every `<a href="https://…">` in the html
+ * goes through /api/mail/click with its signature, and an open pixel goes before `</body>`. The
+ * unsubscribe placeholder, mailto links, images and the text part are left as they are. `sign`
+ * returns the hex signature of a message. Every recipient gets the same links: nothing names one.
+ */
+export function trackMail(html, { site, key, sign }) {
+  let links = 0;
+  const tracked = html.replace(/(<a\b[^>]*?\shref=")(https:\/\/[^"]+)(")/gi, (_match, before, href, after) => {
+    const target = href.replaceAll('&amp;', '&');
+    if (target.startsWith(`${site}/api/`)) return `${before}${href}${after}`;
+    links += 1;
+    const url = `${site}/api/mail/click?${new URLSearchParams({ k: key, u: target, s: sign(mailStatMessage(key, target)) })}`;
+    return `${before}${url.replaceAll('&', '&amp;')}${after}`;
+  });
+  const pixelUrl = `${site}/api/mail/open?${new URLSearchParams({ k: key, s: sign(mailStatMessage(key)) })}`.replaceAll('&', '&amp;');
+  const pixel = `<img src="${pixelUrl}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;">`;
+  const at = tracked.search(/<\/body>/i);
+  return { html: at < 0 ? tracked + pixel : tracked.slice(0, at) + pixel + tracked.slice(at), links };
+}
+
 /**
  * The owner's reply address from SIGNAL_REPLY_TO, trimmed and lowercased as the list's addresses
  * are, or null when the value is not one plain address. It is written into the Reply-To and the
