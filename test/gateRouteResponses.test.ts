@@ -67,7 +67,7 @@ beforeEach(() => {
 });
 
 describe('opaque public success responses', () => {
-  it('returns the same Gate request response for created and duplicate submissions', async () => {
+  it('tells a Gate request that is already on the list so, apart from a new one', async () => {
     const { POST } = await import('../app/api/gate/request/route');
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-01T12:00:00+09:00'));
@@ -82,7 +82,7 @@ describe('opaque public success responses', () => {
     })));
 
     expect(created).toEqual({ status: 200, cacheControl: 'no-store', body: { ok: true } });
-    expect(duplicate).toEqual(created);
+    expect(duplicate).toEqual({ status: 200, cacheControl: 'no-store', body: { ok: true, alreadyListed: true } });
     expect(mocks.listGateEventRows).toHaveBeenCalledWith({ database: true });
     expect(mocks.listGateArtistRowsByEvent).toHaveBeenCalledWith(
       { database: true },

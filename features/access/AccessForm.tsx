@@ -47,6 +47,7 @@ export function AccessForm({
     waitlist,
     waitlisted,
     alreadyWaiting,
+    alreadyListed,
     turned,
   } = useAccessRequest(eventId, availability);
   // A guest without an account goes without the id, on the plain form only (see the field).
@@ -99,6 +100,26 @@ export function AccessForm({
           <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>
           <Action href={eventHref(eventId)}>이벤트로 돌아가기</Action>
           <Action href="/signal">다음 이벤트 소식 신청</Action>
+        </ActionDeck>
+      </FormSuccess>
+    );
+  if (done && alreadyListed)
+    return (
+      <FormSuccess>
+        <p className={ui.eyebrow}>ALREADY LISTED</p>
+        <h2>이미 신청하셨습니다</h2>
+        <Facts
+          rows={[
+            ...(event ? [['이벤트', `${event.session} · ${event.date} ${event.time}`] as [string, string]] : []),
+            // The entry that stands may be under another inviter and name: only what matched is shown.
+            ...(fields.instagram.trim() ? [['인스타그램', `@${fields.instagram.trim().replace(/^@/, '')}`] as [string, string]] : []),
+            ['상태', '게스트 명단'],
+          ]}
+        />
+        <p>이 인스타그램 ID 또는 이메일로 이 이벤트에 이미 신청되어 있어 새로 저장하지 않았습니다. 다시 신청하지 않으셔도 됩니다.</p>
+        <ActionDeck>
+          <Action primary external href={instagram.url}>{instagram.printed} 팔로우</Action>
+          <Action href={eventHref(eventId)}>이벤트로 돌아가기</Action>
         </ActionDeck>
       </FormSuccess>
     );

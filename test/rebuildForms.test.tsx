@@ -167,6 +167,20 @@ describe('guest request UI',()=>{
     expect(screen.getByText(/아직 게스트 명단은 아닙니다/)).toBeInTheDocument();
     const sent=JSON.parse(fetch.mock.calls[1][1].body);expect(sent.marketingConsent).toBe(false);expect(sent.email).toBeUndefined();expect(sent.waitlist).toBe(true);
   });
+  it('tells a guest already on the list so, without naming an inviter or the name just typed',async()=>{
+    const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:true})).mockResolvedValueOnce(json({ok:true,alreadyListed:true}));vi.stubGlobal('fetch',fetch);
+    const user=userEvent.setup();render(<AccessForm eventId="A"/>);
+    await user.type(screen.getByLabelText(/초대 코드/),'CODE{Enter}');
+    await user.type(await screen.findByLabelText(/^이름/),'Example');await user.type(screen.getByRole('textbox',{name:/인스타그램 ID/}),'example');
+    await user.click(screen.getByRole('button',{name:/신청/}));
+    const heading=await screen.findByRole('heading',{name:'이미 신청하셨습니다'});
+    const saved=heading.closest('section')??heading.parentElement??document.body;
+    expect(saved).toHaveTextContent('@example');
+    expect(saved).toHaveTextContent('새로 저장하지 않았습니다');
+    expect(saved).not.toHaveTextContent('INVITER');
+    expect(saved).not.toHaveTextContent('Example');
+    expect(screen.queryByRole('heading',{name:'게스트 신청을 저장했습니다'})).not.toBeInTheDocument();
+  });
   it('tells a guest who was waiting already so, without naming an inviter or the name just typed',async()=>{
     const fetch=vi.fn().mockResolvedValueOnce(json({name:'INVITER',open:false})).mockResolvedValueOnce(json({ok:true,waitlisted:true,alreadyWaiting:true}));vi.stubGlobal('fetch',fetch);
     const user=userEvent.setup();render(<AccessForm eventId="A"/>);
