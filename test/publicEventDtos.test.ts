@@ -56,6 +56,14 @@ describe('public event DTOs', () => {
     expect(row('60')).toMatchObject({ accessWindowDays: 30 });
     expect(row()).not.toHaveProperty('accessWindowDays');
   });
+  it('passes a request close time only when it is whole minutes within a day', () => {
+    const row = (accessCloseMinutes?: unknown) => parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, accessCloseMinutes }) }, []);
+    expect(row(60)).toMatchObject({ accessCloseMinutes: 60 });
+    expect(row(undefined)).not.toHaveProperty('accessCloseMinutes');
+    expect(row(5000)).toMatchObject({ accessCloseMinutes: 0 });
+    expect(row('60')).toMatchObject({ accessCloseMinutes: 0 });
+  });
+
   it('keeps a valid end time and rejects one the runtime cannot read', () => {
     expect(parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, endTime: '05:00' }) }, [])).toMatchObject({ endTime: '05:00' });
     expect(parsePublicEventRow({ id: 'e1', data: JSON.stringify({ ...eventData, endTime: 'late' }) }, [])).toBeNull();

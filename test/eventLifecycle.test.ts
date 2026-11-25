@@ -164,6 +164,13 @@ describe('event end and running order', () => {
     expect(getRequestWindowState(night, 30, kst('2026-11-28T23:00:00')).isActive).toBe(false);
   });
 
+  it('closes guest requests the set minutes before the start, and wakes the pages then', () => {
+    expect(getRequestWindowState(night, 30, kst('2026-11-28T21:59:59'), 60)).toMatchObject({ isActive: true, isClosed: false });
+    expect(getRequestWindowState(night, 30, kst('2026-11-28T22:00:00'), 60)).toMatchObject({ isActive: false, isClosed: true, isElapsed: false });
+    expect(getRequestWindowState(night, 30, kst('2026-11-28T23:00:00'), 60)).toMatchObject({ isActive: false, isClosed: false, isElapsed: true });
+    expect(getEventBoundaryTimes([night], undefined, () => 60)).toContain(kst('2026-11-28T22:00:00').getTime());
+  });
+
   it('archives a stored LIVE event once its end has passed', () => {
     const live = { ...night, status: 'LIVE' as const };
     expect(getEffectiveEventStatus(live, kst('2026-11-28T21:00:00'))).toBe('LIVE');

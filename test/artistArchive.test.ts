@@ -42,6 +42,11 @@ describe('public artist archive',()=>{
   });
 });
 describe('event access availability',()=>{
+  it('says when requests closed before the start',()=>{
+    const night={...event('A',[],'2026-10-01'),time:'23:00 KST',guestAccess:true,accessCloseMinutes:60};
+    expect(accessAvailability(night,[night],new Date('2026-10-01T12:59:59Z')).canRequest).toBe(true);
+    expect(accessAvailability(night,[night],new Date('2026-10-01T13:00:00Z'))).toEqual({canRequest:false,message:'게스트 신청은 22:00에 마감되었습니다.'});
+  });
   it('only opens the server-selected nearest future event within its 30-day window',()=>{
     const early={...event('A',[],'2026-10-01'),guestAccess:true},later={...event('B',[],'2026-10-02'),guestAccess:true};
     expect(accessAvailability(early,[later,early],new Date('2026-09-01T14:00:00Z')).canRequest).toBe(true);

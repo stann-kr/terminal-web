@@ -168,6 +168,25 @@ describe('opaque public success responses', () => {
     if (error === 'REQUEST_PERIOD_INACTIVE') expect(mocks.createAccessRequestAtomically).not.toHaveBeenCalled();
   });
 
+  it('refuses requests once the event\'s close time has passed, before its start', async () => {
+    const { POST } = await import('../app/api/gate/request/route');
+    mocks.listGateEventRows.mockResolvedValue([{
+      id: 'event-1',
+      data: JSON.stringify({ date: '2026-08-20', time: '23:00 KST', status: 'UPCOMING', accessCloseMinutes: 60 }),
+    }]);
+    mocks.createAccessRequestAtomically.mockResolvedValue({ status: 'created' });
+    vi.useFakeTimers();
+    const post = async (now: string) => {
+      vi.setSystemTime(new Date(now));
+      return responseDetails(await POST(new Request('https://terminal.test/api/gate/request', {
+        method: 'POST', body: JSON.stringify(requestBody), headers: { 'content-type': 'application/json' },
+      })));
+    };
+    expect((await post('2026-08-20T21:59:00+09:00')).status).toBe(200);
+    expect(await post('2026-08-20T22:00:00+09:00')).toEqual({ status: 403, cacheControl: 'no-store', body: { error: 'REQUEST_PERIOD_INACTIVE' } });
+    expect(mocks.createAccessRequestAtomically).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps a guest on a full code\'s waitlist only when the request asked to wait', async () => {
     const { POST } = await import('../app/api/gate/request/route');
     vi.useFakeTimers();
