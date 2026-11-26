@@ -56,8 +56,12 @@ export function PrivacyPage() {
         <section aria-labelledby="privacy-share">
           <h2 id="privacy-share">2. 제공</h2>
           <p>
-            게스트 신청의 이름과 신청 시각, 대기 명단의 이름·인스타그램 ID와 신청 시각은 신청하신 초대 링크의 아티스트에게 제공됩니다. 그 밖의 제3자에게는 제공하지 않습니다.
+            게스트 신청의 이름과 신청 시각, 대기 명단의 이름·인스타그램 ID와 신청 시각은 신청하신 초대 링크의 아티스트에게 제공됩니다.
           </p>
+          <p>
+            FAUST(서울)에서 열리는 이벤트는 명단에 오른 게스트의 이름, 인스타그램 ID(적은 경우), 신청 시각과 초대한 아티스트 이름이 입장 확인을 위해 FAUST의 출입 명단에 제공됩니다. 이메일은 제공하지 않으며, FAUST에서의 보관은 FAUST의 출입 기록 기준을 따릅니다.
+          </p>
+          <p>그 밖의 제3자에게는 제공하지 않습니다.</p>
         </section>
 
         <section aria-labelledby="privacy-host">

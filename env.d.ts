@@ -17,6 +17,10 @@ declare global {
     TRACE_HASH_SECRET?: string;
     /** Promo files for artists' host pages (wrangler.toml `terminal-press`). */
     PRESS?: R2Bucket;
+    /** authon-worker (FAUST door list), production only: listed guests are copied there. */
+    AUTHON?: Fetcher;
+    /** authon's INTERNAL_API_SECRET for /api/internal/sync-guest; without it nothing is copied. */
+    AUTHON_SYNC_SECRET?: string;
   }
 }
 

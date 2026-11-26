@@ -16,6 +16,7 @@ import {
   parseGateRequestBody,
   resolveArtistAccessCode,
 } from "@/lib/gate/createAccessRequest";
+import { scheduleAuthonSync } from "@/lib/authon/syncGuest";
 import { recordSubmission } from "@/lib/trace/recordSubmission";
 import { generateId } from "@/lib/utils/id";
 
@@ -84,6 +85,8 @@ export async function POST(request: Request) {
     if (result.status === "created" || result.status === "waitlisted") {
       await recordSubmission(request, "gate", requestId, now);
     }
+    // A listed guest is copied to the venue's door list; a waitlisted one only once moved up.
+    if (result.status === "created") await scheduleAuthonSync(requestId);
     // A guest already on the list (same Instagram id, or same email) is told so: nothing new was
     // stored. The operator chose this over an opaque success, accepting that the reply shows whether
     // an id is on this event's list.

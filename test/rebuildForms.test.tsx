@@ -155,7 +155,7 @@ describe('guest request UI',()=>{
     expect(screen.getByRole('note')).toHaveTextContent('INVITER의 게스트 초대가 마감되었습니다');
     // The waiting guest shares their Instagram id with the artist, and leaves no email for news.
     expect(screen.queryByRole('checkbox',{name:/대기 명단/})).not.toBeInTheDocument();
-    expect(screen.getByText(/대기 신청하시면/)).toHaveTextContent('이름·인스타그램 ID와 신청 시각이 초대한 아티스트에게 전달되고, 명단에 오르면 아티스트가 인스타그램으로 연락합니다');
+    expect(screen.getByText(/대기 신청하시면/)).toHaveTextContent('이름·인스타그램 ID와 신청 시각이 초대한 아티스트에게 전달되고, 명단에 오르면 아티스트가 인스타그램으로 연락하며 입장 확인을 위해 이벤트 장소의 출입 명단에도 올라갑니다');
     expect(screen.queryByRole('checkbox',{name:/차기 이벤트 소식/})).not.toBeInTheDocument();
     // The artist reaches a waiting guest by Instagram alone: here the id is asked for.
     const id=screen.getByRole('textbox',{name:/인스타그램 ID/});
@@ -255,7 +255,7 @@ describe('guest request UI',()=>{
     // No consent tick for the request itself: only "no Instagram account" and the optional news box.
     expect(screen.getAllByRole('checkbox').map(box=>box.getAttribute('id'))).toEqual(['no-instagram','marketing-consent']);
     const notice=screen.getByText(/신청하시면 이름과 신청 시각이/);
-    expect(notice).toHaveTextContent('신청하시면 이름과 신청 시각이 초대한 아티스트에게 전달됩니다. 신청 정보는 이벤트 종료 후 1개월까지 보관됩니다.');
+    expect(notice).toHaveTextContent('신청하시면 이름과 신청 시각이 초대한 아티스트에게 전달되고, 입장 확인을 위해 이름·인스타그램 ID가 이벤트 장소의 출입 명단에 올라갑니다. 신청 정보는 이벤트 종료 후 1개월까지 보관됩니다.');
     expect(within(notice).getByRole('link',{name:/개인정보처리방침/})).toHaveAttribute('href','/privacy');
   });
   it('reports a stored request without claiming admission or tickets',async()=>{
